@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="NovaDigital - Creative Agency. We partner with businesses to build cutting-edge digital experiences, branding, and interfaces.">
+  <title>NovaDigital | Creative Agency</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+  <!-- Header Section -->
+  <header>
+    <nav class="navbar">
+      <a href="index.html" class="logo" id="header-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+        <span>NovaDigital</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html" class="active">Home</a></li>
+        <li><a href="about.html">Introduce</a></li>
+        <li><a href="services.html">Services</a></li>
+        <li><a href="portfolio.html">Project</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        <li><a href="#" class="nav-btn" id="default-get-started">Get Started Now</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- Hero Section -->
+  <main>
+    <section class="hero-container">
+      <!-- Animated Background Shapes -->
+      <div class="hero-bg-shapes">
+        <div class="hero-bg-shape shape-1"></div>
+        <div class="hero-bg-shape shape-2"></div>
+        <div class="hero-bg-shape shape-3"></div>
+        <div class="hero-bg-shape shape-4"></div>
+      </div>
+      
+      <div class="hero-content">
+        <span class="hero-pill">Breakthrough Digital Solutions</span>
+        <h1>Build your <span>brand's future</span> with us.</h1>
+        <p>We partner with businesses to create cutting-edge technology products, sophisticated website interfaces, and top-tier branding strategies.</p>
+        <div class="hero-buttons">
+          <a href="portfolio.html" class="btn-primary">
+            View Projects
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+          </a>
+          <a href="about.html" class="btn-secondary">Learn More</a>
+        </div>
+      </div>
+      <div class="hero-image">
+        <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1426&q=80" alt="Digital Technology Dashboard">
+      </div>
+    </section>
+
+    <!-- Why Choose Us Section -->
+    <section class="features-section">
+      <!-- Animated Background Shapes -->
+      <div class="features-bg-shapes">
+        <div class="features-bg-shape feat-shape-1"></div>
+        <div class="features-bg-shape feat-shape-2"></div>
+      </div>
+      
+      <div class="section-header" style="position: relative; z-index: 1;">
+        <span class="hero-pill">Why Choose Us</span>
+        <h2>What Makes Us Different</h2>
+        <p>We combine innovation, expertise, and passion to deliver exceptional results</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card animate-on-scroll">
+          <div class="feature-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+          </div>
+          <h3>Lightning Fast Delivery</h3>
+          <p>We prioritize speed without compromising quality, ensuring your projects are delivered on time and beyond expectations.</p>
+        </div>
+        <div class="feature-card animate-on-scroll">
+          <div class="feature-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+          </div>
+          <h3>Top-Notch Security</h3>
+          <p>Your data and projects are protected with industry-leading security measures and best practices.</p>
+        </div>
+        <div class="feature-card animate-on-scroll">
+          <div class="feature-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="8" r="7"></circle>
+              <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+            </svg>
+          </div>
+          <h3>Expert Team Support</h3>
+          <p>Our team of professionals is always ready to assist you with any questions or challenges.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Inbox Section -->
+    <section class="inbox-section" id="inbox-section" style="display: none; padding: 4rem 2rem; background: #f8fafc;">
+      <div class="container" style="max-width: 1200px; margin: 0 auto;">
+        <div class="section-header" style="text-align: center; margin-bottom: 2rem;">
+          <h2 style="font-size: 2.5rem; font-weight: 800; color: var(--text-dark); margin-bottom: 0.5rem;">Hộp Thư</h2>
+          <p style="color: var(--text-muted); font-size: 1.1rem;">Xem các phản hồi từ đội ngũ của chúng tôi</p>
+        </div>
+        <div id="inbox-container" style="display: flex; flex-direction: column; gap: 1.5rem;"></div>
+      </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="testimonials-section">
+      <!-- Animated Background Shapes -->
+      <div class="testimonials-bg-shapes">
+        <div class="testimonials-bg-shape test-shape-1"></div>
+        <div class="testimonials-bg-shape test-shape-2"></div>
+      </div>
+      
+      <div class="section-header" style="position: relative; z-index: 1;">
+        <span class="hero-pill">Testimonials</span>
+        <h2>What Our Clients Say</h2>
+        <p class="subtitle">Don't just take our word for it</p>
+      </div>
+      <div class="testimonials-grid">
+        <div class="testimonial-card animate-on-scroll">
+          <p class="testimonial-quote">"Working with NovaDigital has been an absolute game-changer for our business. Their attention to detail and creativity are unmatched!"</p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">JS</div>
+            <div class="testimonial-info">
+              <h4>John Smith</h4>
+              <p>CEO, TechCorp</p>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card animate-on-scroll">
+          <p class="testimonial-quote">"The team is incredibly professional and responsive. They delivered our project ahead of schedule and exceeded our expectations."</p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">EL</div>
+            <div class="testimonial-info">
+              <h4>Emma Lee</h4>
+              <p>Founder, InnovateHub</p>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card animate-on-scroll">
+          <p class="testimonial-quote">"Outstanding design work! Our brand has never looked better. Highly recommend NovaDigital to anyone looking to elevate their business."</p>
+          <div class="testimonial-author">
+            <div class="testimonial-avatar">MJ</div>
+            <div class="testimonial-info">
+              <h4>Mike Johnson</h4>
+              <p>Marketing Director, GlobalCo</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Trusted Partners Section -->
+    <section class="partners-section">
+      <!-- Animated Background Shapes -->
+      <div class="partners-bg-shapes">
+        <div class="partners-bg-shape part-shape-1"></div>
+        <div class="partners-bg-shape part-shape-2"></div>
+      </div>
+      
+      <h3>A Trusted Partner of Major Brands</h3>
+      <div class="partners-logos">
+        <!-- Google -->
+        <svg xmlns="http://www.w3.org/2000/svg" width="100" height="32" viewBox="0 0 24 24"><path d="M12.24 10.285V13.4h6.887c-.275 1.564-1.88 4.604-6.887 4.604-4.33 0-7.859-3.578-7.859-8s3.53-8 7.859-8c2.46 0 4.105 1.025 5.047 1.926l2.427-2.334C17.955 2.192 15.34 1 12.24 1 5.72 1 .43 6.28.43 12.8s5.29 11.8 11.81 11.8c6.8 0 11.32-4.78 11.32-11.52 0-.772-.082-1.359-.184-1.795H12.24z"/></svg>
+        
+        <!-- Microsoft -->
+        <svg xmlns="http://www.w3.org/2000/svg" width="100" height="32" viewBox="0 0 23 23"><path fill="#f35325" d="M0 0h11v11H0z"/><path fill="#81bc06" d="M12 0h11v11H12z"/><path fill="#05a6f0" d="M0 12h11v11H0z"/><path fill="#ffba08" d="M12 12h11v11H12z"/></svg>
+        
+        <!-- Apple -->
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><path d="M12.2 2c-.6 0-1.2.3-1.6.7-.8.8-1 2-1 2.8 0 .1.1.2.2.2.8 0 1.9-.5 2.5-1.3.6-.8.6-2 .5-2.2-.1-.1-.3-.2-.6-.2zM17.6 15c-.1-2.9 2.4-4.3 2.5-4.4-.1-.1-2.6-2.9-5.7-2.9-1.2 0-2.3.7-3 .7-.7 0-1.7-.6-2.8-.6-2.9 0-5.7 2.5-5.7 6.9 0 2.2.9 4.3 1.8 5.7 1.1 1.7 2.1 3.2 3.5 3.2 1.3 0 1.8-.8 3.3-.8 1.5 0 2 .8 3.3.8 1.4 0 2.4-1.4 3.3-2.9.9-1.5 1.3-3 1.3-3.1-.1 0-2.8-1-2.8-4.1z"/></svg>
+        
+        <!-- Amazon -->
+        <svg xmlns="http://www.w3.org/2000/svg" width="100" height="32" viewBox="0 0 24 24"><path d="M15.9 14c0 1.9-.9 3.5-3.3 3.5-1.4 0-2.5-.7-2.5-2.1 0-2 1.9-2.5 4.9-2.5v1.1zm.9-4.8c-.8-.6-2.1-.9-3.8-.9-2.3 0-4.5.7-5.1 1.4-.2.2-.2.5 0 .7l.9.8c.2.2.5.1.7-.1.4-.4 1.4-.8 2.7-.8 1.5 0 2.3.6 2.3 1.6v.5c-.8 0-1.9.1-3 .3-2.3.4-4 1.4-4 3.4 0 2 1.6 3.2 3.6 3.2 1.9 0 3.2-.9 3.9-2.1v1.7c0 .2.2.4.4.4h2.1c.2 0 .4-.2.4-.4v-7.8c.1-2.4-1.2-3.8-3.7-3.8-2 0-3.8.8-4.4 1.4-.2.2-.1.5.1.7l1.1.9c.2.1.4.1.6-.1.4-.4 1.3-.8 2.3-.8 1.3 0 1.8.5 1.8 1.4v.6zm5.8 8.1c-.2-.4-.4-.5-.6-.5-.2 0-.4.2-.4.4 0 1-.7 1.8-2.1 1.8-1.5 0-2.2-1-2.2-2.7V9c0-.2-.2-.4-.4-.4h-2.1c-.2 0-.4.2-.4.4v7.4c0 3.1 1.6 4.6 4.3 4.6 1.8 0 3-.7 3.6-1.8v1.3c0 .2.2.4.4.4h2.1c.2 0 .4-.2.4-.4v-8.1c.1-.4-.2-.8-.6-.8z"/></svg>
+        
+        <!-- Slack -->
+        <svg xmlns="http://www.w3.org/2000/svg" width="100" height="32" viewBox="0 0 24 24"><path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523 2.528 2.528 0 0 1-2.522-2.523 2.528 2.528 0 0 1 2.522-2.52h2.52v2.52zm1.261 0a2.528 2.528 0 0 1 2.52-2.52h5.043a2.528 2.528 0 0 1 2.522 2.52v5.043a2.528 2.528 0 0 1-2.522 2.52H8.823a2.528 2.528 0 0 1-2.52-2.52v-5.043zm2.52-6.342a2.528 2.528 0 0 1-2.52-2.52 2.528 2.528 0 0 1 2.52-2.522 2.528 2.528 0 0 1 2.52 2.522v2.52h-2.52zm0 1.261a2.528 2.528 0 0 1 2.52 2.52v5.043a2.528 2.528 0 0 1-2.52 2.522H3.78a2.528 2.528 0 0 1-2.52-2.522V10.084a2.528 2.528 0 0 1 2.52-2.52h5.043zm6.342-2.52a2.528 2.528 0 0 1 2.52-2.523 2.528 2.528 0 0 1 2.522 2.523 2.528 2.528 0 0 1-2.522 2.52h-2.52v-2.52zm-1.261 0a2.528 2.528 0 0 1-2.52 2.52H6.341a2.528 2.528 0 0 1-2.52-2.52V3.78a2.528 2.528 0 0 1 2.52-2.52h5.043a2.528 2.528 0 0 1 2.52 2.52v5.043zm-2.52 6.342a2.528 2.528 0 0 1 2.52 2.52 2.528 2.528 0 0 1-2.52 2.522 2.528 2.528 0 0 1-2.52-2.522v-2.52h2.52zm0-1.261a2.528 2.528 0 0 1-2.52-2.52V6.341a2.528 2.528 0 0 1 2.52-2.52h5.043c1.393 0 2.52 1.127 2.52 2.52v5.043a2.528 2.528 0 0 1-2.52 2.52h-5.043z"/></svg>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer Section -->
+  <footer>
+    <div class="footer-container">
+      <div class="footer-col">
+        <a href="index.html" class="footer-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+          <span>NovaDigital</span>
+        </a>
+        <p>Bring your business closer to millions of customers through comprehensive UI/UX design and technology solutions.</p>
+      </div>
+      <div class="footer-col">
+        <h3>Quick Links</h3>
+        <ul class="footer-links">
+          <li><a href="about.html">About Us</a></li>
+          <li><a href="services.html">Service</a></li>
+          <li><a href="portfolio.html">Product</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h3>Information</h3>
+        <div class="footer-info">
+          <div class="footer-info-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            <span>Fv1</span>
+          </div>
+          <div class="footer-info-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+            <a href="mailto:contact@novadigital.com">contact@novadigital.com</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 NovaDigital. All rights reserved.</p>
+      <div class="social-icons-footer">
+        <a href="#" aria-label="Facebook">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/></svg>
+        </a>
+        <a href="#" aria-label="Github">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+        </a>
+        <a href="#" aria-label="LinkedIn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.779-1.75-1.75s.784-1.75 1.75-1.75 1.75.779 1.75 1.75-.784 1.75-1.75 1.75zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+        </a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/js/main.js"></script>
+</body>
+</html>
