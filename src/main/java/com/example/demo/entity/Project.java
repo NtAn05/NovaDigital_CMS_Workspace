@@ -23,13 +23,14 @@ public class Project {
     private String description;
 
     @Column(nullable = false, length = 100)
-    private String category; // Ví dụ: "Website E-Commerce", "Mobile Application"
+    private String category; // Examples: "E-Commerce Website", "Mobile Application"
 
     @Column(name = "image_url", length = 255)
-    private String imageUrl; // Đường dẫn ảnh banner/thumbnail của dự án
+    private String imageUrl; // Path to the project's banner/thumbnail image
 
     @Column(name = "technologies", columnDefinition = "TEXT")
-    private String technologies; // Công nghệ sử dụng (comma-separated or JSON)
+    private String technologies; // Technologies used (comma-separated or JSON)
+
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

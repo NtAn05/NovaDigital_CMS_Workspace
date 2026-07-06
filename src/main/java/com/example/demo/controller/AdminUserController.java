@@ -4,7 +4,7 @@ import com.example.demo.dto.UserRequest;
 import com.example.demo.dto.UserResponse;
 import com.example.demo.entity.User;
 import com.example.demo.repository.UserRepository;
-import com.example.demo.utils.PasswordHasher;
+import com.example.demo.service.PasswordHasher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -47,23 +47,23 @@ public class AdminUserController {
         Map<String, Object> error = new HashMap<>();
 
         if (request.getUsername() == null || request.getUsername().isBlank()) {
-            error.put("message", "Tên đăng nhập không được để trống");
+            error.put("message", "Username cannot empty");
             return ResponseEntity.badRequest().body(error);
         }
         if (userRepository.existsByUsername(request.getUsername())) {
-            error.put("message", "Tên đăng nhập đã tồn tại");
+            error.put("message", "Username already exists.");
             return ResponseEntity.badRequest().body(error);
         }
         if (request.getEmail() == null || request.getEmail().isBlank()) {
-            error.put("message", "Email không được để trống");
+            error.put("message", "Email cannot empty");
             return ResponseEntity.badRequest().body(error);
         }
         if (userRepository.existsByEmail(request.getEmail())) {
-            error.put("message", "Email đã tồn tại");
+            error.put("message", "The email already exists. ");
             return ResponseEntity.badRequest().body(error);
         }
         if (request.getPassword() == null || request.getPassword().length() < 6) {
-            error.put("message", "Mật khẩu phải có ít nhất 6 ký tự");
+            error.put("message", "The password must be at least 6 characters long.");
             return ResponseEntity.badRequest().body(error);
         }
 
@@ -87,7 +87,7 @@ public class AdminUserController {
 
         Optional<User> optional = userRepository.findById(id);
         if (optional.isEmpty()) {
-            error.put("message", "Không tìm thấy user với id = " + id);
+            error.put("message", "Cannot find user with id = " + id);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
         }
 
@@ -100,7 +100,7 @@ public class AdminUserController {
             // Check email uniqueness (exclude current user)
             Optional<User> existingEmail = userRepository.findByEmail(request.getEmail().trim());
             if (existingEmail.isPresent() && !existingEmail.get().getId().equals(id)) {
-                error.put("message", "Email đã được sử dụng bởi tài khoản khác");
+                error.put("message", "The email is already in use by another account.");
                 return ResponseEntity.badRequest().body(error);
             }
             user.setEmail(request.getEmail().trim());
@@ -118,7 +118,7 @@ public class AdminUserController {
         // Update password only if provided
         if (request.getPassword() != null && !request.getPassword().isBlank()) {
             if (request.getPassword().length() < 6) {
-                error.put("message", "Mật khẩu phải có ít nhất 6 ký tự");
+                error.put("message", "The password must be at least 6 characters long.");
                 return ResponseEntity.badRequest().body(error);
             }
             user.setPassword(PasswordHasher.hash(request.getPassword()));
@@ -133,13 +133,13 @@ public class AdminUserController {
     public ResponseEntity<?> deleteUser(@PathVariable Long id) {
         if (!userRepository.existsById(id)) {
             Map<String, Object> error = new HashMap<>();
-            error.put("message", "Không tìm thấy user với id = " + id);
+            error.put("message", "Cannot find user with id = " + id);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
         }
         userRepository.deleteById(id);
         Map<String, Object> result = new HashMap<>();
         result.put("success", true);
-        result.put("message", "Đã xóa user thành công");
+        result.put("message", "User successfully deleted.");
         return ResponseEntity.ok(result);
     }
 
@@ -153,6 +153,7 @@ public class AdminUserController {
                 u.getPhone(),
                 u.getRole(),
                 u.isEnabled(),
+                u.getAvatarUrl(),
                 u.getLastLogin(),
                 u.getCreatedAt()
         );
