@@ -1,0 +1,96 @@
+package com.example.demo.config;
+
+import com.example.demo.service.CustomUserDetailsService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Autowired
+    private CustomUserDetailsService customUserDetailsService;
+
+    @Bean
+    public JwtAuthenticationFilter jwtAuthenticationFilter() {
+        return new JwtAuthenticationFilter();
+    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
+        return authConfig.getAuthenticationManager();
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            .cors(cors -> cors.disable())
+            .csrf(csrf -> csrf.disable())
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(auth -> auth
+                // Public pages (Frontend)
+                .requestMatchers("/", "/index.html", "/about.html", "/services.html", "/portfolio.html", 
+                               "/contact.html", "/login.html", "/register.html", "/member.html", "/member-contact.html", "/admin.html", "/forgot-password.html", "/inbox.html", "/user-profile.html").permitAll()
+                .requestMatchers("/css/**", "/js/**", "/images/**", "/uploads/**", "/favicon.ico").permitAll()
+                
+                // Auth APIs
+                .requestMatchers("/api/auth/**").permitAll()
+                
+                // Public GET APIs
+                .requestMatchers(HttpMethod.GET, "/api/projects", "/api/projects/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/services", "/api/services/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/members", "/api/members/**").permitAll()
+                
+                // Contact submission requires authentication
+                .requestMatchers(HttpMethod.POST, "/api/contacts", "/api/contacts/**").authenticated()
+
+                // Security rules for changing content / sensitive endpoints
+                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                
+                // Modifying projects, services, members needs ADMIN or MEMBER (which is Team_Member)
+                .requestMatchers(HttpMethod.POST, "/api/projects", "/api/projects/**").hasAnyRole("ADMIN", "MEMBER")
+                .requestMatchers(HttpMethod.PUT, "/api/projects", "/api/projects/**").hasAnyRole("ADMIN", "MEMBER")
+                .requestMatchers(HttpMethod.DELETE, "/api/projects", "/api/projects/**").hasAnyRole("ADMIN", "MEMBER")
+                
+                .requestMatchers(HttpMethod.POST, "/api/services", "/api/services/**").hasAnyRole("ADMIN", "MEMBER")
+                .requestMatchers(HttpMethod.PUT, "/api/services", "/api/services/**").hasAnyRole("ADMIN", "MEMBER")
+                .requestMatchers(HttpMethod.DELETE, "/api/services", "/api/services/**").hasAnyRole("ADMIN", "MEMBER")
+                
+                .requestMatchers(HttpMethod.POST, "/api/members", "/api/members/**").hasAnyRole("ADMIN", "MEMBER")
+                .requestMatchers(HttpMethod.PUT, "/api/members", "/api/members/**").hasAnyRole("ADMIN", "MEMBER")
+                .requestMatchers(HttpMethod.DELETE, "/api/members", "/api/members/**").hasAnyRole("ADMIN", "MEMBER")
+
+                // Uploading files is restricted to authenticated users (so users can upload avatars)
+                .requestMatchers("/api/upload", "/api/upload/**").authenticated()
+
+                // Get my contacts needs authentication
+                .requestMatchers("/api/contacts/my").authenticated()
+                // Manage contacts / reply is for Admin / Member
+                .requestMatchers(HttpMethod.GET, "/api/contacts", "/api/contacts/**").hasAnyRole("ADMIN", "MEMBER")
+                .requestMatchers(HttpMethod.POST, "/api/contacts", "/api/contacts/**").hasAnyRole("ADMIN", "MEMBER")
+
+                // Any other request
+                .anyRequest().authenticated()
+            );
+
+        http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+}
