@@ -31,6 +31,9 @@ public class User {
     @Column(length = 20)
     private String phone;
 
+    @Column(name = "avatar_url", length = 512)
+    private String avatarUrl;
+
     @Column(nullable = false, length = 20)
     private String role = "ROLE_USER"; // Mặc định tài khoản mới đăng ký là khách hàng (ROLE_USER)
 
