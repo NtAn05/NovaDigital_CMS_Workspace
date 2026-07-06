@@ -37,6 +37,27 @@ public class ServiceController {
             return r;
         }).collect(Collectors.toList());
     }
+        // ── GET BY ID ─────────────────────────────────────────
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getServiceById(@PathVariable Long id) {
+        Optional<Service> optional = serviceRepository.findById(id);
+
+        if (optional.isEmpty()) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("message", "Không tìm thấy dịch vụ với id = " + id);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        }
+
+        Service service = optional.get();
+
+        ServiceResponse response = new ServiceResponse();
+        response.setId(service.getId());
+        response.setTitle(service.getTitle());
+        response.setDescription(service.getDescription());
+        response.setIconUrl(service.getIconUrl());
+
+        return ResponseEntity.ok(response);
+    }
 
     // ── CREATE ───────────────────────────────────────────
     @PostMapping
