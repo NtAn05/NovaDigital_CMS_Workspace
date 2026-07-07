@@ -40,7 +40,15 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .cors(cors -> cors.disable())
+            .cors(cors -> cors.configurationSource(request -> {
+            var corsConfiguration = new org.springframework.web.cors.CorsConfiguration();
+            // Replace with your exact frontend URL (e.g., http://127.0.0.1:5500 or http://localhost:3000)
+            corsConfiguration.setAllowedOrigins(java.util.List.of("http://127.0.0.1:5500", "http://localhost:3000"));
+            corsConfiguration.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+            corsConfiguration.setAllowedHeaders(java.util.List.of("*"));
+            corsConfiguration.setAllowCredentials(true);
+            return corsConfiguration;
+        }))
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
@@ -50,15 +58,17 @@ public class SecurityConfig {
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/uploads/**", "/favicon.ico").permitAll()
                 
                 // Auth APIs
-                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/auth/**", "/error").permitAll()
                 
                 // Public GET APIs
                 .requestMatchers(HttpMethod.GET, "/api/projects", "/api/projects/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/services", "/api/services/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/members", "/api/members/**").permitAll()
                 
-                // Contact submission requires authentication
-                .requestMatchers(HttpMethod.POST, "/api/contacts", "/api/contacts/**").authenticated()
+                // Contact submission: any authenticated user can POST to /api/contacts (send message)
+                .requestMatchers(HttpMethod.POST, "/api/contacts").authenticated()
+                // Reply to a contact: only ADMIN or MEMBER
+                .requestMatchers(HttpMethod.POST, "/api/contacts/**").hasAnyRole("ADMIN", "MEMBER")
 
                 // Security rules for changing content / sensitive endpoints
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
@@ -81,9 +91,8 @@ public class SecurityConfig {
 
                 // Get my contacts needs authentication
                 .requestMatchers("/api/contacts/my").authenticated()
-                // Manage contacts / reply is for Admin / Member
+                // Manage contacts (list/view) is for Admin / Member
                 .requestMatchers(HttpMethod.GET, "/api/contacts", "/api/contacts/**").hasAnyRole("ADMIN", "MEMBER")
-                .requestMatchers(HttpMethod.POST, "/api/contacts", "/api/contacts/**").hasAnyRole("ADMIN", "MEMBER")
 
                 // Any other request
                 .anyRequest().authenticated()

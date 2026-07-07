@@ -1623,7 +1623,10 @@ function initContactForm() {
 
       const response = await fetch("/api/contacts", {
         method:  "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + (localStorage.getItem("token") || "")
+        },
         body:    JSON.stringify({ name, email, title: finalTitle, content })
       });
 
@@ -1684,7 +1687,10 @@ async function fetchInbox(email) {
   try {
     const apiUrl = `/api/contacts/my?email=${encodeURIComponent(email)}`;
     console.log("Calling API:", apiUrl);
-    const response = await fetch(apiUrl);
+    const token = localStorage.getItem("token") || "";
+    const response = await fetch(apiUrl, {
+      headers: { "Authorization": "Bearer " + token }
+    });
     console.log("Response status:", response.status);
     if (!response.ok) throw new Error(`Failed to fetch inbox: ${response.status} ${response.statusText}`);
     const contacts = await response.json();

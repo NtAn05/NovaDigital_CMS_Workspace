@@ -159,7 +159,10 @@
       const tableBody = document.getElementById("member-contacts-table-body");
       if (!tableBody) return;
       try {
-        const response = await fetch("/api/contacts");
+        const token = localStorage.getItem("token") || "";
+        const response = await fetch("/api/contacts", {
+          headers: { "Authorization": "Bearer " + token }
+        });
         if (!response.ok) throw new Error("Failed to fetch");
         const contacts = await response.json();
         tableBody.innerHTML = "";
@@ -194,7 +197,8 @@
       const body = document.getElementById("reply-modal-body");
       const alert = document.getElementById("reply-alert");
       if (alert) { alert.style.display = "none"; alert.textContent = ""; alert.className = "crud-alert alert-message"; }
-      fetch(`/api/contacts`).then(res => res.json()).then(contacts => {
+      const token = localStorage.getItem("token") || "";
+      fetch(`/api/contacts`, { headers: { "Authorization": "Bearer " + token } }).then(res => res.json()).then(contacts => {
         const contact = contacts.find(c => c.id === contactId);
         if (contact) {
           body.innerHTML = `
@@ -232,9 +236,13 @@
         alert.textContent = "Sending reply...";
         alert.className = "crud-alert alert-message";
         alert.style.display = "block";
+        const token = localStorage.getItem("token") || "";
         const response = await fetch(`/api/contacts/${currentContactId}/reply`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + token
+          },
           body: JSON.stringify({ message })
         });
         const data = await response.json();
