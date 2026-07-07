@@ -2092,7 +2092,7 @@ footer {
 }
 
 .admin-table tr:hover {
-  background-color: #f8fafc;
+  background-color: var(--card-bg-hover);
 }
 
 .status-badge {
@@ -3277,6 +3277,18 @@ html.dark-theme .auth-card input:focus {
   background: rgba(0, 0, 0, 0.35) !important;
   border-color: var(--primary-light) !important;
   box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.15) !important;
+}
+
+/* Prevent table headers from turning white on hover */
+.admin-table thead tr:hover,
+.admin-table thead tr:hover td,
+.admin-table thead tr:hover th {
+  background: rgba(0, 0, 0, 0.02) !important;
+}
+html.dark-theme .admin-table thead tr:hover,
+html.dark-theme .admin-table thead tr:hover td,
+html.dark-theme .admin-table thead tr:hover th {
+  background: rgba(255, 255, 255, 0.02) !important;
 }
 
 
