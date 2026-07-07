@@ -20,7 +20,7 @@ public class ContactService {
 
     public Contact getContactById(Long id) {
         return contactRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy lời nhắn với id = " + id));
+                .orElseThrow(() -> new RuntimeException("Message not found with id = " + id));
     }
 
     public java.util.List<Contact> getContactsByEmail(String email) {

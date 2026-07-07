@@ -58,7 +58,7 @@ public class UserProfileController {
             if (!newUsername.isBlank() && !newUsername.equals(user.getUsername())) {
                 if (userRepository.findByUsername(newUsername).isPresent()) {
                     return ResponseEntity.badRequest()
-                            .body(Map.of("message", "Tên đăng nhập đã tồn tại"));
+                            .body(Map.of("message", "Username already exists"));
                 }
                 user.setUsername(newUsername);
             }
@@ -76,7 +76,7 @@ public class UserProfileController {
             if (!newEmail.isBlank() && !newEmail.equals(user.getEmail())) {
                 if (userRepository.findByEmail(newEmail).isPresent()) {
                     return ResponseEntity.badRequest()
-                            .body(Map.of("message", "Email đã được sử dụng bởi tài khoản khác"));
+                            .body(Map.of("message", "Email is already in use by another account"));
                 }
                 user.setEmail(newEmail);
             }
@@ -99,13 +99,13 @@ public class UserProfileController {
             if (!np.isBlank()) {
                 if (np.length() < 6) {
                     return ResponseEntity.badRequest()
-                            .body(Map.of("message", "Mật khẩu mới phải có ít nhất 6 ký tự"));
+                            .body(Map.of("message", "New password must be at least 6 characters"));
                 }
                 // Verify old password first
                 String oldPw = body.containsKey("oldPassword") ? ((String) body.get("oldPassword")).trim() : "";
                 if (!PasswordHasher.verify(oldPw, user.getPassword())) {
                     return ResponseEntity.badRequest()
-                            .body(Map.of("message", "Mật khẩu hiện tại không đúng"));
+                            .body(Map.of("message", "Current password is incorrect"));
                 }
                 user.setPassword(PasswordHasher.hash(np));
             }
@@ -115,7 +115,7 @@ public class UserProfileController {
 
         Map<String, Object> result = new HashMap<>();
         result.put("success",  true);
-        result.put("message",  "Cập nhật hồ sơ thành công");
+        result.put("message",  "Profile updated successfully");
         result.put("username",  saved.getUsername());
         result.put("fullName", saved.getFullName());
         result.put("email",    saved.getEmail());
