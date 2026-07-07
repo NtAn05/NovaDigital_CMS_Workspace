@@ -1,5 +1,15 @@
 // Dynamic Data Loading, Authentication, and UI logic for NovaDigital Creative Agency
 
+function initTheme() {
+  const currentTheme = localStorage.getItem("theme") || "light";
+  if (currentTheme === "dark") {
+    document.documentElement.classList.add("dark-theme");
+  } else {
+    document.documentElement.classList.remove("dark-theme");
+  }
+}
+initTheme(); // Initialize theme immediately before DOM fully loads
+
 document.addEventListener("DOMContentLoaded", () => {
   console.log("DOM Loaded");
   
@@ -526,6 +536,9 @@ function updateNavbarAuth() {
       openAuthModal("login");
     });
   }
+
+  // Inject theme toggle button next to navbar links
+  injectThemeToggle();
 }
 
 // User Logout Logic
@@ -1309,7 +1322,10 @@ async function fetchAdminContacts() {
   if (!tableBody) return;
 
   try {
-    const response = await fetch("/api/contacts");
+    const token = getAdminToken();
+    const response = await fetch("/api/contacts", {
+      headers: token ? { "Authorization": "Bearer " + token } : {}
+    });
     if (!response.ok) throw new Error("Failed to fetch contact submissions");
     const contacts = await response.json();
 
@@ -1766,7 +1782,7 @@ async function fetchInbox(email) {
     } else {
       contacts.forEach(contact => {
         const card = document.createElement("div");
-        card.style.cssText = "background:white;border-radius:12px;padding:1.5rem;box-shadow:0 1px 3px rgba(0,0,0,0.1);border:1px solid #e2e8f0;";
+        card.className = "inbox-card";
 
         const createdAt = new Date(contact.createdAt).toLocaleDateString("vi-VN", {
           hour: "2-digit", minute: "2-digit",
@@ -1786,19 +1802,19 @@ async function fetchInbox(email) {
             </div>
             <span class="status-badge ${contact.status === 'DONE' ? 'status-done' : 'status-pending'}" style="padding:0.35rem 0.75rem;font-size:0.75rem;">${escapeHtml(contact.status)}</span>
           </div>
-          <div style="background:#f8fafc;padding:1rem;border-radius:8px;margin-bottom:1rem;">
+          <div class="inbox-message-box">
             <h4 style="font-size:0.875rem;font-weight:600;color:var(--text-dark);margin:0 0 0.5rem;">Tin nhắn của bạn:</h4>
             <p style="font-size:0.875rem;color:var(--text-muted);margin:0;white-space:pre-line;">${escapeHtml(contact.content)}</p>
           </div>
           ${contact.reply ? `
-            <div style="background:#ecfdf5;padding:1rem;border-radius:8px;border:1px solid #a7f3d0;">
+            <div class="inbox-reply-box">
               <h4 style="font-size:0.875rem;font-weight:600;color:#059669;margin:0 0 0.5rem;">Phản hồi từ đội ngũ${repliedAt ? ` (${repliedAt})` : ''}:</h4>
               <p style="font-size:0.875rem;color:#065f46;margin:0;white-space:pre-line;">${escapeHtml(contact.reply)}</p>
             </div>
           ` : `
-            <div style="text-align:center;padding:1rem;color:var(--text-muted);font-size:0.875rem;">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:24px;height:24px;margin:0 auto 0.5rem;opacity:0.5;"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-              <p>Đang chờ phản hồi...</p>
+            <div class="inbox-pending-box" style="text-align:center;padding:1rem;color:var(--text-muted);font-size:0.875rem;background:#fef3c7;border-radius:8px;border:1px solid #fde68a;">
+              <h4 style="font-size:0.875rem;font-weight:600;color:#d97706;margin:0 0 0.5rem;">Trạng thái:</h4>
+              <p style="font-size:0.875rem;color:#b45309;margin:0;">Đang chờ phản hồi...</p>
             </div>
           `}
         `;
