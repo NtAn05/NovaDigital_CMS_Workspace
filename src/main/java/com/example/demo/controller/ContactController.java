@@ -61,16 +61,16 @@ public class ContactController {
             System.out.println("----------------------------------------");
             
             response.put("success", true);
-            response.put("message", "Đã gửi phản hồi thành công!");
+            response.put("message", "Reply sent successfully!");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             response.put("success", false);
-            response.put("message", "Lỗi: " + e.getMessage());
+            response.put("message", "Error: " + e.getMessage());
             return ResponseEntity.badRequest().body(response);
         }
     }
 
-    // API lấy contact của user đang đăng nhập (dựa vào email trong token hoặc localStorage, ở đây sẽ dùng email query param cho đơn giản, hoặc sau này dùng JWT)
+    // API to get contacts of the currently logged-in user (based on the email query param, or JWT in the future)
     @GetMapping("/my")
     public ResponseEntity<?> getMyContacts(@RequestParam String email) {
         java.util.List<Contact> contacts = contactService.getContactsByEmail(email);

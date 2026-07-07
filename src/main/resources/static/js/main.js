@@ -9,6 +9,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // 1. Inject the Auth Modal into every page
   injectAuthModal();
 
+  // 1b. Inject the Floating Quick Access Panel
+  injectQuickPanel();
+
   // 2. Check Authentication Route Guards
   checkRouteGuard();
 
@@ -1433,6 +1436,17 @@ async function fetchMembers() {
   }
 }
 
+function getTechClass(tech) {
+  const t = tech.toLowerCase();
+  if (t.includes('html') || t.includes('css')) return 'html';
+  if (t.includes('javascript') || t.includes('js')) return 'js';
+  if (t.includes('react')) return 'react';
+  if (t.includes('node')) return 'node';
+  if (t.includes('java') || t.includes('spring')) return 'java';
+  if (t.includes('sql') || t.includes('database') || t.includes('postgres') || t.includes('mysql')) return 'database';
+  return 'default';
+}
+
 function openProjectModal(project) {
   const modalOverlay = document.getElementById('project-modal-overlay');
   const modalImage = document.getElementById('project-modal-image');
@@ -1441,6 +1455,8 @@ function openProjectModal(project) {
   const modalDescription = document.getElementById('project-modal-description');
   const modalTechnologiesWrapper = document.getElementById('project-modal-technologies-wrapper');
   const modalTechnologies = document.getElementById('project-modal-technologies');
+  const modalLinkWrapper = document.getElementById('project-modal-link-wrapper');
+  const modalLink = document.getElementById('project-modal-link');
 
   if (!modalOverlay) return;
 
@@ -1452,12 +1468,17 @@ function openProjectModal(project) {
 
   if (project.technologies) {
     const techArray = project.technologies.split(',').map(t => t.trim()).filter(t => t);
-    modalTechnologies.innerHTML = techArray.map(tech => 
-      `<span class="tech-badge">${escapeHtml(tech)}</span>`
+    modalTechnologies.innerHTML = techArray.map(tech =>
+      `<span class="tech-tag ${getTechClass(tech)}">${escapeHtml(tech)}</span>`
     ).join('');
     modalTechnologiesWrapper.style.display = 'block';
   } else {
     modalTechnologiesWrapper.style.display = 'none';
+  }
+
+  if (modalLinkWrapper && modalLink) {
+    modalLink.href = `https://demo.novadigital.com/${(project.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+    modalLinkWrapper.style.display = 'block';
   }
 
   modalOverlay.classList.add('is-open');
@@ -1471,6 +1492,61 @@ function closeProjectModal() {
   document.body.style.overflow = '';
 }
 
+let allProjects = [];
+
+function renderFilteredProjects(category) {
+    const projectsGrid = document.getElementById("projects-grid");
+    if (!projectsGrid) return;
+
+    const filtered = category === "all"
+        ? allProjects
+        : allProjects.filter(p => (p.category || "").toLowerCase().includes(category.toLowerCase()));
+
+    projectsGrid.innerHTML = "";
+
+    if (filtered.length === 0) {
+        projectsGrid.innerHTML = `<p style="text-align: center; grid-column: 1 / -1; color: var(--text-muted); padding: 3rem 0; font-weight: 500;">No projects found in this category.</p>`;
+        return;
+    }
+
+    filtered.forEach((project, index) => {
+        const card = document.createElement("div");
+        card.className = "project-card project-card-anim";
+        card.style.animationDelay = `${index * 0.06}s`;
+
+        card.innerHTML = `
+            <div class="project-image-wrapper">
+                <img class="project-image" src="${project.imageUrl}" alt="${escapeHtml(project.title)}"
+                    onerror="this.src='https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=500&h=300'">
+            </div>
+            <div class="project-body">
+                <span class="project-category">${escapeHtml(project.category)}</span>
+                <h3 class="project-title-clickable">${escapeHtml(project.title)}</h3>
+                <p>${escapeHtml(project.description)}</p>
+                <div class="project-link">
+                    View Details
+                    <span class="arrow">➔</span>
+                </div>
+            </div>
+        `;
+
+        const elementsToClick = [
+            card.querySelector('.project-title-clickable'),
+            card.querySelector('.project-link'),
+            card.querySelector('.project-image-wrapper')
+        ];
+        elementsToClick.forEach(el => {
+            if (el) {
+                el.addEventListener('click', () => {
+                    openProjectModal(project);
+                });
+            }
+        });
+
+        projectsGrid.appendChild(card);
+    });
+}
+
 async function fetchProjects() {
     const projectsGrid = document.getElementById("projects-grid");
     if (!projectsGrid) return;
@@ -1478,36 +1554,22 @@ async function fetchProjects() {
     try {
         const response = await fetch("/api/projects");
         if (!response.ok) throw new Error("Failed to fetch projects");
-        const projects = await response.json();
+        allProjects = await response.json();
 
-        projectsGrid.innerHTML = "";
+        renderFilteredProjects("all");
 
-        projects.forEach(project => {
-            const card     = document.createElement("div");
-            card.className = "project-card";
-
-            card.innerHTML = `
-                <div class="project-image-wrapper">
-                    <img class="project-image" src="${project.imageUrl}" alt="${escapeHtml(project.title)}"
-                        onerror="this.src='https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=500&h=300'">
-                </div>
-                <div class="project-body">
-                    <span class="project-category">${escapeHtml(project.category)}</span>
-                    <h3 class="project-title-clickable">${escapeHtml(project.title)}</h3>
-                    <p>${escapeHtml(project.description)}</p>
-                </div>
-            `;
-            
-            // Add click event listener to title
-            const titleElement = card.querySelector('.project-title-clickable');
-            titleElement.addEventListener('click', () => {
-                openProjectModal(project);
+        const filterContainer = document.getElementById("project-filters");
+        if (filterContainer) {
+            const buttons = filterContainer.querySelectorAll(".filter-btn");
+            buttons.forEach(btn => {
+                btn.addEventListener("click", () => {
+                    buttons.forEach(b => b.classList.remove("active"));
+                    btn.classList.add("active");
+                    renderFilteredProjects(btn.getAttribute("data-filter"));
+                });
             });
-            
-            projectsGrid.appendChild(card);
-        });
+        }
 
-        // Add event listeners for project modal close
         const projectModalClose = document.getElementById('project-modal-close');
         const projectModalOverlay = document.getElementById('project-modal-overlay');
 
@@ -1517,20 +1579,16 @@ async function fetchProjects() {
 
         if (projectModalOverlay) {
             projectModalOverlay.addEventListener('click', (e) => {
-                if (e.target === projectModalOverlay) {
-                    closeProjectModal();
-                }
+                if (e.target === projectModalOverlay) closeProjectModal();
             });
         }
 
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                closeProjectModal();
-            }
+            if (e.key === 'Escape') closeProjectModal();
         });
     } catch (error) {
         console.error("Error loading projects:", error);
-        projectsGrid.innerHTML = `<p class="error-msg">Không thể tải danh sách dự án. Vui lòng thử lại sau.</p>`;
+        projectsGrid.innerHTML = `<p class="error-msg">Could not load projects list. Please try again later.</p>`;
     }
 }
 
@@ -1750,6 +1808,18 @@ async function fetchInbox(email) {
 
     inboxSection.style.display = "block";
     console.log("Inbox section displayed");
+
+    // Update quick inbox badge
+    const quickInbox = document.getElementById("quick-inbox");
+    if (quickInbox) {
+      const inboxBadge = quickInbox.querySelector(".quick-inbox-badge");
+      const hasReplies = contacts.some(c => c.reply);
+      if (hasReplies && inboxBadge) {
+        inboxBadge.style.display = "block";
+      } else if (inboxBadge) {
+        inboxBadge.style.display = "none";
+      }
+    }
   } catch (error) {
     console.error("Error loading inbox:", error);
     inboxContainer.innerHTML = `
@@ -1789,4 +1859,133 @@ function initScrollAnimations() {
   
   animatedElements1.forEach(el => observer.observe(el));
   animatedElements2.forEach(el => observer.observe(el));
+}
+
+// =============================================
+// Theme Switcher (Dark/Light Mode)
+// =============================================
+function injectThemeToggle() {
+  const navbar = document.querySelector(".navbar");
+  if (!navbar) return;
+  if (document.getElementById("theme-toggle-btn")) return;
+
+  const toggleBtn = document.createElement("button");
+  toggleBtn.id = "theme-toggle-btn";
+  toggleBtn.setAttribute("aria-label", "Toggle dark/light theme");
+  toggleBtn.style.cssText = `background:none;border:none;cursor:pointer;padding:0.5rem;display:inline-flex;align-items:center;justify-content:center;transition:var(--transition);margin-left:0.5rem;outline:none;border-radius:50%;width:38px;height:38px;`;
+
+  const sunIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;color:#eab308;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
+  const moonIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;color:#6366f1;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
+
+  const currentTheme = localStorage.getItem("theme") || "light";
+  if (currentTheme === "dark") {
+    document.documentElement.classList.add("dark-theme");
+    toggleBtn.innerHTML = sunIcon;
+  } else {
+    document.documentElement.classList.remove("dark-theme");
+    toggleBtn.innerHTML = moonIcon;
+  }
+
+  toggleBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    const isDark = document.documentElement.classList.contains("dark-theme");
+    if (isDark) {
+      document.documentElement.classList.remove("dark-theme");
+      localStorage.setItem("theme", "light");
+      toggleBtn.innerHTML = moonIcon;
+    } else {
+      document.documentElement.classList.add("dark-theme");
+      localStorage.setItem("theme", "dark");
+      toggleBtn.innerHTML = sunIcon;
+    }
+  });
+
+  const navLinks = document.querySelector(".nav-links");
+  if (navLinks) {
+    const li = document.createElement("li");
+    li.id = "theme-toggle-li";
+    li.className = "auth-item";
+    li.style.display = "inline-flex";
+    li.style.alignItems = "center";
+    li.appendChild(toggleBtn);
+    navLinks.appendChild(li);
+  } else {
+    navbar.appendChild(toggleBtn);
+  }
+}
+
+// =============================================
+// Floating Quick Access Panel
+// =============================================
+function injectQuickPanel() {
+  if (document.getElementById("quick-panel")) return;
+
+  const quickPanel = document.createElement("div");
+  quickPanel.id = "quick-panel";
+  quickPanel.className = "quick-panel";
+
+  const currentTheme = localStorage.getItem("theme") || "light";
+
+  quickPanel.innerHTML = `
+    <button id="quick-theme-toggle" class="quick-panel-btn" aria-label="Toggle Theme">
+      <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:${currentTheme === 'dark' ? 'block' : 'none'};width:20px;height:20px;color:#eab308;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+      <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:${currentTheme === 'light' ? 'block' : 'none'};width:20px;height:20px;color:#6366f1;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+    </button>
+    <a id="quick-inbox" href="/inbox.html" class="quick-panel-btn" aria-label="Inbox" style="display:none;">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+      <span class="quick-inbox-badge" style="display:none;"></span>
+    </a>
+    <button id="quick-scroll-top" class="quick-panel-btn" aria-label="Scroll to top" style="opacity:0;pointer-events:none;transition:all 0.3s ease;">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;"><polyline points="18 15 12 9 6 15"></polyline></svg>
+    </button>
+  `;
+
+  document.body.appendChild(quickPanel);
+
+  // Scroll to top
+  const scrollTopBtn = document.getElementById("quick-scroll-top");
+  window.addEventListener("scroll", () => {
+    if (window.scrollY > 300) {
+      scrollTopBtn.style.opacity = "1";
+      scrollTopBtn.style.pointerEvents = "auto";
+    } else {
+      scrollTopBtn.style.opacity = "0";
+      scrollTopBtn.style.pointerEvents = "none";
+    }
+  });
+  scrollTopBtn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+
+  // Theme toggle
+  const qThemeBtn = document.getElementById("quick-theme-toggle");
+  const sunIcon = qThemeBtn.querySelector(".sun-icon");
+  const moonIcon = qThemeBtn.querySelector(".moon-icon");
+
+  qThemeBtn.addEventListener("click", () => {
+    const isDark = document.documentElement.classList.contains("dark-theme");
+    if (isDark) {
+      document.documentElement.classList.remove("dark-theme");
+      localStorage.setItem("theme", "light");
+      sunIcon.style.display = "none";
+      moonIcon.style.display = "block";
+    } else {
+      document.documentElement.classList.add("dark-theme");
+      localStorage.setItem("theme", "dark");
+      sunIcon.style.display = "block";
+      moonIcon.style.display = "none";
+    }
+    // Sync with header toggle
+    const headerToggle = document.getElementById("theme-toggle-btn");
+    if (headerToggle) {
+      const hSun = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;color:#eab308;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
+      const hMoon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;color:#6366f1;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
+      headerToggle.innerHTML = isDark ? hMoon : hSun;
+    }
+  });
+
+  // Inbox shortcut (show only if logged in)
+  const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+  if (token) {
+    const quickInbox = document.getElementById("quick-inbox");
+    if (quickInbox) quickInbox.style.display = "flex";
+  }
 }

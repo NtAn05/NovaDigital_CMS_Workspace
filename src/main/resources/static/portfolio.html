@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dự Án | NovaDigital</title>
+  <title>Projects | NovaDigital</title>
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
@@ -48,16 +48,28 @@
         <h2>Completed Projects</h2>
         <p>Showcasing our best work and successful collaborations</p>
       </div>
+
+      <!-- Project Category Filters -->
+      <div class="project-filters" id="project-filters">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="web">🌐 Web Design</button>
+        <button class="filter-btn" data-filter="design">🎨 UI/UX Design</button>
+        <button class="filter-btn" data-filter="marketing">📊 Marketing</button>
+        <button class="filter-btn" data-filter="mobile">📱 Mobile App</button>
+        <button class="filter-btn" data-filter="branding">🎯 Branding</button>
+        <button class="filter-btn" data-filter="cloud">☁️ Cloud Solutions</button>
+      </div>
+
       <div class="projects-grid" id="projects-grid">
-        <p style="text-align: center; grid-column: 1 / -1; color: var(--text-muted);">Đang tải danh sách dự án...</p>
+        <p style="text-align: center; grid-column: 1 / -1; color: var(--text-muted);">Loading projects list...</p>
       </div>
     </section>
   </main>
 
   <!-- Project Detail Modal -->
-  <div id="project-modal-overlay" class="auth-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="project-modal-title">
-    <div class="auth-modal project-modal">
-      <button class="auth-modal-close" id="project-modal-close" aria-label="Đóng">&times;</button>
+  <div id="project-modal-overlay" class="auth-modal-overlay project-drawer-overlay" role="dialog" aria-modal="true" aria-labelledby="project-modal-title">
+    <div class="auth-modal project-modal project-drawer">
+      <button class="auth-modal-close project-drawer-close" id="project-modal-close" aria-label="Close">&times;</button>
       <div class="project-modal-content">
         <div class="project-modal-image-wrapper">
           <img id="project-modal-image" src="" alt="" class="project-modal-image">
@@ -65,10 +77,16 @@
         <div class="project-modal-body">
           <span id="project-modal-category" class="project-category"></span>
           <h2 id="project-modal-title"></h2>
-          <p id="project-modal-description"></p>
-          <div id="project-modal-technologies-wrapper" style="margin-top: 1.5rem;">
-            <h4 style="margin-bottom: 0.75rem; color: var(--text-dark); font-size: 1rem;">Công nghệ sử dụng</h4>
+          <p id="project-modal-description" class="project-modal-desc"></p>
+          <div id="project-modal-technologies-wrapper" style="margin-top: 1.75rem;">
+            <h4 style="margin-bottom: 0.75rem; color: var(--text-dark); font-size: 1rem; font-weight: 700;">Technologies Used</h4>
             <div id="project-modal-technologies" class="technologies-list"></div>
+          </div>
+          <div id="project-modal-link-wrapper" style="margin-top: 2rem; display: none;">
+            <a id="project-modal-link" href="#" target="_blank" class="btn-primary" style="display: inline-flex; align-items: center; gap: 0.5rem; text-decoration: none; padding: 0.75rem 1.5rem; font-size: 0.9rem; font-weight: 600; border-radius: var(--radius-sm);">
+              Launch Live Project
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>
+            </a>
           </div>
         </div>
       </div>
