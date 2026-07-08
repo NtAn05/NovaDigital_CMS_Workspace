@@ -2092,7 +2092,7 @@ footer {
 }
 
 .admin-table tr:hover {
-  background-color: #f8fafc;
+  background-color: var(--card-bg-hover);
 }
 
 .status-badge {
@@ -3277,6 +3277,43 @@ html.dark-theme .auth-card input:focus {
   background: rgba(0, 0, 0, 0.35) !important;
   border-color: var(--primary-light) !important;
   box-shadow: 0 0 0 4px rgba(6, 182, 212, 0.15) !important;
+}
+
+/* Prevent table headers from turning white on hover */
+.admin-table thead tr:hover,
+.admin-table thead tr:hover td,
+.admin-table thead tr:hover th {
+  background: rgba(0, 0, 0, 0.02) !important;
+}
+html.dark-theme .admin-table thead tr:hover,
+html.dark-theme .admin-table thead tr:hover td,
+html.dark-theme .admin-table thead tr:hover th {
+  background: rgba(255, 255, 255, 0.02) !important;
+}
+
+/* Stylized brand social button for admin tables */
+.table-social-btn {
+  color: var(--text-muted) !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: var(--bg-light);
+  transition: var(--transition);
+}
+.table-social-btn svg {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+}
+.table-social-btn:hover {
+  color: #fff !important;
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
 }
 
 

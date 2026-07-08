@@ -366,7 +366,7 @@
   <script src="/js/main.js"></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      const token = sessionStorage.getItem("token");
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
       if (!token) {
         alert("You must be logged in to access this page!");
         window.location.href = "login.html";
@@ -491,6 +491,12 @@
           const data = await res.json().catch(() => ({}));
           if (res.ok) {
             // Update local storage
+            localStorage.setItem("username", data.username || username);
+            localStorage.setItem("fullName", data.fullName || fullName);
+            localStorage.setItem("email", data.email || email);
+            if (data.avatarUrl) {
+              localStorage.setItem("avatarUrl", data.avatarUrl);
+            }
             sessionStorage.setItem("username", data.username || username);
             sessionStorage.setItem("fullName", data.fullName || fullName);
             sessionStorage.setItem("email", data.email || email);

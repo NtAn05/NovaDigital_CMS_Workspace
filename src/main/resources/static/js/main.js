@@ -1,5 +1,15 @@
 // Dynamic Data Loading, Authentication, and UI logic for NovaDigital Creative Agency
 
+function initTheme() {
+  const currentTheme = localStorage.getItem("theme") || "light";
+  if (currentTheme === "dark") {
+    document.documentElement.classList.add("dark-theme");
+  } else {
+    document.documentElement.classList.remove("dark-theme");
+  }
+}
+initTheme(); // Initialize theme immediately before DOM fully loads
+
 document.addEventListener("DOMContentLoaded", () => {
   console.log("DOM Loaded");
   
@@ -62,7 +72,7 @@ document.addEventListener("DOMContentLoaded", () => {
     openAuthModal("login");
     if (urlParams.get("error") === "unauthorized") {
       setTimeout(() => {
-        showModalAlert("Bạn cần đăng nhập để truy cập tính năng này.", false, "modal-login-alert");
+        showModalAlert("You need to log in to access this feature.", false, "modal-login-alert");
       }, 180);
     }
   } else if (hash === "#register") {
@@ -70,8 +80,15 @@ document.addEventListener("DOMContentLoaded", () => {
   } else if (hash === "#registered") {
     openAuthModal("login");
     setTimeout(() => {
-      showModalAlert("Đăng ký tài khoản thành công! Hãy đăng nhập.", true, "modal-login-alert");
+      showModalAlert("Registration successful! Please log in.", true, "modal-login-alert");
     }, 180);
+  } else if (hash === "#inbox-section") {
+    const section = document.getElementById("inbox-section");
+    if (section) {
+      setTimeout(() => {
+        section.scrollIntoView({ behavior: "smooth" });
+      }, 300);
+    }
   }
 });
 
@@ -85,7 +102,7 @@ function injectAuthModal() {
       <div class="auth-modal">
 
         <!-- Close button -->
-        <button class="auth-modal-close" id="auth-modal-close-btn" aria-label="Đóng">&times;</button>
+        <button class="auth-modal-close" id="auth-modal-close-btn" aria-label="Close">&times;</button>
 
         <!-- Brand -->
         <div class="auth-modal-brand">
@@ -99,76 +116,79 @@ function injectAuthModal() {
         <div class="auth-modal-tabs" role="tablist">
           <button class="auth-tab-btn active" id="tab-login" role="tab"
             aria-selected="true" aria-controls="panel-login"
-            onclick="switchAuthTab('login')">Đăng Nhập</button>
+            onclick="switchAuthTab('login')">Login</button>
           <button class="auth-tab-btn" id="tab-register" role="tab"
             aria-selected="false" aria-controls="panel-register"
-            onclick="switchAuthTab('register')">Đăng Ký</button>
+            onclick="switchAuthTab('register')">Register</button>
         </div>
 
         <!-- ===== LOGIN PANEL ===== -->
         <div class="auth-panel active" id="panel-login" role="tabpanel" aria-labelledby="tab-login">
-          <h2 id="auth-modal-heading">Chào Mừng Trở Lại</h2>
-          <p class="subtitle">Nhập thông tin để truy cập tài khoản của bạn</p>
+          <h2 id="auth-modal-heading">Welcome Back</h2>
+          <p class="subtitle">Enter your details to access your account</p>
 
           <form id="modal-loginForm" novalidate>
             <div class="form-group">
-              <label for="modal-usernameOrEmail">Tên đăng nhập hoặc Email *</label>
+              <label for="modal-usernameOrEmail">Username or Email *</label>
               <input type="text" id="modal-usernameOrEmail"
-                placeholder="Nhập tên đăng nhập hoặc email" required autocomplete="username">
+                placeholder="Enter username or email" required autocomplete="username">
             </div>
             <div class="form-group">
-              <label for="modal-password">Mật khẩu *</label>
+              <label for="modal-password">Password *</label>
               <input type="password" id="modal-password"
                 placeholder="••••••••" required autocomplete="current-password">
             </div>
-            <button type="submit" class="submit-btn" style="margin-top:0.5rem;">Đăng Nhập</button>
+            <div style="text-align: right; margin-top: -0.5rem; margin-bottom: 1rem;">
+              <a href="forgot-password.html" style="font-size: 0.85rem; color: var(--primary); text-decoration: none; font-weight: 500;">Forgot password?</a>
+            </div>
+            <button type="submit" class="submit-btn" style="margin-top:0.5rem;">Login</button>
             <div id="modal-login-alert" class="alert-message"></div>
           </form>
 
           <div class="auth-modal-divider">
-            Chưa có tài khoản?
-            <a onclick="switchAuthTab('register')">Đăng ký ngay</a>
+            Don't have an account?
+            <a onclick="switchAuthTab('register')">Register now</a>
           </div>
         </div>
 
         <!-- ===== REGISTER PANEL ===== -->
         <div class="auth-panel" id="panel-register" role="tabpanel" aria-labelledby="tab-register">
-          <h2>Tạo Tài Khoản</h2>
-          <p class="subtitle">Tham gia NovaDigital để trải nghiệm dịch vụ cao cấp</p>
+          <h2>Create Account</h2>
+          <p class="subtitle">Join NovaDigital to experience premium services</p>
 
           <form id="modal-registerForm" novalidate>
             <div class="form-group">
-              <label for="modal-username">Tên đăng nhập *</label>
+              <label for="modal-username">Username *</label>
               <input type="text" id="modal-username"
-                placeholder="Chọn tên đăng nhập" required minlength="4" maxlength="50" autocomplete="username">
+                placeholder="Choose a username" required minlength="4" maxlength="50" autocomplete="username">
             </div>
             <div class="form-group">
-              <label for="modal-fullName">Họ và tên *</label>
+              <label for="modal-fullName">Full Name *</label>
               <input type="text" id="modal-fullName"
-                placeholder="Nhập họ và tên đầy đủ" required autocomplete="name">
+                placeholder="Enter your full name" required autocomplete="name">
             </div>
             <div class="form-group">
-              <label for="modal-email">Địa chỉ Email *</label>
+              <label for="modal-email">Email Address *</label>
               <input type="email" id="modal-email"
                 placeholder="name@domain.com" required autocomplete="email">
             </div>
             <div class="form-group">
-              <label for="modal-phone">Số điện thoại (10 chữ số)</label>
+              <label for="modal-phone">Phone Number (10 digits)</label>
               <input type="tel" id="modal-phone"
                 placeholder="0123456789" pattern="[0-9]{10}" autocomplete="tel">
             </div>
             <div class="form-group">
-              <label for="modal-reg-password">Mật khẩu *</label>
+              <label for="modal-reg-password">Password *</label>
               <input type="password" id="modal-reg-password"
-                placeholder="Tối thiểu 6 ký tự" required minlength="6" autocomplete="new-password">
+                placeholder="Min 6 characters" required minlength="6" autocomplete="new-password">
             </div>
-            <button type="submit" class="submit-btn" style="margin-top:0.5rem;">Đăng Ký</button>
+            <button type="submit" class="submit-btn" style="margin-top:0.5rem;">Register</button>
             <div id="modal-register-alert" class="alert-message"></div>
           </form>
 
           <div class="auth-modal-divider">
-            Đã có tài khoản?
-            <a onclick="switchAuthTab('login')">Đăng nhập tại đây</a>
+            Already have an account?
+            <a onclick="switchAuthTab('login')">Login here</a>
           </div>
         </div>
 
@@ -271,12 +291,12 @@ function initModalLoginForm() {
     const password        = document.getElementById("modal-password").value;
 
     if (!usernameOrEmail || !password) {
-      showModalAlert("Vui lòng điền đầy đủ tên đăng nhập và mật khẩu.", false, "modal-login-alert");
+      showModalAlert("Please enter your username and password.", false, "modal-login-alert");
       return;
     }
 
     try {
-      showModalAlert("Đang đăng nhập...", null, "modal-login-alert");
+      showModalAlert("Logging in...", null, "modal-login-alert");
 
       const response = await fetch("/api/auth/login", {
         method:  "POST",
@@ -293,7 +313,7 @@ function initModalLoginForm() {
         localStorage.setItem("role",     data.role);
         localStorage.setItem("email",    data.email);
 
-        showModalAlert("Đăng nhập thành công! Đang chuyển hướng...", true, "modal-login-alert");
+        showModalAlert("Login successful! Redirecting...", true, "modal-login-alert");
 
         setTimeout(() => {
           if (data.role === "ROLE_ADMIN") {
@@ -311,11 +331,11 @@ function initModalLoginForm() {
           }
         }, 1000);
       } else {
-        showModalAlert(data.message || "Đăng nhập thất bại. Kiểm tra lại thông tin.", false, "modal-login-alert");
+        showModalAlert(data.message || "Login failed. Please check your credentials.", false, "modal-login-alert");
       }
     } catch (error) {
       console.error("Modal login error:", error);
-      showModalAlert("Không thể kết nối đến máy chủ. Vui lòng thử lại.", false, "modal-login-alert");
+      showModalAlert("Could not connect to server. Please try again.", false, "modal-login-alert");
     }
   });
 }
@@ -335,12 +355,12 @@ function initModalRegisterForm() {
     const password = document.getElementById("modal-reg-password").value;
 
     if (!username || !fullName || !email || !password) {
-      showModalAlert("Vui lòng điền các trường bắt buộc.", false, "modal-register-alert");
+      showModalAlert("Please fill in all required fields.", false, "modal-register-alert");
       return;
     }
 
     try {
-      showModalAlert("Đang đăng ký...", null, "modal-register-alert");
+      showModalAlert("Registering...", null, "modal-register-alert");
 
       const response = await fetch("/api/auth/register", {
         method:  "POST",
@@ -351,22 +371,22 @@ function initModalRegisterForm() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        showModalAlert("Đăng ký thành công! Hãy đăng nhập ngay.", true, "modal-register-alert");
+        showModalAlert("Registration successful! Please log in.", true, "modal-register-alert");
         setTimeout(() => {
           switchAuthTab("login");
           setTimeout(() => {
-            showModalAlert("Tài khoản đã được tạo! Hãy đăng nhập.", true, "modal-login-alert");
+            showModalAlert("Account created! Please log in.", true, "modal-login-alert");
           }, 80);
         }, 1400);
       } else {
         showModalAlert(
-          data.message || "Đăng ký thất bại. Tên đăng nhập hoặc Email có thể đã tồn tại.",
+          data.message || "Registration failed. Username or Email may already exist.",
           false, "modal-register-alert"
         );
       }
     } catch (error) {
       console.error("Modal register error:", error);
-      showModalAlert("Không thể kết nối đến máy chủ. Vui lòng thử lại.", false, "modal-register-alert");
+      showModalAlert("Could not connect to server. Please try again.", false, "modal-register-alert");
     }
   });
 }
@@ -526,6 +546,9 @@ function updateNavbarAuth() {
       openAuthModal("login");
     });
   }
+
+  // Inject theme toggle button next to navbar links
+  injectThemeToggle();
 }
 
 // User Logout Logic
@@ -549,9 +572,9 @@ function initLoginForm() {
   // Show query-param message
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get("error") === "unauthorized") {
-    showAlert("Bạn cần đăng nhập để truy cập tính năng này.", false);
+    showAlert("You need to log in to access this feature.", false);
   } else if (urlParams.get("registered") === "true") {
-    showAlert("Đăng ký tài khoản thành công! Hãy đăng nhập.", true);
+    showAlert("Account registered successfully! Please log in.", true);
   }
 
   form.addEventListener("submit", async (e) => {
@@ -561,12 +584,12 @@ function initLoginForm() {
     const password        = document.getElementById("password").value;
 
     if (!usernameOrEmail || !password) {
-      showAlert("Vui lòng điền đầy đủ tên đăng nhập và mật khẩu.", false);
+      showAlert("Please enter your username and password.", false);
       return;
     }
 
     try {
-      showAlert("Đang đăng nhập...", null);
+      showAlert("Logging in...", null);
 
       const response = await fetch("/api/auth/login", {
         method:  "POST",
@@ -583,7 +606,7 @@ function initLoginForm() {
         localStorage.setItem("role",     data.role);
         localStorage.setItem("email",    data.email);
 
-        showAlert("Đăng nhập thành công! Đang chuyển hướng...", true);
+        showAlert("Login successful! Redirecting...", true);
 
         setTimeout(() => {
           if (data.role === "ROLE_ADMIN") {
@@ -601,11 +624,11 @@ function initLoginForm() {
           }
         }, 1000);
       } else {
-        showAlert(data.message || "Đăng nhập thất bại. Kiểm tra lại thông tin.", false);
+        showAlert(data.message || "Login failed. Please check your credentials.", false);
       }
     } catch (error) {
       console.error("Login error:", error);
-      showAlert("Không thể kết nối đến máy chủ. Vui lòng thử lại.", false);
+      showAlert("Could not connect to server. Please try again.", false);
     }
   });
 
@@ -640,12 +663,12 @@ function initRegisterForm() {
     const password = document.getElementById("password").value;
 
     if (!username || !fullName || !email || !password) {
-      showAlert("Vui lòng điền các trường bắt buộc.", false);
+      showAlert("Please fill in all required fields.", false);
       return;
     }
 
     try {
-      showAlert("Đang đăng ký...", null);
+      showAlert("Registering...", null);
 
       const response = await fetch("/api/auth/register", {
         method:  "POST",
@@ -656,14 +679,14 @@ function initRegisterForm() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        showAlert("Đăng ký thành công! Đang chuyển đến trang đăng nhập...", true);
+        showAlert("Registration successful! Redirecting to login...", true);
         setTimeout(() => { window.location.href = "login.html?registered=true"; }, 1500);
       } else {
-        showAlert(data.message || "Đăng ký thất bại. Tên đăng nhập hoặc Email có thể đã tồn tại.", false);
+        showAlert(data.message || "Registration failed. Username or Email may already exist.", false);
       }
     } catch (error) {
       console.error("Registration error:", error);
-      showAlert("Không thể kết nối đến máy chủ. Vui lòng thử lại.", false);
+      showAlert("Could not connect to server. Please try again.", false);
     }
   });
 
@@ -816,7 +839,7 @@ function openCrudModal(type, id) {
         formData.append("file", file);
         
         try {
-          showCrudAlert("Đang tải ảnh lên...", null);
+          showCrudAlert("Uploading image...", null);
           const res = await fetch("/api/upload", {
             method: "POST",
             body: formData
@@ -829,13 +852,13 @@ function openCrudModal(type, id) {
               preview.src = data.url;
               preview.style.display = "block";
             }
-            showCrudAlert("✅ Tải ảnh lên thành công!", true);
+            showCrudAlert("✅ Image uploaded successfully!", true);
           } else {
-            showCrudAlert(data.message || "Tải ảnh lên thất bại.", false);
+            showCrudAlert(data.message || "Failed to upload image.", false);
           }
         } catch (err) {
           console.error("Upload error:", err);
-          showCrudAlert("Không thể tải ảnh lên máy chủ.", false);
+          showCrudAlert("Could not upload image to server.", false);
         }
       });
     }
@@ -877,25 +900,25 @@ function buildCrudForm(type, item) {
     </div>`;
 
   if (type === "user") return `
-    ${fld("cf-username",  "Tên đăng nhập *", "text",  v.username, `placeholder="Nhập tên đăng nhập" required ${item ? 'readonly style="background:#f8fafc;cursor:not-allowed;"' : ""}`)}
-    ${fld("cf-fullName",  "Họ và tên *",     "text",  v.fullName, 'placeholder="Nhập họ và tên" required')}
+    ${fld("cf-username",  "Username *", "text",  v.username, `placeholder="Enter username" required ${item ? 'readonly style="background:#f8fafc;cursor:not-allowed;"' : ""}`)}
+    ${fld("cf-fullName",  "Full Name *",     "text",  v.fullName, 'placeholder="Enter full name" required')}
     ${fld("cf-email",     "Email *",          "email", v.email,    'placeholder="name@domain.com" required')}
-    ${fld("cf-phone",     "Số điện thoại",   "tel",   v.phone,    'placeholder="0123456789" pattern="[0-9]{10}"')}
-    ${!item ? fld("cf-password", "Mật khẩu *", "password", "", 'placeholder="Tối thiểu 6 ký tự" required minlength="6"') : ""}
-    ${sel("cf-role", "Vai trò *", [["ROLE_USER","User"],["ROLE_ADMIN","Admin"],["Team_Member","Team Member"]], v.role || "ROLE_USER")}
+    ${fld("cf-phone",     "Phone Number",   "tel",   v.phone,    'placeholder="0123456789" pattern="[0-9]{10}"')}
+    ${!item ? fld("cf-password", "Password *", "password", "", 'placeholder="Min 6 characters" required minlength="6"') : ""}
+    ${sel("cf-role", "Role *", [["ROLE_USER","User"],["ROLE_ADMIN","Admin"],["Team_Member","Team Member"]], v.role || "ROLE_USER")}
     <div class="form-group" style="width: 100%;">
       <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; justify-content: flex-start;">
         <input type="checkbox" id="cf-enabled" ${v.enabled !== false ? 'checked' : ''}>
-        <span>Trạng thái hoạt động</span>
+        <span>Active Status</span>
       </label>
     </div>
   `;
 
   if (type === "member") return `
-    ${fld("cf-name",       "Tên thành viên *",         "text", v.name,        'placeholder="Nguyễn Văn A" required')}
-    ${fld("cf-role",       "Chức vụ / Vị trí *",       "text", v.role,        'placeholder="Frontend Developer" required')}
+    ${fld("cf-name",       "Member Name *",         "text", v.name,        'placeholder="Enter member name" required')}
+    ${fld("cf-role",       "Position / Role *",       "text", v.role,        'placeholder="e.g. Frontend Developer" required')}
     <div class="form-group">
-      <label for="cf-avatarFile">Ảnh đại diện *</label>
+      <label for="cf-avatarFile">Avatar Image *</label>
       <input type="file" id="cf-avatarFile" accept="image/*" style="width:100%; padding:0.5rem; border:1px dashed var(--border-color); border-radius:var(--radius-sm); background:var(--bg-light); cursor:pointer;">
       <input type="hidden" id="cf-avatarUrl" value="${escapeHtml(String(v.avatarUrl || ""))}">
       ${v.avatarUrl ? `<img id="cf-preview" src="${escapeHtml(v.avatarUrl)}" style="margin-top: 0.75rem; max-width: 150px; height: auto; border-radius: 6px; border: 1px solid var(--border-color); display: block;">` : `<img id="cf-preview" style="margin-top: 0.75rem; max-width: 150px; height: auto; border-radius: 6px; border: 1px solid var(--border-color); display: none;">`}
@@ -906,25 +929,25 @@ function buildCrudForm(type, item) {
   `;
 
   if (type === "project") return `
-    ${fld("cf-title",       "Tên dự án *",   "text", v.title,       'placeholder="Nhập tên dự án" required')}
-    ${fld("cf-category",    "Danh mục *",    "text", v.category,    'placeholder="Web Development" required')}
+    ${fld("cf-title",       "Project Title *",   "text", v.title,       'placeholder="Enter project title" required')}
+    ${fld("cf-category",    "Category *",    "text", v.category,    'placeholder="e.g. Web Development" required')}
     <div class="form-group">
-      <label for="cf-imageFile">Ảnh bìa *</label>
+      <label for="cf-imageFile">Cover Image *</label>
       <input type="file" id="cf-imageFile" accept="image/*" style="width:100%; padding:0.5rem; border:1px dashed var(--border-color); border-radius:var(--radius-sm); background:var(--bg-light); cursor:pointer;">
       <input type="hidden" id="cf-imageUrl" value="${escapeHtml(String(v.imageUrl || ""))}">
       ${v.imageUrl ? `<img id="cf-preview" src="${escapeHtml(v.imageUrl)}" style="margin-top: 0.75rem; max-width: 150px; height: auto; border-radius: 6px; border: 1px solid var(--border-color); display: block;">` : `<img id="cf-preview" style="margin-top: 0.75rem; max-width: 150px; height: auto; border-radius: 6px; border: 1px solid var(--border-color); display: none;">`}
     </div>
-    ${txt("cf-description", "Mô tả *",               v.description, 'placeholder="Mô tả dự án..." required')}
-    ${txt("cf-technologies", "Công nghệ sử dụng", v.technologies, 'placeholder="React, Node.js, MongoDB..."')}
+    ${txt("cf-description", "Description *",               v.description, 'placeholder="Project description..." required')}
+    ${txt("cf-technologies", "Technologies Used", v.technologies, 'placeholder="e.g. React, Node.js, MongoDB..."')}
   `;
 
   if (type === "service") return `
-    ${fld("cf-title", "Tên dịch vụ *", "text", v.title, 'placeholder="Nhập tên dịch vụ" required')}
-    ${sel("cf-iconUrl", "Loại Icon *",
+    ${fld("cf-title", "Service Title *", "text", v.title, 'placeholder="Enter service title" required')}
+    ${sel("cf-iconUrl", "Icon Type *",
       [["web","🌐 Web Design"],["design","🎨 UI/UX Design"],["marketing","📊 Marketing"],
        ["mobile","📱 Mobile App"],["branding","🎯 Branding"],["cloud","☁️ Cloud Solutions"]],
       v.iconUrl || "web")}
-    ${txt("cf-description", "Mô tả *", v.description, 'placeholder="Mô tả dịch vụ..." required')}
+    ${txt("cf-description", "Description *", v.description, 'placeholder="Service description..." required')}
   `;
 
   return "<p>Unknown type.</p>";
@@ -969,7 +992,7 @@ async function submitCrudForm() {
     if (!payload.title || !payload.description) valid = false;
   }
 
-  if (!valid) { showCrudAlert("Vui lòng điền đầy đủ các trường bắt buộc (*)", false); return; }
+  if (!valid) { showCrudAlert("Please fill in all required fields (*)", false); return; }
 
   const eps = { user: "/api/admin/users", member: "/api/members",
                 project: "/api/projects", service: "/api/services" };
@@ -978,12 +1001,12 @@ async function submitCrudForm() {
   const method = isEdit ? "PUT" : "POST";
 
   try {
-    showCrudAlert("Đang xử lý...", null);
+    showCrudAlert("Processing...", null);
     const response = await fetch(url, { method, headers: adminHeaders(), body: JSON.stringify(payload) });
     const data = await response.json().catch(() => ({}));
 
     if (response.ok) {
-      showCrudAlert(isEdit ? "✅ Cập nhật thành công!" : "✅ Thêm mới thành công!", true);
+      showCrudAlert(isEdit ? "✅ Updated successfully!" : "✅ Added successfully!", true);
       setTimeout(() => {
         closeCrudModal();
         if (type === "user")    fetchAdminUsers();
@@ -992,11 +1015,11 @@ async function submitCrudForm() {
         if (type === "service") fetchAdminServicesTable();
       }, 700);
     } else {
-      showCrudAlert(data.message || "Thao tác thất bại. Vui lòng thử lại.", false);
+      showCrudAlert(data.message || "Operation failed. Please try again.", false);
     }
   } catch (err) {
     console.error("CRUD submit error:", err);
-    showCrudAlert("Không thể kết nối đến máy chủ.", false);
+    showCrudAlert("Could not connect to server.", false);
   }
 }
 
@@ -1019,7 +1042,7 @@ function openDeleteConfirm(type, id, name) {
   _deleteState = { type, id };
   const overlay = document.getElementById("confirm-modal-overlay");
   const text    = document.getElementById("confirm-modal-text");
-  if (text) text.textContent = `Bạn có chắc muốn xóa "${name}"? Hành động này không thể hoàn tác.`;
+  if (text) text.textContent = `Are you sure you want to delete "${name}"? This action cannot be undone.`;
   if (overlay) overlay.classList.add("is-open");
   document.body.style.overflow = "hidden";
 }
@@ -1046,11 +1069,11 @@ async function confirmDelete() {
       if (type === "project") fetchAdminProjectsTable();
       if (type === "service") fetchAdminServicesTable();
     } else {
-      alert("Xóa thất bại. Vui lòng thử lại.");
+      alert("Delete failed. Please try again.");
     }
   } catch (err) {
     console.error("Delete error:", err);
-    alert("Không thể kết nối đến máy chủ.");
+    alert("Could not connect to server.");
   }
 }
 
@@ -1072,7 +1095,7 @@ async function fetchAdminUsers() {
     tbody.innerHTML = "";
 
     if (!users.length) {
-      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text-muted);">Chưa có user nào.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text-muted);">No users found.</td></tr>`;
       return;
     }
 
@@ -1090,7 +1113,7 @@ async function fetchAdminUsers() {
         const now = new Date();
         const diffMinutes = (now - lastLogin) / (1000 * 60);
         isOnline = diffMinutes < 5;
-        lastLoginText = lastLogin.toLocaleString("vi-VN");
+        lastLoginText = lastLogin.toLocaleString("en-US");
       }
       
       tr.innerHTML = `
@@ -1106,7 +1129,7 @@ async function fetchAdminUsers() {
         <td><span class="status-badge ${u.role === "ROLE_ADMIN" ? "badge-admin" : (u.role === "Team_Member" ? "badge-member" : "badge-user")}">${u.role === "ROLE_ADMIN" ? "Admin" : (u.role === "Team_Member" ? "Team Member" : "User")}</span></td>
         <td>
           <button class="btn-toggle-status" onclick="toggleUserStatus(${u.id})" style="padding: 4px 12px; border-radius: 20px; border: none; cursor: pointer; font-weight: 600; font-size: 12px; white-space: nowrap; ${u.enabled ? 'background: #ecfdf5; color: #059669;' : 'background: #fef2f2; color: #dc2626;'}">
-            ${u.enabled ? 'Hoạt động' : 'Vô hiệu'}
+            ${u.enabled ? 'Active' : 'Disabled'}
           </button>
         </td>
         <td style="min-width: 140px;">
@@ -1129,7 +1152,7 @@ async function fetchAdminUsers() {
     });
   } catch (err) {
     console.error("fetchAdminUsers error:", err);
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:2rem;color:#ef4444;">Không thể tải danh sách user.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:2rem;color:#ef4444;">Could not load user list.</td></tr>`;
   }
 }
 
@@ -1154,11 +1177,11 @@ async function toggleUserStatus(userId) {
       // Refresh table
       fetchAdminUsers();
     } else {
-      alert("Thao tác thất bại. Vui lòng thử lại.");
+      alert("Operation failed. Please try again.");
     }
   } catch (err) {
     console.error("Toggle status error:", err);
-    alert("Không thể kết nối đến máy chủ.");
+    alert("Could not connect to server.");
   }
 }
 
@@ -1176,7 +1199,7 @@ async function fetchAdminMembersTable() {
     tbody.innerHTML = "";
 
     if (!members.length) {
-      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted);">Chưa có thành viên nào.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted);">No members found.</td></tr>`;
       return;
     }
 
@@ -1207,7 +1230,7 @@ async function fetchAdminMembersTable() {
     });
   } catch (err) {
     console.error("fetchAdminMembersTable error:", err);
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:#ef4444;">Không thể tải danh sách thành viên.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:#ef4444;">Could not load member list.</td></tr>`;
   }
 }
 
@@ -1225,7 +1248,7 @@ async function fetchAdminProjectsTable() {
     tbody.innerHTML = "";
 
     if (!projects.length) {
-      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);">Chưa có dự án nào.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);">No projects found.</td></tr>`;
       return;
     }
 
@@ -1254,7 +1277,7 @@ async function fetchAdminProjectsTable() {
     });
   } catch (err) {
     console.error("fetchAdminProjectsTable error:", err);
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:#ef4444;">Không thể tải danh sách dự án.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:#ef4444;">Could not load project list.</td></tr>`;
   }
 }
 
@@ -1270,7 +1293,7 @@ async function fetchAdminServicesTable() {
     tbody.innerHTML = "";
 
     if (!services.length) {
-      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--text-muted);">Chưa có dịch vụ nào.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--text-muted);">No services found.</td></tr>`;
       return;
     }
 
@@ -1299,7 +1322,7 @@ async function fetchAdminServicesTable() {
     });
   } catch (err) {
     console.error("fetchAdminServicesTable error:", err);
-    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:2rem;color:#ef4444;">Không thể tải danh sách dịch vụ.</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:2rem;color:#ef4444;">Could not load service list.</td></tr>`;
   }
 }
 
@@ -1309,14 +1332,17 @@ async function fetchAdminContacts() {
   if (!tableBody) return;
 
   try {
-    const response = await fetch("/api/contacts");
+    const token = getAdminToken();
+    const response = await fetch("/api/contacts", {
+      headers: token ? { "Authorization": "Bearer " + token } : {}
+    });
     if (!response.ok) throw new Error("Failed to fetch contact submissions");
     const contacts = await response.json();
 
     tableBody.innerHTML = "";
 
     if (contacts.length === 0) {
-      tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;">Chưa có lời nhắn liên hệ nào được gửi.</td></tr>`;
+      tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;">No contact messages found.</td></tr>`;
       if (statsCount) statsCount.textContent = "0";
       return;
     }
@@ -1325,7 +1351,7 @@ async function fetchAdminContacts() {
 
     contacts.forEach(contact => {
       const row  = document.createElement("tr");
-      const date = new Date(contact.createdAt).toLocaleDateString("vi-VN", {
+      const date = new Date(contact.createdAt).toLocaleDateString("en-US", {
         hour: "2-digit", minute: "2-digit",
         day: "2-digit", month: "2-digit", year: "numeric"
       });
@@ -1344,7 +1370,7 @@ async function fetchAdminContacts() {
     });
   } catch (error) {
     console.error("Error loading admin contacts:", error);
-    tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:#ef4444;">Không thể tải danh sách liên hệ. Vui lòng tải lại trang.</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:#ef4444;">Could not load contacts list. Please reload the page.</td></tr>`;
   }
 }
 
@@ -1393,7 +1419,7 @@ async function fetchServices() {
     });
   } catch (error) {
     console.error("Error loading services:", error);
-    servicesGrid.innerHTML = `<p class="error-msg">Không thể tải danh sách dịch vụ. Vui lòng thử lại sau.</p>`;
+    servicesGrid.innerHTML = `<p class="error-msg">Could not load services. Please try again later.</p>`;
   }
 }
 
@@ -1432,7 +1458,7 @@ async function fetchMembers() {
     });
   } catch (error) {
     console.error("Error loading members:", error);
-    teamGrid.innerHTML = `<p class="error-msg">Không thể tải danh sách thành viên. Vui lòng thử lại sau.</p>`;
+    teamGrid.innerHTML = `<p class="error-msg">Could not load members. Please try again later.</p>`;
   }
 }
 
@@ -1609,7 +1635,7 @@ function initContactForm() {
     fetch("/api/services")
       .then(res => res.json())
       .then(services => {
-        serviceSelect.innerHTML = '<option value="" disabled selected>Chọn dịch vụ muốn thuê...</option>';
+        serviceSelect.innerHTML = '<option value="" disabled selected>Choose a service to hire...</option>';
         serviceGrid.innerHTML = '';
 
         const icons = {
@@ -1642,7 +1668,7 @@ function initContactForm() {
             serviceSelect.value = service.title;
             const titleField = document.getElementById("title");
             if (titleField) {
-              titleField.value = `Đăng ký dịch vụ: ${service.title}`;
+              titleField.value = `Register service: ${service.title}`;
             }
             if (selectOverlay) {
               selectOverlay.classList.remove("is-open");
@@ -1654,8 +1680,8 @@ function initContactForm() {
       })
       .catch(err => {
         console.error("Error loading services for contact form:", err);
-        serviceSelect.innerHTML = '<option value="" disabled selected>Không thể tải dịch vụ</option>';
-        serviceGrid.innerHTML = '<div style="grid-column: span 2; text-align: center; color: #ef4444; padding: 2rem;">Không thể tải danh sách dịch vụ. Vui lòng tải lại trang.</div>';
+        serviceSelect.innerHTML = '<option value="" disabled selected>Could not load services</option>';
+        serviceGrid.innerHTML = '<div style="grid-column: span 2; text-align: center; color: #ef4444; padding: 2rem;">Could not load services. Please reload the page.</div>';
       });
   }
 
@@ -1669,15 +1695,15 @@ function initContactForm() {
     const content = document.getElementById("content").value.trim();
 
     if (!name || !email || !service || !title || !content) {
-      showAlert("Vui lòng điền đầy đủ các thông tin bắt buộc.", false);
+      showAlert("Please fill in all required fields.", false);
       return;
     }
 
     try {
-      showAlert("Đang gửi tin nhắn...", null);
+      showAlert("Sending message...", null);
 
-      // We prefix the title with [Dịch vụ: ...] to record it properly in the database
-      const finalTitle = `[Dịch vụ: ${service}] ${title}`;
+      // We prefix the title with [Service: ...] to record it properly in the database
+      const finalTitle = `[Service: ${service}] ${title}`;
 
       const response = await fetch("/api/contacts", {
         method:  "POST",
@@ -1691,15 +1717,15 @@ function initContactForm() {
       const result = await response.json();
 
       if (response.ok && result.success) {
-        showAlert("Cảm ơn bạn! Tin nhắn của bạn đã được gửi đi thành công.", true);
+        showAlert("Thank you! Your message has been sent successfully.", true);
         form.reset();
         // Restore overlay for subsequent clicks if needed, or leave it closed.
       } else {
-        showAlert(result.message || "Gửi tin nhắn thất bại. Vui lòng thử lại.", false);
+        showAlert(result.message || "Failed to send message. Please try again.", false);
       }
     } catch (error) {
       console.error("Error submitting contact form:", error);
-      showAlert("Không thể kết nối đến máy chủ. Vui lòng thử lại sau.", false);
+      showAlert("Could not connect to server. Please try again later.", false);
     }
   });
 
@@ -1760,20 +1786,20 @@ async function fetchInbox(email) {
       inboxContainer.innerHTML = `
         <div style="text-align:center;padding:3rem;color:var(--text-muted);">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:64px;height:64px;margin:0 auto 1rem;opacity:0.5;"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"></path></svg>
-          <p>Chưa có tin nhắn nào. Bạn có thể gửi tin nhắn ở trang Contact để kiểm tra.</p>
+          <p>No messages found. You can send a message on the Contact page to test.</p>
         </div>
       `;
     } else {
       contacts.forEach(contact => {
         const card = document.createElement("div");
-        card.style.cssText = "background:white;border-radius:12px;padding:1.5rem;box-shadow:0 1px 3px rgba(0,0,0,0.1);border:1px solid #e2e8f0;";
+        card.className = "inbox-card";
 
-        const createdAt = new Date(contact.createdAt).toLocaleDateString("vi-VN", {
+        const createdAt = new Date(contact.createdAt).toLocaleDateString("en-US", {
           hour: "2-digit", minute: "2-digit",
           day: "2-digit", month: "2-digit", year: "numeric"
         });
 
-        const repliedAt = contact.repliedAt ? new Date(contact.repliedAt).toLocaleDateString("vi-VN", {
+        const repliedAt = contact.repliedAt ? new Date(contact.repliedAt).toLocaleDateString("en-US", {
           hour: "2-digit", minute: "2-digit",
           day: "2-digit", month: "2-digit", year: "numeric"
         }) : null;
@@ -1782,23 +1808,23 @@ async function fetchInbox(email) {
           <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;">
             <div>
               <h3 style="font-size:1.125rem;font-weight:700;color:var(--text-dark);margin:0 0 0.25rem;">${escapeHtml(contact.title)}</h3>
-              <p style="font-size:0.875rem;color:var(--text-muted);margin:0;">Gửi vào ${createdAt}</p>
+              <p style="font-size:0.875rem;color:var(--text-muted);margin:0;">Sent at ${createdAt}</p>
             </div>
             <span class="status-badge ${contact.status === 'DONE' ? 'status-done' : 'status-pending'}" style="padding:0.35rem 0.75rem;font-size:0.75rem;">${escapeHtml(contact.status)}</span>
           </div>
-          <div style="background:#f8fafc;padding:1rem;border-radius:8px;margin-bottom:1rem;">
-            <h4 style="font-size:0.875rem;font-weight:600;color:var(--text-dark);margin:0 0 0.5rem;">Tin nhắn của bạn:</h4>
+          <div class="inbox-message-box">
+            <h4 style="font-size:0.875rem;font-weight:600;color:var(--text-dark);margin:0 0 0.5rem;">Your message:</h4>
             <p style="font-size:0.875rem;color:var(--text-muted);margin:0;white-space:pre-line;">${escapeHtml(contact.content)}</p>
           </div>
           ${contact.reply ? `
-            <div style="background:#ecfdf5;padding:1rem;border-radius:8px;border:1px solid #a7f3d0;">
-              <h4 style="font-size:0.875rem;font-weight:600;color:#059669;margin:0 0 0.5rem;">Phản hồi từ đội ngũ${repliedAt ? ` (${repliedAt})` : ''}:</h4>
+            <div class="inbox-reply-box">
+              <h4 style="font-size:0.875rem;font-weight:600;color:#059669;margin:0 0 0.5rem;">Response from team${repliedAt ? ` (${repliedAt})` : ''}:</h4>
               <p style="font-size:0.875rem;color:#065f46;margin:0;white-space:pre-line;">${escapeHtml(contact.reply)}</p>
             </div>
           ` : `
-            <div style="text-align:center;padding:1rem;color:var(--text-muted);font-size:0.875rem;">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:24px;height:24px;margin:0 auto 0.5rem;opacity:0.5;"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-              <p>Đang chờ phản hồi...</p>
+            <div class="inbox-pending-box" style="text-align:center;padding:1rem;color:var(--text-muted);font-size:0.875rem;background:#fef3c7;border-radius:8px;border:1px solid #fde68a;">
+              <h4 style="font-size:0.875rem;font-weight:600;color:#d97706;margin:0 0 0.5rem;">Status:</h4>
+              <p style="font-size:0.875rem;color:#b45309;margin:0;">Awaiting response...</p>
             </div>
           `}
         `;
@@ -1824,7 +1850,7 @@ async function fetchInbox(email) {
     console.error("Error loading inbox:", error);
     inboxContainer.innerHTML = `
       <div style="text-align:center;padding:3rem;color:#ef4444;">
-        <p>Không thể tải hộp thư. Lỗi: ${error.message}</p>
+        <p>Could not load inbox. Error: ${error.message}</p>
       </div>
     `;
     inboxSection.style.display = "block";
@@ -1931,7 +1957,7 @@ function injectQuickPanel() {
       <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:${currentTheme === 'dark' ? 'block' : 'none'};width:20px;height:20px;color:#eab308;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
       <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:${currentTheme === 'light' ? 'block' : 'none'};width:20px;height:20px;color:#6366f1;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
     </button>
-    <a id="quick-inbox" href="/inbox.html" class="quick-panel-btn" aria-label="Inbox" style="display:none;">
+    <a id="quick-inbox" href="index.html#inbox-section" class="quick-panel-btn" aria-label="Inbox" style="display:none;">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
       <span class="quick-inbox-badge" style="display:none;"></span>
     </a>
@@ -1986,6 +2012,19 @@ function injectQuickPanel() {
   const token = localStorage.getItem("token") || sessionStorage.getItem("token");
   if (token) {
     const quickInbox = document.getElementById("quick-inbox");
-    if (quickInbox) quickInbox.style.display = "flex";
+    if (quickInbox) {
+      quickInbox.style.display = "flex";
+      quickInbox.addEventListener("click", (e) => {
+        const path = window.location.pathname;
+        const page = path.substring(path.lastIndexOf('/') + 1) || "index.html";
+        if (page === "index.html" || page === "") {
+          e.preventDefault();
+          const section = document.getElementById("inbox-section");
+          if (section) {
+            section.scrollIntoView({ behavior: "smooth" });
+          }
+        }
+      });
+    }
   }
 }

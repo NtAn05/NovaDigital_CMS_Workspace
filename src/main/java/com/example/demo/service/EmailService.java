@@ -15,13 +15,13 @@ public class EmailService {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom("studyhub123vn@gmail.com");
         message.setTo(toEmail);
-        message.setSubject("NovaDigital - Mã xác thực OTP đặt lại mật khẩu");
-        message.setText("Chào bạn,\n\n"
-                + "Bạn đã yêu cầu đặt lại mật khẩu tại NovaDigital.\n"
-                + "Mã OTP của bạn là: " + otp + "\n"
-                + "Mã này có hiệu lực trong vòng 5 phút.\n\n"
-                + "Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email.\n\n"
-                + "Trân trọng,\n"
+        message.setSubject("NovaDigital - OTP Password Reset Verification Code");
+        message.setText("Hello,\n\n"
+                + "You have requested to reset your password at NovaDigital.\n"
+                + "Your OTP verification code is: " + otp + "\n"
+                + "This code is valid for 5 minutes.\n\n"
+                + "If you did not make this request, please ignore this email.\n\n"
+                + "Best regards,\n"
                 + "NovaDigital Team");
         mailSender.send(message);
     }
