@@ -24,7 +24,7 @@ public class OtpService {
     public String generateOtp(String email) {
         Random random = new Random();
         String otp = String.format("%06d", random.nextInt(1000000));
-        LocalDateTime expiryTime = LocalDateTime.now().plusMinutes(5); // OTP valid for 5 minutes
+        LocalDateTime expiryTime = LocalDateTime.now().plusMinutes(2); // OTP valid for 5 minutes
         otpCache.put(email, new OtpDetails(otp, expiryTime));
         return otp;
     }
