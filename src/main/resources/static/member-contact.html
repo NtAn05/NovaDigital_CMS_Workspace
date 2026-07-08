@@ -172,7 +172,7 @@
         }
         contacts.forEach(contact => {
           const row = document.createElement("tr");
-          const date = new Date(contact.createdAt).toLocaleDateString("vi-VN", {
+          const date = new Date(contact.createdAt).toLocaleDateString("en-US", {
             hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric"
           });
           row.setAttribute("data-searchable", `${contact.name} ${contact.email} ${contact.title} ${contact.content}`);
