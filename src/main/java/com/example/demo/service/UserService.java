@@ -32,9 +32,11 @@ public class UserService {
         user.setEmail(request.getEmail());
         user.setPhone(request.getPhone());
         
-        // Auto-assign admin role if username starts with or equals admin
+        // Auto-assign roles based on username prefix
         if (request.getUsername().toLowerCase().startsWith("admin")) {
             user.setRole("ROLE_ADMIN");
+        } else if (request.getUsername().toLowerCase().startsWith("member")) {
+            user.setRole("ROLE_MEMBER");
         } else {
             user.setRole("ROLE_USER");
         }

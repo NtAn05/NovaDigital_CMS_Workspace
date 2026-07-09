@@ -15,7 +15,7 @@ public class ContactService {
     }
 
     public java.util.List<Contact> getAllContacts() {
-        return contactRepository.findAll();
+        return contactRepository.findAllByOrderByCreatedAtDesc();
     }
 
     public Contact getContactById(Long id) {
