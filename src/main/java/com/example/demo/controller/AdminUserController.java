@@ -10,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import org.springframework.data.domain.Sort;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,7 +28,7 @@ public class AdminUserController {
     // ── GET ALL ──────────────────────────────────────────
     @GetMapping
     public ResponseEntity<List<UserResponse>> getAllUsers() {
-        List<UserResponse> users = userRepository.findAll()
+        List<UserResponse> users = userRepository.findAll(Sort.by(Sort.Direction.DESC, "updatedAt"))
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
@@ -73,7 +75,7 @@ public class AdminUserController {
         user.setEmail(request.getEmail().trim());
         user.setPhone(request.getPhone() != null ? request.getPhone().trim() : null);
         user.setPassword(PasswordHasher.hash(request.getPassword()));
-        user.setRole(request.getRole() != null ? request.getRole() : "ROLE_USER");
+        user.setRole(standardizeRole(request.getRole()));
         user.setEnabled(true);
 
         User saved = userRepository.save(user);
@@ -109,7 +111,7 @@ public class AdminUserController {
             user.setPhone(request.getPhone().trim());
         }
         if (request.getRole() != null && !request.getRole().isBlank()) {
-            user.setRole(request.getRole());
+            user.setRole(standardizeRole(request.getRole()));
         }
         // Update enabled status if provided
         if (request.getEnabled() != null) {
@@ -144,6 +146,21 @@ public class AdminUserController {
     }
 
     // ── HELPER ───────────────────────────────────────────
+    private String standardizeRole(String role) {
+        if (role == null || role.isBlank()) return "ROLE_USER";
+        String r = role.trim().toUpperCase().replace("_", " ");
+        if ("TEAM MEMBER".equals(r) || "MEMBER".equals(r) || "ROLE MEMBER".equals(r)) {
+            return "ROLE_MEMBER";
+        }
+        if ("ADMIN".equals(r) || "ROLE ADMIN".equals(r)) {
+            return "ROLE_ADMIN";
+        }
+        if ("USER".equals(r) || "ROLE USER".equals(r)) {
+            return "ROLE_USER";
+        }
+        return role;
+    }
+
     private UserResponse toResponse(User u) {
         return new UserResponse(
                 u.getId(),

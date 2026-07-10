@@ -31,6 +31,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // 4. Highlight Active Navigation Item
   highlightActiveLink();
 
+  // 4b. Initialize Hero Text Click animation
+  initHeroTextClick();
+
   // 5. Detect current page and fetch corresponding data
   const path = window.location.pathname;
   const page = path.substring(path.lastIndexOf('/') + 1) || "index.html";
@@ -54,8 +57,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // Member page is handled by inline script
   } else if (page === "index.html") {
     // Fetch inbox if user is logged in
-    const token = localStorage.getItem("token");
-    const email = localStorage.getItem("email"); 
+    const token = sessionStorage.getItem("token");
+    const email = sessionStorage.getItem("email"); 
     console.log("Token:", token);
     console.log("Email from localStorage:", email);
     if (token && email) {
@@ -307,11 +310,12 @@ function initModalLoginForm() {
       const data = await response.json();
 
       if (response.ok && data.token) {
-        localStorage.setItem("token",    data.token);
-        localStorage.setItem("username", data.username);
-        localStorage.setItem("fullName", data.fullName);
-        localStorage.setItem("role",     data.role);
-        localStorage.setItem("email",    data.email);
+        sessionStorage.setItem("token",     data.token);
+        sessionStorage.setItem("username",  data.username);
+        sessionStorage.setItem("fullName",  data.fullName);
+        sessionStorage.setItem("role",      data.role);
+        sessionStorage.setItem("email",     data.email);
+        sessionStorage.setItem("avatarUrl", data.avatarUrl || "");
 
         showModalAlert("Login successful! Redirecting...", true, "modal-login-alert");
 
@@ -321,9 +325,9 @@ function initModalLoginForm() {
           } else if (data.role === "Team_Member" || data.role === "ROLE_MEMBER") {
             window.location.href = "member-contact.html";
           } else {
-            const redirectAttempt = localStorage.getItem("redirectAttempt");
+            const redirectAttempt = sessionStorage.getItem("redirectAttempt");
             if (redirectAttempt) {
-              localStorage.removeItem("redirectAttempt");
+              sessionStorage.removeItem("redirectAttempt");
               window.location.href = redirectAttempt;
             } else {
               window.location.reload();
@@ -399,8 +403,8 @@ function checkRouteGuard() {
   const path = window.location.pathname;
   const page = path.substring(path.lastIndexOf('/') + 1) || "index.html";
 
-  const token = localStorage.getItem("token");
-  const role  = localStorage.getItem("role");
+  const token = sessionStorage.getItem("token");
+  const role  = sessionStorage.getItem("role");
 
   // Admin MUST stay in admin.html and cannot access any other page
   if (token && role === "ROLE_ADMIN") {
@@ -419,10 +423,10 @@ function checkRouteGuard() {
   }
 
   // Protected client pages
-  const protectedPages = ["services.html", "about.html", "portfolio.html", "contact.html"];
+  const protectedPages = ["contact.html"];
 
   if (protectedPages.includes(page) && !token) {
-    localStorage.setItem("redirectAttempt", page);
+    sessionStorage.setItem("redirectAttempt", page);
     window.location.href = "index.html?error=unauthorized#login";
     return;
   }
@@ -463,9 +467,9 @@ function updateNavbarAuth() {
   const navLinksContainer = document.querySelector(".nav-links");
   if (!navLinksContainer) return;
 
-  const token    = localStorage.getItem("token");
-  const role     = localStorage.getItem("role");
-  const fullName = localStorage.getItem("fullName");
+  const token    = sessionStorage.getItem("token");
+  const role     = sessionStorage.getItem("role");
+  const fullName = sessionStorage.getItem("fullName");
 
   // If Admin, hide all standard navigation links (Home, Services, etc.)
   if (token && role === "ROLE_ADMIN") {
@@ -504,33 +508,98 @@ function updateNavbarAuth() {
   }
 
   if (token) {
-    // — Admin Dashboard link —
+    const dropdownLi = document.createElement("li");
+    dropdownLi.className = "auth-item user-dropdown-container";
+    dropdownLi.style.position = "relative";
+
+    const username  = sessionStorage.getItem("username");
+    const avatarUrl = sessionStorage.getItem("avatarUrl");
+
+    function getInitials(name) {
+      if (!name) return "ND";
+      const parts = name.trim().split(/\s+/);
+      if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    const initials = getInitials(fullName || username);
+
+    let menuItemsHtml = "";
     if (role === "ROLE_ADMIN") {
-      const li = document.createElement("li");
-      li.className = "auth-item";
-      li.innerHTML = `<a href="admin.html">Dashboard</a>`;
-      navLinksContainer.appendChild(li);
+      menuItemsHtml = `
+        <a href="admin.html" class="dropdown-item">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+          Dashboard
+        </a>
+      `;
     } else if (role === "Team_Member" || role === "ROLE_MEMBER") {
-      const li = document.createElement("li");
-      li.className = "auth-item";
-      li.innerHTML = `<a href="member-contact.html">Member Portal</a>`;
-      navLinksContainer.appendChild(li);
+      menuItemsHtml = `
+        <a href="member-contact.html" class="dropdown-item">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Member Portal
+        </a>
+        <a href="user-profile.html" class="dropdown-item">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Profile
+        </a>
+      `;
+    } else {
+      menuItemsHtml = `
+        <a href="user-profile.html" class="dropdown-item">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Profile
+        </a>
+        <a href="transaction.html" class="dropdown-item">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          My Transaction
+        </a>
+        <a href="rented-project.html" class="dropdown-item">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg>
+          My Rented Project
+        </a>
+      `;
     }
 
-    // — Greeting —
-    const greetLi = document.createElement("li");
-    greetLi.className = "auth-item";
-    greetLi.innerHTML = `<span style="font-weight:600;font-size:0.95rem;color:var(--text-muted);">Hi, ${escapeHtml(fullName)}</span>`;
-    navLinksContainer.appendChild(greetLi);
+    dropdownLi.innerHTML = `
+      <div class="user-avatar-trigger" id="user-avatar-trigger" style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;padding:0.25rem 0;">
+        ${avatarUrl ? 
+          `<img src="${escapeHtml(avatarUrl)}" alt="Avatar" class="nav-avatar-img" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid var(--primary);">` :
+          `<div class="nav-avatar-initials" style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg, var(--primary) 0%, var(--primary-purple) 100%);color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;">${escapeHtml(initials)}</div>`
+        }
+        <span class="nav-username-txt" style="font-weight:600;font-size:0.95rem;color:var(--text-muted);">${escapeHtml(fullName || username)}</span>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="12" height="12" style="color:var(--text-muted);"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </div>
+      <div class="user-dropdown-menu" id="user-dropdown-menu">
+        ${menuItemsHtml}
+        <hr style="border:none;border-top:1px solid var(--border-color);margin:0.4rem 0;">
+        <a href="#" id="dropdown-logout-btn" class="dropdown-item logout-link" style="color:#ef4444 !important;font-weight:600;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Logout
+        </a>
+      </div>
+    `;
 
-    // — Logout button —
-    const logoutLi = document.createElement("li");
-    logoutLi.className = "auth-item";
-    logoutLi.innerHTML = `<a href="#" id="logout-btn" class="nav-btn"
-      style="background-color:#ef4444;border-color:#ef4444;box-shadow:0 4px 14px rgba(239,68,68,0.25);">Logout</a>`;
-    navLinksContainer.appendChild(logoutLi);
+    navLinksContainer.appendChild(dropdownLi);
 
-    document.getElementById("logout-btn").addEventListener("click", (e) => {
+    const trigger = dropdownLi.querySelector("#user-avatar-trigger");
+    const menu = dropdownLi.querySelector("#user-dropdown-menu");
+
+    trigger.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const isVisible = menu.classList.contains("show");
+      if (isVisible) {
+        menu.classList.remove("show");
+      } else {
+        // Hide other dropdowns if any
+        document.querySelectorAll(".user-dropdown-menu").forEach(m => m.classList.remove("show"));
+        menu.classList.add("show");
+      }
+    });
+
+    document.addEventListener("click", () => {
+      menu.classList.remove("show");
+    });
+
+    dropdownLi.querySelector("#dropdown-logout-btn").addEventListener("click", (e) => {
       e.preventDefault();
       logoutUser();
     });
@@ -553,10 +622,7 @@ function updateNavbarAuth() {
 
 // User Logout Logic
 function logoutUser() {
-  localStorage.removeItem("token");
-  localStorage.removeItem("username");
-  localStorage.removeItem("fullName");
-  localStorage.removeItem("role");
+  sessionStorage.clear();
   window.location.href = "index.html";
 }
 
@@ -600,11 +666,12 @@ function initLoginForm() {
       const data = await response.json();
 
       if (response.ok && data.token) {
-        localStorage.setItem("token",    data.token);
-        localStorage.setItem("username", data.username);
-        localStorage.setItem("fullName", data.fullName);
-        localStorage.setItem("role",     data.role);
-        localStorage.setItem("email",    data.email);
+        sessionStorage.setItem("token",     data.token);
+        sessionStorage.setItem("username",  data.username);
+        sessionStorage.setItem("fullName",  data.fullName);
+        sessionStorage.setItem("role",      data.role);
+        sessionStorage.setItem("email",     data.email);
+        sessionStorage.setItem("avatarUrl", data.avatarUrl || "");
 
         showAlert("Login successful! Redirecting...", true);
 
@@ -614,9 +681,9 @@ function initLoginForm() {
           } else if (data.role === "Team_Member" || data.role === "ROLE_MEMBER") {
             window.location.href = "member-contact.html";
           } else {
-            const redirect = localStorage.getItem("redirectAttempt");
+            const redirect = sessionStorage.getItem("redirectAttempt");
             if (redirect) {
-              localStorage.removeItem("redirectAttempt");
+              sessionStorage.removeItem("redirectAttempt");
               window.location.href = redirect;
             } else {
               window.location.href = "index.html";
@@ -775,7 +842,7 @@ function switchAdminPanel(panelName, el) {
 // =============================================
 
 function getAdminToken() {
-  return localStorage.getItem("token") || "";
+  return sessionStorage.getItem("token") || "";
 }
 
 function adminHeaders() {
@@ -828,24 +895,64 @@ function openCrudModal(type, id) {
   // Bind file upload trigger for projects or members
   if (type === "project" || type === "member") {
     const fileInputId = type === "project" ? "cf-imageFile" : "cf-avatarFile";
-    const urlInputId = type === "project" ? "cf-imageUrl" : "cf-avatarUrl";
-    const fileInput = document.getElementById(fileInputId);
+    const urlInputId  = type === "project" ? "cf-imageUrl"  : "cf-avatarUrl";
+    const fileInput   = document.getElementById(fileInputId);
+
     if (fileInput) {
       fileInput.addEventListener("change", async (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        
-        const formData = new FormData();
-        formData.append("file", file);
-        
+
+        const preview   = document.getElementById("cf-preview");
+        const urlInput  = document.getElementById(urlInputId);
+
+        // Helper: read file as Base64 Data URL (always works, no server needed)
+        const readAsDataUrl = (f) => new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload  = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(f);
+        });
+
+        showCrudAlert("Uploading image...", null);
+
+        // 1️⃣ Try server upload first (with auth token)
         try {
+          const formData = new FormData();
+          formData.append("file", file);
+
+          const res  = await fetch("/api/upload", {
           showCrudAlert("Uploading image...", null);
           const res = await fetch("/api/upload", {
             method: "POST",
+            headers: { "Authorization": "Bearer " + getAdminToken() },
             body: formData
           });
           const data = await res.json().catch(() => ({}));
+
           if (res.ok && data.url) {
+
+            urlInput.value = data.url;
+            if (preview) { preview.src = data.url; preview.style.display = "block"; }
+            showCrudAlert("✅ Image uploaded successfully!", true);
+            return; // done – no need for fallback
+          }
+          // Server returned non-ok or no url → fall through to Base64
+          console.warn("Server upload failed (status:", res.status, "), falling back to Base64.");
+        } catch (uploadErr) {
+          console.warn("Server upload error, falling back to Base64:", uploadErr);
+        }
+
+        // 2️⃣ Fallback: use Base64 Data URL directly
+        try {
+          const dataUrl = await readAsDataUrl(file);
+          urlInput.value = dataUrl;
+          if (preview) { preview.src = dataUrl; preview.style.display = "block"; }
+          showCrudAlert("✅ Image ready (local preview).", true);
+        } catch (b64Err) {
+          console.error("Base64 read error:", b64Err);
+          showCrudAlert("Could not load image. Please try a different file.", false);
+
             document.getElementById(urlInputId).value = data.url;
             const preview = document.getElementById("cf-preview");
             if (preview) {
@@ -859,10 +966,12 @@ function openCrudModal(type, id) {
         } catch (err) {
           console.error("Upload error:", err);
           showCrudAlert("Could not upload image to server.", false);
+
         }
       });
     }
   }
+
 
   overlay.classList.add("is-open");
   document.body.style.overflow = "hidden";
@@ -905,7 +1014,11 @@ function buildCrudForm(type, item) {
     ${fld("cf-email",     "Email *",          "email", v.email,    'placeholder="name@domain.com" required')}
     ${fld("cf-phone",     "Phone Number",   "tel",   v.phone,    'placeholder="0123456789" pattern="[0-9]{10}"')}
     ${!item ? fld("cf-password", "Password *", "password", "", 'placeholder="Min 6 characters" required minlength="6"') : ""}
+
+    ${sel("cf-role", "Role *", [["ROLE_USER","User"],["ROLE_ADMIN","Admin"],["ROLE_MEMBER","Team Member"]], v.role || "ROLE_USER")}
+
     ${sel("cf-role", "Role *", [["ROLE_USER","User"],["ROLE_ADMIN","Admin"],["Team_Member","Team Member"]], v.role || "ROLE_USER")}
+
     <div class="form-group" style="width: 100%;">
       <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; justify-content: flex-start;">
         <input type="checkbox" id="cf-enabled" ${v.enabled !== false ? 'checked' : ''}>
@@ -916,7 +1029,11 @@ function buildCrudForm(type, item) {
 
   if (type === "member") return `
     ${fld("cf-name",       "Member Name *",         "text", v.name,        'placeholder="Enter member name" required')}
+
+    ${fld("cf-role",       "Position / Role",         "text", v.role,        'placeholder="e.g. Frontend Developer"')}
+
     ${fld("cf-role",       "Position / Role *",       "text", v.role,        'placeholder="e.g. Frontend Developer" required')}
+
     <div class="form-group">
       <label for="cf-avatarFile">Avatar Image *</label>
       <input type="file" id="cf-avatarFile" accept="image/*" style="width:100%; padding:0.5rem; border:1px dashed var(--border-color); border-radius:var(--radius-sm); background:var(--bg-light); cursor:pointer;">
@@ -978,7 +1095,7 @@ async function submitCrudForm() {
   if (type === "member") {
     payload = { name: g("cf-name"), role: g("cf-role"), avatarUrl: g("cf-avatarUrl"),
                 facebookUrl: g("cf-facebookUrl"), githubUrl: g("cf-githubUrl"), linkedinUrl: g("cf-linkedinUrl") };
-    if (!payload.name || !payload.role || !payload.avatarUrl) valid = false;
+    if (!payload.name || !payload.avatarUrl) valid = false;
   }
 
   if (type === "project") {
@@ -1126,7 +1243,7 @@ async function fetchAdminUsers() {
         <td>${escapeHtml(u.username || "")}</td>
         <td>${escapeHtml(u.email || "")}</td>
         <td>${escapeHtml(u.phone || "—")}</td>
-        <td><span class="status-badge ${u.role === "ROLE_ADMIN" ? "badge-admin" : (u.role === "Team_Member" ? "badge-member" : "badge-user")}">${u.role === "ROLE_ADMIN" ? "Admin" : (u.role === "Team_Member" ? "Team Member" : "User")}</span></td>
+        <td><span class="status-badge ${u.role === "ROLE_ADMIN" ? "badge-admin" : (u.role === "Team_Member" || u.role === "ROLE_MEMBER" ? "badge-member" : "badge-user")}">${u.role === "ROLE_ADMIN" ? "Admin" : (u.role === "Team_Member" || u.role === "ROLE_MEMBER" ? "Team Member" : "User")}</span></td>
         <td>
           <button class="btn-toggle-status" onclick="toggleUserStatus(${u.id})" style="padding: 4px 12px; border-radius: 20px; border: none; cursor: pointer; font-weight: 600; font-size: 12px; white-space: nowrap; ${u.enabled ? 'background: #ecfdf5; color: #059669;' : 'background: #fef2f2; color: #dc2626;'}">
             ${u.enabled ? 'Active' : 'Disabled'}
@@ -1207,15 +1324,22 @@ async function fetchAdminMembersTable() {
       _cache.members[m.id] = m;
       const tr = document.createElement("tr");
       tr.setAttribute("data-searchable", `${m.name} ${m.role}`);
-      const mkLink = url => url ? `<a href="${escapeHtml(url)}" target="_blank" style="color:var(--primary);font-weight:600;">🔗</a>` : "—";
+      const fbSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="#1877F2" viewBox="0 0 24 24" style="vertical-align:middle;"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>`;
+      const ghSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 24 24" style="vertical-align:middle;color:var(--text-dark);"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>`;
+      const liSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="#0A66C2" viewBox="0 0 24 24" style="vertical-align:middle;"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.779-1.75-1.75s.784-1.75 1.75-1.75 1.75.779 1.75 1.75-.784 1.75-1.75 1.75zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>`;
+
+      const mkFbLink = url => url ? `<a href="${escapeHtml(url)}" target="_blank" title="Facebook">${fbSvg}</a>` : "—";
+      const mkGhLink = url => url ? `<a href="${escapeHtml(url)}" target="_blank" title="GitHub">${ghSvg}</a>` : "—";
+      const mkLiLink = url => url ? `<a href="${escapeHtml(url)}" target="_blank" title="LinkedIn">${liSvg}</a>` : "—";
+
       tr.innerHTML = `
         <td><img src="${escapeHtml(m.avatarUrl || "")}" alt="${escapeHtml(m.name || "")}" class="table-avatar"
               onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=60&h=60'"></td>
         <td class="text-dark-inline">${escapeHtml(m.name || "")}</td>
         <td><span class="status-badge badge-active">${escapeHtml(m.role || "")}</span></td>
-        <td>${mkLink(m.facebookUrl)}</td>
-        <td>${mkLink(m.githubUrl)}</td>
-        <td>${mkLink(m.linkedinUrl)}</td>
+        <td>${mkFbLink(m.facebookUrl)}</td>
+        <td>${mkGhLink(m.githubUrl)}</td>
+        <td>${mkLiLink(m.linkedinUrl)}</td>
         <td>
           <div class="action-btns">
             <button class="btn-edit"   onclick="openCrudModal('member', ${m.id})">
@@ -1627,9 +1751,20 @@ function initContactForm() {
   const alertMsg = document.getElementById("alertMessage");
   if (!form || !alertMsg) return;
 
+  const nameInput = document.getElementById("name");
+  const emailInput = document.getElementById("email");
   const serviceSelect = document.getElementById("serviceSelect");
   const serviceGrid = document.getElementById("service-select-grid");
   const selectOverlay = document.getElementById("service-select-overlay");
+
+  if (nameInput) {
+    nameInput.value = sessionStorage.getItem("fullName") || sessionStorage.getItem("username") || "";
+    nameInput.readOnly = true;
+  }
+  if (emailInput) {
+    emailInput.value = sessionStorage.getItem("email") || "";
+    emailInput.readOnly = true;
+  }
 
   if (serviceSelect && serviceGrid) {
     fetch("/api/services")
@@ -1771,7 +1906,11 @@ async function fetchInbox(email) {
   try {
     const apiUrl = `/api/contacts/my?email=${encodeURIComponent(email)}`;
     console.log("Calling API:", apiUrl);
+
+    const token = sessionStorage.getItem("token") || "";
+
     const token = localStorage.getItem("token") || "";
+
     const response = await fetch(apiUrl, {
       headers: { "Authorization": "Bearer " + token }
     });
@@ -2009,7 +2148,11 @@ function injectQuickPanel() {
   });
 
   // Inbox shortcut (show only if logged in)
+
+  const token = sessionStorage.getItem("token");
+
   const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+
   if (token) {
     const quickInbox = document.getElementById("quick-inbox");
     if (quickInbox) {
@@ -2028,3 +2171,20 @@ function injectQuickPanel() {
     }
   }
 }
+
+
+// Hero H1 text click animation
+function initHeroTextClick() {
+  const heroH1 = document.querySelector(".hero-content h1");
+  if (!heroH1) return;
+
+  heroH1.style.cursor = "pointer";
+  heroH1.addEventListener("click", () => {
+    if (heroH1.classList.contains("hero-text-clicked")) return;
+    heroH1.classList.add("hero-text-clicked");
+    setTimeout(() => {
+      heroH1.classList.remove("hero-text-clicked");
+    }, 800);
+  });
+}
+

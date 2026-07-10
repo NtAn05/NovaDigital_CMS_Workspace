@@ -159,7 +159,8 @@
       const tableBody = document.getElementById("member-contacts-table-body");
       if (!tableBody) return;
       try {
-        const token = localStorage.getItem("token") || "";
+
+        const token = sessionStorage.getItem("token") || "";
         const response = await fetch("/api/contacts", {
           headers: { "Authorization": "Bearer " + token }
         });
@@ -197,7 +198,8 @@
       const body = document.getElementById("reply-modal-body");
       const alert = document.getElementById("reply-alert");
       if (alert) { alert.style.display = "none"; alert.textContent = ""; alert.className = "crud-alert alert-message"; }
-      const token = localStorage.getItem("token") || "";
+
+      const token = sessionStorage.getItem("token") || "";
       fetch(`/api/contacts`, { headers: { "Authorization": "Bearer " + token } }).then(res => res.json()).then(contacts => {
         const contact = contacts.find(c => c.id === contactId);
         if (contact) {
@@ -236,7 +238,8 @@
         alert.textContent = "Sending reply...";
         alert.className = "crud-alert alert-message";
         alert.style.display = "block";
-        const token = localStorage.getItem("token") || "";
+        const token = sessionStorage.getItem("token") || "";
+
         const response = await fetch(`/api/contacts/${currentContactId}/reply`, {
           method: "POST",
           headers: {

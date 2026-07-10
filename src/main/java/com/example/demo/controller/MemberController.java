@@ -9,6 +9,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.example.demo.entity.User;
+import com.example.demo.repository.UserRepository;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +27,9 @@ public class MemberController {
 
     @Autowired
     private MemberRepository memberRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     // ── GET ALL ──────────────────────────────────────────
     @GetMapping
@@ -65,6 +71,27 @@ public class MemberController {
     @PutMapping("/{id}")
     public ResponseEntity<?> updateMember(@PathVariable Long id, @RequestBody Member request) {
         Map<String, Object> error = new HashMap<>();
+
+        if (id >= 1000000L) {
+            Long userId = id - 1000000L;
+            Optional<User> optionalUser = userRepository.findById(userId);
+            if (optionalUser.isEmpty()) {
+                error.put("message", "Cannot find member (user) with id = " + id);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+            }
+            User user = optionalUser.get();
+            if (request.getName() != null && !request.getName().isBlank()) {
+                user.setFullName(request.getName().trim());
+            }
+            if (request.getAvatarUrl() != null) {
+                user.setAvatarUrl(request.getAvatarUrl());
+            }
+            User savedUser = userRepository.save(user);
+            return ResponseEntity.ok(new MemberResponse(id,
+                    savedUser.getFullName() != null && !savedUser.getFullName().isBlank() ? savedUser.getFullName() : savedUser.getUsername(),
+                    "Team Member", savedUser.getAvatarUrl(), null, null, null));
+        }
+
         Optional<Member> optional = memberRepository.findById(id);
         if (optional.isEmpty()) {
             error.put("message", "Cannot find member with id = " + id);
@@ -87,6 +114,20 @@ public class MemberController {
     // ── DELETE ───────────────────────────────────────────
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteMember(@PathVariable Long id) {
+        if (id >= 1000000L) {
+            Long userId = id - 1000000L;
+            if (!userRepository.existsById(userId)) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("message", "Cannot find member (user) with id = " + id);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+            }
+            userRepository.deleteById(userId);
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("message", "Delete member successfully");
+            return ResponseEntity.ok(result);
+        }
+
         if (!memberRepository.existsById(id)) {
             Map<String, Object> error = new HashMap<>();
             error.put("message", "Cannot find member with id = " + id);
