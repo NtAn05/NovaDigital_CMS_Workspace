@@ -19,22 +19,42 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String usernameOrEmail) throws UsernameNotFoundException {
-        User user = userRepository.findByUsernameOrEmail(usernameOrEmail, usernameOrEmail)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with username or email: " + usernameOrEmail));
+
+        User user = userRepository
+                .findByUsernameOrEmail(usernameOrEmail, usernameOrEmail)
+                .orElseThrow(() -> new UsernameNotFoundException(
+                        "User not found with username or email: " + usernameOrEmail));
 
         String role = user.getRole();
-        // Standardize role for Spring Security
-        if ("Team_Member".equals(role)) {
+
+        // Chuẩn hóa role cho Spring Security
+        if (role != null) {
+
+            // TEAM_MEMBER, Team_Member hoặc ROLE_MEMBER -> ROLE_MEMBER
+            if ("TEAM_MEMBER".equalsIgnoreCase(role)
+                    || "Team_Member".equalsIgnoreCase(role)
+                    || "ROLE_MEMBER".equalsIgnoreCase(role)) {
+
+                role = "ROLE_MEMBER";
+            }
+            // Các role khác chưa có tiền tố ROLE_
+            else if (!role.startsWith("ROLE_")) {
+
+                role = "ROLE_" + role.toUpperCase();
+            }
+
+        } else {
+            // Trường hợp role bị null
             role = "ROLE_MEMBER";
-        } else if (!role.startsWith("ROLE_")) {
-            role = "ROLE_" + role.toUpperCase();
         }
 
         return new org.springframework.security.core.userdetails.User(
                 user.getUsername(),
                 user.getPassword(),
                 user.isEnabled(),
-                true, true, true,
+                true,
+                true,
+                true,
                 Collections.singletonList(new SimpleGrantedAuthority(role))
         );
     }

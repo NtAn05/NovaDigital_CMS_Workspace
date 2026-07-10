@@ -252,7 +252,7 @@
     document.addEventListener("DOMContentLoaded", () => {
       // Set name
       const nameBadge = document.getElementById("member-name-badge");
-      const fullName = localStorage.getItem("fullName") || "Team Member";
+      const fullName = sessionStorage.getItem("fullName") || "Team Member";
       if (nameBadge) {
         nameBadge.textContent = "Hi, " + fullName;
       }
@@ -262,10 +262,10 @@
       if (logoutBtn) {
         logoutBtn.addEventListener("click", (e) => {
           e.preventDefault();
-          localStorage.removeItem("token");
-          localStorage.removeItem("username");
-          localStorage.removeItem("fullName");
-          localStorage.removeItem("role");
+          sessionStorage.removeItem("token");
+          sessionStorage.removeItem("username");
+          sessionStorage.removeItem("fullName");
+          sessionStorage.removeItem("role");
           window.location.href = "index.html";
         });
       }
@@ -316,7 +316,7 @@
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                "Authorization": "Bearer " + (localStorage.getItem("token") || "")
+                "Authorization": "Bearer " + (sessionStorage.getItem("token") || "")
               },
               body: JSON.stringify({ message: msg })
             });
@@ -356,7 +356,7 @@
       try {
         const response = await fetch("/api/contacts", {
           headers: {
-            "Authorization": "Bearer " + (localStorage.getItem("token") || "")
+            "Authorization": "Bearer " + (sessionStorage.getItem("token") || "")
           }
         });
         if (!response.ok) throw new Error("Failed to fetch");

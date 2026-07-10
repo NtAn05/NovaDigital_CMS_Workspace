@@ -15,7 +15,7 @@ public class ContactService {
     }
 
     public java.util.List<Contact> getAllContacts() {
-        return contactRepository.findAll();
+        return contactRepository.findAllByOrderByCreatedAtDesc();
     }
 
     public Contact getContactById(Long id) {
@@ -25,5 +25,17 @@ public class ContactService {
 
     public java.util.List<Contact> getContactsByEmail(String email) {
         return contactRepository.findByEmailOrderByCreatedAtDesc(email);
+    }
+
+    public void deleteContact(Long id) {
+        contactRepository.deleteById(id);
+    }
+
+    public void deleteContactsByEmail(String email) {
+        contactRepository.deleteAllByEmail(email);
+    }
+
+    public void deleteContactsByIdsAndEmail(java.util.List<Long> ids, String email) {
+        contactRepository.deleteAllByIdInAndEmail(ids, email);
     }
 }

@@ -32,4 +32,13 @@ public class Member {
 
     @Column(name = "linkedin_url", length = 255)
     private String linkedinUrl;
+
+    @Column(name = "user_id")
+    private Long userId;
+
+    @Column(name = "skills", length = 1000)
+    private String skills;
+
+    @Column(name = "projects", length = 1000)
+    private String projects;
 }

@@ -6,8 +6,301 @@
   <meta name="description" content="NovaDigital - Creative Agency. We partner with businesses to build cutting-edge digital experiences, branding, and interfaces.">
   <title>NovaDigital | Creative Agency</title>
   <link rel="stylesheet" href="/css/style.css">
+  <style>
+    /* ─── PAGE LOADER ─────────────────────────────── */
+    #page-loader {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      background: #0a0f1e;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      transition: opacity 0.55s ease, visibility 0.55s ease;
+    }
+
+    #page-loader.loader-hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    /* Logo area */
+    .loader-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .loader-logo-icon {
+      width: 48px;
+      height: 48px;
+      color: #2563eb;
+      filter: drop-shadow(0 0 12px rgba(37, 99, 235, 0.6));
+      animation: loaderSpin 1.4s linear infinite;
+    }
+
+    @keyframes loaderSpin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+
+    .loader-logo-text {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.85rem;
+      font-weight: 800;
+      background: linear-gradient(90deg, #2563eb 0%, #8b5cf6 50%, #06b6d4 100%);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: loaderTextShine 2s linear infinite;
+    }
+
+    @keyframes loaderTextShine {
+      to { background-position: 200% center; }
+    }
+
+    /* Typing dots */
+    .loader-dots {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .loader-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #2563eb;
+      animation: loaderDotPulse 1.2s ease-in-out infinite;
+    }
+
+    .loader-dot:nth-child(2) { animation-delay: 0.2s; background: #8b5cf6; }
+    .loader-dot:nth-child(3) { animation-delay: 0.4s; background: #06b6d4; }
+
+    @keyframes loaderDotPulse {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+      40%           { transform: scale(1.2); opacity: 1; }
+    }
+
+    /* Progress bar */
+    .loader-bar-track {
+      width: 220px;
+      height: 3px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .loader-bar-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 99px;
+      background: linear-gradient(90deg, #2563eb, #8b5cf6, #06b6d4);
+      animation: loaderBarProgress 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    @keyframes loaderBarProgress {
+      0%   { width: 0%; }
+      60%  { width: 75%; }
+      90%  { width: 92%; }
+      100% { width: 100%; }
+    }
+
+    /* ─── HERO ENTRANCE ANIMATIONS ───────────────── */
+    .hero-pill,
+    .hero-content h1,
+    .hero-content p,
+    .hero-buttons,
+    .hero-image-wrapper {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    body.page-loaded .hero-pill          { opacity: 1; transform: translateY(0); transition-delay: 0.05s; }
+    body.page-loaded .hero-content h1    { opacity: 1; transform: translateY(0); transition-delay: 0.2s;  }
+    body.page-loaded .hero-content p     { opacity: 1; transform: translateY(0); transition-delay: 0.35s; }
+    body.page-loaded .hero-buttons       { opacity: 1; transform: translateY(0); transition-delay: 0.5s;  }
+    body.page-loaded .hero-image-wrapper { opacity: 1; transform: translateY(0); transition-delay: 0.65s; }
+
+    /* ─── NAVBAR SLIDE-DOWN ──────────────────────── */
+    header {
+      transform: translateY(-100%);
+      transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    body.page-loaded header {
+      transform: translateY(0);
+    }
+
+    /* ─── TOP PROGRESS LINE ──────────────────────── */
+    #top-progress-line {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      width: 0%;
+      z-index: 99998;
+      background: linear-gradient(90deg, #2563eb 0%, #8b5cf6 50%, #06b6d4 100%);
+      box-shadow: 0 0 8px rgba(37, 99, 235, 0.5);
+      transition: width 0.3s ease, opacity 0.4s ease;
+      opacity: 0;
+    }
+
+    #top-progress-line.visible {
+      opacity: 1;
+    }
+
+    /* ─── HERO SLIDESHOW ─────────────────────────── */
+    .hero-slideshow-container {
+      width: 100%;
+      max-width: 580px;
+      aspect-ratio: 4/3;
+      position: relative;
+      overflow: hidden;
+      border-radius: var(--radius-lg);
+      box-shadow: 0 25px 60px -20px rgba(15,23,42,0.35),
+                  0 0 0 1px rgba(255,255,255,0.12) inset;
+      transition: transform 0.5s cubic-bezier(0.25,1,0.5,1),
+                  box-shadow 0.5s ease;
+      z-index: 1;
+      cursor: grab;
+    }
+    .hero-slideshow-container:active { cursor: grabbing; }
+    .hero-slideshow-container:hover {
+      transform: translateY(-6px) scale(1.015);
+      box-shadow: 0 40px 80px -20px rgba(37,99,235,0.28),
+                  0 0 0 1px rgba(255,255,255,0.18) inset;
+    }
+
+    /* Each slide fills the container */
+    .hero-slideshow-container .slide-img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      /* Cross-fade: exactly 1.0s – matches JS FADE_MS constant */
+      transition: opacity 0.9s cubic-bezier(0.45, 0, 0.55, 1),
+                  transform 5s ease-out;
+      transform: scale(1.06);   /* start slightly zoomed */
+      z-index: 1;
+      will-change: opacity, transform;
+    }
+    .hero-slideshow-container .slide-img.active {
+      opacity: 1;
+      transform: scale(1);      /* Ken Burns: slowly zooms out while visible */
+      z-index: 2;
+    }
+    /* Previous slide fades out without moving back */
+    .hero-slideshow-container .slide-img.leaving {
+      opacity: 0;
+      z-index: 3;               /* stays on top while fading */
+      transform: scale(1.0);
+      transition: opacity 0.9s cubic-bezier(0.45, 0, 0.55, 1);
+    }
+
+    /* ── Progress bar showing time until next slide ── */
+    .slide-progress-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 3px;
+      width: 0%;
+      background: linear-gradient(90deg, #2563eb 0%, #8b5cf6 60%, #06b6d4 100%);
+      z-index: 10;
+      border-radius: 0 2px 2px 0;
+      box-shadow: 0 0 8px rgba(37,99,235,0.6);
+    }
+    .slide-progress-bar.running {
+      /* Width animated by JS via requestAnimationFrame */
+      transition: none;
+    }
+
+    /* ── Arrow navigation ──────────────────────────── */
+    .slide-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 10;
+      background: rgba(15, 23, 42, 0.45);
+      border: 1px solid rgba(255,255,255,0.15);
+      backdrop-filter: blur(6px);
+      color: #fff;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.25s ease, background 0.2s ease;
+      pointer-events: auto;
+    }
+    .slide-arrow:hover { background: rgba(37,99,235,0.7); }
+    .slide-arrow.prev { left: 0.75rem; }
+    .slide-arrow.next { right: 0.75rem; }
+    .hero-slideshow-container:hover .slide-arrow { opacity: 1; }
+
+    /* ── Dot indicators ────────────────────────────── */
+    .slideshow-indicators {
+      position: absolute;
+      bottom: 0.9rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 0.45rem;
+      z-index: 10;
+      background: rgba(9, 17, 35, 0.5);
+      padding: 0.3rem 0.7rem;
+      border-radius: 99px;
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .slideshow-indicators .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.35);
+      cursor: pointer;
+      transition: background 0.3s ease, transform 0.3s ease,
+                  width 0.35s cubic-bezier(0.25,1,0.5,1);
+    }
+    .slideshow-indicators .dot.active {
+      background: #2563eb;
+      width: 20px;
+      border-radius: 99px;
+      transform: none;
+      box-shadow: 0 0 8px rgba(37,99,235,0.7);
+    }
+  </style>
 </head>
 <body>
+
+  <!-- ── TOP PROGRESS LINE ──────────────────── -->
+  <div id="top-progress-line"></div>
+
+  <!-- ── PAGE LOADER ───────────────────────── -->
+  <div id="page-loader" role="status" aria-label="Loading NovaDigital">
+    <div class="loader-logo">
+      <svg class="loader-logo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+      </svg>
+      <span class="loader-logo-text">NovaDigital</span>
+    </div>
+    <div class="loader-dots">
+      <div class="loader-dot"></div>
+      <div class="loader-dot"></div>
+      <div class="loader-dot"></div>
+    </div>
+    <div class="loader-bar-track">
+      <div class="loader-bar-fill"></div>
+    </div>
+  </div>
 
   <!-- Header Section -->
   <header>
@@ -54,7 +347,49 @@
       </div>
       <div class="hero-image-wrapper">
         <div class="hero-image">
-          <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1426&q=80" alt="Digital Technology Dashboard">
+          <div class="hero-slideshow-container" id="hero-slideshow">
+
+            <!-- 6 slides -->
+            <img class="slide-img active"
+              src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1000&q=80"
+              alt="Digital Dashboard">
+            <img class="slide-img"
+              src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=1000&q=80"
+              alt="Developer Workspace">
+            <img class="slide-img"
+              src="https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=1000&q=80"
+              alt="UI/UX Wireframes">
+            <img class="slide-img"
+              src="https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&w=1000&q=80"
+              alt="Coding Work">
+            <img class="slide-img"
+              src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1000&q=80"
+              alt="Team Synergy">
+            <img class="slide-img"
+              src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1000&q=80"
+              alt="Technology Network">
+
+            <!-- Arrow navigation -->
+            <button class="slide-arrow prev" id="slide-prev" aria-label="Previous slide">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <button class="slide-arrow next" id="slide-next" aria-label="Next slide">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+
+            <!-- Progress bar -->
+            <div class="slide-progress-bar" id="slide-progress"></div>
+
+            <!-- Dot indicators -->
+            <div class="slideshow-indicators">
+              <span class="dot active" data-index="0"></span>
+              <span class="dot" data-index="1"></span>
+              <span class="dot" data-index="2"></span>
+              <span class="dot" data-index="3"></span>
+              <span class="dot" data-index="4"></span>
+              <span class="dot" data-index="5"></span>
+            </div>
+          </div>
           
           <!-- Floating UI Elements -->
           <div class="floating-badge badge-1 animate-float" style="animation-duration: 5s;">
@@ -135,16 +470,7 @@
       </div>
     </section>
 
-    <!-- Inbox Section -->
-    <section class="inbox-section" id="inbox-section" style="display: none; padding: 4rem 2rem; background: #f8fafc;">
-      <div class="container" style="max-width: 1200px; margin: 0 auto;">
-        <div class="section-header" style="text-align: center; margin-bottom: 2rem;">
-          <h2 style="font-size: 2.5rem; font-weight: 800; color: var(--text-dark); margin-bottom: 0.5rem;">Inbox</h2>
-          <p style="color: var(--text-muted); font-size: 1.1rem;">View replies from our team</p>
-        </div>
-        <div id="inbox-container" style="display: flex; flex-direction: column; gap: 1.5rem;"></div>
-      </div>
-    </section>
+
 
     <!-- Testimonials Section -->
     <section class="testimonials-section">
@@ -310,5 +636,201 @@
   </footer>
 
   <script src="/js/main.js"></script>
+  <script>
+    (function() {
+      const loader     = document.getElementById('page-loader');
+      const topLine    = document.getElementById('top-progress-line');
+      const DELAY_MS   = 1300; // Minimum screen time for loader
+
+      function revealPage() {
+        // 1. Animate top progress line to 100% then fade out
+        if (topLine) {
+          topLine.classList.add('visible');
+          topLine.style.width = '100%';
+          setTimeout(() => { topLine.style.opacity = '0'; }, 500);
+        }
+
+        // 2. Fade-out loader
+        if (loader) {
+          loader.classList.add('loader-hidden');
+        }
+
+        // 3. Trigger hero + navbar entrance animations
+        requestAnimationFrame(() => {
+          document.body.classList.add('page-loaded');
+        });
+      }
+
+      // Reveal after minimum delay (whichever is later: DOMContentLoaded or DELAY_MS)
+      const start = Date.now();
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+          const elapsed = Date.now() - start;
+          const remaining = Math.max(0, DELAY_MS - elapsed);
+          setTimeout(revealPage, remaining);
+        });
+      } else {
+        setTimeout(revealPage, DELAY_MS);
+      }
+
+      // ── HERO SLIDESHOW ──────────────────────────────────────────────────
+      (function () {
+        const container = document.getElementById('hero-slideshow');
+        if (!container) return;
+
+        const slides   = container.querySelectorAll('.slide-img');
+        const dots     = container.querySelectorAll('.dot');
+        const bar      = document.getElementById('slide-progress');
+        const btnPrev  = document.getElementById('slide-prev');
+        const btnNext  = document.getElementById('slide-next');
+
+        // ── Timing constants ────────────────────────────────────────────
+        const DISPLAY_MS = 4000;   // bar fills from 0→100% during this time
+        const FADE_MS    = 900;    // CSS cross-fade duration (must match CSS)
+
+        let current       = 0;
+        let rafHandle     = null;
+        let cycleStart    = 0;     // when bar started counting
+        let paused        = false;
+        let pausedPct     = 0;     // 0-100, where bar was when paused
+        let transitioning = false;
+
+        // ── Transition to slide n ────────────────────────────────────────
+        function goTo(n) {
+          if (transitioning) return;
+          transitioning = true;
+
+          const prev = current;
+          current = ((n % slides.length) + slides.length) % slides.length;
+
+          // Outgoing slide: add 'leaving' class → fades out on top
+          slides[prev].classList.remove('active');
+          slides[prev].classList.add('leaving');
+
+          // Incoming slide becomes active
+          slides[current].classList.add('active');
+
+          // Update dots
+          dots.forEach(d => d.classList.remove('active'));
+          dots[current].classList.add('active');
+
+          // After fade completes → clean up & start next bar cycle
+          setTimeout(() => {
+            slides[prev].classList.remove('leaving');
+            transitioning = false;
+
+            // Bar resets to 0 and starts counting for the NEW slide
+            resetBar();
+            startBarCycle();
+          }, FADE_MS);
+        }
+
+        // ── Progress bar helpers ─────────────────────────────────────────
+        function setBarWidth(pct) {
+          if (bar) bar.style.width = pct + '%';
+        }
+
+        // Immediately snap bar to 0 (no animation)
+        function resetBar() {
+          cancelAnimationFrame(rafHandle);
+          if (bar) {
+            bar.style.transition = 'none';
+            bar.style.width = '0%';
+            // Force reflow so the transition removal takes effect before we re-enable
+            bar.getBoundingClientRect();
+          }
+          cycleStart  = 0;
+          pausedPct   = 0;
+        }
+
+        // Start rAF loop: animates bar from pausedPct → 100% over DISPLAY_MS
+        function startBarCycle() {
+          cancelAnimationFrame(rafHandle);
+          const startPct  = pausedPct;           // resume from paused position
+          const remaining = DISPLAY_MS * (1 - startPct / 100);
+          const t0        = performance.now();
+
+          function tick(now) {
+            if (paused) return;
+
+            const elapsed = now - t0;
+            const pct = Math.min(startPct + (elapsed / remaining) * (100 - startPct), 100);
+            setBarWidth(pct);
+
+            if (pct < 100) {
+              rafHandle = requestAnimationFrame(tick);
+            } else {
+              // Bar reached 100% → NOW trigger the slide transition
+              rafHandle = null;
+              goTo(current + 1);
+            }
+          }
+          rafHandle = requestAnimationFrame(tick);
+        }
+
+        // ── Manual navigation (dots / arrows) ───────────────────────────
+        function jumpTo(n) {
+          if (n === current || transitioning) return;
+          cancelAnimationFrame(rafHandle);
+          resetBar();
+          // Bypass goTo's internal resetBar/startBarCycle so we control timing
+          transitioning = true;
+          const prev = current;
+          current = ((n % slides.length) + slides.length) % slides.length;
+
+          slides[prev].classList.remove('active');
+          slides[prev].classList.add('leaving');
+          slides[current].classList.add('active');
+          dots.forEach(d => d.classList.remove('active'));
+          dots[current].classList.add('active');
+
+          setTimeout(() => {
+            slides[prev].classList.remove('leaving');
+            transitioning = false;
+            resetBar();
+            startBarCycle();
+          }, FADE_MS);
+        }
+
+        dots.forEach(dot => {
+          dot.addEventListener('click', () => {
+            jumpTo(parseInt(dot.dataset.index, 10));
+          });
+        });
+
+        if (btnPrev) btnPrev.addEventListener('click', () => jumpTo(current - 1));
+        if (btnNext) btnNext.addEventListener('click', () => jumpTo(current + 1));
+
+        // ── Pause on hover ───────────────────────────────────────────────
+        container.addEventListener('mouseenter', () => {
+          if (paused) return;
+          paused = true;
+          // Snapshot the current bar width
+          pausedPct = bar ? parseFloat(bar.style.width || '0') : 0;
+          cancelAnimationFrame(rafHandle);
+        });
+
+        container.addEventListener('mouseleave', () => {
+          if (!paused) return;
+          paused = false;
+          startBarCycle();   // resumes from pausedPct
+        });
+
+        // ── Touch / swipe support ────────────────────────────────────────
+        let touchX = 0;
+        container.addEventListener('touchstart', e => {
+          touchX = e.touches[0].clientX;
+        }, { passive: true });
+        container.addEventListener('touchend', e => {
+          const dx = e.changedTouches[0].clientX - touchX;
+          if (Math.abs(dx) > 40) jumpTo(dx < 0 ? current + 1 : current - 1);
+        }, { passive: true });
+
+        // ── Boot ─────────────────────────────────────────────────────────
+        resetBar();
+        startBarCycle();
+      })();
+    })();
+  </script>
 </body>
 </html>
