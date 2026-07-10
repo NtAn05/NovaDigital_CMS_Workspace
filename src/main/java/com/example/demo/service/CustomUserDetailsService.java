@@ -24,10 +24,15 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         String role = user.getRole();
         // Standardize role for Spring Security
+
         if (role != null && ("TEAM_MEMBER".equalsIgnoreCase(role) || "Team_Member".equalsIgnoreCase(role) || "ROLE_MEMBER".equalsIgnoreCase(role))) {
             role = "ROLE_MEMBER";
         } else if (role != null && !role.startsWith("ROLE_")) {
-            role = "ROLE_" + role.toUpperCase();
+
+        if ("Team_Member".equals(role)) {
+            role = "ROLE_MEMBER";
+        } else if (!role.startsWith("ROLE_")) {
+            main role = "ROLE_" + role.toUpperCase();
         }
 
         return new org.springframework.security.core.userdetails.User(

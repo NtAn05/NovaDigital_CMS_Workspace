@@ -20,7 +20,7 @@ public class User {
     private String username;
 
     @Column(nullable = false, length = 255)
-    private String password; // Lưu mật khẩu đã mã hóa (BCrypt)
+    private String password; // Stores BCrypt hashed password
 
     @Column(name = "full_name", nullable = false, length = 100)
     private String fullName;
@@ -31,11 +31,14 @@ public class User {
     @Column(length = 20)
     private String phone;
 
+    @Column(name = "avatar_url", length = 512)
+    private String avatarUrl;
+
     @Column(nullable = false, length = 20)
-    private String role = "ROLE_USER"; // Mặc định tài khoản mới đăng ký là khách hàng (ROLE_USER)
+    private String role = "ROLE_USER"; // Default registered role is ROLE_USER
 
     @Column(nullable = false)
-    private boolean enabled = true; // Tài khoản có đang hoạt động hay bị khóa không
+    private boolean enabled = true; // Is account active or locked
 
     @Column(name = "last_login")
     private LocalDateTime lastLogin;

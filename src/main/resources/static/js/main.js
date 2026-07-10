@@ -922,6 +922,8 @@ function openCrudModal(type, id) {
           formData.append("file", file);
 
           const res  = await fetch("/api/upload", {
+          showCrudAlert("Uploading image...", null);
+          const res = await fetch("/api/upload", {
             method: "POST",
             headers: { "Authorization": "Bearer " + getAdminToken() },
             body: formData
@@ -929,6 +931,7 @@ function openCrudModal(type, id) {
           const data = await res.json().catch(() => ({}));
 
           if (res.ok && data.url) {
+
             urlInput.value = data.url;
             if (preview) { preview.src = data.url; preview.style.display = "block"; }
             showCrudAlert("✅ Image uploaded successfully!", true);
@@ -949,6 +952,21 @@ function openCrudModal(type, id) {
         } catch (b64Err) {
           console.error("Base64 read error:", b64Err);
           showCrudAlert("Could not load image. Please try a different file.", false);
+
+            document.getElementById(urlInputId).value = data.url;
+            const preview = document.getElementById("cf-preview");
+            if (preview) {
+              preview.src = data.url;
+              preview.style.display = "block";
+            }
+            showCrudAlert("✅ Image uploaded successfully!", true);
+          } else {
+            showCrudAlert(data.message || "Failed to upload image.", false);
+          }
+        } catch (err) {
+          console.error("Upload error:", err);
+          showCrudAlert("Could not upload image to server.", false);
+
         }
       });
     }
@@ -996,7 +1014,11 @@ function buildCrudForm(type, item) {
     ${fld("cf-email",     "Email *",          "email", v.email,    'placeholder="name@domain.com" required')}
     ${fld("cf-phone",     "Phone Number",   "tel",   v.phone,    'placeholder="0123456789" pattern="[0-9]{10}"')}
     ${!item ? fld("cf-password", "Password *", "password", "", 'placeholder="Min 6 characters" required minlength="6"') : ""}
+
     ${sel("cf-role", "Role *", [["ROLE_USER","User"],["ROLE_ADMIN","Admin"],["ROLE_MEMBER","Team Member"]], v.role || "ROLE_USER")}
+
+    ${sel("cf-role", "Role *", [["ROLE_USER","User"],["ROLE_ADMIN","Admin"],["Team_Member","Team Member"]], v.role || "ROLE_USER")}
+
     <div class="form-group" style="width: 100%;">
       <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; justify-content: flex-start;">
         <input type="checkbox" id="cf-enabled" ${v.enabled !== false ? 'checked' : ''}>
@@ -1007,7 +1029,11 @@ function buildCrudForm(type, item) {
 
   if (type === "member") return `
     ${fld("cf-name",       "Member Name *",         "text", v.name,        'placeholder="Enter member name" required')}
+
     ${fld("cf-role",       "Position / Role",         "text", v.role,        'placeholder="e.g. Frontend Developer"')}
+
+    ${fld("cf-role",       "Position / Role *",       "text", v.role,        'placeholder="e.g. Frontend Developer" required')}
+
     <div class="form-group">
       <label for="cf-avatarFile">Avatar Image *</label>
       <input type="file" id="cf-avatarFile" accept="image/*" style="width:100%; padding:0.5rem; border:1px dashed var(--border-color); border-radius:var(--radius-sm); background:var(--bg-light); cursor:pointer;">
@@ -1818,7 +1844,7 @@ function initContactForm() {
         method:  "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer " + (sessionStorage.getItem("token") || "")
+          "Authorization": "Bearer " + (localStorage.getItem("token") || "")
         },
         body:    JSON.stringify({ name, email, title: finalTitle, content })
       });
@@ -1880,7 +1906,11 @@ async function fetchInbox(email) {
   try {
     const apiUrl = `/api/contacts/my?email=${encodeURIComponent(email)}`;
     console.log("Calling API:", apiUrl);
+
     const token = sessionStorage.getItem("token") || "";
+
+    const token = localStorage.getItem("token") || "";
+
     const response = await fetch(apiUrl, {
       headers: { "Authorization": "Bearer " + token }
     });
@@ -2118,7 +2148,11 @@ function injectQuickPanel() {
   });
 
   // Inbox shortcut (show only if logged in)
+
   const token = sessionStorage.getItem("token");
+
+  const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+
   if (token) {
     const quickInbox = document.getElementById("quick-inbox");
     if (quickInbox) {
@@ -2138,6 +2172,7 @@ function injectQuickPanel() {
   }
 }
 
+
 // Hero H1 text click animation
 function initHeroTextClick() {
   const heroH1 = document.querySelector(".hero-content h1");
@@ -2152,3 +2187,4 @@ function initHeroTextClick() {
     }, 800);
   });
 }
+

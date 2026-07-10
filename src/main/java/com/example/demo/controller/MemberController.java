@@ -45,11 +45,11 @@ public class MemberController {
     public ResponseEntity<?> createMember(@RequestBody Member request) {
         Map<String, Object> error = new HashMap<>();
         if (request.getName() == null || request.getName().isBlank()) {
-            error.put("message", "Tên thành viên không được để trống");
+            error.put("message", "Member's name cannot empty ");
             return ResponseEntity.badRequest().body(error);
         }
         if (request.getRole() == null || request.getRole().isBlank()) {
-            error.put("message", "Chức vụ không được để trống");
+            error.put("message", "Role cannot empty");
             return ResponseEntity.badRequest().body(error);
         }
 
@@ -94,7 +94,7 @@ public class MemberController {
 
         Optional<Member> optional = memberRepository.findById(id);
         if (optional.isEmpty()) {
-            error.put("message", "Không tìm thấy thành viên với id = " + id);
+            error.put("message", "Cannot find member with id = " + id);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
         }
 
@@ -130,13 +130,13 @@ public class MemberController {
 
         if (!memberRepository.existsById(id)) {
             Map<String, Object> error = new HashMap<>();
-            error.put("message", "Không tìm thấy thành viên với id = " + id);
+            error.put("message", "Cannot find member with id = " + id);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
         }
         memberRepository.deleteById(id);
         Map<String, Object> result = new HashMap<>();
         result.put("success", true);
-        result.put("message", "Đã xóa thành viên thành công");
+        result.put("message", "Delete member successfully");
         return ResponseEntity.ok(result);
     }
 }

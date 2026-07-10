@@ -37,17 +37,38 @@ public class ServiceController {
             return r;
         }).collect(Collectors.toList());
     }
+        // ── GET BY ID ─────────────────────────────────────────
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getServiceById(@PathVariable Long id) {
+        Optional<Service> optional = serviceRepository.findById(id);
+
+        if (optional.isEmpty()) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("message", "Service not found with id = " + id);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        }
+
+        Service service = optional.get();
+
+        ServiceResponse response = new ServiceResponse();
+        response.setId(service.getId());
+        response.setTitle(service.getTitle());
+        response.setDescription(service.getDescription());
+        response.setIconUrl(service.getIconUrl());
+
+        return ResponseEntity.ok(response);
+    }
 
     // ── CREATE ───────────────────────────────────────────
     @PostMapping
     public ResponseEntity<?> createService(@RequestBody Service request) {
         Map<String, Object> error = new HashMap<>();
         if (request.getTitle() == null || request.getTitle().isBlank()) {
-            error.put("message", "Tên dịch vụ không được để trống");
+            error.put("message", "Service title cannot be empty");
             return ResponseEntity.badRequest().body(error);
         }
         if (request.getDescription() == null || request.getDescription().isBlank()) {
-            error.put("message", "Mô tả không được để trống");
+            error.put("message", "Description cannot be empty");
             return ResponseEntity.badRequest().body(error);
         }
 
@@ -69,7 +90,7 @@ public class ServiceController {
         Map<String, Object> error = new HashMap<>();
         Optional<Service> optional = serviceRepository.findById(id);
         if (optional.isEmpty()) {
-            error.put("message", "Không tìm thấy dịch vụ với id = " + id);
+            error.put("message", "Service not found with id = " + id);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
         }
 
@@ -90,13 +111,13 @@ public class ServiceController {
     public ResponseEntity<?> deleteService(@PathVariable Long id) {
         if (!serviceRepository.existsById(id)) {
             Map<String, Object> error = new HashMap<>();
-            error.put("message", "Không tìm thấy dịch vụ với id = " + id);
+            error.put("message", "Service not found with id = " + id);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
         }
         serviceRepository.deleteById(id);
         Map<String, Object> result = new HashMap<>();
         result.put("success", true);
-        result.put("message", "Đã xóa dịch vụ thành công");
+        result.put("message", "Service deleted successfully");
         return ResponseEntity.ok(result);
     }
 }

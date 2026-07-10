@@ -798,8 +798,7 @@
   <script src="/js/main.js"></script>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      /* ── Auth Guard ──────────────────────────────── */
-      const token = sessionStorage.getItem("token");
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
       if (!token) {
         window.location.href = "index.html?error=unauthorized#login";
         return;
@@ -969,7 +968,14 @@
           const data = await res.json().catch(() => ({}));
 
           if (res.ok) {
-            // Update sessionStorage
+            // Update local storage
+            localStorage.setItem("username", data.username || username);
+            localStorage.setItem("fullName", data.fullName || fullName);
+            localStorage.setItem("email", data.email || email);
+            if (data.avatarUrl) {
+              localStorage.setItem("avatarUrl", data.avatarUrl);
+            }
+            sessionStorage.setItem("username", data.username || username);
             sessionStorage.setItem("fullName", data.fullName || fullName);
             sessionStorage.setItem("avatarUrl", data.avatarUrl || avatarUrl);
 

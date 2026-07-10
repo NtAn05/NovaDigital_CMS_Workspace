@@ -23,22 +23,22 @@ public class Contact {
     private String email;
 
     @Column(nullable = false, length = 255)
-    private String title; // Tiêu đề lời nhắn (Message title)
+    private String title; // Message title
 
     @Column(nullable = false, columnDefinition = "TEXT")
-    private String content; // Nội dung chi tiết (Detailed content)
+    private String content; // Detailed content
 
     @Column(length = 50)
-    private String status = "PENDING"; // Trạng thái xử lý: PENDING, DONE...
+    private String status = "PENDING"; // Processing status: PENDING, DONE...
 
     @Column(columnDefinition = "TEXT")
-    private String reply; // Câu trả lời từ member
+    private String reply; // Reply message from team member
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     @Column(name = "replied_at")
-    private LocalDateTime repliedAt; // Thời gian trả lời
+    private LocalDateTime repliedAt; // Replied date time
 
     @PrePersist
     protected void onCreate() {
