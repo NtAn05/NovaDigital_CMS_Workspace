@@ -31,12 +31,12 @@ public class MemberController {
     @Autowired
     private UserRepository userRepository;
 
-    // ── GET ALL ──────────────────────────────────────────
     @GetMapping
     public List<MemberResponse> getAllMembers() {
         return memberService.getAllMembers().stream()
                 .map(m -> new MemberResponse(m.getId(), m.getName(), m.getRole(),
-                        m.getAvatarUrl(), m.getFacebookUrl(), m.getGithubUrl(), m.getLinkedinUrl()))
+                        m.getAvatarUrl(), m.getFacebookUrl(), m.getGithubUrl(), m.getLinkedinUrl(),
+                        m.getSkills(), m.getProjects()))
                 .collect(Collectors.toList());
     }
 
@@ -57,11 +57,14 @@ public class MemberController {
         member.setFacebookUrl(request.getFacebookUrl());
         member.setGithubUrl(request.getGithubUrl());
         member.setLinkedinUrl(request.getLinkedinUrl());
+        member.setSkills(request.getSkills());
+        member.setProjects(request.getProjects());
 
         Member saved = memberRepository.save(member);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new MemberResponse(saved.getId(), saved.getName(), saved.getRole(),
-                        saved.getAvatarUrl(), saved.getFacebookUrl(), saved.getGithubUrl(), saved.getLinkedinUrl()));
+                        saved.getAvatarUrl(), saved.getFacebookUrl(), saved.getGithubUrl(), saved.getLinkedinUrl(),
+                        saved.getSkills(), saved.getProjects()));
     }
 
     // ── UPDATE ───────────────────────────────────────────
@@ -77,16 +80,49 @@ public class MemberController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
             }
             User user = optionalUser.get();
+            if (!"ROLE_MEMBER".equalsIgnoreCase(user.getRole()) && !"Team_Member".equalsIgnoreCase(user.getRole())) {
+                error.put("message", "User with id = " + id + " is not a member.");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+            }
+
+            // Find or create dynamic member record in members table
+            Member m = memberRepository.findByUserId(userId)
+                    .orElseGet(() -> {
+                        Member memberObj = new Member();
+                        memberObj.setUserId(userId);
+                        memberObj.setRole("Team Member");
+                        return memberObj;
+                    });
+
             if (request.getName() != null && !request.getName().isBlank()) {
-                user.setFullName(request.getName().trim());
+                m.setName(request.getName().trim());
+            }
+            if (request.getRole() != null && !request.getRole().isBlank()) {
+                m.setRole(request.getRole().trim());
             }
             if (request.getAvatarUrl() != null) {
-                user.setAvatarUrl(request.getAvatarUrl());
+                m.setAvatarUrl(request.getAvatarUrl());
             }
-            User savedUser = userRepository.save(user);
-            return ResponseEntity.ok(new MemberResponse(id,
-                    savedUser.getFullName() != null && !savedUser.getFullName().isBlank() ? savedUser.getFullName() : savedUser.getUsername(),
-                    "Team Member", savedUser.getAvatarUrl(), null, null, null));
+            if (request.getFacebookUrl() != null) {
+                m.setFacebookUrl(request.getFacebookUrl().trim().isEmpty() ? null : request.getFacebookUrl().trim());
+            }
+            if (request.getGithubUrl() != null) {
+                m.setGithubUrl(request.getGithubUrl().trim().isEmpty() ? null : request.getGithubUrl().trim());
+            }
+            if (request.getLinkedinUrl() != null) {
+                m.setLinkedinUrl(request.getLinkedinUrl().trim().isEmpty() ? null : request.getLinkedinUrl().trim());
+            }
+            if (request.getSkills() != null) {
+                m.setSkills(request.getSkills().trim().isEmpty() ? null : request.getSkills().trim());
+            }
+            if (request.getProjects() != null) {
+                m.setProjects(request.getProjects().trim().isEmpty() ? null : request.getProjects().trim());
+            }
+
+            Member saved = memberRepository.save(m);
+            return ResponseEntity.ok(new MemberResponse(id, saved.getName(), saved.getRole(),
+                    saved.getAvatarUrl(), saved.getFacebookUrl(), saved.getGithubUrl(), saved.getLinkedinUrl(),
+                    saved.getSkills(), saved.getProjects()));
         }
 
         Optional<Member> optional = memberRepository.findById(id);
@@ -102,10 +138,13 @@ public class MemberController {
         if (request.getFacebookUrl() != null) member.setFacebookUrl(request.getFacebookUrl());
         if (request.getGithubUrl()   != null) member.setGithubUrl(request.getGithubUrl());
         if (request.getLinkedinUrl() != null) member.setLinkedinUrl(request.getLinkedinUrl());
+        if (request.getSkills()      != null) member.setSkills(request.getSkills());
+        if (request.getProjects()    != null) member.setProjects(request.getProjects());
 
         Member saved = memberRepository.save(member);
         return ResponseEntity.ok(new MemberResponse(saved.getId(), saved.getName(), saved.getRole(),
-                saved.getAvatarUrl(), saved.getFacebookUrl(), saved.getGithubUrl(), saved.getLinkedinUrl()));
+                saved.getAvatarUrl(), saved.getFacebookUrl(), saved.getGithubUrl(), saved.getLinkedinUrl(),
+                saved.getSkills(), saved.getProjects()));
     }
 
     // ── DELETE ───────────────────────────────────────────

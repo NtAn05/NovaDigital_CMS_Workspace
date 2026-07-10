@@ -406,17 +406,17 @@ function checkRouteGuard() {
   const token = sessionStorage.getItem("token");
   const role  = sessionStorage.getItem("role");
 
-  // Admin MUST stay in admin.html and cannot access any other page
+  // Admin MUST stay in admin.html or user-profile.html
   if (token && role === "ROLE_ADMIN") {
-    if (page !== "admin.html") {
+    if (page !== "admin.html" && page !== "user-profile.html") {
       window.location.href = "admin.html";
       return;
     }
   }
 
-  // Member MUST stay in member-contact.html and cannot access any other page
-  if (token && role === "ROLE_MEMBER") {
-    if (page !== "member-contact.html") {
+  // Member MUST stay in member-contact.html or member-profile.html
+  if (token && (role === "ROLE_MEMBER" || role === "Team_Member")) {
+    if (page !== "member-contact.html" && page !== "member-profile.html") {
       window.location.href = "member-contact.html";
       return;
     }
@@ -440,7 +440,7 @@ function checkRouteGuard() {
 
   // Member contact page guard
   if (page === "member-contact.html") {
-    if (!token || role !== "ROLE_MEMBER") {
+    if (!token || (role !== "ROLE_MEMBER" && role !== "Team_Member")) {
       window.location.href = "index.html";
     }
   }
@@ -471,8 +471,10 @@ function updateNavbarAuth() {
   const role     = sessionStorage.getItem("role");
   const fullName = sessionStorage.getItem("fullName");
 
-  // If Admin, hide all standard navigation links (Home, Services, etc.)
-  if (token && role === "ROLE_ADMIN") {
+  const isPortalUser = token && (role === "ROLE_ADMIN" || role === "ROLE_MEMBER" || role === "Team_Member");
+
+  // If Admin or Member, hide all standard navigation links (Home, Services, etc.)
+  if (isPortalUser) {
     navLinksContainer.querySelectorAll("li").forEach(li => {
       // Hide standard links. Dynamic auth-items (Dashboard, Logout) will be added back later.
       if (!li.classList.contains("auth-item")) {
@@ -482,7 +484,8 @@ function updateNavbarAuth() {
     // Also hide the logo link to homepage or change it
     const logo = document.getElementById("header-logo");
     if (logo) {
-      logo.setAttribute("href", "admin.html");
+      const targetPage = role === "ROLE_ADMIN" ? "admin.html" : "member-contact.html";
+      logo.setAttribute("href", targetPage);
       logo.onclick = (e) => { e.preventDefault(); }; // Disable clicking logo to go anywhere
       logo.style.cursor = "default";
     }
@@ -537,7 +540,7 @@ function updateNavbarAuth() {
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           Member Portal
         </a>
-        <a href="user-profile.html" class="dropdown-item">
+        <a href="member-profile.html" class="dropdown-item">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           Profile
         </a>
@@ -1000,8 +1003,6 @@ function buildCrudForm(type, item) {
 
     ${sel("cf-role", "Role *", [["ROLE_USER","User"],["ROLE_ADMIN","Admin"],["ROLE_MEMBER","Team Member"]], v.role || "ROLE_USER")}
 
-    ${sel("cf-role", "Role *", [["ROLE_USER","User"],["ROLE_ADMIN","Admin"],["Team_Member","Team Member"]], v.role || "ROLE_USER")}
-
     <div class="form-group" style="width: 100%;">
       <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; justify-content: flex-start;">
         <input type="checkbox" id="cf-enabled" ${v.enabled !== false ? 'checked' : ''}>
@@ -1012,11 +1013,7 @@ function buildCrudForm(type, item) {
 
   if (type === "member") return `
     ${fld("cf-name",       "Member Name *",         "text", v.name,        'placeholder="Enter member name" required')}
-
-    ${fld("cf-role",       "Position / Role",         "text", v.role,        'placeholder="e.g. Frontend Developer"')}
-
     ${fld("cf-role",       "Position / Role *",       "text", v.role,        'placeholder="e.g. Frontend Developer" required')}
-
     <div class="form-group">
       <label for="cf-avatarFile">Avatar Image *</label>
       <input type="file" id="cf-avatarFile" accept="image/*" style="width:100%; padding:0.5rem; border:1px dashed var(--border-color); border-radius:var(--radius-sm); background:var(--bg-light); cursor:pointer;">
@@ -1026,6 +1023,8 @@ function buildCrudForm(type, item) {
     ${fld("cf-facebookUrl","Facebook URL",               "url",  v.facebookUrl, 'placeholder="https://facebook.com/..."')}
     ${fld("cf-githubUrl",  "GitHub URL",                 "url",  v.githubUrl,   'placeholder="https://github.com/..."')}
     ${fld("cf-linkedinUrl","LinkedIn URL",               "url",  v.linkedinUrl, 'placeholder="https://linkedin.com/in/..."')}
+    ${fld("cf-skills",     "Professional Skills",       "text", v.skills,      'placeholder="e.g. Java, React, SQL"')}
+    ${fld("cf-projects",   "Projects Worked On",        "text", v.projectsWorked, 'placeholder="e.g. CMS Portal, E-Commerce App"')}
   `;
 
   if (type === "project") return `
@@ -1043,7 +1042,7 @@ function buildCrudForm(type, item) {
 
   if (type === "service") return `
     ${fld("cf-title", "Service Title *", "text", v.title, 'placeholder="Enter service title" required')}
-    ${sel("cf-iconUrl", "Icon Type *",
+    ${sel("cf-iconUrl", "Service Icon *",
       [["web","🌐 Web Design"],["design","🎨 UI/UX Design"],["marketing","📊 Marketing"],
        ["mobile","📱 Mobile App"],["branding","🎯 Branding"],["cloud","☁️ Cloud Solutions"]],
       v.iconUrl || "web")}
@@ -1077,7 +1076,8 @@ async function submitCrudForm() {
 
   if (type === "member") {
     payload = { name: g("cf-name"), role: g("cf-role"), avatarUrl: g("cf-avatarUrl"),
-                facebookUrl: g("cf-facebookUrl"), githubUrl: g("cf-githubUrl"), linkedinUrl: g("cf-linkedinUrl") };
+                facebookUrl: g("cf-facebookUrl"), githubUrl: g("cf-githubUrl"), linkedinUrl: g("cf-linkedinUrl"),
+                skills: g("cf-skills"), projects: g("cf-projects") };
     if (!payload.name || !payload.avatarUrl) valid = false;
   }
 

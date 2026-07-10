@@ -54,7 +54,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Public pages (Frontend)
                 .requestMatchers("/", "/index.html", "/about.html", "/services.html", "/portfolio.html", 
-                               "/contact.html", "/login.html", "/register.html", "/member.html", "/member-contact.html", "/admin.html", "/forgot-password.html", "/inbox.html", "/user-profile.html").permitAll()
+                               "/contact.html", "/login.html", "/register.html", "/member.html", "/member-contact.html", "/admin.html", "/forgot-password.html", "/inbox.html", "/user-profile.html", "/member-profile.html").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/uploads/**", "/favicon.ico").permitAll()
                 
                 // Auth APIs

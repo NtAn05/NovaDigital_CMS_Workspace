@@ -34,6 +34,21 @@ public class User {
     @Column(name = "avatar_url", length = 512)
     private String avatarUrl;
 
+    @Column(name = "facebook_url", length = 255)
+    private String facebookUrl;
+
+    @Column(name = "github_url", length = 255)
+    private String githubUrl;
+
+    @Column(name = "linkedin_url", length = 255)
+    private String linkedinUrl;
+
+    @Column(name = "skills", length = 1000)
+    private String skills;
+
+    @Column(name = "projects_worked", length = 1000)
+    private String projectsWorked;
+
     @Column(nullable = false, length = 20)
     private String role = "ROLE_USER"; // Default registered role is ROLE_USER
 
