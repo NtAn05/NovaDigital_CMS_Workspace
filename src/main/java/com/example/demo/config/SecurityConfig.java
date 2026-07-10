@@ -91,6 +91,7 @@ public class SecurityConfig {
 
                 // Get my contacts needs authentication
                 .requestMatchers("/api/contacts/my").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/contacts/**").authenticated()
                 // Manage contacts (list/view) is for Admin / Member
                 .requestMatchers(HttpMethod.GET, "/api/contacts", "/api/contacts/**").hasAnyRole("ADMIN", "MEMBER")
 
