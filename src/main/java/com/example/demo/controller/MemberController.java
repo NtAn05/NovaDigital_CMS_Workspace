@@ -48,14 +48,11 @@ public class MemberController {
             error.put("message", "Member's name cannot empty ");
             return ResponseEntity.badRequest().body(error);
         }
-        if (request.getRole() == null || request.getRole().isBlank()) {
-            error.put("message", "Role cannot empty");
-            return ResponseEntity.badRequest().body(error);
-        }
-
         Member member = new Member();
         member.setName(request.getName().trim());
-        member.setRole(request.getRole().trim());
+        if (request.getRole() != null && !request.getRole().isBlank()) {
+            member.setRole(request.getRole().trim());
+        }
         member.setAvatarUrl(request.getAvatarUrl());
         member.setFacebookUrl(request.getFacebookUrl());
         member.setGithubUrl(request.getGithubUrl());

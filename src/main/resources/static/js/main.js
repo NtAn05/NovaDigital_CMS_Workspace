@@ -922,8 +922,6 @@ function openCrudModal(type, id) {
           formData.append("file", file);
 
           const res  = await fetch("/api/upload", {
-          showCrudAlert("Uploading image...", null);
-          const res = await fetch("/api/upload", {
             method: "POST",
             headers: { "Authorization": "Bearer " + getAdminToken() },
             body: formData
@@ -952,21 +950,6 @@ function openCrudModal(type, id) {
         } catch (b64Err) {
           console.error("Base64 read error:", b64Err);
           showCrudAlert("Could not load image. Please try a different file.", false);
-
-            document.getElementById(urlInputId).value = data.url;
-            const preview = document.getElementById("cf-preview");
-            if (preview) {
-              preview.src = data.url;
-              preview.style.display = "block";
-            }
-            showCrudAlert("✅ Image uploaded successfully!", true);
-          } else {
-            showCrudAlert(data.message || "Failed to upload image.", false);
-          }
-        } catch (err) {
-          console.error("Upload error:", err);
-          showCrudAlert("Could not upload image to server.", false);
-
         }
       });
     }
@@ -1907,9 +1890,7 @@ async function fetchInbox(email) {
     const apiUrl = `/api/contacts/my?email=${encodeURIComponent(email)}`;
     console.log("Calling API:", apiUrl);
 
-    const token = sessionStorage.getItem("token") || "";
-
-    const token = localStorage.getItem("token") || "";
+    const token = sessionStorage.getItem("token") || localStorage.getItem("token") || "";
 
     const response = await fetch(apiUrl, {
       headers: { "Authorization": "Bearer " + token }
@@ -2148,8 +2129,6 @@ function injectQuickPanel() {
   });
 
   // Inbox shortcut (show only if logged in)
-
-  const token = sessionStorage.getItem("token");
 
   const token = localStorage.getItem("token") || sessionStorage.getItem("token");
 

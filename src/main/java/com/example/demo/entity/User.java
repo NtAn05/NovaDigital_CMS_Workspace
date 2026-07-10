@@ -46,9 +46,6 @@ public class User {
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    @Column(name ="avatar_url")
-    private String avatarUrl;
-
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
