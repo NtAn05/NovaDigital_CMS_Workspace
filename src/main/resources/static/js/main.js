@@ -34,6 +34,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // 4b. Initialize Hero Text Click animation
   initHeroTextClick();
 
+  // 4c. Initialize Navbar scroll effects (detached and auto show/hide)
+  initNavbarScrollEffects();
+
   // 5. Detect current page and fetch corresponding data
   const path = window.location.pathname;
   const page = path.substring(path.lastIndexOf('/') + 1) || "index.html";
@@ -2164,6 +2167,41 @@ function initHeroTextClick() {
     setTimeout(() => {
       heroH1.classList.remove("hero-text-clicked");
     }, 800);
+  });
+}
+
+// Navbar scroll effects (detached floating and scroll-to-hide)
+function initNavbarScrollEffects() {
+  const header = document.querySelector("header");
+  if (!header) return;
+
+  let lastScrollY = window.scrollY;
+  const scrollThreshold = 10; // minimum scroll down/up before hiding/showing
+  const detachThreshold = 30; // scroll Y position where navbar detaches
+
+  window.addEventListener("scroll", () => {
+    const currentScrollY = window.scrollY;
+
+    // 1. Detach/Attach logic
+    if (currentScrollY > detachThreshold) {
+      header.classList.add("header-detached");
+    } else {
+      header.classList.remove("header-detached");
+    }
+
+    // 2. Hide/Show logic (Scroll-to-hide)
+    // Only trigger if we scrolled more than the threshold
+    if (Math.abs(currentScrollY - lastScrollY) > scrollThreshold) {
+      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        // Scrolling down -> hide navbar
+        header.classList.add("header-hidden");
+      } else {
+        // Scrolling up -> show navbar
+        header.classList.remove("header-hidden");
+      }
+    }
+
+    lastScrollY = currentScrollY;
   });
 }
 
