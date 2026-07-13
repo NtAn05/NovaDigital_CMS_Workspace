@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="NovaDigital - Book a consultation, pick add-on packages and see your price update live.">
+  <title>Book a Consultation | NovaDigital</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .booking-wrap { max-width: 960px; margin: 0 auto; padding: 40px 20px 80px; }
+    .booking-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 28px; }
+    @media (max-width: 860px) { .booking-grid { grid-template-columns: 1fr; } }
+
+    .card { background: var(--card-bg, #fff); border: 1px solid var(--border-color, #e6e6f0); border-radius: 16px; padding: 24px; }
+
+    .field { margin-bottom: 16px; }
+    .field label { display:block; font-size:13px; font-weight:600; margin-bottom:6px; color: var(--text-muted, #666); }
+    .field input, .field select { width:100%; padding:10px 12px; border:1px solid #d9d9e6; border-radius:10px; font-size:14px; }
+
+    .addon-list { display:flex; flex-direction:column; gap:10px; }
+    .addon-item { display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border:1px solid #e2e2ec; border-radius:10px; cursor:pointer; }
+    .addon-item.checked { border-color: var(--accent2, #6c5ce7); background: rgba(108,92,231,0.06); }
+    .addon-item .left { display:flex; align-items:center; gap:10px; }
+    .addon-item input { width:16px; height:16px; }
+    .addon-price { font-weight:700; color: var(--accent2, #6c5ce7); }
+
+    .price-summary { position: sticky; top: 20px; }
+    .price-row { display:flex; justify-content:space-between; font-size:14px; padding:6px 0; color:#555; }
+    .price-row.total { border-top:1px dashed #ccc; margin-top:8px; padding-top:12px; font-size:18px; font-weight:800; color:#111; }
+    #totalPriceValue { transition: transform .15s ease; display:inline-block; }
+    #totalPriceValue.bump { transform: scale(1.12); }
+
+    .slot-trigger { display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border:1px solid #d9d9e6; border-radius:10px; cursor:pointer; }
+    .slot-trigger span.value { font-weight:700; }
+
+    .btn-primary { width:100%; padding:14px; border:none; border-radius:12px; background: var(--accent2, #6c5ce7); color:#fff; font-weight:700; font-size:15px; cursor:pointer; margin-top: 10px; }
+    .btn-primary:disabled { opacity:.5; cursor:not-allowed; }
+
+    /* ── UC-07: Calendar Modal ── */
+    .modal-overlay { position: fixed; inset:0; background: rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; z-index:1000; }
+    .modal-overlay.open { display:flex; }
+    .modal-box { background:#fff; border-radius:16px; width: min(480px, 92vw); max-height: 85vh; overflow:auto; padding: 22px; }
+    .modal-box h3 { margin: 0 0 14px; }
+    .date-input-row { margin-bottom: 16px; }
+    .slots-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; }
+    .slot-btn { padding:10px 6px; border-radius:10px; border:1px solid #d9d9e6; background:#fff; font-size:13px; cursor:pointer; text-align:center; }
+    .slot-btn.locked { background:#f2f2f5; color:#b3b3bd; text-decoration: line-through; cursor:not-allowed; border-style:dashed; }
+    .slot-btn.selected { background: var(--accent2, #6c5ce7); border-color: var(--accent2, #6c5ce7); color:#fff; }
+    .modal-actions { display:flex; justify-content:flex-end; gap:10px; margin-top: 18px; }
+    .btn-ghost { padding:10px 16px; border-radius:10px; border:1px solid #d9d9e6; background:#fff; cursor:pointer; }
+    .legend { display:flex; gap:16px; font-size:12px; color:#777; margin-top:12px; }
+    .legend span { display:flex; align-items:center; gap:6px; }
+    .dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
+    .dot.free { background:#fff; border:1px solid #d9d9e6; }
+    .dot.locked { background:#f2f2f5; border:1px dashed #b3b3bd; }
+    .dot.sel { background: var(--accent2, #6c5ce7); }
+
+    #formMsg { margin-top:10px; font-size:13px; }
+    #formMsg.error { color:#d63031; }
+    #formMsg.success { color:#00b894; }
+  </style>
+</head>
+<body>
+
+  <!-- Header Section -->
+  <header>
+    <nav class="navbar">
+      <a href="index.html" class="logo" id="header-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+        <span>NovaDigital</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">Introduce</a></li>
+        <li><a href="services.html">Services</a></li>
+        <li><a href="portfolio.html">Project</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        <li><a href="booking.html" class="nav-btn active">Book a Consultation</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <section class="about-hero">
+      <div class="about-hero-content">
+        <span class="hero-pill">Book a Consultation</span>
+        <h1>Plan Your <span>Project</span></h1>
+        <p>Choose a service, pick add-on packages and see your price update instantly. Then book a free time slot with our consultant.</p>
+      </div>
+    </section>
+
+    <div class="booking-wrap">
+      <form id="bookingForm" novalidate>
+        <div class="booking-grid">
+
+          <!-- LEFT: service + addons + customer info -->
+          <div class="card">
+            <div class="field">
+              <label for="serviceSelect">Service *</label>
+              <select id="serviceSelect" required>
+                <option value="">Loading services...</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="consultantSelect">Consultant *</label>
+              <select id="consultantSelect" required>
+                <option value="">Loading consultants...</option>
+              </select>
+            </div>
+
+            <!-- UC-06: Dynamic Pricing Module -->
+            <div class="field">
+              <label>Add-on Packages</label>
+              <div class="addon-list" id="addonList">
+                <p style="color:#999;font-size:13px;">Loading pricing...</p>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="clientIdInput">Your User ID *</label>
+              <input type="number" id="clientIdInput" required placeholder="e.g. 1" min="1">
+              <small style="color:#999;">TODO: khi có đăng nhập, tự lấy từ session (User đang login) thay vì nhập tay.</small>
+            </div>
+            <div class="field">
+              <label for="messageContent">Message (optional)</label>
+              <input type="text" id="messageContent" placeholder="Tell us about your project...">
+            </div>
+
+            <!-- UC-07 trigger -->
+            <div class="field">
+              <label>Consultation Time *</label>
+              <div class="slot-trigger" id="slotTrigger">
+                <span class="value" id="slotTriggerValue">Choose date &amp; time slot</span>
+                <span>📅</span>
+              </div>
+            </div>
+
+            <button type="submit" class="btn-primary" id="submitBtn" disabled>Confirm Booking</button>
+            <div id="formMsg"></div>
+          </div>
+
+          <!-- RIGHT: live price summary -->
+          <div class="card price-summary">
+            <h3 style="margin-top:0;">Price Summary</h3>
+            <div class="price-row"><span>Base price</span><span id="basePriceValue">$0</span></div>
+            <div id="addonsBreakdown"></div>
+            <div class="price-row total"><span>Total</span><span id="totalPriceValue">$0</span></div>
+          </div>
+
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <!-- UC-07: Booking Calendar Modal -->
+  <div class="modal-overlay" id="calendarModal">
+    <div class="modal-box">
+      <h3>Choose Date &amp; Time</h3>
+      <div class="date-input-row">
+        <input type="date" id="dateInput">
+      </div>
+      <div class="slots-grid" id="slotsGrid">
+        <p style="grid-column:1/-1;color:#999;font-size:13px;">Select a consultant and a date to see available slots.</p>
+      </div>
+      <div class="legend">
+        <span><i class="dot free"></i> Available</span>
+        <span><i class="dot locked"></i> Already booked</span>
+        <span><i class="dot sel"></i> Selected</span>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" id="closeModalBtn">Cancel</button>
+        <button type="button" class="btn-primary" style="width:auto;margin-top:0;" id="confirmSlotBtn" disabled>Use this slot</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer Section -->
+  <footer>
+    <div class="footer-container">
+      <div class="footer-col">
+        <a href="index.html" class="footer-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+          <span>NovaDigital</span>
+        </a>
+        <p>Bring your business closer to millions of customers through comprehensive UI/UX design and technology solutions.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    const API = '';
+
+    // ── State ──────────────────────────────────────────────────────
+    let pricingTable = { basePrice: 0, addons: [] }; // addons: [{id, addonName, priceModifier}]
+    let selectedAddonIds = new Set();
+    let chosenDate = null;
+    let chosenStart = null;
+    let confirmedStart = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadServices();
+      loadConsultants();
+      bindEvents();
+    });
+
+    async function loadServices() {
+      try {
+        const res = await fetch(`${API}/api/services`);
+        const services = await res.json();
+        const sel = document.getElementById('serviceSelect');
+        sel.innerHTML = '<option value="">-- Select a service --</option>' +
+          services.map(s => `<option value="${s.id}">${escHtml(s.title)}</option>`).join('');
+      } catch (e) {
+        document.getElementById('serviceSelect').innerHTML = '<option value="">Failed to load services</option>';
+      }
+    }
+
+    // Expert lấy từ bảng Member có sẵn (client_id/expert_id map thẳng vào User/Member đã có)
+    async function loadConsultants() {
+      try {
+        const res = await fetch(`${API}/api/members`);
+        const members = await res.json();
+        const sel = document.getElementById('consultantSelect');
+        sel.innerHTML = '<option value="">-- Select an expert --</option>' +
+          members.map(m => `<option value="${m.id}">${escHtml(m.name)} (${escHtml(m.role || '')})</option>`).join('');
+      } catch (e) {
+        document.getElementById('consultantSelect').innerHTML = '<option value="">Failed to load experts</option>';
+      }
+    }
+
+    // ── UC-06: Dynamic Pricing Module (Service.base_price + Service_Addon) ──
+    async function loadPricingForService(serviceId) {
+      const list = document.getElementById('addonList');
+      if (!serviceId) {
+        pricingTable = { basePrice: 0, addons: [] };
+        list.innerHTML = '<p style="color:#999;font-size:13px;">Select a service to see add-ons.</p>';
+        updateTotal();
+        return;
+      }
+      list.innerHTML = '<p style="color:#999;font-size:13px;">Loading pricing...</p>';
+      try {
+        const res = await fetch(`${API}/api/bookings/pricing?serviceId=${serviceId}`);
+        if (!res.ok) throw new Error('failed');
+        pricingTable = await res.json();
+        selectedAddonIds.clear();
+        renderAddons();
+        updateTotal();
+      } catch (e) {
+        list.innerHTML = '<p style="color:#d63031;font-size:13px;">Failed to load pricing table.</p>';
+      }
+    }
+
+    function renderAddons() {
+      const list = document.getElementById('addonList');
+      const addons = pricingTable.addons || [];
+      if (!addons.length) {
+        list.innerHTML = '<p style="color:#999;font-size:13px;">No add-ons available for this service.</p>';
+        return;
+      }
+      list.innerHTML = addons.map(a => `
+        <label class="addon-item" data-id="${a.id}">
+          <span class="left">
+            <input type="checkbox" class="addon-checkbox" data-id="${a.id}" data-price="${a.priceModifier}">
+            <span>${escHtml(a.addonName)}</span>
+          </span>
+          <span class="addon-price">+$${Number(a.priceModifier).toFixed(0)}</span>
+        </label>
+      `).join('');
+
+      // JavaScript arithmetic handler: recalculates total whenever an addon checkbox changes
+      list.querySelectorAll('.addon-checkbox').forEach(cb => {
+        cb.addEventListener('change', (e) => {
+          const id = Number(e.target.dataset.id);
+          if (e.target.checked) selectedAddonIds.add(id); else selectedAddonIds.delete(id);
+          e.target.closest('.addon-item').classList.toggle('checked', e.target.checked);
+          updateTotal();
+        });
+      });
+    }
+
+    // Pure arithmetic handler: base + sum(selected addon prices) = live total
+    function updateTotal() {
+      const base = Number(pricingTable.basePrice || 0);
+      let addonsSum = 0;
+      const breakdownEl = document.getElementById('addonsBreakdown');
+      breakdownEl.innerHTML = '';
+
+      (pricingTable.addons || []).forEach(a => {
+        if (!selectedAddonIds.has(a.id)) return;
+        const price = Number(a.priceModifier || 0);
+        addonsSum += price;
+        const row = document.createElement('div');
+        row.className = 'price-row';
+        row.innerHTML = `<span>${escHtml(a.addonName)}</span><span>+$${price.toFixed(0)}</span>`;
+        breakdownEl.appendChild(row);
+      });
+
+      const total = base + addonsSum;
+      document.getElementById('basePriceValue').textContent = `$${base.toFixed(0)}`;
+      const totalEl = document.getElementById('totalPriceValue');
+      totalEl.textContent = `$${total.toFixed(0)}`;
+      totalEl.classList.remove('bump');
+      void totalEl.offsetWidth;
+      totalEl.classList.add('bump');
+
+      validateForm();
+    }
+
+    // ── UC-07: Booking Calendar Controls ─────────────────────────────
+    function bindEvents() {
+      document.getElementById('serviceSelect').addEventListener('change', (e) => {
+        loadPricingForService(e.target.value);
+        validateForm();
+      });
+      document.getElementById('slotTrigger').addEventListener('click', openCalendarModal);
+      document.getElementById('closeModalBtn').addEventListener('click', closeCalendarModal);
+      document.getElementById('dateInput').addEventListener('change', onDateChange);
+      document.getElementById('confirmSlotBtn').addEventListener('click', confirmSlot);
+      document.getElementById('consultantSelect').addEventListener('change', () => {
+        confirmedStart = null;
+        document.getElementById('slotTriggerValue').textContent = 'Choose date & time slot';
+        validateForm();
+      });
+      document.getElementById('bookingForm').addEventListener('submit', submitBooking);
+      document.getElementById('clientIdInput').addEventListener('input', validateForm);
+
+      const dateInput = document.getElementById('dateInput');
+      dateInput.min = new Date().toISOString().split('T')[0];
+    }
+
+    function openCalendarModal() {
+      const expertId = document.getElementById('consultantSelect').value;
+      if (!expertId) {
+        alert('Please choose an expert first.');
+        return;
+      }
+      document.getElementById('calendarModal').classList.add('open');
+      if (chosenDate) loadSlots();
+    }
+
+    function closeCalendarModal() {
+      document.getElementById('calendarModal').classList.remove('open');
+    }
+
+    function onDateChange(e) {
+      chosenDate = e.target.value;
+      chosenStart = null;
+      loadSlots();
+    }
+
+    async function loadSlots() {
+      const expertId = document.getElementById('consultantSelect').value;
+      const grid = document.getElementById('slotsGrid');
+      if (!expertId || !chosenDate) return;
+
+      grid.innerHTML = '<p style="grid-column:1/-1;color:#999;font-size:13px;">Loading slots...</p>';
+      document.getElementById('confirmSlotBtn').disabled = true;
+
+      try {
+        const res = await fetch(`${API}/api/bookings/slots?expertId=${expertId}&date=${chosenDate}`);
+        if (!res.ok) throw new Error('Failed to load slots');
+        const slots = await res.json();
+
+        grid.innerHTML = slots.map(s => {
+          const label = s.startTime.slice(0, 5);
+          return `<button type="button" class="slot-btn ${s.locked ? 'locked' : ''}"
+                    data-start="${s.startTime}" ${s.locked ? 'disabled' : ''}>${label}</button>`;
+        }).join('');
+
+        grid.querySelectorAll('.slot-btn:not(.locked)').forEach(btn => {
+          btn.addEventListener('click', () => {
+            grid.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('selected'));
+            btn.classList.add('selected');
+            chosenStart = btn.dataset.start;
+            document.getElementById('confirmSlotBtn').disabled = false;
+          });
+        });
+      } catch (e) {
+        grid.innerHTML = '<p style="grid-column:1/-1;color:#d63031;font-size:13px;">Could not load slots. Try again.</p>';
+      }
+    }
+
+    function confirmSlot() {
+      if (!chosenDate || !chosenStart) return;
+      confirmedStart = chosenStart;
+      const label = chosenStart.slice(0, 5);
+      document.getElementById('slotTriggerValue').textContent = `${chosenDate} — ${label}`;
+      closeCalendarModal();
+      validateForm();
+    }
+
+    // ── Submit ─────────────────────────────────────────────────────
+    function validateForm() {
+      const ok = document.getElementById('serviceSelect').value &&
+                 document.getElementById('consultantSelect').value &&
+                 document.getElementById('clientIdInput').value &&
+                 chosenDate && confirmedStart;
+      document.getElementById('submitBtn').disabled = !ok;
+    }
+
+    async function submitBooking(e) {
+      e.preventDefault();
+      const msg = document.getElementById('formMsg');
+      msg.textContent = '';
+      msg.className = '';
+
+      const payload = {
+        serviceId: Number(document.getElementById('serviceSelect').value),
+        clientId: Number(document.getElementById('clientIdInput').value),
+        expertId: Number(document.getElementById('consultantSelect').value),
+        addonIds: Array.from(selectedAddonIds),
+        appointmentDate: chosenDate,
+        timeSlot: confirmedStart,
+        messageContent: document.getElementById('messageContent').value.trim()
+      };
+
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Booking...';
+
+      try {
+        const res = await fetch(`${API}/api/bookings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          msg.textContent = data.message || 'Booking failed.';
+          msg.className = 'error';
+          if (res.status === 409) { confirmedStart = null; loadSlots(); }
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Confirm Booking';
+          return;
+        }
+
+        msg.textContent = `Booking confirmed! Total: $${data.totalPrice.toFixed(0)} on ${data.appointmentDate} at ${data.timeSlot.slice(0,5)}.`;
+        msg.className = 'success';
+        submitBtn.textContent = 'Booked ✓';
+      } catch (err) {
+        msg.textContent = 'Network error, please try again.';
+        msg.className = 'error';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Confirm Booking';
+      }
+    }
+
+    function escHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str == null ? '' : str;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>
