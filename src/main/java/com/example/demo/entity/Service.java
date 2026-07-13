@@ -25,6 +25,12 @@ public class Service {
     @Column(name = "icon_url", length = 255)
     private String iconUrl; // Path to service icon/image
 
+    @Column(name = "base_price")
+    private Double basePrice;
+
+    @Column(name = "category", length = 100)
+    private String category;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

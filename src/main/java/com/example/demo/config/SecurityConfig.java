@@ -66,6 +66,32 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/projects", "/api/projects/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/services", "/api/services/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/members", "/api/members/**").permitAll()
+                .requestMatchers("/api/bookings/**").permitAll()
+
+                // Milestone SSE Stream: public so Client View can subscribe without login
+                .requestMatchers(HttpMethod.GET, "/api/milestones/stream").permitAll()
+
+                // Milestone read: public (project progress visible on Client View)
+                .requestMatchers(HttpMethod.GET, "/api/projects/*/milestones").permitAll()
+
+                // Milestone audit logs: restricted to internal team
+                .requestMatchers(HttpMethod.GET, "/api/projects/*/milestones/*/logs").hasAnyRole("ADMIN", "MEMBER")
+
+                // Milestone sync & create: MEMBER only (PM ownership check is in service layer)
+                .requestMatchers(HttpMethod.POST, "/api/projects/*/milestones").hasRole("MEMBER")
+                .requestMatchers(HttpMethod.PUT, "/api/projects/*/milestones/**").hasRole("MEMBER")
+
+                // Milestone delete: Admin only
+                .requestMatchers(HttpMethod.DELETE, "/api/projects/*/milestones/**").hasRole("ADMIN")
+
+                // Assignment management: Admin only
+                .requestMatchers("/api/projects/*/assignments").hasRole("ADMIN")
+                .requestMatchers("/api/projects/*/assignments/**").hasRole("ADMIN")
+                .requestMatchers("/api/projects/*/clients").hasRole("ADMIN")
+                .requestMatchers("/api/projects/*/clients/**").hasRole("ADMIN")
+
+                // My-projects endpoints: any authenticated user
+                .requestMatchers("/api/my/**").authenticated()
                 
                 // Contact submission: any authenticated user can POST to /api/contacts (send message)
                 .requestMatchers(HttpMethod.POST, "/api/contacts").authenticated()

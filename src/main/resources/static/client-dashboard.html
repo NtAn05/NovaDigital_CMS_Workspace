@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Client Portal — NovaDigital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:      #0a0c18;
+      --surface: #111427;
+      --card:    #181c32;
+      --border:  #222741;
+      --accent:  #7c6fff;
+      --cyan:    #00d4ff;
+      --green:   #22d3a5;
+      --amber:   #f59e0b;
+      --red:     #ef4444;
+      --text:    #e2e8f0;
+      --muted:   #64748b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* ── Header ── */
+    header {
+      background: rgba(17,20,39,.85); backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px; height: 64px; display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 50;
+    }
+    .header-logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 18px;
+      background: linear-gradient(135deg, var(--accent), var(--cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .header-logo .icon { width: 32px; height: 32px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--accent), var(--cyan));
+      display: flex; align-items: center; justify-content: center; font-size: 16px; -webkit-text-fill-color: initial; }
+
+    .header-user { display: flex; align-items: center; gap: 14px; }
+    .header-user .welcome { font-size: 14px; color: var(--muted); }
+    .header-user .name { font-weight: 600; color: var(--text); }
+    .avatar {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--green));
+      display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px;
+      overflow: hidden; flex-shrink: 0;
+    }
+    .avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .btn-logout {
+      padding: 7px 16px; border-radius: 8px; background: transparent;
+      border: 1px solid var(--border); color: var(--muted); cursor: pointer; font-size: 13px; transition: all .2s;
+    }
+    .btn-logout:hover { border-color: var(--red); color: var(--red); }
+
+    /* ── Main ── */
+    .container { max-width: 1100px; margin: 0 auto; padding: 40px 24px; }
+
+    .page-title { font-size: 28px; font-weight: 800; margin-bottom: 6px; }
+    .page-sub { color: var(--muted); font-size: 14px; margin-bottom: 32px; }
+
+    /* ── SSE bar ── */
+    .sse-bar {
+      display: flex; align-items: center; gap: 8px; padding: 10px 16px;
+      background: rgba(34,211,165,.07); border: 1px solid rgba(34,211,165,.18);
+      border-radius: 10px; font-size: 13px; color: var(--green); margin-bottom: 32px;
+    }
+    .sse-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(1.5)} }
+
+    /* ── Project Cards ── */
+    .projects { display: flex; flex-direction: column; gap: 28px; }
+
+    .project-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 20px; overflow: hidden;
+      transition: box-shadow .3s;
+    }
+    .project-card:hover { box-shadow: 0 8px 40px rgba(124,111,255,.12); }
+
+    .project-card-top {
+      display: grid; grid-template-columns: 240px 1fr; gap: 0;
+    }
+    .project-img {
+      height: 180px; background: linear-gradient(135deg, var(--surface), var(--border));
+      display: flex; align-items: center; justify-content: center; font-size: 56px;
+    }
+    .project-img img { width: 100%; height: 100%; object-fit: cover; }
+
+    .project-info { padding: 24px; }
+    .project-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .category-tag {
+      padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;
+      background: rgba(124,111,255,.15); color: var(--accent);
+    }
+    .hired-date { font-size: 12px; color: var(--muted); }
+    .project-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .project-desc { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 14px; }
+    .tech-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+    .tech-tag {
+      padding: 3px 10px; border-radius: 6px; font-size: 12px;
+      background: rgba(0,212,255,.1); color: var(--cyan); border: 1px solid rgba(0,212,255,.2);
+    }
+
+    /* ── Milestones Timeline ── */
+    .milestones-section { border-top: 1px solid var(--border); padding: 24px; }
+    .milestones-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+    .milestones-header h4 { font-size: 15px; font-weight: 700; }
+    .milestones-count {
+      background: rgba(124,111,255,.15); color: var(--accent);
+      font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 20px;
+    }
+
+    .timeline { display: flex; flex-direction: column; gap: 14px; }
+
+    .milestone-row { display: flex; align-items: center; gap: 16px; }
+    .timeline-dot-wrap { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+    .timeline-dot {
+      width: 14px; height: 14px; border-radius: 50%; border: 2px solid;
+      transition: all .4s;
+    }
+    .timeline-line { width: 2px; height: 20px; background: var(--border); }
+
+    .milestone-content { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+    .milestone-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .milestone-name { font-weight: 600; font-size: 14px; }
+    .status-badge {
+      font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px;
+    }
+    .status-PENDING     { background: rgba(100,116,139,.2); color: #94a3b8; border: 1px solid rgba(100,116,139,.3); }
+    .status-IN_PROGRESS { background: rgba(0,212,255,.12); color: var(--cyan); border: 1px solid rgba(0,212,255,.25); }
+    .status-COMPLETED   { background: rgba(34,211,165,.12); color: var(--green); border: 1px solid rgba(34,211,165,.25); }
+    .status-BLOCKED     { background: rgba(239,68,68,.12); color: var(--red); border: 1px solid rgba(239,68,68,.25); }
+
+    .dot-PENDING     { background: #94a3b8; border-color: #94a3b8; }
+    .dot-IN_PROGRESS { background: var(--cyan); border-color: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
+    .dot-COMPLETED   { background: var(--green); border-color: var(--green); }
+    .dot-BLOCKED     { background: var(--red); border-color: var(--red); }
+
+    .progress-row { display: flex; align-items: center; gap: 12px; }
+    .progress-track { flex: 1; height: 6px; background: var(--border); border-radius: 20px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 20px; transition: width .8s ease; }
+    .fill-PENDING     { background: #94a3b8; }
+    .fill-IN_PROGRESS { background: linear-gradient(90deg, var(--accent), var(--cyan)); }
+    .fill-COMPLETED   { background: linear-gradient(90deg, var(--green), var(--cyan)); }
+    .fill-BLOCKED     { background: var(--red); }
+    .progress-pct { font-size: 13px; font-weight: 700; min-width: 38px; text-align: right; }
+
+    /* ── Toast ── */
+    #toasts { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 10px; z-index: 999; }
+    .toast {
+      padding: 14px 18px; border-radius: 14px; max-width: 340px; font-size: 13px;
+      animation: slideIn .3s ease; display: flex; flex-direction: column; gap: 4px;
+    }
+    .toast-title { font-weight: 700; }
+    .toast-body { font-size: 12px; color: var(--text); }
+    .toast-info { background: rgba(124,111,255,.18); border: 1px solid var(--accent); color: var(--accent); }
+    .toast-success { background: rgba(34,211,165,.15); border: 1px solid var(--green); color: var(--green); }
+    @keyframes slideIn { from{transform:translateX(60px);opacity:0} to{transform:translateX(0);opacity:1} }
+
+    /* ── Empty / Spinner ── */
+    .empty { text-align: center; padding: 80px 24px; color: var(--muted); }
+    .empty .emoji { font-size: 64px; display: block; margin-bottom: 16px; }
+    .empty h3 { font-size: 18px; color: var(--text); margin-bottom: 8px; }
+
+    .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .6s linear infinite; margin: 60px auto; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 640px) {
+      .project-card-top { grid-template-columns: 1fr; }
+      .project-img { height: 140px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header>
+  <div class="header-logo">
+    <div class="icon">⚡</div>
+    NovaDigital
+  </div>
+  <div class="header-user">
+    <div>
+      <div class="welcome">Welcome back,</div>
+      <div class="name" id="headerName">Client</div>
+    </div>
+    <div class="avatar" id="headerAvatar">?</div>
+    <a href="user-profile.html" class="btn-logout" style="text-decoration:none">👤 Profile</a>
+    <button class="btn-logout" id="btnLogout">Sign Out</button>
+  </div>
+</header>
+
+<!-- Main -->
+<div class="container">
+  <h1 class="page-title">My Projects</h1>
+  <p class="page-sub">Track the progress of your hired projects in real time.</p>
+
+  <div class="sse-bar">
+    <div class="sse-dot"></div>
+    <span>Real-time connected — milestone progress updates automatically when PM syncs</span>
+  </div>
+
+  <div class="projects" id="projectList">
+    <div class="spinner"></div>
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+  const API = '';
+  const token = localStorage.getItem('authToken');
+  if (!token) { window.location.href = '/login.html'; }
+
+  const savedUser = localStorage.getItem('user');
+  let currentUser = null;
+  if (savedUser) {
+    currentUser = JSON.parse(savedUser);
+    document.getElementById('headerName').textContent = currentUser.fullName || currentUser.username;
+    const av = document.getElementById('headerAvatar');
+    if (currentUser.avatarUrl) {
+      av.innerHTML = `<img src="${currentUser.avatarUrl}" alt="av" />`;
+    } else {
+      av.textContent = (currentUser.fullName || currentUser.username || '?')[0].toUpperCase();
+    }
+  }
+
+  document.getElementById('btnLogout').addEventListener('click', () => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('user');
+    window.location.href = '/login.html';
+  });
+
+  // ── SSE ─────────────────────────────────────────────────────────────────────
+  const sse = new EventSource(`${API}/api/milestones/stream`);
+  sse.addEventListener('milestone-update', (e) => {
+    const payload = JSON.parse(e.data);
+    // Refresh that project's milestones inline
+    updateProjectMilestones(payload.projectId);
+    if (payload.mutationSummary) {
+      showToast('Project Update', payload.mutationSummary);
+    }
+  });
+
+  // ── Load & Render ────────────────────────────────────────────────────────────
+  async function loadProjects() {
+    const res = await fetch(`${API}/api/my/client-projects`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    const projects = await res.json();
+    const list = document.getElementById('projectList');
+
+    if (!projects.length) {
+      list.innerHTML = `
+        <div class="empty">
+          <span class="emoji">📋</span>
+          <h3>No projects yet</h3>
+          <p>Your hired projects will appear here once assigned by our team.</p>
+        </div>`;
+      return;
+    }
+
+    list.innerHTML = '';
+    for (const p of projects) {
+      const card = await buildProjectCard(p);
+      list.appendChild(card);
+    }
+  }
+
+  async function buildProjectCard(p) {
+    const milestones = await fetchMilestones(p.id);
+    const card = document.createElement('div');
+    card.className = 'project-card';
+    card.id = `project-${p.id}`;
+
+    const techs = (p.technologies || '').split(',').filter(Boolean)
+      .map(t => `<span class="tech-tag">${escHtml(t.trim())}</span>`).join('');
+
+    const imgHtml = p.imageUrl
+      ? `<img src="${escHtml(p.imageUrl)}" alt="${escHtml(p.title)}" />`
+      : `<span>🖥️</span>`;
+
+    card.innerHTML = `
+      <div class="project-card-top">
+        <div class="project-img">${imgHtml}</div>
+        <div class="project-info">
+          <div class="project-meta">
+            <span class="category-tag">${escHtml(p.category)}</span>
+            <span class="hired-date">Hired ${formatDate(p.hiredAt)}</span>
+          </div>
+          <div class="project-title">${escHtml(p.title)}</div>
+          <div class="project-desc">${escHtml(p.description)}</div>
+          <div class="tech-tags">${techs}</div>
+        </div>
+      </div>
+      <div class="milestones-section">
+        <div class="milestones-header">
+          <h4>🏁 Milestones</h4>
+          <span class="milestones-count">${milestones.length} total</span>
+        </div>
+        <div class="timeline" id="timeline-${p.id}">
+          ${renderTimeline(milestones)}
+        </div>
+      </div>`;
+
+    return card;
+  }
+
+  async function fetchMilestones(projectId) {
+    const res = await fetch(`${API}/api/projects/${projectId}/milestones`);
+    return res.ok ? await res.json() : [];
+  }
+
+  function renderTimeline(milestones) {
+    if (!milestones.length) return '<p style="color:var(--muted);font-size:13px">No milestones defined yet.</p>';
+    return milestones.map((m, i) => `
+      <div class="milestone-row">
+        <div class="timeline-dot-wrap">
+          <div class="timeline-dot dot-${m.status}"></div>
+          ${i < milestones.length - 1 ? '<div class="timeline-line"></div>' : ''}
+        </div>
+        <div class="milestone-content" id="ms-${m.id}">
+          <div class="milestone-top">
+            <span class="milestone-name">${escHtml(m.name)}</span>
+            <span class="status-badge status-${m.status}">${m.status.replace('_',' ')}</span>
+          </div>
+          <div class="progress-row">
+            <div class="progress-track">
+              <div class="progress-fill fill-${m.status}" style="width:${m.progressPercentage}%"></div>
+            </div>
+            <span class="progress-pct" style="color:${statusColor(m.status)}">${m.progressPercentage}%</span>
+          </div>
+          ${m.description ? `<p style="font-size:12px;color:var(--muted);margin-top:8px">${escHtml(m.description)}</p>` : ''}
+        </div>
+      </div>`).join('');
+  }
+
+  async function updateProjectMilestones(projectId) {
+    const timeline = document.getElementById(`timeline-${projectId}`);
+    if (!timeline) return;
+    const milestones = await fetchMilestones(projectId);
+    timeline.innerHTML = renderTimeline(milestones);
+    // Update count badge
+    const countEl = timeline.closest('.milestones-section')?.querySelector('.milestones-count');
+    if (countEl) countEl.textContent = `${milestones.length} total`;
+  }
+
+  // ── Helpers ─────────────────────────────────────────────────────────────────
+  function statusColor(s) {
+    return { PENDING:'#94a3b8', IN_PROGRESS:'var(--cyan)', COMPLETED:'var(--green)', BLOCKED:'var(--red)' }[s] || '#fff';
+  }
+
+  function formatDate(dt) {
+    if (!dt) return '';
+    return new Date(dt).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
+  }
+
+  function escHtml(str) {
+    return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function showToast(title, body) {
+    const c = document.getElementById('toasts');
+    const t = document.createElement('div');
+    t.className = 'toast toast-info';
+    t.innerHTML = `<div class="toast-title">🔔 ${title}</div><div class="toast-body">${body}</div>`;
+    c.appendChild(t);
+    setTimeout(() => t.remove(), 6000);
+  }
+
+  loadProjects();
+</script>
+</body>
+</html>

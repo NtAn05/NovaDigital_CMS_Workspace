@@ -1,5 +1,17 @@
 // Dynamic Data Loading, Authentication, and UI logic for NovaDigital Creative Agency
 
+// Clear persistent authentication keys if a new browser session starts (empty sessionStorage)
+function initSessionClean() {
+  const sessionToken = sessionStorage.getItem("token");
+  const localToken = localStorage.getItem("token") || localStorage.getItem("authToken");
+  if (!sessionToken && localToken) {
+    console.log("New session detected. Clearing persistent auth storage...");
+    const authKeys = ["token", "authToken", "username", "fullName", "role", "email", "avatarUrl", "user"];
+    authKeys.forEach(key => localStorage.removeItem(key));
+  }
+}
+initSessionClean();
+
 function initTheme() {
   const currentTheme = localStorage.getItem("theme") || "light";
   if (currentTheme === "dark") {
@@ -34,6 +46,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // 4b. Initialize Hero Text Click animation
   initHeroTextClick();
 
+  // 4c. Initialize Navbar scroll effects (detached floating and show/hide)
+  initNavbarScrollEffects();
+
   // 5. Detect current page and fetch corresponding data
   const path = window.location.pathname;
   const page = path.substring(path.lastIndexOf('/') + 1) || "index.html";
@@ -45,6 +60,8 @@ document.addEventListener("DOMContentLoaded", () => {
     fetchMembers();
   } else if (page === "portfolio.html") {
     fetchProjects();
+  } else if (page === "rented-project.html") {
+    // Handled by inline script
   } else if (page === "contact.html") {
     initContactForm();
   } else if (page === "login.html") {
@@ -55,12 +72,12 @@ document.addEventListener("DOMContentLoaded", () => {
     initAdminDashboard();
   } else if (page === "member-contact.html") {
     // Member page is handled by inline script
-  } else if (page === "index.html") {
+  } else if (page === "inbox.html" || page === "index.html") {
     // Fetch inbox if user is logged in
-    const token = sessionStorage.getItem("token");
-    const email = sessionStorage.getItem("email"); 
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    const email = localStorage.getItem("email") || sessionStorage.getItem("email"); 
     console.log("Token:", token);
-    console.log("Email from localStorage:", email);
+    console.log("Email:", email);
     if (token && email) {
       console.log("Calling fetchInbox with email:", email);
       fetchInbox(email);
@@ -310,7 +327,25 @@ function initModalLoginForm() {
       const data = await response.json();
 
       if (response.ok && data.token) {
+        // Write to localStorage
+        localStorage.setItem("token",     data.token);
+        localStorage.setItem("authToken", data.token);
+        localStorage.setItem("username",  data.username);
+        localStorage.setItem("fullName",  data.fullName);
+        localStorage.setItem("role",      data.role);
+        localStorage.setItem("email",     data.email);
+        localStorage.setItem("avatarUrl", data.avatarUrl || "");
+        localStorage.setItem("user", JSON.stringify({
+          username:  data.username,
+          fullName:  data.fullName,
+          email:     data.email,
+          role:      data.role,
+          avatarUrl: data.avatarUrl || null
+        }));
+
+        // Write to sessionStorage for route guard and header sync compatibility
         sessionStorage.setItem("token",     data.token);
+        sessionStorage.setItem("authToken", data.token);
         sessionStorage.setItem("username",  data.username);
         sessionStorage.setItem("fullName",  data.fullName);
         sessionStorage.setItem("role",      data.role);
@@ -403,8 +438,8 @@ function checkRouteGuard() {
   const path = window.location.pathname;
   const page = path.substring(path.lastIndexOf('/') + 1) || "index.html";
 
-  const token = sessionStorage.getItem("token");
-  const role  = sessionStorage.getItem("role");
+  const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+  const role  = localStorage.getItem("role") || sessionStorage.getItem("role");
 
   // Admin MUST stay in admin.html or user-profile.html
   if (token && role === "ROLE_ADMIN") {
@@ -423,7 +458,7 @@ function checkRouteGuard() {
   }
 
   // Protected client pages
-  const protectedPages = ["contact.html"];
+  const protectedPages = ["contact.html", "rented-project.html"];
 
   if (protectedPages.includes(page) && !token) {
     sessionStorage.setItem("redirectAttempt", page);
@@ -467,9 +502,9 @@ function updateNavbarAuth() {
   const navLinksContainer = document.querySelector(".nav-links");
   if (!navLinksContainer) return;
 
-  const token    = sessionStorage.getItem("token");
-  const role     = sessionStorage.getItem("role");
-  const fullName = sessionStorage.getItem("fullName");
+  const token    = localStorage.getItem("token") || sessionStorage.getItem("token");
+  const role     = localStorage.getItem("role") || sessionStorage.getItem("role");
+  const fullName = localStorage.getItem("fullName") || sessionStorage.getItem("fullName");
 
   const isPortalUser = token && (role === "ROLE_ADMIN" || role === "ROLE_MEMBER" || role === "Team_Member");
 
@@ -515,8 +550,8 @@ function updateNavbarAuth() {
     dropdownLi.className = "auth-item user-dropdown-container";
     dropdownLi.style.position = "relative";
 
-    const username  = sessionStorage.getItem("username");
-    const avatarUrl = sessionStorage.getItem("avatarUrl");
+    const username  = localStorage.getItem("username") || sessionStorage.getItem("username");
+    const avatarUrl = localStorage.getItem("avatarUrl") || sessionStorage.getItem("avatarUrl");
 
     function getInitials(name) {
       if (!name) return "ND";
@@ -550,6 +585,10 @@ function updateNavbarAuth() {
         <a href="user-profile.html" class="dropdown-item">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           Profile
+        </a>
+        <a href="inbox.html" class="dropdown-item">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+          Inbox
         </a>
         <a href="transaction.html" class="dropdown-item">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
@@ -625,6 +664,7 @@ function updateNavbarAuth() {
 
 // User Logout Logic
 function logoutUser() {
+  localStorage.clear();
   sessionStorage.clear();
   window.location.href = "index.html";
 }
@@ -669,7 +709,26 @@ function initLoginForm() {
       const data = await response.json();
 
       if (response.ok && data.token) {
+        // Store both 'token' (legacy) and 'authToken' (used by new dashboards) in localStorage
+        localStorage.setItem("token",     data.token);
+        localStorage.setItem("authToken", data.token);
+        localStorage.setItem("username",  data.username);
+        localStorage.setItem("fullName",  data.fullName);
+        localStorage.setItem("role",      data.role);
+        localStorage.setItem("email",     data.email);
+        localStorage.setItem("avatarUrl", data.avatarUrl || "");
+        // Store full user object for PM / Client dashboards
+        localStorage.setItem("user", JSON.stringify({
+          username:  data.username,
+          fullName:  data.fullName,
+          email:     data.email,
+          role:      data.role,
+          avatarUrl: data.avatarUrl || null
+        }));
+
+        // Write to sessionStorage for route guard and header sync compatibility
         sessionStorage.setItem("token",     data.token);
+        sessionStorage.setItem("authToken", data.token);
         sessionStorage.setItem("username",  data.username);
         sessionStorage.setItem("fullName",  data.fullName);
         sessionStorage.setItem("role",      data.role);
@@ -681,8 +740,12 @@ function initLoginForm() {
         setTimeout(() => {
           if (data.role === "ROLE_ADMIN") {
             window.location.href = "admin.html";
-          } else if (data.role === "Team_Member" || data.role === "ROLE_MEMBER") {
+          } else if (data.role === "ROLE_MEMBER") {
+            // Internal team member — goes to PM Dashboard
             window.location.href = "member-contact.html";
+          } else if (data.role === "ROLE_USER") {
+            // External client — goes to Client Portal
+            window.location.href = "client-dashboard.html";
           } else {
             const redirect = sessionStorage.getItem("redirectAttempt");
             if (redirect) {
@@ -925,8 +988,6 @@ function openCrudModal(type, id) {
           formData.append("file", file);
 
           const res  = await fetch("/api/upload", {
-          showCrudAlert("Uploading image...", null);
-          const res = await fetch("/api/upload", {
             method: "POST",
             headers: { "Authorization": "Bearer " + getAdminToken() },
             body: formData
@@ -955,21 +1016,6 @@ function openCrudModal(type, id) {
         } catch (b64Err) {
           console.error("Base64 read error:", b64Err);
           showCrudAlert("Could not load image. Please try a different file.", false);
-
-            document.getElementById(urlInputId).value = data.url;
-            const preview = document.getElementById("cf-preview");
-            if (preview) {
-              preview.src = data.url;
-              preview.style.display = "block";
-            }
-            showCrudAlert("✅ Image uploaded successfully!", true);
-          } else {
-            showCrudAlert(data.message || "Failed to upload image.", false);
-          }
-        } catch (err) {
-          console.error("Upload error:", err);
-          showCrudAlert("Could not upload image to server.", false);
-
         }
       });
     }
@@ -1389,6 +1435,12 @@ async function fetchAdminProjectsTable() {
         <td style="max-width:220px;white-space:pre-wrap;">${escapeHtml((p.description || "").substring(0, 100))}${(p.description || "").length > 100 ? "..." : ""}</td>
         <td>
           <div class="action-btns">
+            <button class="btn-edit" style="background:#2563eb; color:#fff; border-color:#2563eb;" onclick="openMilestoneModal(${p.id})">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;margin-right:2px;"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>Milestones
+            </button>
+            <button class="btn-edit" style="background:#059669; color:#fff; border-color:#059669;" onclick="openAssignmentModal(${p.id}, '${escapeHtml(p.title || '')}')">
+              &#128101; Assign
+            </button>
             <button class="btn-edit"   onclick="openCrudModal('project', ${p.id})">
               <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit
             </button>
@@ -1633,6 +1685,10 @@ function openProjectModal(project) {
 
   modalOverlay.classList.add('is-open');
   document.body.style.overflow = 'hidden';
+  
+  // Set active project tracker and fetch milestones in real-time
+  activeProjectInModal = project.id;
+  fetchAndRenderProjectMilestones(project.id);
 }
 
 function closeProjectModal() {
@@ -1640,6 +1696,179 @@ function closeProjectModal() {
   if (!modalOverlay) return;
   modalOverlay.classList.remove('is-open');
   document.body.style.overflow = '';
+  
+  // Clear active project tracker
+  activeProjectInModal = null;
+}
+
+// Global tracking for currently open modal project
+let activeProjectInModal = null;
+
+// Fetch and render milestones timeline inside project modal
+async function fetchAndRenderProjectMilestones(projectId) {
+  const container = document.getElementById('project-modal-milestones-list');
+  if (!container) return;
+
+  container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.9rem;">Loading milestones...</p>`;
+
+  try {
+    const response = await fetch(`/api/projects/${projectId}/milestones`);
+    if (!response.ok) throw new Error("Failed to load milestones");
+    const milestones = await response.json();
+
+    if (!milestones || milestones.length === 0) {
+      container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.9rem;">No milestones defined for this project.</p>`;
+      return;
+    }
+
+    container.innerHTML = milestones.map(m => {
+      const statusClass = m.status.toLowerCase();
+      const isCompleted = m.status === 'COMPLETED';
+      return `
+        <div class="milestone-item" id="milestone-item-${m.id}">
+          <div class="milestone-dot ${statusClass}" id="milestone-dot-${m.id}"></div>
+          <div class="milestone-header">
+            <span class="milestone-name">${escapeHtml(m.name)}</span>
+            <span class="milestone-status-badge ${statusClass}" id="milestone-badge-${m.id}">${escapeHtml(m.status)}</span>
+          </div>
+          ${m.description ? `<p class="milestone-desc">${escapeHtml(m.description)}</p>` : ''}
+          <div class="milestone-progress-container">
+            <div class="milestone-progress-bg">
+              <div class="milestone-progress-fill ${isCompleted ? 'completed' : ''}" 
+                   id="milestone-progress-fill-${m.id}" 
+                   style="width: ${m.progressPercentage}%"></div>
+            </div>
+            <span class="milestone-progress-text" id="milestone-progress-text-${m.id}">${m.progressPercentage}%</span>
+          </div>
+          ${m.dueDate ? `
+            <div class="milestone-due">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+              Due: ${m.dueDate}
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }).join('');
+  } catch (err) {
+    console.error("fetchAndRenderProjectMilestones error:", err);
+    container.innerHTML = `<p style="color: #ef4444; font-size: 0.9rem;">Could not load milestones.</p>`;
+  }
+}
+
+// Initialize Server-Sent Events stream for real-time milestone updates
+function initMilestoneSSE() {
+  const toastContainer = document.getElementById('live-toast-container');
+  if (!toastContainer) return; // Only run on pages that have the toast container
+
+  const eventSource = new EventSource('/api/milestones/stream');
+
+  eventSource.addEventListener('connected', (e) => {
+    console.log("SSE Connection live:", JSON.parse(e.data).message);
+  });
+
+  eventSource.addEventListener('milestone-update', (e) => {
+    try {
+      const payload = JSON.parse(e.data);
+      console.log("Live milestone event received:", payload);
+
+      // 1. Display Toast notification
+      showLiveToast(payload.eventType, payload.mutationSummary);
+
+      // 2. If this update belongs to the active project in the open modal, update UI in real-time
+      if (activeProjectInModal === payload.projectId && payload.milestone) {
+        const m = payload.milestone;
+        
+        // Update progress bar
+        const progressFill = document.getElementById(`milestone-progress-fill-${m.id}`);
+        const progressText = document.getElementById(`milestone-progress-text-${m.id}`);
+        if (progressFill && progressText) {
+          progressFill.style.width = `${m.progressPercentage}%`;
+          progressText.textContent = `${m.progressPercentage}%`;
+          if (m.status === 'COMPLETED') {
+            progressFill.classList.add('completed');
+          } else {
+            progressFill.classList.remove('completed');
+          }
+        }
+
+        // Update status badge
+        const badge = document.getElementById(`milestone-badge-${m.id}`);
+        const dot = document.getElementById(`milestone-dot-${m.id}`);
+        if (badge && dot) {
+          badge.className = 'milestone-status-badge';
+          dot.className = 'milestone-dot';
+
+          const statusClass = m.status.toLowerCase();
+          badge.classList.add(statusClass);
+          dot.classList.add(statusClass);
+
+          badge.textContent = m.status;
+        }
+
+        // Add a temporary highlight animation to the milestone element
+        const item = document.getElementById(`milestone-item-${m.id}`);
+        if (item) {
+          item.style.transition = 'background-color 0.3s ease';
+          item.style.backgroundColor = 'rgba(37, 99, 235, 0.08)';
+          setTimeout(() => {
+            item.style.backgroundColor = 'transparent';
+          }, 1000);
+        }
+      }
+    } catch (err) {
+      console.error("Error handling SSE event:", err);
+    }
+  });
+
+  eventSource.onerror = (err) => {
+    console.warn("SSE connection encountered an error, reconnecting...", err);
+  };
+}
+
+function showLiveToast(eventType, message) {
+  const container = document.getElementById('live-toast-container');
+  if (!container) return;
+
+  const toast = document.createElement('div');
+  toast.className = 'live-toast';
+  
+  let title = 'Project Milestone Update';
+  let iconSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2z"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>`;
+
+  if (eventType === 'MILESTONE_CREATED') {
+    title = 'New Milestone Added';
+    toast.classList.add('success');
+    iconSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>`;
+  } else if (eventType === 'MILESTONE_UPDATED') {
+    title = 'Milestone Sync Status';
+    toast.classList.add('success');
+  } else if (eventType === 'MILESTONE_DELETED') {
+    title = 'Milestone Removed';
+  }
+
+  toast.innerHTML = `
+    <div class="live-toast-icon">${iconSVG}</div>
+    <div class="live-toast-body">
+      <div class="live-toast-title">${escapeHtml(title)}</div>
+      <div class="live-toast-message">${escapeHtml(message)}</div>
+    </div>
+    <button class="live-toast-close" onclick="this.parentElement.remove()">&times;</button>
+  `;
+
+  container.appendChild(toast);
+
+  // Trigger animation reflow
+  setTimeout(() => {
+    toast.classList.add('show');
+  }, 10);
+
+  // Auto remove toast after 5 seconds
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => {
+      toast.remove();
+    }, 400);
+  }, 5000);
 }
 
 let allProjects = [];
@@ -1899,81 +2128,51 @@ async function fetchInbox(email) {
   console.log("fetchInbox called with email:", email);
   const inboxSection = document.getElementById("inbox-section");
   const inboxContainer = document.getElementById("inbox-container");
-  console.log("inboxSection element:", inboxSection);
-  console.log("inboxContainer element:", inboxContainer);
+  const toolbar = document.getElementById("inbox-toolbar");
+
   if (!inboxSection || !inboxContainer) return;
+
+  // Initialize state
+  if (!window.inboxState) {
+    window.inboxState = {
+      contacts: [],
+      currentPage: 1,
+      pageSize: 5,
+      selectedIds: new Set(),
+      email: email
+    };
+    initInboxEventListeners(email);
+  } else {
+    window.inboxState.email = email;
+  }
 
   try {
     const apiUrl = `/api/contacts/my?email=${encodeURIComponent(email)}`;
-    console.log("Calling API:", apiUrl);
-
-    const token = sessionStorage.getItem("token") || "";
-
-    const token = localStorage.getItem("token") || "";
+    const token = sessionStorage.getItem("token") || localStorage.getItem("token") || "";
 
     const response = await fetch(apiUrl, {
       headers: { "Authorization": "Bearer " + token }
     });
-    console.log("Response status:", response.status);
-    if (!response.ok) throw new Error(`Failed to fetch inbox: ${response.status} ${response.statusText}`);
+    if (!response.ok) throw new Error(`Failed to fetch inbox: ${response.status}`);
+    
     const contacts = await response.json();
-    console.log("Contacts received:", contacts);
+    window.inboxState.contacts = contacts;
+    window.inboxState.selectedIds.clear(); // Reset selections
+    
+    // Update "Select All" checkbox
+    const selectAllCheckbox = document.getElementById("select-all-checkbox");
+    if (selectAllCheckbox) selectAllCheckbox.checked = false;
 
-    inboxContainer.innerHTML = "";
+    renderInboxPage();
 
-    if (contacts.length === 0) {
-      inboxContainer.innerHTML = `
-        <div style="text-align:center;padding:3rem;color:var(--text-muted);">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:64px;height:64px;margin:0 auto 1rem;opacity:0.5;"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"></path></svg>
-          <p>No messages found. You can send a message on the Contact page to test.</p>
-        </div>
-      `;
-    } else {
-      contacts.forEach(contact => {
-        const card = document.createElement("div");
-        card.className = "inbox-card";
-
-        const createdAt = new Date(contact.createdAt).toLocaleDateString("en-US", {
-          hour: "2-digit", minute: "2-digit",
-          day: "2-digit", month: "2-digit", year: "numeric"
-        });
-
-        const repliedAt = contact.repliedAt ? new Date(contact.repliedAt).toLocaleDateString("en-US", {
-          hour: "2-digit", minute: "2-digit",
-          day: "2-digit", month: "2-digit", year: "numeric"
-        }) : null;
-
-        card.innerHTML = `
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;">
-            <div>
-              <h3 style="font-size:1.125rem;font-weight:700;color:var(--text-dark);margin:0 0 0.25rem;">${escapeHtml(contact.title)}</h3>
-              <p style="font-size:0.875rem;color:var(--text-muted);margin:0;">Sent at ${createdAt}</p>
-            </div>
-            <span class="status-badge ${contact.status === 'DONE' ? 'status-done' : 'status-pending'}" style="padding:0.35rem 0.75rem;font-size:0.75rem;">${escapeHtml(contact.status)}</span>
-          </div>
-          <div class="inbox-message-box">
-            <h4 style="font-size:0.875rem;font-weight:600;color:var(--text-dark);margin:0 0 0.5rem;">Your message:</h4>
-            <p style="font-size:0.875rem;color:var(--text-muted);margin:0;white-space:pre-line;">${escapeHtml(contact.content)}</p>
-          </div>
-          ${contact.reply ? `
-            <div class="inbox-reply-box">
-              <h4 style="font-size:0.875rem;font-weight:600;color:#059669;margin:0 0 0.5rem;">Response from team${repliedAt ? ` (${repliedAt})` : ''}:</h4>
-              <p style="font-size:0.875rem;color:#065f46;margin:0;white-space:pre-line;">${escapeHtml(contact.reply)}</p>
-            </div>
-          ` : `
-            <div class="inbox-pending-box" style="text-align:center;padding:1rem;color:var(--text-muted);font-size:0.875rem;background:#fef3c7;border-radius:8px;border:1px solid #fde68a;">
-              <h4 style="font-size:0.875rem;font-weight:600;color:#d97706;margin:0 0 0.5rem;">Status:</h4>
-              <p style="font-size:0.875rem;color:#b45309;margin:0;">Awaiting response...</p>
-            </div>
-          `}
-        `;
-        inboxContainer.appendChild(card);
-      });
+    // Show/hide toolbar based on message count
+    if (toolbar) {
+      toolbar.style.display = contacts.length > 0 ? "flex" : "none";
     }
 
     inboxSection.style.display = "block";
     console.log("Inbox section displayed");
-
+    
     // Update quick inbox badge
     const quickInbox = document.getElementById("quick-inbox");
     if (quickInbox) {
@@ -1993,6 +2192,297 @@ async function fetchInbox(email) {
       </div>
     `;
     inboxSection.style.display = "block";
+  }
+}
+
+function renderInboxPage() {
+  const container = document.getElementById("inbox-container");
+  const paginationContainer = document.getElementById("inbox-pagination");
+  if (!container) return;
+
+  const state = window.inboxState;
+  const contacts = state.contacts;
+  
+  if (contacts.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center;padding:3rem;color:var(--text-muted);">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:64px;height:64px;margin:0 auto 1rem;opacity:0.5;"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"></path></svg>
+        <p>No messages found. You can send a message on the Contact page to test.</p>
+      </div>
+    `;
+    if (paginationContainer) paginationContainer.style.display = "none";
+    updateDeleteSelectedBtnState();
+    return;
+  }
+
+  // Calculate page bounds
+  const totalItems = contacts.length;
+  const totalPages = Math.ceil(totalItems / state.pageSize);
+  
+  // Guard current page
+  if (state.currentPage > totalPages) {
+    state.currentPage = Math.max(1, totalPages);
+  }
+  
+  const startIndex = (state.currentPage - 1) * state.pageSize;
+  const endIndex = Math.min(startIndex + state.pageSize, totalItems);
+  const pageItems = contacts.slice(startIndex, endIndex);
+
+  container.innerHTML = "";
+
+  pageItems.forEach(contact => {
+    const card = document.createElement("div");
+    card.className = "inbox-card";
+
+    const createdAt = new Date(contact.createdAt).toLocaleDateString("en-US", {
+      hour: "2-digit", minute: "2-digit",
+      day: "2-digit", month: "2-digit", year: "numeric"
+    });
+
+    const repliedAt = contact.repliedAt ? new Date(contact.repliedAt).toLocaleDateString("en-US", {
+      hour: "2-digit", minute: "2-digit",
+      day: "2-digit", month: "2-digit", year: "numeric"
+    }) : null;
+
+    const isChecked = state.selectedIds.has(contact.id) ? "checked" : "";
+
+    card.innerHTML = `
+      <div style="display:flex; gap: 1.25rem; align-items: flex-start;">
+        <input type="checkbox" class="message-checkbox" data-id="${contact.id}" ${isChecked} style="width: 18px; height: 18px; cursor: pointer; accent-color: #00f0ff; margin-top: 0.25rem; flex-shrink: 0;">
+        <div style="flex-grow: 1; min-width: 0;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;gap:1rem;flex-wrap:wrap;">
+            <div>
+              <h3 style="font-size:1.125rem;font-weight:700;color:var(--text-dark);margin:0 0 0.25rem;">${escapeHtml(contact.title)}</h3>
+              <p style="font-size:0.875rem;color:var(--text-muted);margin:0;">Sent at ${createdAt}</p>
+            </div>
+            <div style="display:flex; align-items:center; gap:0.75rem;">
+              <span class="status-badge ${contact.status === 'DONE' ? 'status-done' : 'status-pending'}" style="padding:0.35rem 0.75rem;font-size:0.75rem;">${escapeHtml(contact.status)}</span>
+              <button class="delete-single-btn" data-id="${contact.id}" style="background:transparent; border:none; color:#f87171; cursor:pointer; padding:0.35rem; border-radius:50%; transition:all 0.2s ease; display:flex; align-items:center; justify-content:center;" title="Delete Message">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              </button>
+            </div>
+          </div>
+          <div class="inbox-message-box">
+            <h4 style="font-size:0.875rem;font-weight:600;color:var(--text-dark);margin:0 0 0.5rem;">Your message:</h4>
+            <p style="font-size:0.875rem;color:var(--text-muted);margin:0;white-space:pre-line;">${escapeHtml(contact.content)}</p>
+          </div>
+          ${contact.reply ? `
+            <div class="inbox-reply-box">
+              <h4 style="font-size:0.875rem;font-weight:600;color:#059669;margin:0 0 0.5rem;">Response from team${repliedAt ? ` (${repliedAt})` : ''}:</h4>
+              <p style="font-size:0.875rem;color:#065f46;margin:0;white-space:pre-line;">${escapeHtml(contact.reply)}</p>
+            </div>
+          ` : `
+            <div class="inbox-pending-box">
+              <h4 style="font-size:0.875rem;font-weight:600;color:#d97706;margin:0 0 0.5rem;">Status:</h4>
+              <p style="font-size:0.875rem;color:#b45309;margin:0;">Awaiting response...</p>
+            </div>
+          `}
+        </div>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+
+  // Render pagination controls
+  if (paginationContainer) {
+    if (totalPages <= 1) {
+      paginationContainer.style.display = "none";
+    } else {
+      paginationContainer.style.display = "flex";
+      paginationContainer.innerHTML = "";
+
+      // Previous button
+      const prevBtn = document.createElement("button");
+      prevBtn.className = "pagination-btn";
+      prevBtn.innerHTML = "&laquo; Prev";
+      prevBtn.disabled = state.currentPage === 1;
+      prevBtn.style.cssText = "background:rgba(255,255,255,0.05); color:var(--text-dark); border:1px solid var(--border-color); padding:0.4rem 1rem; border-radius:50px; font-weight:600; font-size:0.85rem; cursor:pointer; transition:all 0.2s;";
+      if (prevBtn.disabled) {
+        prevBtn.style.opacity = "0.4";
+        prevBtn.style.cursor = "not-allowed";
+      } else {
+        prevBtn.addEventListener("click", () => {
+          state.currentPage--;
+          renderInboxPage();
+        });
+      }
+      paginationContainer.appendChild(prevBtn);
+
+      // Page numbers
+      for (let i = 1; i <= totalPages; i++) {
+        const pageBtn = document.createElement("button");
+        pageBtn.className = "pagination-btn";
+        pageBtn.textContent = i;
+        pageBtn.style.cssText = "width:36px; height:36px; display:flex; align-items:center; justify-content:center; border-radius:50%; font-weight:600; font-size:0.85rem; border:1px solid var(--border-color); transition:all 0.2s; cursor:pointer;";
+        
+        if (i === state.currentPage) {
+          pageBtn.style.background = "linear-gradient(135deg, #00f0ff, #0070f3)";
+          pageBtn.style.color = "#fff";
+          pageBtn.style.borderColor = "transparent";
+          pageBtn.style.boxShadow = "0 0 10px rgba(0, 240, 255, 0.3)";
+        } else {
+          pageBtn.style.background = "rgba(255,255,255,0.05)";
+          pageBtn.style.color = "var(--text-dark)";
+          pageBtn.addEventListener("click", () => {
+            state.currentPage = i;
+            renderInboxPage();
+          });
+        }
+        paginationContainer.appendChild(pageBtn);
+      }
+
+      // Next button
+      const nextBtn = document.createElement("button");
+      nextBtn.className = "pagination-btn";
+      nextBtn.innerHTML = "Next &raquo;";
+      nextBtn.disabled = state.currentPage === totalPages;
+      nextBtn.style.cssText = "background:rgba(255,255,255,0.05); color:var(--text-dark); border:1px solid var(--border-color); padding:0.4rem 1rem; border-radius:50px; font-weight:600; font-size:0.85rem; cursor:pointer; transition:all 0.2s;";
+      if (nextBtn.disabled) {
+        nextBtn.style.opacity = "0.4";
+        nextBtn.style.cursor = "not-allowed";
+      } else {
+        nextBtn.addEventListener("click", () => {
+          state.currentPage++;
+          renderInboxPage();
+        });
+      }
+      paginationContainer.appendChild(nextBtn);
+    }
+  }
+
+  updateDeleteSelectedBtnState();
+}
+
+function updateDeleteSelectedBtnState() {
+  const deleteSelectedBtn = document.getElementById("delete-selected-btn");
+  if (!deleteSelectedBtn) return;
+  
+  const state = window.inboxState;
+  const count = state.selectedIds.size;
+  
+  if (count > 0) {
+    deleteSelectedBtn.removeAttribute("disabled");
+    deleteSelectedBtn.style.background = "rgba(239, 68, 68, 0.3)";
+    deleteSelectedBtn.style.color = "#fca5a5";
+    deleteSelectedBtn.style.borderColor = "rgba(239, 68, 68, 0.6)";
+  } else {
+    deleteSelectedBtn.setAttribute("disabled", "true");
+    deleteSelectedBtn.style.background = "rgba(239, 68, 68, 0.15)";
+    deleteSelectedBtn.style.color = "#f87171";
+    deleteSelectedBtn.style.borderColor = "rgba(239, 68, 68, 0.3)";
+    deleteSelectedBtn.style.opacity = "0.5";
+  }
+}
+
+function initInboxEventListeners(email) {
+  const container = document.getElementById("inbox-container");
+  const selectAll = document.getElementById("select-all-checkbox");
+  const deleteSelected = document.getElementById("delete-selected-btn");
+  const deleteAll = document.getElementById("delete-all-btn");
+
+  if (!container) return;
+
+  // Handle single item deletion and individual checkboxes delegation
+  container.addEventListener("click", async (e) => {
+    // Check if clicked delete single button
+    const deleteBtn = e.target.closest(".delete-single-btn");
+    if (deleteBtn) {
+      const id = deleteBtn.getAttribute("data-id");
+      if (confirm("Are you sure you want to delete this message? This action cannot be undone.")) {
+        await executeDelete(`/api/contacts/${id}`, "DELETE");
+        fetchInbox(email);
+      }
+      return;
+    }
+    
+    // Check if clicked individual checkbox
+    const checkbox = e.target.closest(".message-checkbox");
+    if (checkbox) {
+      const id = parseInt(checkbox.getAttribute("data-id"), 10);
+      const state = window.inboxState;
+      if (checkbox.checked) {
+        state.selectedIds.add(id);
+      } else {
+        state.selectedIds.delete(id);
+      }
+      
+      // Update select-all checkbox state
+      if (selectAll) {
+        const visibleCheckboxes = container.querySelectorAll(".message-checkbox");
+        const allChecked = Array.from(visibleCheckboxes).every(cb => cb.checked);
+        selectAll.checked = allChecked && visibleCheckboxes.length > 0;
+      }
+      
+      updateDeleteSelectedBtnState();
+    }
+  });
+
+  // Handle select all checkbox
+  if (selectAll) {
+    selectAll.addEventListener("change", (e) => {
+      const state = window.inboxState;
+      const checked = e.target.checked;
+      
+      // Select/deselect items on the CURRENT page
+      const currentCheckboxes = container.querySelectorAll(".message-checkbox");
+      currentCheckboxes.forEach(checkbox => {
+        checkbox.checked = checked;
+        const id = parseInt(checkbox.getAttribute("data-id"), 10);
+        if (checked) {
+          state.selectedIds.add(id);
+        } else {
+          state.selectedIds.delete(id);
+        }
+      });
+      
+      updateDeleteSelectedBtnState();
+    });
+  }
+
+  // Handle delete selected button
+  if (deleteSelected) {
+    deleteSelected.addEventListener("click", async () => {
+      const state = window.inboxState;
+      if (state.selectedIds.size === 0) return;
+      
+      if (confirm(`Are you sure you want to delete the ${state.selectedIds.size} selected message(s)? This action cannot be undone.`)) {
+        const idsArray = Array.from(state.selectedIds);
+        const idsParam = idsArray.join(",");
+        await executeDelete(`/api/contacts/my?ids=${idsParam}`, "DELETE");
+        fetchInbox(email);
+      }
+    });
+  }
+
+  // Handle delete all button
+  if (deleteAll) {
+    deleteAll.addEventListener("click", async () => {
+      if (confirm("Are you sure you want to delete ALL messages in your inbox? This action cannot be undone.")) {
+        await executeDelete("/api/contacts/my", "DELETE");
+        fetchInbox(email);
+      }
+    });
+  }
+}
+
+async function executeDelete(url, method) {
+  try {
+    const token = sessionStorage.getItem("token") || localStorage.getItem("token") || "";
+    const response = await fetch(url, {
+      method: method,
+      headers: {
+        "Authorization": "Bearer " + token
+      }
+    });
+    const result = await response.json();
+    if (response.ok && result.success !== false) {
+      alert(result.message || "Deletion successful!");
+    } else {
+      alert(result.message || "Failed to delete message(s).");
+    }
+  } catch (error) {
+    console.error("Delete operation failed:", error);
+    alert("An error occurred during deletion. Please try again.");
   }
 }
 
@@ -2096,7 +2586,7 @@ function injectQuickPanel() {
       <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:${currentTheme === 'dark' ? 'block' : 'none'};width:20px;height:20px;color:#eab308;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
       <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:${currentTheme === 'light' ? 'block' : 'none'};width:20px;height:20px;color:#6366f1;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
     </button>
-    <a id="quick-inbox" href="index.html#inbox-section" class="quick-panel-btn" aria-label="Inbox" style="display:none;">
+    <a id="quick-inbox" href="inbox.html" class="quick-panel-btn" aria-label="Inbox" style="display:none;">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
       <span class="quick-inbox-badge" style="display:none;"></span>
     </a>
@@ -2149,8 +2639,6 @@ function injectQuickPanel() {
 
   // Inbox shortcut (show only if logged in)
 
-  const token = sessionStorage.getItem("token");
-
   const token = localStorage.getItem("token") || sessionStorage.getItem("token");
 
   if (token) {
@@ -2160,7 +2648,7 @@ function injectQuickPanel() {
       quickInbox.addEventListener("click", (e) => {
         const path = window.location.pathname;
         const page = path.substring(path.lastIndexOf('/') + 1) || "index.html";
-        if (page === "index.html" || page === "") {
+        if (page === "inbox.html") {
           e.preventDefault();
           const section = document.getElementById("inbox-section");
           if (section) {
@@ -2172,6 +2660,356 @@ function injectQuickPanel() {
   }
 }
 
+// =========================================================================
+// PROJECT MILESTONE ADMIN PANEL LOGIC (UC-12)
+// =========================================================================
+
+let currentAdminProjectId = null;
+
+function openMilestoneModal(projectId) {
+  currentAdminProjectId = projectId;
+  
+  const project = _cache.projects[projectId];
+  const titleEl = document.getElementById("milestone-project-title");
+  if (titleEl && project) {
+    titleEl.textContent = `Manage Milestones: ${project.title}`;
+  }
+
+  const overlay = document.getElementById("milestone-modal-overlay");
+  if (overlay) {
+    overlay.classList.add("is-open");
+  }
+
+  // Clear form and audit logs panel
+  const form = document.getElementById("admin-milestone-form");
+  if (form) form.reset();
+  closeAuditTrail();
+
+  fetchAndRenderAdminMilestones(projectId);
+}
+
+function closeMilestoneModal() {
+  currentAdminProjectId = null;
+  const overlay = document.getElementById("milestone-modal-overlay");
+  if (overlay) {
+    overlay.classList.remove("is-open");
+  }
+  closeAuditTrail();
+}
+
+async function fetchAndRenderAdminMilestones(projectId) {
+  const container = document.getElementById("admin-milestones-list");
+  if (!container) return;
+
+  container.innerHTML = `<p style="color: var(--text-muted); text-align:center; padding: 2rem 0; font-size:0.85rem;">Loading milestones...</p>`;
+
+  try {
+    const response = await fetch(`/api/projects/${projectId}/milestones`);
+    if (!response.ok) throw new Error("Failed to load milestones");
+    const milestones = await response.json();
+
+    if (!milestones || milestones.length === 0) {
+      container.innerHTML = `<p style="color: var(--text-muted); text-align:center; padding: 2rem 0; font-size:0.85rem;">No milestones found. Create one on the right panel!</p>`;
+      return;
+    }
+
+    container.innerHTML = milestones.map(m => {
+      return `
+        <div class="milestone-row-box" id="admin-milestone-row-${m.id}">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem;">
+            <div>
+              <strong style="color:var(--text-dark); font-size:0.9rem; display:block;">${escapeHtml(m.name)}</strong>
+              ${m.description ? `<span style="color:var(--text-muted); font-size:0.75rem; display:block; margin-top:0.1rem;">${escapeHtml(m.description)}</span>` : ''}
+              ${m.dueDate ? `<span style="color:var(--text-muted); font-size:0.7rem; display:block; margin-top:0.15rem;">📅 Due: ${m.dueDate}</span>` : ''}
+            </div>
+            <div style="display:flex; gap:0.35rem; align-items:center;">
+              <span class="status-badge status-${m.status}" 
+                    style="font-size:0.75rem; font-weight:700; padding:3px 10px; border-radius:20px; text-transform:uppercase;
+                    ${m.status==='COMPLETED'?'background:rgba(16,185,129,0.12);color:#10b981':m.status==='IN_PROGRESS'?'background:rgba(59,130,246,0.12);color:#3b82f6':m.status==='BLOCKED'?'background:rgba(239,68,68,0.12);color:#ef4444':'background:rgba(100,116,139,0.12);color:#64748b'}">
+                ${m.status.replace('_', ' ')}
+              </span>
+            </div>
+          </div>
+
+          <!-- Static progress bar instead of range slider -->
+          <div style="display:flex; align-items:center; gap:0.5rem; margin: 0.5rem 0;">
+            <span style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">Progress:</span>
+            <div style="flex:1; height:6px; background:#e2e8f0; border-radius:10px; overflow:hidden;">
+              <div style="width:${m.progressPercentage}%; height:100%; background:linear-gradient(90deg, #3b82f6, #06b6d4); border-radius:10px;"></div>
+            </div>
+            <span style="font-size:0.75rem; font-weight:700; color:#2563eb;">${m.progressPercentage}%</span>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.25rem;">
+            <button onclick="openAuditTrail(${m.id}, '${escapeHtml(m.name)}')" 
+                    style="background:none; border:none; color:#2563eb; font-size:0.75rem; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:0.15rem;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              View logs
+            </button>
+            <button onclick="deleteAdminMilestone(${m.id}, '${escapeHtml(m.name)}')" 
+                    style="background:none; border:none; color:#ef4444; font-size:0.75rem; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:0.15rem;">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              Delete
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch (err) {
+    console.error("fetchAndRenderAdminMilestones error:", err);
+    container.innerHTML = `<p style="color:#ef4444; text-align:center; padding: 2rem 0; font-size:0.85rem;">Could not load milestones list.</p>`;
+  }
+}
+
+
+async function deleteAdminMilestone(milestoneId, milestoneName) {
+  if (!currentAdminProjectId) return;
+  if (!confirm(`Are you sure you want to delete milestone '${milestoneName}'?`)) return;
+
+  const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+  try {
+    const response = await fetch(`/api/projects/${currentAdminProjectId}/milestones/${milestoneId}`, {
+      method: "DELETE",
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      alert(data.message || "Failed to delete milestone.");
+      return;
+    }
+
+    fetchAndRenderAdminMilestones(currentAdminProjectId);
+    closeAuditTrail();
+  } catch (err) {
+    console.error("deleteAdminMilestone error:", err);
+    alert("An error occurred while deleting milestone.");
+  }
+}
+
+async function openAuditTrail(milestoneId, milestoneName) {
+  if (!currentAdminProjectId) return;
+
+  const wrapper = document.getElementById("admin-milestone-audit-wrapper");
+  const nameEl = document.getElementById("audit-milestone-name");
+  const list = document.getElementById("admin-milestone-audit-list");
+
+  if (!wrapper || !nameEl || !list) return;
+
+  nameEl.textContent = milestoneName;
+  wrapper.style.display = "block";
+  list.innerHTML = `<p style="color:var(--text-muted); font-size:0.8rem;">Loading mutation logs...</p>`;
+
+  try {
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    const response = await fetch(`/api/projects/${currentAdminProjectId}/milestones/${milestoneId}/logs`, {
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    });
+
+    if (!response.ok) throw new Error("Failed");
+    const logs = await response.json();
+
+    if (!logs || logs.length === 0) {
+      list.innerHTML = `<p style="color:var(--text-muted); font-size:0.8rem; text-align:center;">No mutation history logs recorded yet.</p>`;
+      return;
+    }
+
+    list.innerHTML = logs.map(l => {
+      const date = new Date(l.performedAt).toLocaleString();
+      let detail = "";
+      let labelClass = "sync";
+
+      if (l.actionType === "CREATE") {
+        detail = `Created milestone as '${escapeHtml(l.newValue)}'`;
+        labelClass = "create";
+      } else if (l.actionType === "DELETE") {
+        detail = `Deleted milestone '${escapeHtml(l.oldValue)}'`;
+        labelClass = "delete";
+      } else {
+        detail = `Changed <b>${escapeHtml(l.fieldName)}</b> from <i>"${escapeHtml(l.oldValue)}"</i> to <i>"${escapeHtml(l.newValue)}"</i>`;
+      }
+
+      return `
+        <div class="audit-log-line ${labelClass}">
+          [${date}] <b>${escapeHtml(l.performedBy)}</b>: ${detail}
+        </div>
+      `;
+    }).join('');
+
+  } catch (err) {
+    console.error("openAuditTrail error:", err);
+    list.innerHTML = `<p style="color:#ef4444; font-size:0.8rem;">Could not load audit logs.</p>`;
+  }
+}
+
+function closeAuditTrail() {
+  const wrapper = document.getElementById("admin-milestone-audit-wrapper");
+  if (wrapper) {
+    wrapper.style.display = "none";
+  }
+}
+
+// =============================================
+//  ASSIGNMENT MODAL — Admin-only project assignments
+// =============================================
+
+let currentAssignmentProjectId = null;
+
+async function openAssignmentModal(projectId, projectTitle) {
+  currentAssignmentProjectId = projectId;
+  document.getElementById("assignment-project-title").textContent = `👥 Assignments: ${projectTitle}`;
+  
+  const overlay = document.getElementById("assignment-modal-overlay");
+  if (overlay) {
+    overlay.classList.add("is-open");
+  }
+  await loadAssignmentData(projectId);
+}
+
+function closeAssignmentModal() {
+  const overlay = document.getElementById("assignment-modal-overlay");
+  if (overlay) {
+    overlay.classList.remove("is-open");
+  }
+  currentAssignmentProjectId = null;
+}
+
+async function loadAssignmentData(projectId) {
+  const token = localStorage.getItem("token") || localStorage.getItem("authToken");
+  const headers = { "Authorization": `Bearer ${token}` };
+
+  // Load existing assignments and clients
+  const [assignRes, clientRes, allUsersRes] = await Promise.all([
+    fetch(`/api/projects/${projectId}/assignments`, { headers }),
+    fetch(`/api/projects/${projectId}/clients`,     { headers }),
+    fetch(`/api/admin/users`,                        { headers }).catch(() => ({ ok: false }))
+  ]);
+
+  const assignments = assignRes.ok ? await assignRes.json() : [];
+  const clients     = clientRes.ok ? await clientRes.json() : [];
+  const allUsers    = allUsersRes.ok ? await allUsersRes.json() : [];
+
+  renderAssignmentList(assignments);
+  renderClientList(clients);
+  populateMemberDropdown(allUsers.filter(u => u.role === "ROLE_MEMBER"), assignments.map(a => a.userId));
+  populateClientDropdown(allUsers.filter(u => u.role === "ROLE_USER"), clients.map(c => c.userId));
+}
+
+function renderAssignmentList(assignments) {
+  const el = document.getElementById("assignment-member-list");
+  if (!assignments.length) {
+    el.innerHTML = '<p style="color:#64748b;font-size:0.85rem;">No members assigned yet.</p>';
+    return;
+  }
+  el.innerHTML = assignments.map(a => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;">
+      <div>
+        <strong style="font-size:0.88rem;">${escapeHtml(a.fullName)}</strong>
+        <span style="font-size:0.75rem;color:#64748b;margin-left:6px;">(${escapeHtml(a.username)})</span><br/>
+        <span style="font-size:0.75rem;padding:2px 8px;border-radius:10px;font-weight:700;${a.projectRole==='PM'?'background:rgba(37,99,235,.12);color:#2563eb':'background:rgba(245,158,11,.12);color:#d97706'}">
+          ${a.projectRole === 'PM' ? '★ PM' : '⚙ STAFF'}
+        </span>
+      </div>
+      <button onclick="removeAssignment(${a.userId})" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:0.75rem;text-decoration:underline;">Remove</button>
+    </div>`).join('');
+}
+
+function renderClientList(clients) {
+  const el = document.getElementById("assignment-client-list");
+  if (!clients.length) {
+    el.innerHTML = '<p style="color:#64748b;font-size:0.85rem;">No clients linked yet.</p>';
+    return;
+  }
+  el.innerHTML = clients.map(c => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;">
+      <div>
+        <strong style="font-size:0.88rem;">${escapeHtml(c.fullName)}</strong>
+        <span style="font-size:0.75rem;color:#64748b;margin-left:6px;">${escapeHtml(c.email)}</span>
+      </div>
+      <button onclick="removeClient(${c.userId})" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:0.75rem;text-decoration:underline;">Unlink</button>
+    </div>`).join('');
+}
+
+function populateMemberDropdown(members, alreadyAssignedIds) {
+  const sel = document.getElementById("assign-user-select");
+  sel.innerHTML = '<option value="">— Select a member —</option>';
+  members.forEach(u => {
+    if (!alreadyAssignedIds.includes(u.id)) {
+      sel.innerHTML += `<option value="${u.id}">${escapeHtml(u.fullName)} (${escapeHtml(u.username)})</option>`;
+    }
+  });
+}
+
+function populateClientDropdown(users, alreadyLinkedIds) {
+  const sel = document.getElementById("assign-client-select");
+  sel.innerHTML = '<option value="">— Select a client —</option>';
+  users.forEach(u => {
+    if (!alreadyLinkedIds.includes(u.id)) {
+      sel.innerHTML += `<option value="${u.id}">${escapeHtml(u.fullName)} (${escapeHtml(u.email)})</option>`;
+    }
+  });
+}
+
+async function submitAssignMember() {
+  const userId = document.getElementById("assign-user-select").value;
+  const role   = document.getElementById("assign-role-select").value;
+  if (!userId) { alert("Please select a member."); return; }
+
+  const token = localStorage.getItem("token") || localStorage.getItem("authToken");
+  const res = await fetch(`/api/projects/${currentAssignmentProjectId}/assignments`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+    body: JSON.stringify({ userId: parseInt(userId), projectRole: role })
+  });
+  const data = await res.json();
+  if (res.ok) {
+    await loadAssignmentData(currentAssignmentProjectId);
+  } else {
+    alert(data.message || "Failed to assign member.");
+  }
+}
+
+async function submitAssignClient() {
+  const userId = document.getElementById("assign-client-select").value;
+  if (!userId) { alert("Please select a client."); return; }
+
+  const token = localStorage.getItem("token") || localStorage.getItem("authToken");
+  const res = await fetch(`/api/projects/${currentAssignmentProjectId}/clients`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+    body: JSON.stringify({ userId: parseInt(userId) })
+  });
+  const data = await res.json();
+  if (res.ok) {
+    await loadAssignmentData(currentAssignmentProjectId);
+  } else {
+    alert(data.message || "Failed to link client.");
+  }
+}
+
+async function removeAssignment(userId) {
+  if (!confirm("Remove this member from the project?")) return;
+  const token = localStorage.getItem("token") || localStorage.getItem("authToken");
+  await fetch(`/api/projects/${currentAssignmentProjectId}/assignments/${userId}`, {
+    method: "DELETE",
+    headers: { "Authorization": `Bearer ${token}` }
+  });
+  await loadAssignmentData(currentAssignmentProjectId);
+}
+
+async function removeClient(userId) {
+  if (!confirm("Unlink this client from the project?")) return;
+  const token = localStorage.getItem("token") || localStorage.getItem("authToken");
+  await fetch(`/api/projects/${currentAssignmentProjectId}/clients/${userId}`, {
+    method: "DELETE",
+    headers: { "Authorization": `Bearer ${token}` }
+  });
+  await loadAssignmentData(currentAssignmentProjectId);
+}
 
 // Hero H1 text click animation
 function initHeroTextClick() {
@@ -2185,6 +3023,41 @@ function initHeroTextClick() {
     setTimeout(() => {
       heroH1.classList.remove("hero-text-clicked");
     }, 800);
+  });
+}
+
+// Navbar scroll effects (detached floating and scroll-to-hide)
+function initNavbarScrollEffects() {
+  const header = document.querySelector("header");
+  if (!header) return;
+
+  let lastScrollY = window.scrollY;
+  const scrollThreshold = 10; // minimum scroll down/up before hiding/showing
+  const detachThreshold = 30; // scroll Y position where navbar detaches
+
+  window.addEventListener("scroll", () => {
+    const currentScrollY = window.scrollY;
+
+    // 1. Detach/Attach logic
+    if (currentScrollY > detachThreshold) {
+      header.classList.add("header-detached");
+    } else {
+      header.classList.remove("header-detached");
+    }
+
+    // 2. Hide/Show logic (Scroll-to-hide)
+    // Only trigger if we scrolled more than the threshold
+    if (Math.abs(currentScrollY - lastScrollY) > scrollThreshold) {
+      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        // Scrolling down -> hide navbar
+        header.classList.add("header-hidden");
+      } else {
+        // Scrolling up -> show navbar
+        header.classList.remove("header-hidden");
+      }
+    }
+
+    lastScrollY = currentScrollY;
   });
 }
 
