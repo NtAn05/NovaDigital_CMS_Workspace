@@ -1,5 +1,17 @@
 // Dynamic Data Loading, Authentication, and UI logic for NovaDigital Creative Agency
 
+// Clear persistent authentication keys if a new browser session starts (empty sessionStorage)
+function initSessionClean() {
+  const sessionToken = sessionStorage.getItem("token");
+  const localToken = localStorage.getItem("token") || localStorage.getItem("authToken");
+  if (!sessionToken && localToken) {
+    console.log("New session detected. Clearing persistent auth storage...");
+    const authKeys = ["token", "authToken", "username", "fullName", "role", "email", "avatarUrl", "user"];
+    authKeys.forEach(key => localStorage.removeItem(key));
+  }
+}
+initSessionClean();
+
 function initTheme() {
   const currentTheme = localStorage.getItem("theme") || "light";
   if (currentTheme === "dark") {
@@ -314,12 +326,14 @@ function initModalLoginForm() {
       const data = await response.json();
 
       if (response.ok && data.token) {
+        // Write to localStorage
         localStorage.setItem("token",     data.token);
         localStorage.setItem("authToken", data.token);
         localStorage.setItem("username",  data.username);
         localStorage.setItem("fullName",  data.fullName);
         localStorage.setItem("role",      data.role);
         localStorage.setItem("email",     data.email);
+        localStorage.setItem("avatarUrl", data.avatarUrl || "");
         localStorage.setItem("user", JSON.stringify({
           username:  data.username,
           fullName:  data.fullName,
@@ -327,6 +341,15 @@ function initModalLoginForm() {
           role:      data.role,
           avatarUrl: data.avatarUrl || null
         }));
+
+        // Write to sessionStorage for route guard and header sync compatibility
+        sessionStorage.setItem("token",     data.token);
+        sessionStorage.setItem("authToken", data.token);
+        sessionStorage.setItem("username",  data.username);
+        sessionStorage.setItem("fullName",  data.fullName);
+        sessionStorage.setItem("role",      data.role);
+        sessionStorage.setItem("email",     data.email);
+        sessionStorage.setItem("avatarUrl", data.avatarUrl || "");
 
         showModalAlert("Login successful! Redirecting...", true, "modal-login-alert");
 
@@ -414,8 +437,8 @@ function checkRouteGuard() {
   const path = window.location.pathname;
   const page = path.substring(path.lastIndexOf('/') + 1) || "index.html";
 
-  const token = sessionStorage.getItem("token");
-  const role  = sessionStorage.getItem("role");
+  const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+  const role  = localStorage.getItem("role") || sessionStorage.getItem("role");
 
   // Admin MUST stay in admin.html or user-profile.html
   if (token && role === "ROLE_ADMIN") {
@@ -478,9 +501,9 @@ function updateNavbarAuth() {
   const navLinksContainer = document.querySelector(".nav-links");
   if (!navLinksContainer) return;
 
-  const token    = sessionStorage.getItem("token");
-  const role     = sessionStorage.getItem("role");
-  const fullName = sessionStorage.getItem("fullName");
+  const token    = localStorage.getItem("token") || sessionStorage.getItem("token");
+  const role     = localStorage.getItem("role") || sessionStorage.getItem("role");
+  const fullName = localStorage.getItem("fullName") || sessionStorage.getItem("fullName");
 
   const isPortalUser = token && (role === "ROLE_ADMIN" || role === "ROLE_MEMBER" || role === "Team_Member");
 
@@ -526,8 +549,8 @@ function updateNavbarAuth() {
     dropdownLi.className = "auth-item user-dropdown-container";
     dropdownLi.style.position = "relative";
 
-    const username  = sessionStorage.getItem("username");
-    const avatarUrl = sessionStorage.getItem("avatarUrl");
+    const username  = localStorage.getItem("username") || sessionStorage.getItem("username");
+    const avatarUrl = localStorage.getItem("avatarUrl") || sessionStorage.getItem("avatarUrl");
 
     function getInitials(name) {
       if (!name) return "ND";
@@ -561,6 +584,10 @@ function updateNavbarAuth() {
         <a href="user-profile.html" class="dropdown-item">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           Profile
+        </a>
+        <a href="inbox.html" class="dropdown-item">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+          Inbox
         </a>
         <a href="transaction.html" class="dropdown-item">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
@@ -636,6 +663,7 @@ function updateNavbarAuth() {
 
 // User Logout Logic
 function logoutUser() {
+  localStorage.clear();
   sessionStorage.clear();
   window.location.href = "index.html";
 }
@@ -680,13 +708,14 @@ function initLoginForm() {
       const data = await response.json();
 
       if (response.ok && data.token) {
-        // Store both 'token' (legacy) and 'authToken' (used by new dashboards)
+        // Store both 'token' (legacy) and 'authToken' (used by new dashboards) in localStorage
         localStorage.setItem("token",     data.token);
         localStorage.setItem("authToken", data.token);
         localStorage.setItem("username",  data.username);
         localStorage.setItem("fullName",  data.fullName);
         localStorage.setItem("role",      data.role);
         localStorage.setItem("email",     data.email);
+        localStorage.setItem("avatarUrl", data.avatarUrl || "");
         // Store full user object for PM / Client dashboards
         localStorage.setItem("user", JSON.stringify({
           username:  data.username,
@@ -695,6 +724,15 @@ function initLoginForm() {
           role:      data.role,
           avatarUrl: data.avatarUrl || null
         }));
+
+        // Write to sessionStorage for route guard and header sync compatibility
+        sessionStorage.setItem("token",     data.token);
+        sessionStorage.setItem("authToken", data.token);
+        sessionStorage.setItem("username",  data.username);
+        sessionStorage.setItem("fullName",  data.fullName);
+        sessionStorage.setItem("role",      data.role);
+        sessionStorage.setItem("email",     data.email);
+        sessionStorage.setItem("avatarUrl", data.avatarUrl || "");
 
         showAlert("Login successful! Redirecting...", true);
 
@@ -2547,7 +2585,7 @@ function injectQuickPanel() {
       <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:${currentTheme === 'dark' ? 'block' : 'none'};width:20px;height:20px;color:#eab308;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
       <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:${currentTheme === 'light' ? 'block' : 'none'};width:20px;height:20px;color:#6366f1;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
     </button>
-    <a id="quick-inbox" href="index.html#inbox-section" class="quick-panel-btn" aria-label="Inbox" style="display:none;">
+    <a id="quick-inbox" href="inbox.html" class="quick-panel-btn" aria-label="Inbox" style="display:none;">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
       <span class="quick-inbox-badge" style="display:none;"></span>
     </a>
@@ -2609,7 +2647,7 @@ function injectQuickPanel() {
       quickInbox.addEventListener("click", (e) => {
         const path = window.location.pathname;
         const page = path.substring(path.lastIndexOf('/') + 1) || "index.html";
-        if (page === "index.html" || page === "") {
+        if (page === "inbox.html") {
           e.preventDefault();
           const section = document.getElementById("inbox-section");
           if (section) {
