@@ -1,5 +1,17 @@
 // Dynamic Data Loading, Authentication, and UI logic for NovaDigital Creative Agency
 
+// Clear persistent authentication keys if a new browser session starts (empty sessionStorage)
+function initSessionClean() {
+  const sessionToken = sessionStorage.getItem("token");
+  const localToken = localStorage.getItem("token") || localStorage.getItem("authToken");
+  if (!sessionToken && localToken) {
+    console.log("New session detected. Clearing persistent auth storage...");
+    const authKeys = ["token", "authToken", "username", "fullName", "role", "email", "avatarUrl", "user"];
+    authKeys.forEach(key => localStorage.removeItem(key));
+  }
+}
+initSessionClean();
+
 function initTheme() {
   const currentTheme = localStorage.getItem("theme") || "light";
   if (currentTheme === "dark") {
@@ -34,6 +46,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // 4b. Initialize Hero Text Click animation
   initHeroTextClick();
 
+  // 4c. Initialize Navbar scroll effects (detached floating and show/hide)
+  initNavbarScrollEffects();
+
   // 5. Detect current page and fetch corresponding data
   const path = window.location.pathname;
   const page = path.substring(path.lastIndexOf('/') + 1) || "index.html";
@@ -57,12 +72,12 @@ document.addEventListener("DOMContentLoaded", () => {
     initAdminDashboard();
   } else if (page === "member-contact.html") {
     // Member page is handled by inline script
-  } else if (page === "index.html") {
+  } else if (page === "inbox.html" || page === "index.html") {
     // Fetch inbox if user is logged in
-    const token = sessionStorage.getItem("token");
-    const email = sessionStorage.getItem("email"); 
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    const email = localStorage.getItem("email") || sessionStorage.getItem("email"); 
     console.log("Token:", token);
-    console.log("Email from localStorage:", email);
+    console.log("Email:", email);
     if (token && email) {
       console.log("Calling fetchInbox with email:", email);
       fetchInbox(email);
@@ -312,12 +327,14 @@ function initModalLoginForm() {
       const data = await response.json();
 
       if (response.ok && data.token) {
+        // Write to localStorage
         localStorage.setItem("token",     data.token);
         localStorage.setItem("authToken", data.token);
         localStorage.setItem("username",  data.username);
         localStorage.setItem("fullName",  data.fullName);
         localStorage.setItem("role",      data.role);
         localStorage.setItem("email",     data.email);
+        localStorage.setItem("avatarUrl", data.avatarUrl || "");
         localStorage.setItem("user", JSON.stringify({
           username:  data.username,
           fullName:  data.fullName,
@@ -325,6 +342,15 @@ function initModalLoginForm() {
           role:      data.role,
           avatarUrl: data.avatarUrl || null
         }));
+
+        // Write to sessionStorage for route guard and header sync compatibility
+        sessionStorage.setItem("token",     data.token);
+        sessionStorage.setItem("authToken", data.token);
+        sessionStorage.setItem("username",  data.username);
+        sessionStorage.setItem("fullName",  data.fullName);
+        sessionStorage.setItem("role",      data.role);
+        sessionStorage.setItem("email",     data.email);
+        sessionStorage.setItem("avatarUrl", data.avatarUrl || "");
 
         showModalAlert("Login successful! Redirecting...", true, "modal-login-alert");
 
@@ -412,8 +438,8 @@ function checkRouteGuard() {
   const path = window.location.pathname;
   const page = path.substring(path.lastIndexOf('/') + 1) || "index.html";
 
-  const token = sessionStorage.getItem("token");
-  const role  = sessionStorage.getItem("role");
+  const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+  const role  = localStorage.getItem("role") || sessionStorage.getItem("role");
 
   // Admin MUST stay in admin.html or user-profile.html
   if (token && role === "ROLE_ADMIN") {
@@ -476,9 +502,9 @@ function updateNavbarAuth() {
   const navLinksContainer = document.querySelector(".nav-links");
   if (!navLinksContainer) return;
 
-  const token    = sessionStorage.getItem("token");
-  const role     = sessionStorage.getItem("role");
-  const fullName = sessionStorage.getItem("fullName");
+  const token    = localStorage.getItem("token") || sessionStorage.getItem("token");
+  const role     = localStorage.getItem("role") || sessionStorage.getItem("role");
+  const fullName = localStorage.getItem("fullName") || sessionStorage.getItem("fullName");
 
   const isPortalUser = token && (role === "ROLE_ADMIN" || role === "ROLE_MEMBER" || role === "Team_Member");
 
@@ -524,8 +550,8 @@ function updateNavbarAuth() {
     dropdownLi.className = "auth-item user-dropdown-container";
     dropdownLi.style.position = "relative";
 
-    const username  = sessionStorage.getItem("username");
-    const avatarUrl = sessionStorage.getItem("avatarUrl");
+    const username  = localStorage.getItem("username") || sessionStorage.getItem("username");
+    const avatarUrl = localStorage.getItem("avatarUrl") || sessionStorage.getItem("avatarUrl");
 
     function getInitials(name) {
       if (!name) return "ND";
@@ -559,6 +585,10 @@ function updateNavbarAuth() {
         <a href="user-profile.html" class="dropdown-item">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           Profile
+        </a>
+        <a href="inbox.html" class="dropdown-item">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+          Inbox
         </a>
         <a href="transaction.html" class="dropdown-item">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
@@ -634,6 +664,7 @@ function updateNavbarAuth() {
 
 // User Logout Logic
 function logoutUser() {
+  localStorage.clear();
   sessionStorage.clear();
   window.location.href = "index.html";
 }
@@ -678,13 +709,14 @@ function initLoginForm() {
       const data = await response.json();
 
       if (response.ok && data.token) {
-        // Store both 'token' (legacy) and 'authToken' (used by new dashboards)
+        // Store both 'token' (legacy) and 'authToken' (used by new dashboards) in localStorage
         localStorage.setItem("token",     data.token);
         localStorage.setItem("authToken", data.token);
         localStorage.setItem("username",  data.username);
         localStorage.setItem("fullName",  data.fullName);
         localStorage.setItem("role",      data.role);
         localStorage.setItem("email",     data.email);
+        localStorage.setItem("avatarUrl", data.avatarUrl || "");
         // Store full user object for PM / Client dashboards
         localStorage.setItem("user", JSON.stringify({
           username:  data.username,
@@ -693,6 +725,15 @@ function initLoginForm() {
           role:      data.role,
           avatarUrl: data.avatarUrl || null
         }));
+
+        // Write to sessionStorage for route guard and header sync compatibility
+        sessionStorage.setItem("token",     data.token);
+        sessionStorage.setItem("authToken", data.token);
+        sessionStorage.setItem("username",  data.username);
+        sessionStorage.setItem("fullName",  data.fullName);
+        sessionStorage.setItem("role",      data.role);
+        sessionStorage.setItem("email",     data.email);
+        sessionStorage.setItem("avatarUrl", data.avatarUrl || "");
 
         showAlert("Login successful! Redirecting...", true);
 
@@ -2087,79 +2128,51 @@ async function fetchInbox(email) {
   console.log("fetchInbox called with email:", email);
   const inboxSection = document.getElementById("inbox-section");
   const inboxContainer = document.getElementById("inbox-container");
-  console.log("inboxSection element:", inboxSection);
-  console.log("inboxContainer element:", inboxContainer);
+  const toolbar = document.getElementById("inbox-toolbar");
+
   if (!inboxSection || !inboxContainer) return;
+
+  // Initialize state
+  if (!window.inboxState) {
+    window.inboxState = {
+      contacts: [],
+      currentPage: 1,
+      pageSize: 5,
+      selectedIds: new Set(),
+      email: email
+    };
+    initInboxEventListeners(email);
+  } else {
+    window.inboxState.email = email;
+  }
 
   try {
     const apiUrl = `/api/contacts/my?email=${encodeURIComponent(email)}`;
-    console.log("Calling API:", apiUrl);
-
     const token = sessionStorage.getItem("token") || localStorage.getItem("token") || "";
 
     const response = await fetch(apiUrl, {
       headers: { "Authorization": "Bearer " + token }
     });
-    console.log("Response status:", response.status);
-    if (!response.ok) throw new Error(`Failed to fetch inbox: ${response.status} ${response.statusText}`);
+    if (!response.ok) throw new Error(`Failed to fetch inbox: ${response.status}`);
+    
     const contacts = await response.json();
-    console.log("Contacts received:", contacts);
+    window.inboxState.contacts = contacts;
+    window.inboxState.selectedIds.clear(); // Reset selections
+    
+    // Update "Select All" checkbox
+    const selectAllCheckbox = document.getElementById("select-all-checkbox");
+    if (selectAllCheckbox) selectAllCheckbox.checked = false;
 
-    inboxContainer.innerHTML = "";
+    renderInboxPage();
 
-    if (contacts.length === 0) {
-      inboxContainer.innerHTML = `
-        <div style="text-align:center;padding:3rem;color:var(--text-muted);">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:64px;height:64px;margin:0 auto 1rem;opacity:0.5;"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"></path></svg>
-          <p>No messages found. You can send a message on the Contact page to test.</p>
-        </div>
-      `;
-    } else {
-      contacts.forEach(contact => {
-        const card = document.createElement("div");
-        card.className = "inbox-card";
-
-        const createdAt = new Date(contact.createdAt).toLocaleDateString("en-US", {
-          hour: "2-digit", minute: "2-digit",
-          day: "2-digit", month: "2-digit", year: "numeric"
-        });
-
-        const repliedAt = contact.repliedAt ? new Date(contact.repliedAt).toLocaleDateString("en-US", {
-          hour: "2-digit", minute: "2-digit",
-          day: "2-digit", month: "2-digit", year: "numeric"
-        }) : null;
-
-        card.innerHTML = `
-          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;">
-            <div>
-              <h3 style="font-size:1.125rem;font-weight:700;color:var(--text-dark);margin:0 0 0.25rem;">${escapeHtml(contact.title)}</h3>
-              <p style="font-size:0.875rem;color:var(--text-muted);margin:0;">Sent at ${createdAt}</p>
-            </div>
-            <span class="status-badge ${contact.status === 'DONE' ? 'status-done' : 'status-pending'}" style="padding:0.35rem 0.75rem;font-size:0.75rem;">${escapeHtml(contact.status)}</span>
-          </div>
-          <div class="inbox-message-box">
-            <h4 style="font-size:0.875rem;font-weight:600;color:var(--text-dark);margin:0 0 0.5rem;">Your message:</h4>
-            <p style="font-size:0.875rem;color:var(--text-muted);margin:0;white-space:pre-line;">${escapeHtml(contact.content)}</p>
-          </div>
-          ${contact.reply ? `
-            <div class="inbox-reply-box">
-              <h4 style="font-size:0.875rem;font-weight:600;color:#059669;margin:0 0 0.5rem;">Response from team${repliedAt ? ` (${repliedAt})` : ''}:</h4>
-              <p style="font-size:0.875rem;color:#065f46;margin:0;white-space:pre-line;">${escapeHtml(contact.reply)}</p>
-            </div>
-          ` : `
-            <div class="inbox-pending-box" style="text-align:center;padding:1rem;color:var(--text-muted);font-size:0.875rem;background:#fef3c7;border-radius:8px;border:1px solid #fde68a;">
-              <h4 style="font-size:0.875rem;font-weight:600;color:#d97706;margin:0 0 0.5rem;">Status:</h4>
-              <p style="font-size:0.875rem;color:#b45309;margin:0;">Awaiting response...</p>
-            </div>
-          `}
-        `;
-        inboxContainer.appendChild(card);
-      });
+    // Show/hide toolbar based on message count
+    if (toolbar) {
+      toolbar.style.display = contacts.length > 0 ? "flex" : "none";
     }
 
     inboxSection.style.display = "block";
     console.log("Inbox section displayed");
-
+    
     // Update quick inbox badge
     const quickInbox = document.getElementById("quick-inbox");
     if (quickInbox) {
@@ -2179,6 +2192,297 @@ async function fetchInbox(email) {
       </div>
     `;
     inboxSection.style.display = "block";
+  }
+}
+
+function renderInboxPage() {
+  const container = document.getElementById("inbox-container");
+  const paginationContainer = document.getElementById("inbox-pagination");
+  if (!container) return;
+
+  const state = window.inboxState;
+  const contacts = state.contacts;
+  
+  if (contacts.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center;padding:3rem;color:var(--text-muted);">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:64px;height:64px;margin:0 auto 1rem;opacity:0.5;"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"></path></svg>
+        <p>No messages found. You can send a message on the Contact page to test.</p>
+      </div>
+    `;
+    if (paginationContainer) paginationContainer.style.display = "none";
+    updateDeleteSelectedBtnState();
+    return;
+  }
+
+  // Calculate page bounds
+  const totalItems = contacts.length;
+  const totalPages = Math.ceil(totalItems / state.pageSize);
+  
+  // Guard current page
+  if (state.currentPage > totalPages) {
+    state.currentPage = Math.max(1, totalPages);
+  }
+  
+  const startIndex = (state.currentPage - 1) * state.pageSize;
+  const endIndex = Math.min(startIndex + state.pageSize, totalItems);
+  const pageItems = contacts.slice(startIndex, endIndex);
+
+  container.innerHTML = "";
+
+  pageItems.forEach(contact => {
+    const card = document.createElement("div");
+    card.className = "inbox-card";
+
+    const createdAt = new Date(contact.createdAt).toLocaleDateString("en-US", {
+      hour: "2-digit", minute: "2-digit",
+      day: "2-digit", month: "2-digit", year: "numeric"
+    });
+
+    const repliedAt = contact.repliedAt ? new Date(contact.repliedAt).toLocaleDateString("en-US", {
+      hour: "2-digit", minute: "2-digit",
+      day: "2-digit", month: "2-digit", year: "numeric"
+    }) : null;
+
+    const isChecked = state.selectedIds.has(contact.id) ? "checked" : "";
+
+    card.innerHTML = `
+      <div style="display:flex; gap: 1.25rem; align-items: flex-start;">
+        <input type="checkbox" class="message-checkbox" data-id="${contact.id}" ${isChecked} style="width: 18px; height: 18px; cursor: pointer; accent-color: #00f0ff; margin-top: 0.25rem; flex-shrink: 0;">
+        <div style="flex-grow: 1; min-width: 0;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem;gap:1rem;flex-wrap:wrap;">
+            <div>
+              <h3 style="font-size:1.125rem;font-weight:700;color:var(--text-dark);margin:0 0 0.25rem;">${escapeHtml(contact.title)}</h3>
+              <p style="font-size:0.875rem;color:var(--text-muted);margin:0;">Sent at ${createdAt}</p>
+            </div>
+            <div style="display:flex; align-items:center; gap:0.75rem;">
+              <span class="status-badge ${contact.status === 'DONE' ? 'status-done' : 'status-pending'}" style="padding:0.35rem 0.75rem;font-size:0.75rem;">${escapeHtml(contact.status)}</span>
+              <button class="delete-single-btn" data-id="${contact.id}" style="background:transparent; border:none; color:#f87171; cursor:pointer; padding:0.35rem; border-radius:50%; transition:all 0.2s ease; display:flex; align-items:center; justify-content:center;" title="Delete Message">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              </button>
+            </div>
+          </div>
+          <div class="inbox-message-box">
+            <h4 style="font-size:0.875rem;font-weight:600;color:var(--text-dark);margin:0 0 0.5rem;">Your message:</h4>
+            <p style="font-size:0.875rem;color:var(--text-muted);margin:0;white-space:pre-line;">${escapeHtml(contact.content)}</p>
+          </div>
+          ${contact.reply ? `
+            <div class="inbox-reply-box">
+              <h4 style="font-size:0.875rem;font-weight:600;color:#059669;margin:0 0 0.5rem;">Response from team${repliedAt ? ` (${repliedAt})` : ''}:</h4>
+              <p style="font-size:0.875rem;color:#065f46;margin:0;white-space:pre-line;">${escapeHtml(contact.reply)}</p>
+            </div>
+          ` : `
+            <div class="inbox-pending-box">
+              <h4 style="font-size:0.875rem;font-weight:600;color:#d97706;margin:0 0 0.5rem;">Status:</h4>
+              <p style="font-size:0.875rem;color:#b45309;margin:0;">Awaiting response...</p>
+            </div>
+          `}
+        </div>
+      </div>
+    `;
+    container.appendChild(card);
+  });
+
+  // Render pagination controls
+  if (paginationContainer) {
+    if (totalPages <= 1) {
+      paginationContainer.style.display = "none";
+    } else {
+      paginationContainer.style.display = "flex";
+      paginationContainer.innerHTML = "";
+
+      // Previous button
+      const prevBtn = document.createElement("button");
+      prevBtn.className = "pagination-btn";
+      prevBtn.innerHTML = "&laquo; Prev";
+      prevBtn.disabled = state.currentPage === 1;
+      prevBtn.style.cssText = "background:rgba(255,255,255,0.05); color:var(--text-dark); border:1px solid var(--border-color); padding:0.4rem 1rem; border-radius:50px; font-weight:600; font-size:0.85rem; cursor:pointer; transition:all 0.2s;";
+      if (prevBtn.disabled) {
+        prevBtn.style.opacity = "0.4";
+        prevBtn.style.cursor = "not-allowed";
+      } else {
+        prevBtn.addEventListener("click", () => {
+          state.currentPage--;
+          renderInboxPage();
+        });
+      }
+      paginationContainer.appendChild(prevBtn);
+
+      // Page numbers
+      for (let i = 1; i <= totalPages; i++) {
+        const pageBtn = document.createElement("button");
+        pageBtn.className = "pagination-btn";
+        pageBtn.textContent = i;
+        pageBtn.style.cssText = "width:36px; height:36px; display:flex; align-items:center; justify-content:center; border-radius:50%; font-weight:600; font-size:0.85rem; border:1px solid var(--border-color); transition:all 0.2s; cursor:pointer;";
+        
+        if (i === state.currentPage) {
+          pageBtn.style.background = "linear-gradient(135deg, #00f0ff, #0070f3)";
+          pageBtn.style.color = "#fff";
+          pageBtn.style.borderColor = "transparent";
+          pageBtn.style.boxShadow = "0 0 10px rgba(0, 240, 255, 0.3)";
+        } else {
+          pageBtn.style.background = "rgba(255,255,255,0.05)";
+          pageBtn.style.color = "var(--text-dark)";
+          pageBtn.addEventListener("click", () => {
+            state.currentPage = i;
+            renderInboxPage();
+          });
+        }
+        paginationContainer.appendChild(pageBtn);
+      }
+
+      // Next button
+      const nextBtn = document.createElement("button");
+      nextBtn.className = "pagination-btn";
+      nextBtn.innerHTML = "Next &raquo;";
+      nextBtn.disabled = state.currentPage === totalPages;
+      nextBtn.style.cssText = "background:rgba(255,255,255,0.05); color:var(--text-dark); border:1px solid var(--border-color); padding:0.4rem 1rem; border-radius:50px; font-weight:600; font-size:0.85rem; cursor:pointer; transition:all 0.2s;";
+      if (nextBtn.disabled) {
+        nextBtn.style.opacity = "0.4";
+        nextBtn.style.cursor = "not-allowed";
+      } else {
+        nextBtn.addEventListener("click", () => {
+          state.currentPage++;
+          renderInboxPage();
+        });
+      }
+      paginationContainer.appendChild(nextBtn);
+    }
+  }
+
+  updateDeleteSelectedBtnState();
+}
+
+function updateDeleteSelectedBtnState() {
+  const deleteSelectedBtn = document.getElementById("delete-selected-btn");
+  if (!deleteSelectedBtn) return;
+  
+  const state = window.inboxState;
+  const count = state.selectedIds.size;
+  
+  if (count > 0) {
+    deleteSelectedBtn.removeAttribute("disabled");
+    deleteSelectedBtn.style.background = "rgba(239, 68, 68, 0.3)";
+    deleteSelectedBtn.style.color = "#fca5a5";
+    deleteSelectedBtn.style.borderColor = "rgba(239, 68, 68, 0.6)";
+  } else {
+    deleteSelectedBtn.setAttribute("disabled", "true");
+    deleteSelectedBtn.style.background = "rgba(239, 68, 68, 0.15)";
+    deleteSelectedBtn.style.color = "#f87171";
+    deleteSelectedBtn.style.borderColor = "rgba(239, 68, 68, 0.3)";
+    deleteSelectedBtn.style.opacity = "0.5";
+  }
+}
+
+function initInboxEventListeners(email) {
+  const container = document.getElementById("inbox-container");
+  const selectAll = document.getElementById("select-all-checkbox");
+  const deleteSelected = document.getElementById("delete-selected-btn");
+  const deleteAll = document.getElementById("delete-all-btn");
+
+  if (!container) return;
+
+  // Handle single item deletion and individual checkboxes delegation
+  container.addEventListener("click", async (e) => {
+    // Check if clicked delete single button
+    const deleteBtn = e.target.closest(".delete-single-btn");
+    if (deleteBtn) {
+      const id = deleteBtn.getAttribute("data-id");
+      if (confirm("Are you sure you want to delete this message? This action cannot be undone.")) {
+        await executeDelete(`/api/contacts/${id}`, "DELETE");
+        fetchInbox(email);
+      }
+      return;
+    }
+    
+    // Check if clicked individual checkbox
+    const checkbox = e.target.closest(".message-checkbox");
+    if (checkbox) {
+      const id = parseInt(checkbox.getAttribute("data-id"), 10);
+      const state = window.inboxState;
+      if (checkbox.checked) {
+        state.selectedIds.add(id);
+      } else {
+        state.selectedIds.delete(id);
+      }
+      
+      // Update select-all checkbox state
+      if (selectAll) {
+        const visibleCheckboxes = container.querySelectorAll(".message-checkbox");
+        const allChecked = Array.from(visibleCheckboxes).every(cb => cb.checked);
+        selectAll.checked = allChecked && visibleCheckboxes.length > 0;
+      }
+      
+      updateDeleteSelectedBtnState();
+    }
+  });
+
+  // Handle select all checkbox
+  if (selectAll) {
+    selectAll.addEventListener("change", (e) => {
+      const state = window.inboxState;
+      const checked = e.target.checked;
+      
+      // Select/deselect items on the CURRENT page
+      const currentCheckboxes = container.querySelectorAll(".message-checkbox");
+      currentCheckboxes.forEach(checkbox => {
+        checkbox.checked = checked;
+        const id = parseInt(checkbox.getAttribute("data-id"), 10);
+        if (checked) {
+          state.selectedIds.add(id);
+        } else {
+          state.selectedIds.delete(id);
+        }
+      });
+      
+      updateDeleteSelectedBtnState();
+    });
+  }
+
+  // Handle delete selected button
+  if (deleteSelected) {
+    deleteSelected.addEventListener("click", async () => {
+      const state = window.inboxState;
+      if (state.selectedIds.size === 0) return;
+      
+      if (confirm(`Are you sure you want to delete the ${state.selectedIds.size} selected message(s)? This action cannot be undone.`)) {
+        const idsArray = Array.from(state.selectedIds);
+        const idsParam = idsArray.join(",");
+        await executeDelete(`/api/contacts/my?ids=${idsParam}`, "DELETE");
+        fetchInbox(email);
+      }
+    });
+  }
+
+  // Handle delete all button
+  if (deleteAll) {
+    deleteAll.addEventListener("click", async () => {
+      if (confirm("Are you sure you want to delete ALL messages in your inbox? This action cannot be undone.")) {
+        await executeDelete("/api/contacts/my", "DELETE");
+        fetchInbox(email);
+      }
+    });
+  }
+}
+
+async function executeDelete(url, method) {
+  try {
+    const token = sessionStorage.getItem("token") || localStorage.getItem("token") || "";
+    const response = await fetch(url, {
+      method: method,
+      headers: {
+        "Authorization": "Bearer " + token
+      }
+    });
+    const result = await response.json();
+    if (response.ok && result.success !== false) {
+      alert(result.message || "Deletion successful!");
+    } else {
+      alert(result.message || "Failed to delete message(s).");
+    }
+  } catch (error) {
+    console.error("Delete operation failed:", error);
+    alert("An error occurred during deletion. Please try again.");
   }
 }
 
@@ -2282,7 +2586,7 @@ function injectQuickPanel() {
       <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:${currentTheme === 'dark' ? 'block' : 'none'};width:20px;height:20px;color:#eab308;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
       <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:${currentTheme === 'light' ? 'block' : 'none'};width:20px;height:20px;color:#6366f1;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
     </button>
-    <a id="quick-inbox" href="index.html#inbox-section" class="quick-panel-btn" aria-label="Inbox" style="display:none;">
+    <a id="quick-inbox" href="inbox.html" class="quick-panel-btn" aria-label="Inbox" style="display:none;">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
       <span class="quick-inbox-badge" style="display:none;"></span>
     </a>
@@ -2344,7 +2648,7 @@ function injectQuickPanel() {
       quickInbox.addEventListener("click", (e) => {
         const path = window.location.pathname;
         const page = path.substring(path.lastIndexOf('/') + 1) || "index.html";
-        if (page === "index.html" || page === "") {
+        if (page === "inbox.html") {
           e.preventDefault();
           const section = document.getElementById("inbox-section");
           if (section) {
@@ -2705,5 +3009,55 @@ async function removeClient(userId) {
     headers: { "Authorization": `Bearer ${token}` }
   });
   await loadAssignmentData(currentAssignmentProjectId);
+}
+
+// Hero H1 text click animation
+function initHeroTextClick() {
+  const heroH1 = document.querySelector(".hero-content h1");
+  if (!heroH1) return;
+
+  heroH1.style.cursor = "pointer";
+  heroH1.addEventListener("click", () => {
+    if (heroH1.classList.contains("hero-text-clicked")) return;
+    heroH1.classList.add("hero-text-clicked");
+    setTimeout(() => {
+      heroH1.classList.remove("hero-text-clicked");
+    }, 800);
+  });
+}
+
+// Navbar scroll effects (detached floating and scroll-to-hide)
+function initNavbarScrollEffects() {
+  const header = document.querySelector("header");
+  if (!header) return;
+
+  let lastScrollY = window.scrollY;
+  const scrollThreshold = 10; // minimum scroll down/up before hiding/showing
+  const detachThreshold = 30; // scroll Y position where navbar detaches
+
+  window.addEventListener("scroll", () => {
+    const currentScrollY = window.scrollY;
+
+    // 1. Detach/Attach logic
+    if (currentScrollY > detachThreshold) {
+      header.classList.add("header-detached");
+    } else {
+      header.classList.remove("header-detached");
+    }
+
+    // 2. Hide/Show logic (Scroll-to-hide)
+    // Only trigger if we scrolled more than the threshold
+    if (Math.abs(currentScrollY - lastScrollY) > scrollThreshold) {
+      if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        // Scrolling down -> hide navbar
+        header.classList.add("header-hidden");
+      } else {
+        // Scrolling up -> show navbar
+        header.classList.remove("header-hidden");
+      }
+    }
+
+    lastScrollY = currentScrollY;
+  });
 }
 
