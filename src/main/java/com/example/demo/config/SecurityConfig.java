@@ -53,9 +53,10 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 // Public pages (Frontend)
+
                 .requestMatchers("/", "/index.html", "/about.html", "/services.html", "/portfolio.html",
                                "/contact.html", "/login.html", "/register.html", "/member.html", "/member-contact.html", "/admin.html", "/forgot-password.html", "/inbox.html", "/user-profile.html",
-                               "/pm-dashboard.html", "/client-dashboard.html", "/booking.html", "/rented-project.html", "/member-profile.htmk").permitAll()
+                               "/pm-dashboard.html", "/client-dashboard.html", "/booking.html", "/member-profile.html").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/uploads/**", "/favicon.ico").permitAll()
                 
                 // Auth APIs
