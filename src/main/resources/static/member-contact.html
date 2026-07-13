@@ -465,7 +465,7 @@
                     <option value="PENDING">PENDING</option>
                     <option value="IN_PROGRESS">IN_PROGRESS</option>
                     <option value="COMPLETED">COMPLETED</option>
-                    <option value="BLOCKED">BLOCKED</option>
+                    <option value="DELAYED">DELAYED</option>
                   </select>
                 </div>
                 <div class="form-field">
@@ -682,7 +682,7 @@
     }
 
     function buildMilestoneItem(m, isPm) {
-      const statusOpts = ['PENDING','IN_PROGRESS','COMPLETED','BLOCKED'].map(s =>
+      const statusOpts = ['PENDING','IN_PROGRESS','COMPLETED','DELAYED'].map(s =>
         `<option value="${s}" ${m.status === s ? 'selected' : ''}>${s}</option>`
       ).join('');
 

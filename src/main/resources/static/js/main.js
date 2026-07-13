@@ -45,7 +45,8 @@ document.addEventListener("DOMContentLoaded", () => {
     fetchMembers();
   } else if (page === "portfolio.html") {
     fetchProjects();
-    initMilestoneSSE();
+  } else if (page === "rented-project.html") {
+    // Handled by inline script
   } else if (page === "contact.html") {
     initContactForm();
   } else if (page === "login.html") {
@@ -431,7 +432,7 @@ function checkRouteGuard() {
   }
 
   // Protected client pages
-  const protectedPages = ["contact.html"];
+  const protectedPages = ["contact.html", "rented-project.html"];
 
   if (protectedPages.includes(page) && !token) {
     sessionStorage.setItem("redirectAttempt", page);
