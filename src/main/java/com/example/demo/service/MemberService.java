@@ -24,14 +24,21 @@ public class MemberService {
         for (User u : users) {
             String role = u.getRole();
             if ("ROLE_MEMBER".equalsIgnoreCase(role) || "Team_Member".equalsIgnoreCase(role)) {
+                // Check if this user already has a linked Member record
+                boolean exists = list.stream().anyMatch(m -> u.getId().equals(m.getUserId()));
+                if (exists) {
+                    continue;
+                }
+
                 Member m = new Member();
                 m.setId(1000000L + u.getId());
+                m.setUserId(u.getId());
                 m.setName(u.getFullName() != null && !u.getFullName().isBlank() ? u.getFullName() : u.getUsername());
                 m.setRole("Team Member");
-                m.setAvatarUrl("");
-                m.setFacebookUrl(null);
-                m.setGithubUrl(null);
-                m.setLinkedinUrl(null);
+                m.setAvatarUrl(u.getAvatarUrl() != null ? u.getAvatarUrl() : "");
+                m.setFacebookUrl(u.getFacebookUrl());
+                m.setGithubUrl(u.getGithubUrl());
+                m.setLinkedinUrl(u.getLinkedinUrl());
                 list.add(m);
             }
         }

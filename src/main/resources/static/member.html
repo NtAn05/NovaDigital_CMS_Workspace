@@ -136,7 +136,7 @@
     }
   </style>
 </head>
-<body>
+<body class="dashboard-page">
 
   <!-- Header Section -->
   <header>
@@ -163,20 +163,20 @@
     <div class="portal-header">
       <div>
         <h1>Team Member Portal</h1>
-        <p>Xem, quản lý và phản hồi trực tiếp các yêu cầu tư vấn dịch vụ của khách hàng qua email.</p>
+        <p>View, manage and reply directly to client service consultation requests via email.</p>
       </div>
       <div>
-        <span id="member-name-badge" style="font-weight: 600; background: var(--primary-light); color: var(--primary); padding: 0.5rem 1rem; border-radius: 50px;">Chào Team Member</span>
+        <span id="member-name-badge" style="font-weight: 600; background: var(--primary-light); color: var(--primary); padding: 0.5rem 1rem; border-radius: 50px;">Welcome Team Member</span>
       </div>
     </div>
 
     <!-- Filter / Search Section -->
     <div class="table-actions-bar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; gap: 1rem;">
       <div class="search-box-wrapper" style="position: relative; flex: 1; max-width: 400px;">
-        <input type="text" id="member-search-input" placeholder="Tìm kiếm lời nhắn..." style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 0.95rem;">
+        <input type="text" id="member-search-input" placeholder="Search messages..." style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 0.95rem;">
       </div>
       <div style="display: flex; gap: 0.5rem; align-items: center;">
-        <span style="font-size: 0.9rem; color: var(--text-muted);">Tổng tin nhắn: </span>
+        <span style="font-size: 0.9rem; color: var(--text-muted);">Total messages: </span>
         <strong id="member-msg-count" style="font-size: 1.1rem; color: var(--text-dark);">0</strong>
       </div>
     </div>
@@ -186,18 +186,18 @@
       <table class="admin-table">
         <thead>
           <tr>
-            <th>Khách hàng</th>
-            <th>Chủ đề / Yêu cầu</th>
-            <th>Nội dung chi tiết</th>
-            <th>Ngày gửi</th>
-            <th>Trạng thái</th>
-            <th>Hành động</th>
+            <th>Client</th>
+            <th>Subject / Request</th>
+            <th>Detailed Message</th>
+            <th>Submitted Date</th>
+            <th>Status</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody id="member-messages-tbody">
           <tr>
             <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">
-              Đang tải danh sách lời nhắn...
+              Loading messages list...
             </td>
           </tr>
         </tbody>
@@ -208,24 +208,24 @@
   <!-- Reply Modal Overlay -->
   <div id="reply-modal-overlay" class="portal-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="reply-modal-title">
     <div class="portal-modal">
-      <button id="reply-modal-close-btn" class="portal-modal-close" aria-label="Đóng">&times;</button>
-      <h2 id="reply-modal-title" style="font-family: var(--font-heading); font-size: 1.75rem; font-weight: 800; color: var(--text-dark); margin-bottom: 0.5rem;">Phản hồi khách hàng</h2>
-      <p class="subtitle" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">Hệ thống sẽ giả lập gửi email phản hồi chính thức cho khách hàng này.</p>
+      <button id="reply-modal-close-btn" class="portal-modal-close" aria-label="Close">&times;</button>
+      <h2 id="reply-modal-title" style="font-family: var(--font-heading); font-size: 1.75rem; font-weight: 800; color: var(--text-dark); margin-bottom: 0.5rem;">Reply to Client</h2>
+      <p class="subtitle" style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">The system will simulate sending an official reply email to this client.</p>
 
       <form id="reply-form">
         <div class="form-group">
-          <label style="font-weight: 600; color: var(--text-dark);">Người nhận:</label>
+          <label style="font-weight: 600; color: var(--text-dark);">Recipient:</label>
           <input type="text" id="reply-to-email" readonly style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: #f8fafc; font-weight: 600; color: var(--text-muted);">
         </div>
         <div class="form-group" style="margin-top: 1rem;">
-          <label style="font-weight: 600; color: var(--text-dark);">Chủ đề gốc:</label>
+          <label style="font-weight: 600; color: var(--text-dark);">Original Subject:</label>
           <input type="text" id="reply-subject" readonly style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm); background: #f8fafc; color: var(--text-muted);">
         </div>
         <div class="form-group" style="margin-top: 1rem;">
-          <label for="reply-message" style="font-weight: 600; color: var(--text-dark);">Nội dung phản hồi *</label>
-          <textarea id="reply-message" rows="6" placeholder="Nhập nội dung email phản hồi..." required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-family: var(--font-body); font-size: 0.95rem; resize: vertical;"></textarea>
+          <label for="reply-message" style="font-weight: 600; color: var(--text-dark);">Reply Content *</label>
+          <textarea id="reply-message" rows="6" placeholder="Enter reply email content..." required style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-family: var(--font-body); font-size: 0.95rem; resize: vertical;"></textarea>
         </div>
-        <button type="submit" class="submit-btn" style="margin-top: 1.5rem; width: 100%;">Gửi Phản Hồi Qua Email</button>
+        <button type="submit" class="submit-btn" style="margin-top: 1.5rem; width: 100%;">Send Reply via Email</button>
         <div id="reply-alert-message" class="alert-message" style="margin-top: 1rem;"></div>
       </form>
     </div>
@@ -252,7 +252,7 @@
     document.addEventListener("DOMContentLoaded", () => {
       // Set name
       const nameBadge = document.getElementById("member-name-badge");
-      const fullName = localStorage.getItem("fullName") || "Team Member";
+      const fullName = sessionStorage.getItem("fullName") || "Team Member";
       if (nameBadge) {
         nameBadge.textContent = "Hi, " + fullName;
       }
@@ -262,10 +262,10 @@
       if (logoutBtn) {
         logoutBtn.addEventListener("click", (e) => {
           e.preventDefault();
-          localStorage.removeItem("token");
-          localStorage.removeItem("username");
-          localStorage.removeItem("fullName");
-          localStorage.removeItem("role");
+          sessionStorage.removeItem("token");
+          sessionStorage.removeItem("username");
+          sessionStorage.removeItem("fullName");
+          sessionStorage.removeItem("role");
           window.location.href = "index.html";
         });
       }
@@ -307,7 +307,7 @@
           if (!id || !msg) return;
 
           try {
-            replyAlert.textContent = "Đang gửi email phản hồi...";
+            replyAlert.textContent = "Sending reply email...";
             replyAlert.className = "alert-message";
             replyAlert.style.display = "block";
             replyAlert.style.cssText = "display:block;background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;";
@@ -316,7 +316,7 @@
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                "Authorization": "Bearer " + (localStorage.getItem("token") || "")
+                "Authorization": "Bearer " + (sessionStorage.getItem("token") || "")
               },
               body: JSON.stringify({ message: msg })
             });
@@ -324,7 +324,7 @@
             const result = await response.json();
 
             if (response.ok && result.success) {
-              replyAlert.textContent = "✅ " + (result.message || "Đã gửi phản hồi thành công!");
+              replyAlert.textContent = "✅ " + (result.message || "Reply sent successfully!");
               replyAlert.className = "alert-message alert-success";
               replyAlert.style.cssText = "display:block;";
               
@@ -334,13 +334,13 @@
                 loadPortalMessages();
               }, 1200);
             } else {
-              replyAlert.textContent = result.message || "Gửi phản hồi thất bại.";
+              replyAlert.textContent = result.message || "Failed to send reply.";
               replyAlert.className = "alert-message alert-error";
               replyAlert.style.cssText = "display:block;";
             }
           } catch (err) {
             console.error("Reply submit error:", err);
-            replyAlert.textContent = "Không thể gửi phản hồi lên máy chủ.";
+            replyAlert.textContent = "Could not send reply to the server.";
             replyAlert.className = "alert-message alert-error";
             replyAlert.style.cssText = "display:block;";
           }
@@ -356,7 +356,7 @@
       try {
         const response = await fetch("/api/contacts", {
           headers: {
-            "Authorization": "Bearer " + (localStorage.getItem("token") || "")
+            "Authorization": "Bearer " + (sessionStorage.getItem("token") || "")
           }
         });
         if (!response.ok) throw new Error("Failed to fetch");
@@ -366,7 +366,7 @@
         tbody.innerHTML = "";
 
         if (messages.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:3rem;color:var(--text-muted);">Không có tin nhắn nào từ người dùng.</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:3rem;color:var(--text-muted);">No messages from users.</td></tr>`;
           return;
         }
 
@@ -378,7 +378,7 @@
           const tr = document.createElement("tr");
           tr.setAttribute("data-searchable", `${msg.name} ${msg.email} ${msg.title} ${msg.content}`);
           
-          const date = new Date(msg.createdAt).toLocaleDateString("vi-VN", {
+          const date = new Date(msg.createdAt).toLocaleDateString("en-US", {
             hour: "2-digit", minute: "2-digit",
             day: "2-digit", month: "2-digit", year: "numeric"
           });
@@ -388,9 +388,9 @@
           
           const replyButton = isPending 
             ? `<button class="btn-reply-action" onclick="openReplyModal(${msg.id})">
-                 <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> Phản Hồi
+                 <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> Reply
                </button>`
-            : `<span style="color:var(--text-muted);font-size:0.9rem;font-weight:600;">Đã phản hồi</span>`;
+            : `<span style="color:var(--text-muted);font-size:0.9rem;font-weight:600;">Replied</span>`;
 
           tr.innerHTML = `
             <td>
@@ -408,7 +408,7 @@
 
       } catch (err) {
         console.error("Portal load messages error:", err);
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:3rem;color:#ef4444;">Không thể tải danh sách lời nhắn. Vui lòng thử lại.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:3rem;color:#ef4444;">Could not load messages list. Please try again.</td></tr>`;
       }
     }
 
