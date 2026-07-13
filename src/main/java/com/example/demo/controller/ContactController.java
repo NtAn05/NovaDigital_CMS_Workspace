@@ -26,7 +26,7 @@ public class ContactController {
         contact.setTitle(request.getTitle());
         contact.setContent(request.getContent());
         
-        Contact savedContact = contactService.saveContact(contact);
+        Contact savedContact = contactService.createContact(contact);
         
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
@@ -51,7 +51,7 @@ public class ContactController {
             contact.setStatus("DONE");
             contact.setReply(replyMessage);
             contact.setRepliedAt(java.time.LocalDateTime.now());
-            contactService.saveContact(contact);
+            contactService.updateContact(contact);
             
             // Mock sending email
             System.out.println("----------------------------------------");

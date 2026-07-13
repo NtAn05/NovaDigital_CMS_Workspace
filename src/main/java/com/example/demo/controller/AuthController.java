@@ -6,6 +6,7 @@ import com.example.demo.dto.LoginRequest;
 import com.example.demo.dto.RegisterRequest;
 import com.example.demo.entity.User;
 import com.example.demo.service.UserService;
+import com.example.demo.audit.service.AuditService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -39,6 +40,9 @@ public class AuthController {
     private com.example.demo.repository.UserRepository userRepository;
 
     @Autowired
+    private AuditService auditService;
+
+    @Autowired
     private com.example.demo.service.OtpService otpService;
 
     @Autowired
@@ -67,23 +71,23 @@ public class AuthController {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             request.getUsernameOrEmail(),
-                            request.getPassword()
-                    )
-            );
+                            request.getPassword()));
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
             String token = tokenProvider.generateToken(authentication);
-            
+
             User authenticatedUser = userService.getUserByUsernameOrEmail(request.getUsernameOrEmail());
-            
+
+            // ── Audit Log: Ghi nhận đăng nhập thành công ──
+            auditService.logAuthAction("LOGIN", authenticatedUser.getUsername());
+
             AuthResponse response = new AuthResponse(
                     token,
                     authenticatedUser.getUsername(),
                     authenticatedUser.getFullName(),
                     authenticatedUser.getRole(),
                     authenticatedUser.getEmail(),
-                    authenticatedUser.getAvatarUrl()
-            );
+                    authenticatedUser.getAvatarUrl());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
@@ -97,22 +101,22 @@ public class AuthController {
     public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> body) {
         String email = body.get("email");
         Map<String, Object> response = new HashMap<>();
-        
+
         if (email == null || email.isBlank()) {
             response.put("success", false);
             response.put("message", "Email không được để trống.");
             return ResponseEntity.badRequest().body(response);
         }
-        
+
         java.util.Optional<User> optionalUser = userRepository.findByEmail(email.trim());
         if (optionalUser.isEmpty()) {
             response.put("success", false);
             response.put("message", "Email không tồn tại trên hệ thống.");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
-        
+
         String otp = otpService.generateOtp(email.trim());
-        
+
         try {
             emailService.sendOtpEmail(email.trim(), otp);
         } catch (Exception e) {
@@ -121,7 +125,7 @@ public class AuthController {
             System.out.println("FALLBACK PASSWORD RESET OTP FOR " + email + ": " + otp);
             System.out.println("========================================");
         }
-        
+
         response.put("success", true);
         response.put("message", "Mã OTP đã được gửi về email của bạn.");
         return ResponseEntity.ok(response);
@@ -132,13 +136,13 @@ public class AuthController {
         String email = body.get("email");
         String otp = body.get("otp");
         Map<String, Object> response = new HashMap<>();
-        
+
         if (email == null || otp == null || email.isBlank() || otp.isBlank()) {
             response.put("success", false);
             response.put("message", "Email và mã OTP không được để trống.");
             return ResponseEntity.badRequest().body(response);
         }
-        
+
         boolean isValid = otpService.verifyOtp(email.trim(), otp.trim());
         if (isValid) {
             response.put("success", true);
@@ -157,34 +161,34 @@ public class AuthController {
         String otp = body.get("otp");
         String newPassword = body.get("newPassword");
         Map<String, Object> response = new HashMap<>();
-        
-        if (email == null || otp == null || newPassword == null || 
-            email.isBlank() || otp.isBlank() || newPassword.isBlank()) {
+
+        if (email == null || otp == null || newPassword == null ||
+                email.isBlank() || otp.isBlank() || newPassword.isBlank()) {
             response.put("success", false);
             response.put("message", "Vui lòng cung cấp đầy đủ thông tin.");
             return ResponseEntity.badRequest().body(response);
         }
-        
+
         boolean isValid = otpService.verifyOtp(email.trim(), otp.trim());
         if (!isValid) {
             response.put("success", false);
             response.put("message", "Xác thực OTP thất bại. Mật khẩu không thể thay đổi.");
             return ResponseEntity.badRequest().body(response);
         }
-        
+
         java.util.Optional<User> optionalUser = userRepository.findByEmail(email.trim());
         if (optionalUser.isEmpty()) {
             response.put("success", false);
             response.put("message", "Không tìm thấy người dùng.");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
-        
+
         User user = optionalUser.get();
         user.setPassword(com.example.demo.service.PasswordHasher.hash(newPassword));
         userRepository.save(user);
-        
+
         otpService.clearOtp(email.trim());
-        
+
         response.put("success", true);
         response.put("message", "Mật khẩu đã được cập nhật thành công.");
         return ResponseEntity.ok(response);
