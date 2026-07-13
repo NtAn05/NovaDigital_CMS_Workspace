@@ -55,7 +55,7 @@ public class SecurityConfig {
                 // Public pages (Frontend)
                 .requestMatchers("/", "/index.html", "/about.html", "/services.html", "/portfolio.html",
                                "/contact.html", "/login.html", "/register.html", "/member.html", "/member-contact.html", "/admin.html", "/forgot-password.html", "/inbox.html", "/user-profile.html",
-                               "/pm-dashboard.html", "/client-dashboard.html").permitAll()
+                               "/pm-dashboard.html", "/client-dashboard.html", "/booking.html").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/uploads/**", "/favicon.ico").permitAll()
                 
                 // Auth APIs
@@ -65,6 +65,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/projects", "/api/projects/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/services", "/api/services/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/members", "/api/members/**").permitAll()
+                .requestMatchers("/api/bookings/**").permitAll()
 
                 // Milestone SSE Stream: public so Client View can subscribe without login
                 .requestMatchers(HttpMethod.GET, "/api/milestones/stream").permitAll()
