@@ -104,14 +104,14 @@ public class AuthController {
 
         if (email == null || email.isBlank()) {
             response.put("success", false);
-            response.put("message", "Email không được để trống.");
+            response.put("message", "Email cannot be empty.");
             return ResponseEntity.badRequest().body(response);
         }
 
         java.util.Optional<User> optionalUser = userRepository.findByEmail(email.trim());
         if (optionalUser.isEmpty()) {
             response.put("success", false);
-            response.put("message", "Email không tồn tại trên hệ thống.");
+            response.put("message", "Email does not exist in the system.");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
 
@@ -120,14 +120,14 @@ public class AuthController {
         try {
             emailService.sendOtpEmail(email.trim(), otp);
         } catch (Exception e) {
-            System.err.println("Gửi mail OTP thất bại: " + e.getMessage());
+            System.err.println("Failed to send OTP email: " + e.getMessage());
             System.out.println("========================================");
             System.out.println("FALLBACK PASSWORD RESET OTP FOR " + email + ": " + otp);
             System.out.println("========================================");
         }
 
         response.put("success", true);
-        response.put("message", "Mã OTP đã được gửi về email của bạn.");
+        response.put("message", "OTP code has been sent to your email.");
         return ResponseEntity.ok(response);
     }
 
@@ -139,18 +139,18 @@ public class AuthController {
 
         if (email == null || otp == null || email.isBlank() || otp.isBlank()) {
             response.put("success", false);
-            response.put("message", "Email và mã OTP không được để trống.");
+            response.put("message", "Email and OTP code cannot be empty.");
             return ResponseEntity.badRequest().body(response);
         }
 
         boolean isValid = otpService.verifyOtp(email.trim(), otp.trim());
         if (isValid) {
             response.put("success", true);
-            response.put("message", "Mã OTP hợp lệ.");
+            response.put("message", "OTP code is valid.");
             return ResponseEntity.ok(response);
         } else {
             response.put("success", false);
-            response.put("message", "Mã OTP không đúng hoặc đã hết hạn.");
+            response.put("message", "OTP code is incorrect or expired.");
             return ResponseEntity.badRequest().body(response);
         }
     }
@@ -165,21 +165,21 @@ public class AuthController {
         if (email == null || otp == null || newPassword == null ||
                 email.isBlank() || otp.isBlank() || newPassword.isBlank()) {
             response.put("success", false);
-            response.put("message", "Vui lòng cung cấp đầy đủ thông tin.");
+            response.put("message", "Please provide all required information.");
             return ResponseEntity.badRequest().body(response);
         }
 
         boolean isValid = otpService.verifyOtp(email.trim(), otp.trim());
         if (!isValid) {
             response.put("success", false);
-            response.put("message", "Xác thực OTP thất bại. Mật khẩu không thể thay đổi.");
+            response.put("message", "OTP verification failed. Password cannot be changed.");
             return ResponseEntity.badRequest().body(response);
         }
 
         java.util.Optional<User> optionalUser = userRepository.findByEmail(email.trim());
         if (optionalUser.isEmpty()) {
             response.put("success", false);
-            response.put("message", "Không tìm thấy người dùng.");
+            response.put("message", "User not found.");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
 
@@ -190,7 +190,7 @@ public class AuthController {
         otpService.clearOtp(email.trim());
 
         response.put("success", true);
-        response.put("message", "Mật khẩu đã được cập nhật thành công.");
+        response.put("message", "Password has been updated successfully.");
         return ResponseEntity.ok(response);
     }
 }

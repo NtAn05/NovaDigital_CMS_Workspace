@@ -15,4 +15,6 @@ public class MemberResponse {
     private String facebookUrl;
     private String githubUrl;
     private String linkedinUrl;
+    private String skills;
+    private String projectsWorked;
 }

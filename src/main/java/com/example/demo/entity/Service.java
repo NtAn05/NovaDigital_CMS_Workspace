@@ -8,9 +8,9 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "services")
-@Data // Tự động tạo getter, setter, equals, hashCode, toString
-@NoArgsConstructor // Tự động tạo constructor không tham số
-@AllArgsConstructor // Tự động tạo constructor có đầy đủ tham số
+@Data // Generates getters, setters, equals, hashCode, and toString
+@NoArgsConstructor // Generates no-args constructor
+@AllArgsConstructor // Generates all-args constructor
 public class Service {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,12 +23,18 @@ public class Service {
     private String description;
 
     @Column(name = "icon_url", length = 255)
-    private String iconUrl; // Đường dẫn tới icon/image của dịch vụ
+    private String iconUrl; // Path to service icon/image
+
+    @Column(name = "base_price")
+    private Double basePrice;
+
+    @Column(name = "category", length = 100)
+    private String category;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
-    // Tự động chèn thời gian hiện tại khi dữ liệu được tạo mới
+    // Automatically set current timestamp when record is created
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();

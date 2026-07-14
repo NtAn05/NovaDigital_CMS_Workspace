@@ -40,25 +40,63 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            .cors(cors -> cors.disable())
+            .cors(cors -> cors.configurationSource(request -> {
+            var corsConfiguration = new org.springframework.web.cors.CorsConfiguration();
+            // Replace with your exact frontend URL (e.g., http://127.0.0.1:5500 or http://localhost:3000)
+            corsConfiguration.setAllowedOrigins(java.util.List.of("http://127.0.0.1:5500", "http://localhost:3000"));
+            corsConfiguration.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+            corsConfiguration.setAllowedHeaders(java.util.List.of("*"));
+            corsConfiguration.setAllowCredentials(true);
+            return corsConfiguration;
+        }))
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 // Public pages (Frontend)
-                .requestMatchers("/", "/index.html", "/about.html", "/services.html", "/portfolio.html", 
-                               "/contact.html", "/login.html", "/register.html", "/member.html", "/member-contact.html", "/admin.html", "/forgot-password.html", "/inbox.html", "/user-profile.html").permitAll()
+
+                .requestMatchers("/", "/index.html", "/about.html", "/services.html", "/portfolio.html",
+                               "/contact.html", "/login.html", "/register.html", "/member.html", "/member-contact.html", "/admin.html", "/forgot-password.html", "/inbox.html", "/user-profile.html",
+                               "/pm-dashboard.html", "/client-dashboard.html", "/booking.html","/rented-project.html", "/member-profile.html").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/uploads/**", "/favicon.ico").permitAll()
                 
                 // Auth APIs
-                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/auth/**", "/error").permitAll()
                 
                 // Public GET APIs
                 .requestMatchers(HttpMethod.GET, "/api/projects", "/api/projects/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/services", "/api/services/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/members", "/api/members/**").permitAll()
+                .requestMatchers("/api/bookings/**").permitAll()
+
+                // Milestone SSE Stream: public so Client View can subscribe without login
+                .requestMatchers(HttpMethod.GET, "/api/milestones/stream").permitAll()
+
+                // Milestone read: public (project progress visible on Client View)
+                .requestMatchers(HttpMethod.GET, "/api/projects/*/milestones").permitAll()
+
+                // Milestone audit logs: restricted to internal team
+                .requestMatchers(HttpMethod.GET, "/api/projects/*/milestones/*/logs").hasAnyRole("ADMIN", "MEMBER")
+
+                // Milestone sync & create: MEMBER only (PM ownership check is in service layer)
+                .requestMatchers(HttpMethod.POST, "/api/projects/*/milestones").hasRole("MEMBER")
+                .requestMatchers(HttpMethod.PUT, "/api/projects/*/milestones/**").hasRole("MEMBER")
+
+                // Milestone delete: Admin only
+                .requestMatchers(HttpMethod.DELETE, "/api/projects/*/milestones/**").hasRole("ADMIN")
+
+                // Assignment management: Admin only
+                .requestMatchers("/api/projects/*/assignments").hasRole("ADMIN")
+                .requestMatchers("/api/projects/*/assignments/**").hasRole("ADMIN")
+                .requestMatchers("/api/projects/*/clients").hasRole("ADMIN")
+                .requestMatchers("/api/projects/*/clients/**").hasRole("ADMIN")
+
+                // My-projects endpoints: any authenticated user
+                .requestMatchers("/api/my/**").authenticated()
                 
-                // Contact submission requires authentication
-                .requestMatchers(HttpMethod.POST, "/api/contacts", "/api/contacts/**").authenticated()
+                // Contact submission: any authenticated user can POST to /api/contacts (send message)
+                .requestMatchers(HttpMethod.POST, "/api/contacts").authenticated()
+                // Reply to a contact: only ADMIN or MEMBER
+                .requestMatchers(HttpMethod.POST, "/api/contacts/**").hasAnyRole("ADMIN", "MEMBER")
 
                 // Security rules for changing content / sensitive endpoints
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
@@ -81,9 +119,9 @@ public class SecurityConfig {
 
                 // Get my contacts needs authentication
                 .requestMatchers("/api/contacts/my").authenticated()
-                // Manage contacts / reply is for Admin / Member
+                .requestMatchers(HttpMethod.DELETE, "/api/contacts/**").authenticated()
+                // Manage contacts (list/view) is for Admin / Member
                 .requestMatchers(HttpMethod.GET, "/api/contacts", "/api/contacts/**").hasAnyRole("ADMIN", "MEMBER")
-                .requestMatchers(HttpMethod.POST, "/api/contacts", "/api/contacts/**").hasAnyRole("ADMIN", "MEMBER")
 
                 // Any other request
                 .anyRequest().authenticated()

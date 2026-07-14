@@ -19,10 +19,10 @@ public class Member {
     private String name;
 
     @Column(nullable = false, length = 100)
-    private String role; // Ví dụ: "PROJECT LEADER", "MEMBER"
+    private String role; // Examples: "PROJECT LEADER", "MEMBER"
 
     @Column(name = "avatar_url", length = 255)
-    private String avatarUrl; // Đường dẫn ảnh đại diện thành viên
+    private String avatarUrl; // Path to member avatar image
 
     @Column(name = "facebook_url", length = 255)
     private String facebookUrl;
@@ -32,4 +32,13 @@ public class Member {
 
     @Column(name = "linkedin_url", length = 255)
     private String linkedinUrl;
+
+    @Column(name = "user_id")
+    private Long userId;
+
+    @Column(name = "skills", length = 1000)
+    private String skills;
+
+    @Column(name = "projects", length = 1000)
+    private String projects;
 }

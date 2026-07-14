@@ -39,11 +39,11 @@ public class ProjectController {
     public ResponseEntity<?> createProject(@RequestBody Project request) {
         Map<String, Object> error = new HashMap<>();
         if (request.getTitle() == null || request.getTitle().isBlank()) {
-            error.put("message", "Tên dự án không được để trống");
+            error.put("message", "Project's name cannot empty");
             return ResponseEntity.badRequest().body(error);
         }
         if (request.getCategory() == null || request.getCategory().isBlank()) {
-            error.put("message", "Danh mục không được để trống");
+            error.put("message", "The category cannot be left blank.");
             return ResponseEntity.badRequest().body(error);
         }
 
@@ -66,7 +66,7 @@ public class ProjectController {
         Map<String, Object> error = new HashMap<>();
         Optional<Project> optional = projectRepository.findById(id);
         if (optional.isEmpty()) {
-            error.put("message", "Không tìm thấy dự án với id = " + id);
+            error.put("message", "Project with id = not found " + id);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
         }
 
@@ -87,13 +87,13 @@ public class ProjectController {
     public ResponseEntity<?> deleteProject(@PathVariable Long id) {
         if (!projectRepository.existsById(id)) {
             Map<String, Object> error = new HashMap<>();
-            error.put("message", "Không tìm thấy dự án với id = " + id);
+            error.put("message", "Project with id = not found " + id);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
         }
         projectRepository.deleteById(id);
         Map<String, Object> result = new HashMap<>();
         result.put("success", true);
-        result.put("message", "Đã xóa dự án thành công");
+        result.put("message", "Project deleted successfully.");
         return ResponseEntity.ok(result);
     }
 }
