@@ -49,6 +49,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // 4c. Initialize Navbar scroll effects (detached floating and show/hide)
   initNavbarScrollEffects();
 
+  // 4d. Move footer bottom inside footer container
+  initFooterMove();
+
   // 5. Detect current page and fetch corresponding data
   const path = window.location.pathname;
   const page = path.substring(path.lastIndexOf('/') + 1) || "index.html";
@@ -3880,5 +3883,14 @@ function initNavbarScrollEffects() {
 
     lastScrollY = currentScrollY;
   });
+}
+
+// Dynamically move footer-bottom inside footer-container for unified layout
+function initFooterMove() {
+  const container = document.querySelector(".footer-container");
+  const bottom = document.querySelector(".footer-bottom");
+  if (container && bottom) {
+    container.appendChild(bottom);
+  }
 }
 
