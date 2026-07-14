@@ -24,7 +24,7 @@ initTheme(); // Initialize theme immediately before DOM fully loads
 
 document.addEventListener("DOMContentLoaded", () => {
   console.log("DOM Loaded");
-
+  
   // 0. Initialize scroll animations
   initScrollAnimations();
 
@@ -259,20 +259,20 @@ function closeAuthModal() {
 }
 
 function switchAuthTab(tab) {
-  const loginTab = document.getElementById("tab-login");
+  const loginTab    = document.getElementById("tab-login");
   const registerTab = document.getElementById("tab-register");
-  const loginPanel = document.getElementById("panel-login");
+  const loginPanel    = document.getElementById("panel-login");
   const registerPanel = document.getElementById("panel-register");
   if (!loginTab || !registerTab) return;
 
   if (tab === "login") {
-    loginTab.classList.add("active"); loginTab.setAttribute("aria-selected", "true");
+    loginTab.classList.add("active");     loginTab.setAttribute("aria-selected", "true");
     registerTab.classList.remove("active"); registerTab.setAttribute("aria-selected", "false");
     loginPanel.classList.add("active");
     registerPanel.classList.remove("active");
   } else {
-    registerTab.classList.add("active"); registerTab.setAttribute("aria-selected", "true");
-    loginTab.classList.remove("active"); loginTab.setAttribute("aria-selected", "false");
+    registerTab.classList.add("active");   registerTab.setAttribute("aria-selected", "true");
+    loginTab.classList.remove("active");   loginTab.setAttribute("aria-selected", "false");
     registerPanel.classList.add("active");
     loginPanel.classList.remove("active");
   }
@@ -310,7 +310,7 @@ function initModalLoginForm() {
     e.preventDefault();
 
     const usernameOrEmail = document.getElementById("modal-usernameOrEmail").value.trim();
-    const password = document.getElementById("modal-password").value;
+    const password        = document.getElementById("modal-password").value;
 
     if (!usernameOrEmail || !password) {
       showModalAlert("Please enter your username and password.", false, "modal-login-alert");
@@ -321,9 +321,9 @@ function initModalLoginForm() {
       showModalAlert("Logging in...", null, "modal-login-alert");
 
       const response = await fetch("/api/auth/login", {
-        method: "POST",
+        method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ usernameOrEmail, password })
+        body:    JSON.stringify({ usernameOrEmail, password })
       });
 
       const data = await response.json();
@@ -391,8 +391,8 @@ function initModalRegisterForm() {
 
     const username = document.getElementById("modal-username").value.trim();
     const fullName = document.getElementById("modal-fullName").value.trim();
-    const email = document.getElementById("modal-email").value.trim();
-    const phone = document.getElementById("modal-phone").value.trim();
+    const email    = document.getElementById("modal-email").value.trim();
+    const phone    = document.getElementById("modal-phone").value.trim();
     const password = document.getElementById("modal-reg-password").value;
 
     if (!username || !fullName || !email || !password) {
@@ -404,9 +404,9 @@ function initModalRegisterForm() {
       showModalAlert("Registering...", null, "modal-register-alert");
 
       const response = await fetch("/api/auth/register", {
-        method: "POST",
+        method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, fullName, email, phone, password })
+        body:    JSON.stringify({ username, fullName, email, phone, password })
       });
 
       const data = await response.json();
@@ -688,7 +688,7 @@ function logoutUser() {
 // =============================================
 
 function initLoginForm() {
-  const form = document.getElementById("loginForm");
+  const form     = document.getElementById("loginForm");
   const alertMsg = document.getElementById("alertMessage");
   if (!form || !alertMsg) return;
 
@@ -704,7 +704,7 @@ function initLoginForm() {
     e.preventDefault();
 
     const usernameOrEmail = document.getElementById("usernameOrEmail").value.trim();
-    const password = document.getElementById("password").value;
+    const password        = document.getElementById("password").value;
 
     if (!usernameOrEmail || !password) {
       showAlert("Please enter your username and password.", false);
@@ -715,9 +715,9 @@ function initLoginForm() {
       showAlert("Logging in...", null);
 
       const response = await fetch("/api/auth/login", {
-        method: "POST",
+        method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ usernameOrEmail, password })
+        body:    JSON.stringify({ usernameOrEmail, password })
       });
 
       const data = await response.json();
@@ -796,7 +796,7 @@ function initLoginForm() {
 }
 
 function initRegisterForm() {
-  const form = document.getElementById("registerForm");
+  const form     = document.getElementById("registerForm");
   const alertMsg = document.getElementById("alertMessage");
   if (!form || !alertMsg) return;
 
@@ -805,8 +805,8 @@ function initRegisterForm() {
 
     const username = document.getElementById("username").value.trim();
     const fullName = document.getElementById("fullName").value.trim();
-    const email = document.getElementById("email").value.trim();
-    const phone = document.getElementById("phone").value.trim();
+    const email    = document.getElementById("email").value.trim();
+    const phone    = document.getElementById("phone").value.trim();
     const password = document.getElementById("password").value;
 
     if (!username || !fullName || !email || !password) {
@@ -818,9 +818,9 @@ function initRegisterForm() {
       showAlert("Registering...", null);
 
       const response = await fetch("/api/auth/register", {
-        method: "POST",
+        method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, fullName, email, phone, password })
+        body:    JSON.stringify({ username, fullName, email, phone, password })
       });
 
       const data = await response.json();
@@ -915,10 +915,6 @@ function switchAdminPanel(panelName, el) {
   document.querySelectorAll(".admin-panel").forEach(p => p.classList.remove("active"));
   const panel = document.getElementById("panel-" + panelName);
   if (panel) panel.classList.add("active");
-
-  if (panelName === "audit" || panelName === "audit-logs") {
-    loadDataUsers(0);
-  }
 }
 
 // =============================================
@@ -965,9 +961,9 @@ function openCrudModal(type, id) {
   _crudState = { type, item };
 
   const overlay = document.getElementById("crud-modal-overlay");
-  const title = document.getElementById("crud-modal-title");
-  const body = document.getElementById("crud-modal-body");
-  const alert = document.getElementById("crud-alert");
+  const title   = document.getElementById("crud-modal-title");
+  const body    = document.getElementById("crud-modal-body");
+  const alert   = document.getElementById("crud-alert");
   if (!overlay) return;
 
   if (alert) { alert.style.display = "none"; alert.textContent = ""; alert.className = "crud-alert alert-message"; }
@@ -1056,7 +1052,7 @@ function closeCrudModal() {
 // =============================================
 
 function buildCrudForm(type, item) {
-  const v = item || {};
+  const v   = item || {};
   const fld = (id, label, type2, value, extra = "") => `
     <div class="form-group">
       <label for="${id}">${label}</label>
@@ -1142,17 +1138,15 @@ async function submitCrudForm() {
   if (!type) return;
 
   const isEdit = !!item;
-  let payload = {};
-  let valid = true;
+  let payload  = {};
+  let valid    = true;
 
   const g = id => (document.getElementById(id)?.value || "").trim();
   const gv = id => document.getElementById(id)?.value || "";
 
   if (type === "user") {
-    payload = {
-      username: g("cf-username"), fullName: g("cf-fullName"), email: g("cf-email"),
-      phone: g("cf-phone"), role: gv("cf-role"), enabled: document.getElementById("cf-enabled")?.checked
-    };
+    payload = { username: g("cf-username"), fullName: g("cf-fullName"), email: g("cf-email"),
+                phone: g("cf-phone"), role: gv("cf-role"), enabled: document.getElementById("cf-enabled")?.checked };
     if (!isEdit) payload.password = gv("cf-password");
     if (!payload.username || !payload.fullName || !payload.email) valid = false;
   }
@@ -1165,10 +1159,8 @@ async function submitCrudForm() {
   }
 
   if (type === "project") {
-    payload = {
-      title: g("cf-title"), category: g("cf-category"), imageUrl: g("cf-imageUrl"),
-      description: g("cf-description"), technologies: g("cf-technologies")
-    };
+    payload = { title: g("cf-title"), category: g("cf-category"), imageUrl: g("cf-imageUrl"),
+                description: g("cf-description"), technologies: g("cf-technologies") };
     if (!payload.title || !payload.category || !payload.imageUrl || !payload.description) valid = false;
   }
 
@@ -1179,12 +1171,10 @@ async function submitCrudForm() {
 
   if (!valid) { showCrudAlert("Please fill in all required fields (*)", false); return; }
 
-  const eps = {
-    user: "/api/admin/users", member: "/api/members",
-    project: "/api/projects", service: "/api/services"
-  };
+  const eps = { user: "/api/admin/users", member: "/api/members",
+                project: "/api/projects", service: "/api/services" };
 
-  const url = isEdit ? `${eps[type]}/${item.id}` : eps[type];
+  const url    = isEdit ? `${eps[type]}/${item.id}` : eps[type];
   const method = isEdit ? "PUT" : "POST";
 
   try {
@@ -1196,8 +1186,8 @@ async function submitCrudForm() {
       showCrudAlert(isEdit ? "✅ Updated successfully!" : "✅ Added successfully!", true);
       setTimeout(() => {
         closeCrudModal();
-        if (type === "user") fetchAdminUsers();
-        if (type === "member") fetchAdminMembersTable();
+        if (type === "user")    fetchAdminUsers();
+        if (type === "member")  fetchAdminMembersTable();
         if (type === "project") fetchAdminProjectsTable();
         if (type === "service") fetchAdminServicesTable();
       }, 700);
@@ -1216,8 +1206,8 @@ function showCrudAlert(msg, isSuccess) {
   el.textContent = msg;
   el.className = "crud-alert alert-message";
   el.removeAttribute("style");
-  if (isSuccess === true) { el.classList.add("alert-success"); el.style.display = "block"; }
-  else if (isSuccess === false) { el.classList.add("alert-error"); el.style.display = "block"; }
+  if (isSuccess === true)       { el.classList.add("alert-success"); el.style.display = "block"; }
+  else if (isSuccess === false) { el.classList.add("alert-error");   el.style.display = "block"; }
   else { el.style.cssText = "display:block;background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;"; }
 }
 
@@ -1245,16 +1235,14 @@ async function confirmDelete() {
   const { type, id } = _deleteState;
   if (!type || id === null) return;
 
-  const eps = {
-    user: "/api/admin/users", member: "/api/members",
-    project: "/api/projects", service: "/api/services"
-  };
+  const eps = { user: "/api/admin/users", member: "/api/members",
+                project: "/api/projects", service: "/api/services" };
   try {
     const response = await fetch(`${eps[type]}/${id}`, { method: "DELETE", headers: adminHeaders() });
     if (response.ok) {
       closeConfirmModal();
-      if (type === "user") fetchAdminUsers();
-      if (type === "member") fetchAdminMembersTable();
+      if (type === "user")    fetchAdminUsers();
+      if (type === "member")  fetchAdminMembersTable();
       if (type === "project") fetchAdminProjectsTable();
       if (type === "service") fetchAdminServicesTable();
     } else {
@@ -1271,7 +1259,7 @@ async function confirmDelete() {
 // =============================================
 
 async function fetchAdminUsers() {
-  const tbody = document.getElementById("users-table-body");
+  const tbody     = document.getElementById("users-table-body");
   const statCount = document.getElementById("stat-users-count");
   if (!tbody) return;
 
@@ -1293,7 +1281,7 @@ async function fetchAdminUsers() {
       const tr = document.createElement("tr");
       tr.setAttribute("data-searchable", `${u.fullName} ${u.username} ${u.email}`);
       const initials = (u.fullName || "?")[0].toUpperCase();
-
+      
       // Check if user is online (last login within last 5 minutes)
       let isOnline = false;
       let lastLoginText = "—";
@@ -1304,7 +1292,7 @@ async function fetchAdminUsers() {
         isOnline = diffMinutes < 5;
         lastLoginText = lastLogin.toLocaleString("en-US");
       }
-
+      
       tr.innerHTML = `
         <td>
           <div class="table-user-cell">
@@ -1375,7 +1363,7 @@ async function toggleUserStatus(userId) {
 }
 
 async function fetchAdminMembersTable() {
-  const tbody = document.getElementById("members-table-body");
+  const tbody     = document.getElementById("members-table-body");
   const statCount = document.getElementById("stat-members-count");
   if (!tbody) return;
 
@@ -1431,7 +1419,7 @@ async function fetchAdminMembersTable() {
 }
 
 async function fetchAdminProjectsTable() {
-  const tbody = document.getElementById("projects-table-body");
+  const tbody     = document.getElementById("projects-table-body");
   const statCount = document.getElementById("stat-projects-count");
   if (!tbody) return;
 
@@ -1499,10 +1487,8 @@ async function fetchAdminServicesTable() {
       return;
     }
 
-    const iconLabels = {
-      web: "🌐 Web Design", design: "🎨 UI/UX", marketing: "📊 Marketing",
-      mobile: "📱 Mobile", branding: "🎯 Branding", cloud: "☁️ Cloud"
-    };
+    const iconLabels = { web: "🌐 Web Design", design: "🎨 UI/UX", marketing: "📊 Marketing",
+                         mobile: "📱 Mobile", branding: "🎯 Branding", cloud: "☁️ Cloud" };
 
     services.forEach(s => {
       _cache.services[s.id] = s;
@@ -1531,7 +1517,7 @@ async function fetchAdminServicesTable() {
 }
 
 async function fetchAdminContacts() {
-  const tableBody = document.getElementById("contacts-table-body");
+  const tableBody  = document.getElementById("contacts-table-body");
   const statsCount = document.getElementById("stat-messages-count");
   if (!tableBody) return;
 
@@ -1594,12 +1580,12 @@ async function fetchServices() {
     servicesGrid.innerHTML = "";
 
     const icons = {
-      web: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>`,
-      design: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"></path><path d="M12 8A4 4 0 1 0 12 16A4 4 0 1 0 12 8Z"></path><path d="M12 2V6"></path><path d="M12 18V22"></path><path d="M4.93 4.93L7.76 7.76"></path><path d="M16.24 16.24L19.07 19.07"></path><path d="M2 12H6"></path><path d="M18 12H22"></path><path d="M4.93 19.07L7.76 16.24"></path><path d="M16.24 7.76L19.07 4.93"></path></svg>`,
+      web:       `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>`,
+      design:    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"></path><path d="M12 8A4 4 0 1 0 12 16A4 4 0 1 0 12 8Z"></path><path d="M12 2V6"></path><path d="M12 18V22"></path><path d="M4.93 4.93L7.76 7.76"></path><path d="M16.24 16.24L19.07 19.07"></path><path d="M2 12H6"></path><path d="M18 12H22"></path><path d="M4.93 19.07L7.76 16.24"></path><path d="M16.24 7.76L19.07 4.93"></path></svg>`,
       marketing: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>`,
-      mobile: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>`,
-      branding: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>`,
-      cloud: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.88 18.04A6 6 0 0 0 6 18a5.5 5.5 0 0 0 .5-10.96 4 4 0 1 0 7.82-1.74l.06-.02a6 6 0 0 0 6.5 12.76z"></path></svg>`
+      mobile:    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>`,
+      branding:  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>`,
+      cloud:     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.88 18.04A6 6 0 0 0 6 18a5.5 5.5 0 0 0 .5-10.96 4 4 0 1 0 7.82-1.74l.06-.02a6 6 0 0 0 6.5 12.76z"></path></svg>`
     };
 
     const accentClasses = {
@@ -1608,10 +1594,10 @@ async function fetchServices() {
     };
 
     services.forEach(service => {
-      const card = document.createElement("div");
-      card.className = "service-card";
-      const iconKey = service.iconUrl || "web";
-      const iconSvg = icons[iconKey] || icons.web;
+      const card       = document.createElement("div");
+      card.className   = "service-card";
+      const iconKey    = service.iconUrl || "web";
+      const iconSvg    = icons[iconKey] || icons.web;
       const accentClass = accentClasses[iconKey] || accentClasses.web;
 
       card.innerHTML = `
@@ -1639,15 +1625,15 @@ async function fetchMembers() {
     teamGrid.innerHTML = "";
 
     const facebookIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/></svg>`;
-    const githubIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>`;
+    const githubIcon   = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>`;
     const linkedinIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.779-1.75-1.75s.784-1.75 1.75-1.75 1.75.779 1.75 1.75-.784 1.75-1.75 1.75zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>`;
 
     members.forEach(member => {
-      const card = document.createElement("div");
-      card.className = "member-card";
-      const fbLink = member.facebookUrl ? `<a href="${member.facebookUrl}" target="_blank">${facebookIcon}</a>` : "";
-      const ghLink = member.githubUrl ? `<a href="${member.githubUrl}"   target="_blank">${githubIcon}</a>` : "";
-      const liLink = member.linkedinUrl ? `<a href="${member.linkedinUrl}" target="_blank">${linkedinIcon}</a>` : "";
+      const card      = document.createElement("div");
+      card.className  = "member-card";
+      const fbLink    = member.facebookUrl ? `<a href="${member.facebookUrl}" target="_blank">${facebookIcon}</a>` : "";
+      const ghLink    = member.githubUrl   ? `<a href="${member.githubUrl}"   target="_blank">${githubIcon}</a>`   : "";
+      const liLink    = member.linkedinUrl ? `<a href="${member.linkedinUrl}" target="_blank">${linkedinIcon}</a>` : "";
 
       card.innerHTML = `
         <div class="member-avatar-wrapper">
@@ -1980,8 +1966,9 @@ async function fetchProjects() {
         const projectModalClose = document.getElementById('project-modal-close');
         const projectModalOverlay = document.getElementById('project-modal-overlay');
 
-      projectsGrid.appendChild(card);
-    });
+        if (projectModalClose) {
+            projectModalClose.addEventListener('click', closeProjectModal);
+        }
 
         if (projectModalOverlay) {
             projectModalOverlay.addEventListener('click', (e) => {
@@ -2004,7 +1991,7 @@ async function fetchProjects() {
 // =============================================
 
 function initContactForm() {
-  const form = document.getElementById("contactForm");
+  const form     = document.getElementById("contactForm");
   const alertMsg = document.getElementById("alertMessage");
   if (!form || !alertMsg) return;
 
@@ -2031,12 +2018,12 @@ function initContactForm() {
         serviceGrid.innerHTML = '';
 
         const icons = {
-          web: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>`,
-          design: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"></path><path d="M12 8A4 4 0 1 0 12 16A4 4 0 1 0 12 8Z"></path><path d="M12 2V6"></path><path d="M12 18V22"></path><path d="M4.93 4.93L7.76 7.76"></path><path d="M16.24 16.24L19.07 19.07"></path><path d="M2 12H6"></path><path d="M18 12H22"></path><path d="M4.93 19.07L7.76 16.24"></path><path d="M16.24 7.76L19.07 4.93"></path></svg>`,
+          web:       `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>`,
+          design:    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"></path><path d="M12 8A4 4 0 1 0 12 16A4 4 0 1 0 12 8Z"></path><path d="M12 2V6"></path><path d="M12 18V22"></path><path d="M4.93 4.93L7.76 7.76"></path><path d="M16.24 16.24L19.07 19.07"></path><path d="M2 12H6"></path><path d="M18 12H22"></path><path d="M4.93 19.07L7.76 16.24"></path><path d="M16.24 7.76L19.07 4.93"></path></svg>`,
           marketing: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>`,
-          mobile: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>`,
-          branding: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>`,
-          cloud: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.88 18.04A6 6 0 0 0 6 18a5.5 5.5 0 0 0 .5-10.96 4 4 0 1 0 7.82-1.74l.06-.02a6 6 0 0 0 6.5 12.76z"></path></svg>`
+          mobile:    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>`,
+          branding:  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>`,
+          cloud:     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.88 18.04A6 6 0 0 0 6 18a5.5 5.5 0 0 0 .5-10.96 4 4 0 1 0 7.82-1.74l.06-.02a6 6 0 0 0 6.5 12.76z"></path></svg>`
         };
 
         services.forEach(service => {
@@ -2080,10 +2067,10 @@ function initContactForm() {
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const name = document.getElementById("name").value.trim();
-    const email = document.getElementById("email").value.trim();
+    const name    = document.getElementById("name").value.trim();
+    const email   = document.getElementById("email").value.trim();
     const service = document.getElementById("serviceSelect").value;
-    const title = document.getElementById("title").value.trim();
+    const title   = document.getElementById("title").value.trim();
     const content = document.getElementById("content").value.trim();
 
     if (!name || !email || !service || !title || !content) {
@@ -2521,13 +2508,13 @@ function initScrollAnimations() {
   // Handle both animate-on-scroll and scroll-animate classes
   const animatedElements1 = document.querySelectorAll('.animate-on-scroll');
   const animatedElements2 = document.querySelectorAll('.scroll-animate');
-
+  
   const observerOptions = {
     root: null,
     rootMargin: '0px 0px -50px 0px',
     threshold: 0.1
   };
-
+  
   const observer = new IntersectionObserver((entries, index) => {
     entries.forEach((entry, idx) => {
       if (entry.isIntersecting) {
@@ -2539,7 +2526,7 @@ function initScrollAnimations() {
       }
     });
   }, observerOptions);
-
+  
   animatedElements1.forEach(el => observer.observe(el));
   animatedElements2.forEach(el => observer.observe(el));
 }
