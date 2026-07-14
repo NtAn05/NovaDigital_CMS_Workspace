@@ -78,7 +78,9 @@ document.addEventListener("DOMContentLoaded", () => {
   } else if (page === "inbox.html" || page === "index.html") {
     // Fetch inbox if user is logged in
     const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-    const email = localStorage.getItem("email") || sessionStorage.getItem("email"); 
+ 
+    const email = localStorage.getItem("email") || sessionStorage.getItem("email");
+ 
     console.log("Token:", token);
     console.log("Email:", email);
     if (token && email) {
@@ -444,7 +446,9 @@ function checkRouteGuard() {
   const page = path.substring(path.lastIndexOf('/') + 1) || "index.html";
 
   const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-  const role  = localStorage.getItem("role") || sessionStorage.getItem("role");
+
+  const role  = localStorage.getItem("role")  || sessionStorage.getItem("role");
+
 
   // Admin MUST stay in admin.html or user-profile.html
   if (token && role === "ROLE_ADMIN") {
@@ -463,7 +467,11 @@ function checkRouteGuard() {
   }
 
   // Protected client pages
+<
+  const protectedPages = [];
+
   const protectedPages = ["contact.html", "rented-project.html"];
+
 
   if (protectedPages.includes(page) && !token) {
     sessionStorage.setItem("redirectAttempt", page);
@@ -507,8 +515,12 @@ function updateNavbarAuth() {
   const navLinksContainer = document.querySelector(".nav-links");
   if (!navLinksContainer) return;
 
-  const token    = localStorage.getItem("token") || sessionStorage.getItem("token");
-  const role     = localStorage.getItem("role") || sessionStorage.getItem("role");
+
+  const token    = localStorage.getItem("token")    || sessionStorage.getItem("token");
+  const role     = localStorage.getItem("role")     || sessionStorage.getItem("role");
+
+  
+
   const fullName = localStorage.getItem("fullName") || sessionStorage.getItem("fullName");
 
   const isPortalUser = token && (role === "ROLE_ADMIN" || role === "ROLE_MEMBER" || role === "Team_Member");
@@ -929,7 +941,7 @@ function switchAdminPanel(panelName, el) {
 // =============================================
 
 function getAdminToken() {
-  return sessionStorage.getItem("token") || "";
+  return localStorage.getItem("token") || sessionStorage.getItem("token") || "";
 }
 
 function adminHeaders() {
@@ -2019,11 +2031,11 @@ function initContactForm() {
   const selectOverlay = document.getElementById("service-select-overlay");
 
   if (nameInput) {
-    nameInput.value = sessionStorage.getItem("fullName") || sessionStorage.getItem("username") || "";
+    nameInput.value = localStorage.getItem("fullName") || sessionStorage.getItem("fullName") || localStorage.getItem("username") || sessionStorage.getItem("username") || "";
     nameInput.readOnly = true;
   }
   if (emailInput) {
-    emailInput.value = sessionStorage.getItem("email") || "";
+    emailInput.value = localStorage.getItem("email") || sessionStorage.getItem("email") || "";
     emailInput.readOnly = true;
   }
 
