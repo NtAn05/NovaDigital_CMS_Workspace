@@ -1980,8 +1980,9 @@ async function fetchProjects() {
         const projectModalClose = document.getElementById('project-modal-close');
         const projectModalOverlay = document.getElementById('project-modal-overlay');
 
-      projectsGrid.appendChild(card);
-    });
+        if (projectModalClose) {
+            projectModalClose.addEventListener('click', closeProjectModal);
+        }
 
         if (projectModalOverlay) {
             projectModalOverlay.addEventListener('click', (e) => {
@@ -1996,7 +1997,7 @@ async function fetchProjects() {
         console.error("Error loading projects:", error);
         projectsGrid.innerHTML = `<p class="error-msg">Could not load projects list. Please try again later.</p>`;
     }
-    }
+       
 }
 
 // =============================================
