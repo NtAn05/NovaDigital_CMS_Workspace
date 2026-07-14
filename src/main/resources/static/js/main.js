@@ -58,8 +58,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // Member page is handled by inline script
   } else if (page === "index.html") {
     // Fetch inbox if user is logged in
-    const token = sessionStorage.getItem("token");
-    const email = sessionStorage.getItem("email"); 
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    const email = localStorage.getItem("email") || sessionStorage.getItem("email");
     console.log("Token:", token);
     console.log("Email from localStorage:", email);
     if (token && email) {
@@ -411,8 +411,8 @@ function checkRouteGuard() {
   const path = window.location.pathname;
   const page = path.substring(path.lastIndexOf('/') + 1) || "index.html";
 
-  const token = sessionStorage.getItem("token");
-  const role  = sessionStorage.getItem("role");
+  const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+  const role  = localStorage.getItem("role")  || sessionStorage.getItem("role");
 
   // Admin MUST stay in admin.html or user-profile.html
   if (token && role === "ROLE_ADMIN") {
@@ -475,9 +475,9 @@ function updateNavbarAuth() {
   const navLinksContainer = document.querySelector(".nav-links");
   if (!navLinksContainer) return;
 
-  const token    = sessionStorage.getItem("token");
-  const role     = sessionStorage.getItem("role");
-  const fullName = sessionStorage.getItem("fullName");
+  const token    = localStorage.getItem("token")    || sessionStorage.getItem("token");
+  const role     = localStorage.getItem("role")     || sessionStorage.getItem("role");
+  const fullName = localStorage.getItem("fullName") || sessionStorage.getItem("fullName");
 
   const isPortalUser = token && (role === "ROLE_ADMIN" || role === "ROLE_MEMBER" || role === "Team_Member");
 
@@ -866,7 +866,7 @@ function switchAdminPanel(panelName, el) {
 // =============================================
 
 function getAdminToken() {
-  return sessionStorage.getItem("token") || "";
+  return localStorage.getItem("token") || sessionStorage.getItem("token") || "";
 }
 
 function adminHeaders() {
