@@ -431,7 +431,7 @@ function checkRouteGuard() {
   }
 
   // Protected client pages
-  const protectedPages = ["contact.html"];
+  const protectedPages = [];
 
   if (protectedPages.includes(page) && !token) {
     sessionStorage.setItem("redirectAttempt", page);
@@ -1945,11 +1945,11 @@ function initContactForm() {
   const selectOverlay = document.getElementById("service-select-overlay");
 
   if (nameInput) {
-    nameInput.value = sessionStorage.getItem("fullName") || sessionStorage.getItem("username") || "";
+    nameInput.value = localStorage.getItem("fullName") || sessionStorage.getItem("fullName") || localStorage.getItem("username") || sessionStorage.getItem("username") || "";
     nameInput.readOnly = true;
   }
   if (emailInput) {
-    emailInput.value = sessionStorage.getItem("email") || "";
+    emailInput.value = localStorage.getItem("email") || sessionStorage.getItem("email") || "";
     emailInput.readOnly = true;
   }
 
