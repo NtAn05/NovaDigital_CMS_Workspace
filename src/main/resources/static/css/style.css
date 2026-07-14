@@ -522,20 +522,26 @@ section {
   font-size: 4.5rem;
   font-weight: 800;
   line-height: 1.05;
-  color: var(--text-dark);
   margin-bottom: 1.75rem;
   letter-spacing: -0.04em;
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  background: linear-gradient(to right, #0f172a 20%, #4f46e5 40%, #d946ef 60%, #4f46e5 80%, #0f172a 100%);
+  background-size: 200% auto;
+  color: transparent !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  animation: shine 4s linear infinite;
 }
 
 .hero-content h1 span {
-  background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  background: linear-gradient(to right, #3b82f6 20%, #8b5cf6 40%, #ff007f 60%, #8b5cf6 80%, #3b82f6 100%);
+  background-size: 200% auto;
+  color: transparent !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  animation: shine 3s linear infinite;
+  display: inline-block;
 }
 
 .hero-content p {
@@ -2652,10 +2658,23 @@ html.dark-theme .section-header h2 {
 
 /* Override Gradient Headings */
 html.dark-theme .hero-content h1 {
-  background: linear-gradient(135deg, #f8fafc 0%, #cbd5e1 100%) !important;
+  background: linear-gradient(to right, #f8fafc 20%, #a78bfa 40%, #ff007f 60%, #a78bfa 80%, #f8fafc 100%) !important;
+  background-size: 200% auto !important;
+  color: transparent !important;
   -webkit-background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
   background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  animation: shine 4s linear infinite !important;
+}
+
+html.dark-theme .hero-content h1 span {
+  background: linear-gradient(to right, #00f0ff 20%, #ff007f 40%, #00f0ff 60%, #ff007f 80%, #00f0ff 100%) !important;
+  background-size: 200% auto !important;
+  color: transparent !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  animation: shine 3s linear infinite !important;
 }
 
 /* Sidebar and Navigation */
@@ -2852,6 +2871,21 @@ html.dark-theme .partners-logos svg:hover {
 }
 
 /* Inbox Styles */
+.inbox-section {
+  padding: 3rem 2rem;
+  background: rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-color) !important;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+html.dark-theme .inbox-section {
+  background: rgba(20, 26, 41, 0.65) !important;
+}
+
 .inbox-card {
   background: var(--bg-white);
   border-radius: 12px;
@@ -3550,5 +3584,15 @@ html.dark-theme .admin-table thead tr:hover th {
 .dark-theme .logout-link:hover {
   background: rgba(239, 68, 68, 0.12) !important;
   color: #f87171 !important;
+}
+
+/* Hero Heading Text Shine animation keyframes */
+@keyframes shine {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: -200% 50%;
+  }
 }
 

@@ -729,6 +729,13 @@
             Services
           </a>
         </li>
+        <li>
+          <a id="nav-audit"
+             onclick="switchAdminPanel('audit', this); return false;">
+            <svg viewBox="0 0 24 24" style="width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg>
+            Audit Logs
+          </a>
+        </li>
       </ul>
 
       <div class="sidebar-footer">
@@ -959,6 +966,66 @@
         </div>
       </div>
 
+      <!-- ========== AUDIT LOGS PANEL ========== -->
+      <div class="admin-panel" id="panel-audit">
+        <div class="panel-header">
+          <div>
+            <h1>Audit Logs Dashboard</h1>
+            <p class="panel-subtitle">Theo dõi lịch sử thay đổi dữ liệu và truy cập hệ thống</p>
+          </div>
+        </div>
+
+        <div class="table-container" style="padding: 1.5rem; padding-top: 1rem;">
+            <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+                <button id="btn-tab-data" style="background: linear-gradient(135deg, rgba(37,99,235,0.1), rgba(79,70,229,0.1)); border: 1px solid rgba(37,99,235,0.2); color: #2563eb; font-size: 0.95rem; font-weight: 600; padding: 0.6rem 1.2rem; cursor: pointer; border-radius: 50px; transition: all 0.3s ease; display: flex; align-items: center; gap: 0.5rem;" onclick="switchAuditTab('dataTab')">
+                    Nhật ký thay đổi dữ liệu
+                </button>
+                <button id="btn-tab-auth" style="background: transparent; border: 1px solid transparent; color: var(--text-muted); font-size: 0.95rem; font-weight: 600; padding: 0.6rem 1.2rem; cursor: pointer; border-radius: 50px; transition: all 0.3s ease; display: flex; align-items: center; gap: 0.5rem;" onclick="switchAuditTab('authTab')">
+                    Lịch sử truy cập
+                </button>
+            </div>
+
+            <!-- Tab 1: User list sorted by latest data change -->
+            <div id="dataTab" style="display: block;">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Họ và tên</th>
+                            <th>Tên đăng nhập</th>
+                            <th>Email</th>
+                            <th>Số điện thoại</th>
+                            <th>Vai trò</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataTableBody">
+                        <tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);">Đang tải...</td></tr>
+                    </tbody>
+                </table>
+                <div id="dataPagination" style="display:flex;justify-content:flex-end;align-items:center;gap:0.4rem;padding:1rem 0 0;"></div>
+            </div>
+
+            <!-- Tab 2: Auth Logs -->
+            <div id="authTab" style="display: none;">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Thời gian</th>
+                            <th>Tài khoản</th>
+                            <th>Trạng thái</th>
+                            <th>Địa chỉ IP</th>
+                            <th>Thiết bị / Trình duyệt</th>
+                        </tr>
+                    </thead>
+                    <tbody id="authTableBody">
+                        <tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);">Loading...</td></tr>
+                    </tbody>
+                </table>
+                <div id="authPagination" style="display:flex;justify-content:flex-end;align-items:center;gap:0.4rem;padding:1rem 0 0;"></div>
+            </div>
+        </div>
+      </div>
+
     </main>
   </div>
 
@@ -1064,7 +1131,7 @@
   <div id="confirm-modal-overlay" class="crud-modal-overlay">
     <div class="crud-modal confirm-modal-box">
       <div class="confirm-icon">
-        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
       </div>
       <h3>Confirm Delete</h3>
       <p id="confirm-modal-text">Are you sure you want to delete this item? This action cannot be undone.</p>
@@ -1073,6 +1140,86 @@
         <button class="btn-confirm-delete" id="btn-confirm-delete-action">Delete</button>
       </div>
     </div>
+  </div>
+
+  <!-- Modal for User Audit Logs -->
+  <div class="crud-modal-overlay" id="auditModal">
+      <div class="crud-modal" style="max-width: 900px; display: flex; flex-direction: column;">
+          <div class="crud-modal-header">
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                  <svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#2563eb;fill:none;stroke-width:2;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  <h3 style="margin: 0;">Lịch sử thay đổi dữ liệu</h3>
+              </div>
+              <button class="crud-modal-close" onclick="closeModal()">&times;</button>
+          </div>
+          <div style="padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); font-size: 0.88rem;">
+              Tài khoản: <strong id="modalUsernameLabel" style="color: #2563eb;"></strong>
+          </div>
+          <div style="overflow-y:auto; flex:1; padding: 1.5rem;">
+              <div id="modalLogContainer" style="display:flex; flex-direction:column; gap:0.75rem;">
+                  <div style="text-align:center;padding:2rem;color:var(--text-muted);">Đang tải dữ liệu...</div>
+              </div>
+              <div id="modalPagination" style="display:flex;justify-content:flex-end;align-items:center;gap:0.4rem;padding:1rem 0 0;"></div>
+          </div>
+      </div>
+  </div>
+
+  <!-- ========== AUDIT LOG DETAIL MODAL (Redesigned Mockup Style) ========== -->
+  <div class="crud-modal-overlay" id="auditDetailModal" style="z-index: 10000;">
+      <div class="crud-modal" style="max-width: 720px; padding: 2rem; display: flex; flex-direction: column; background: #fff; border-radius: 20px;">
+        
+        <!-- Modal Header -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem;">
+          <div>
+            <h3 style="margin: 0; font-size: 1.25rem; font-weight: 800; color: #1f2937; display: inline-flex; align-items: center; gap: 8px; font-family: system-ui, -apple-system, sans-serif;">
+              Profile Update Log: <span id="detail-user-title">Sarah Jenkins</span> (<span id="detail-table-title">users</span> Table)
+            </h3>
+            <span id="detail-action-badge" style="margin-left: 8px; font-size: 0.7rem; padding: 0.15rem 0.5rem; border-radius: 50px; font-weight: 800; display: inline-block; vertical-align: middle;">UPDATE</span>
+          </div>
+          <button class="crud-modal-close" onclick="closeDetailModal()" style="margin-top: -0.25rem; font-size: 1.5rem; background: none; border: none; cursor: pointer; color: #9ca3af;" title="Đóng">&times;</button>
+        </div>
+
+        <!-- Metadata row -->
+        <div style="display: flex; align-items: center; gap: 1.2rem; font-size: 0.82rem; color: #6b7280; padding-bottom: 0.8rem; border-bottom: 1px solid #e5e7eb; margin-bottom: 1rem; font-family: system-ui, -apple-system, sans-serif;">
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span>Performed By:</span>
+            <div style="width: 20px; height: 20px; border-radius: 50%; background: #3b82f6; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.65rem;" id="detail-avatar">S</div>
+            <strong id="detail-performed-by" style="color: #1f2937;">Sarah Jenkins</strong>
+          </div>
+          <div>
+            <span>Date:</span> <strong id="detail-date" style="color: #1f2937;">Oct 26, 2023</strong>
+          </div>
+          <div>
+            <span>Time:</span> <strong id="detail-time" style="color: #1f2937;">10:45 AM (Hanoi, Vietnam time)</strong>
+          </div>
+        </div>
+
+        <!-- Toggle switch row -->
+        <div style="display: flex; justify-content: flex-start; align-items: center; margin-bottom: 1rem; font-family: system-ui, -apple-system, sans-serif;">
+          <label style="display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.85rem; color: #2563eb; font-weight: 700;">
+            <input type="checkbox" id="detail-only-changes-toggle" checked style="width: 16px; height: 16px; accent-color: #2563eb; cursor: pointer;">
+            Chỉ hiển thị các trường đã thay đổi
+          </label>
+        </div>
+
+        <!-- Comparison Table Container -->
+        <div id="detail-comparison-table-container" style="flex: 1; overflow-y: auto; max-height: 400px; margin-bottom: 1rem;">
+          <!-- Rendered comparison table goes here -->
+        </div>
+
+        <!-- Modal Footer -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 1rem; border-top: 1px solid #e5e7eb; font-size: 0.8rem; color: #6b7280; font-family: system-ui, -apple-system, sans-serif;">
+          <div>
+            Source IP: <strong id="detail-source-ip" style="color: #1f2937;">192.168.1.50</strong> | 
+            Session ID: <strong id="detail-session-id" style="color: #1f2937;">ABC-12345</strong>
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <button onclick="window.print()" style="padding: 0.4rem 1rem; font-size: 0.8rem; border-radius: 8px; border: 1px solid #d1d5db; background: #fff; color: #374151; font-weight: 600; cursor: pointer;">Print Log</button>
+            <button onclick="closeDetailModal()" style="padding: 0.4rem 1.2rem; font-size: 0.8rem; background: #2563eb; border-radius: 8px; color: #fff; border: none; cursor: pointer; font-weight: 600;">Close</button>
+          </div>
+        </div>
+
+      </div>
   </div>
 
   <script src="/js/main.js"></script>
