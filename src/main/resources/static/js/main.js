@@ -3012,7 +3012,7 @@ function initAdminDashboard() {
   function formatAuditDate(dateString) {
     if (!dateString) return '';
     const date = new Date(dateString);
-    return date.toLocaleString('vi-VN', {
+    return date.toLocaleString('en-US', {
       year: 'numeric', month: '2-digit', day: '2-digit',
       hour: '2-digit', minute: '2-digit', second: '2-digit'
     });
@@ -3032,7 +3032,7 @@ function initAdminDashboard() {
 
   function formatDiff(detailStr) {
     if (!detailStr || detailStr === '[]' || detailStr === 'null') {
-      return '<span style="color: var(--text-muted); font-style: italic;">Không có thay đổi chi tiết</span>';
+      return '<span style="color: var(--text-muted); font-style: italic;">No detailed changes</span>';
     }
 
     // Check if it's a failed log (starts with [FAILED])
@@ -3058,7 +3058,7 @@ function initAdminDashboard() {
             <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 0.6rem 0.8rem; margin-bottom: 0.6rem; color: #dc2626; font-size: 0.8rem;">
                 <div style="font-weight: 700; display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">
                     <svg viewBox="0 0 24 24" style="width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.5;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                    Thao tác thất bại
+                    Operation failed
                 </div>
                 <div style="font-family: monospace; font-size: 0.75rem; word-break: break-all;">${errorMessage}</div>
             </div>
@@ -3066,7 +3066,7 @@ function initAdminDashboard() {
     }
 
     if (!jsonPart || jsonPart === '(no payload)') {
-      return html || '<span style="color: var(--text-muted); font-style: italic;">Không có dữ liệu</span>';
+      return html || '<span style="color: var(--text-muted); font-style: italic;">No data</span>';
     }
 
     try {
@@ -3106,7 +3106,7 @@ function initAdminDashboard() {
                        </span>`
             : `<span style="color: #ef4444; background: #fef2f2; border: 1px solid #fee2e2; padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.75rem; font-weight:600; display: inline-flex; align-items: center; gap: 4px;">
                         <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2.5;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                        Đã xóa
+                        Deleted
                        </span>`;
 
           const borderStyle = idx < parsed.length - 1 ? 'border-bottom: 1px solid var(--border-color);' : '';
@@ -3188,11 +3188,11 @@ function initAdminDashboard() {
   function getAuthStatusBadge(action) {
     const upperAction = action ? action.toUpperCase() : '';
     if (upperAction === 'LOGIN' || upperAction === 'LOGOUT') {
-      return `<span class="status-badge badge-active">Thành công</span>`;
+      return `<span class="status-badge badge-active">Success</span>`;
     } else if (upperAction.includes('FAILED') || upperAction.includes('ERROR')) {
-      return `<span style="background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; padding: 0.2rem 0.6rem; border-radius: 50px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase;">Thất bại</span>`;
+      return `<span style="background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; padding: 0.2rem 0.6rem; border-radius: 50px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase;">Failure</span>`;
     } else if (upperAction === 'CHANGE_PASSWORD') {
-      return `<span class="status-badge status-pending">Đổi mật khẩu</span>`;
+      return `<span class="status-badge status-pending">Change Password</span>`;
     }
     return `<span class="status-badge status-pending">${action}</span>`;
   }
@@ -3216,7 +3216,7 @@ function initAdminDashboard() {
     const activeBtnStyle = `style="min-width:34px;height:34px;border-radius:8px;border:1px solid #2563eb;background:#2563eb;color:#fff;font-size:0.82rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;"`;
     const disabledStyle = `style="min-width:34px;height:34px;border-radius:8px;border:1px solid #e2e8f0;background:#f8fafc;color:#cbd5e1;font-size:0.82rem;font-weight:600;display:inline-flex;align-items:center;justify-content:center;cursor:not-allowed;"`;
 
-    let html = `<span style="font-size:0.82rem;color:var(--text-muted);margin-right:0.5rem;">Trang ${currentPage + 1} / ${totalPages}</span>`;
+    let html = `<span style="font-size:0.82rem;color:var(--text-muted);margin-right:0.5rem;">Page ${currentPage + 1} / ${totalPages}</span>`;
 
     // Prev
     if (currentPage === 0) {
@@ -3253,7 +3253,7 @@ function initAdminDashboard() {
   async function fetchAuditWithAuth(url) {
     const token = sessionStorage.getItem("token") || localStorage.getItem("token") || "";
     const res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
-    if (!res.ok) throw new Error('Lỗi truy cập dữ liệu (' + res.status + ')');
+    if (!res.ok) throw new Error('Data access error (' + res.status + ')');
     return res.json();
   }
 
@@ -3261,13 +3261,13 @@ function initAdminDashboard() {
   async function loadDataUsers(page = 0) {
     auditDataPage = page;
     const tbody = document.getElementById('dataTableBody');
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);">Đang tải...</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);">Loading...</td></tr>`;
 
     try {
       const data = await fetchAuditWithAuth(`/api/audit/data-users?page=${page}&size=${AUDIT_PAGE_SIZE}`);
 
       if (!data.content || data.content.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);">Không có người dùng nào.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);">No users found.</td></tr>`;
         document.getElementById('dataPagination').innerHTML = '';
         return;
       }
@@ -3294,7 +3294,7 @@ function initAdminDashboard() {
                         <svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:#2563eb;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;">
                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
                         </svg>
-                        Xem logs
+                        View logs
                     </button>
                 </td>
             `;
@@ -3311,13 +3311,13 @@ function initAdminDashboard() {
   async function loadAuthLogs(page = 0) {
     auditAuthPage = page;
     const tbody = document.getElementById('authTableBody');
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);">Đang tải...</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);">Loading...</td></tr>`;
 
     try {
       const data = await fetchAuditWithAuth(`/api/audit/auth?page=${page}&size=${AUDIT_PAGE_SIZE}`);
 
       if (!data.content || data.content.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);">Không có dữ liệu lịch sử truy cập.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);">No access history data.</td></tr>`;
         document.getElementById('authPagination').innerHTML = '';
         return;
       }
@@ -3416,13 +3416,13 @@ function initAdminDashboard() {
   async function loadUserAuditLogs(page = 0) {
     auditModalPage = page;
     const container = document.getElementById('modalLogContainer');
-    container.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-muted);">Đang tải dữ liệu...</div>`;
+    container.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-muted);">Loading data...</div>`;
 
     try {
       const data = await fetchAuditWithAuth(`/api/audit/data/user/${auditModalUsername}?page=${page}&size=${AUDIT_PAGE_SIZE}`);
 
       if (!data.content || data.content.length === 0) {
-        container.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-muted);">Người dùng này chưa có hoạt động thay đổi dữ liệu nào.</div>`;
+        container.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-muted);">This user has no data change activities yet.</div>`;
         document.getElementById('modalPagination').innerHTML = '';
         return;
       }
@@ -3437,22 +3437,22 @@ function initAdminDashboard() {
         entry.style.borderBottom = '1px solid #e5e7eb';
 
         const dt = log.createdAt ? new Date(log.createdAt) : null;
-        const timeStr = dt ? dt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '';
-        const dateStr = dt ? dt.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
+        const timeStr = dt ? dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '';
+        const dateStr = dt ? dt.toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
 
-        let summaryText = 'Thay đổi dữ liệu';
+        let summaryText = 'Data changed';
         try {
           const clean = (log.detail || '').replace(/^\[FAILED\]\s*/, '').replace(/^[^{[]*?({|\[)/, '$1');
           const parsed = JSON.parse(clean);
           if (Array.isArray(parsed)) {
             const fields = parsed.map(d => d.field).join(', ');
-            summaryText = `Cập nhật các trường: <strong style="color:#2563eb;">${fields}</strong>`;
+            summaryText = `Updated fields: <strong style="color:#2563eb;">${fields}</strong>`;
           } else if (typeof parsed === 'object') {
             const fields = Object.keys(parsed).filter(k => k !== 'id' && k !== 'createdAt' && k !== 'updatedAt').join(', ');
-            summaryText = `Tạo mới với các trường: <strong style="color:#059669;">${fields}</strong>`;
+            summaryText = `Created with fields: <strong style="color:#059669;">${fields}</strong>`;
           }
         } catch (e) {
-          summaryText = log.detail || 'Thay đổi dữ liệu';
+          summaryText = log.detail || 'Data changed';
         }
 
         const logJsonString = encodeURIComponent(JSON.stringify(log));
@@ -3469,7 +3469,7 @@ function initAdminDashboard() {
           <div class="log-detail-col" style="flex:1; display:flex; justify-content:space-between; align-items:center; gap: 1rem; font-family: system-ui, -apple-system, sans-serif;">
               <span style="font-size:0.85rem; color:#374151;">${summaryText}</span>
               <button onclick="openDetailModal('${logJsonString}')" style="background:#eff6ff; border:1px solid #bfdbfe; color:#2563eb; padding:4px 10px; border-radius:6px; font-size:0.78rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:4px; transition:all 0.2s;">
-                  Xem chi tiết
+                  View details
               </button>
           </div>
       `;
@@ -3521,8 +3521,8 @@ function initAdminDashboard() {
     // Format date and time
     const dt = log.createdAt ? new Date(log.createdAt) : null;
     if (dt) {
-      document.getElementById('detail-date').innerText = dt.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
-      document.getElementById('detail-time').innerText = dt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' (Hanoi, Vietnam time)';
+      document.getElementById('detail-date').innerText = dt.toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      document.getElementById('detail-time').innerText = dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) + ' (Hanoi, Vietnam time)';
     } else {
       document.getElementById('detail-date').innerText = '-';
       document.getElementById('detail-time').innerText = '-';
@@ -3552,7 +3552,7 @@ function initAdminDashboard() {
   function renderComparisonTable() {
     const container = document.getElementById('detail-comparison-table-container');
     if (!activeDetailLog || !activeDetailLog.detail) {
-      container.innerHTML = '<span style="color:#6b7280; font-style:italic;">Không có dữ liệu</span>';
+      container.innerHTML = '<span style="color:#6b7280; font-style:italic;">No data</span>';
       return;
     }
 
@@ -3580,7 +3580,7 @@ function initAdminDashboard() {
       html += `
             <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 0.6rem 0.8rem; margin-bottom: 0.6rem; color: #dc2626; font-size: 0.8rem; font-family: system-ui, -apple-system, sans-serif;">
                 <div style="font-weight: 700; display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">
-                    Thao tác thất bại
+                    Operation failed
                 </div>
                 <div style="font-family: monospace; font-size: 0.75rem; word-break: break-all;">${errorMessage}</div>
             </div>
@@ -3588,7 +3588,7 @@ function initAdminDashboard() {
     }
 
     if (!jsonPart || jsonPart === '(no payload)') {
-      container.innerHTML = html + '<span style="color:#6b7280; font-style:italic;">Không có nội dung chi tiết</span>';
+      container.innerHTML = html + '<span style="color:#6b7280; font-style:italic;">No detailed content</span>';
       return;
     }
 
@@ -3635,8 +3635,8 @@ function initAdminDashboard() {
             // Unchanged row
             cellBgBefore = '#f9fafb';
             cellBgAfter = '#f9fafb';
-            beforeContent = `<span style="background: #e5e7eb; color: #4b5563; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.78rem; font-weight: 500;">${newVal || '(trống)'} (No change)</span>`;
-            afterContent = `<span style="background: #e5e7eb; color: #4b5563; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.78rem; font-weight: 500;">${newVal || '(trống)'} (No change)</span>`;
+            beforeContent = `<span style="background: #e5e7eb; color: #4b5563; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.78rem; font-weight: 500;">${newVal || '(empty)'} (No change)</span>`;
+            afterContent = `<span style="background: #e5e7eb; color: #4b5563; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.78rem; font-weight: 500;">${newVal || '(empty)'} (No change)</span>`;
           } else {
             // Changed row
             cellBgBefore = '#fef2f2';
@@ -3653,7 +3653,7 @@ function initAdminDashboard() {
                             ✓ ${newVal}
                            </span>`
               : `<span style="color: #dc2626; background: #fee2e2; border: 1px solid #fca5a5; padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
-                            Đã xóa
+                            Deleted
                            </span>`;
           }
 
@@ -3673,7 +3673,7 @@ function initAdminDashboard() {
           tableHtml += `
                     <tr>
                         <td colspan="3" style="text-align: center; color: #9ca3af; padding: 2rem; font-style: italic;">
-                            Không có thay đổi nào được ghi nhận.
+                            No changes were recorded.
                         </td>
                     </tr>
                 `;
