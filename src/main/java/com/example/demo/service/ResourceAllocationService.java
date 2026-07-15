@@ -38,10 +38,6 @@ public class ResourceAllocationService {
         User actor = resolveActor(authentication);
         LocalDate effectiveDate = focusDate != null ? focusDate : LocalDate.now();
         List<Project> accessibleProjects = getAccessibleProjects(actor);
-        if (!isAdmin(actor) && accessibleProjects.isEmpty()) {
-            throw new AccessDeniedException(
-                    "Access denied: this account is not assigned as PM on any project.");
-        }
 
         Long selectedProjectId = requestedProjectId;
         if (selectedProjectId == null && !accessibleProjects.isEmpty()) {
@@ -129,7 +125,7 @@ public class ResourceAllocationService {
                     .toList();
 
         return new ResourceMatrixResponse(
-                isAdmin(actor) ? "HR_ADMIN" : "PROJECT_MANAGER",
+                "RESOURCE_MANAGER",
                 actor.getFullName(),
                 effectiveDate,
                 selectedId,
@@ -170,7 +166,7 @@ public class ResourceAllocationService {
         ResourceAllocation allocation = allocationRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Resource allocation not found: " + id));
 
-        // A PM must be authorized for both the existing project and any target project.
+        // The dedicated resource manager can update allocations across all projects.
         assertCanManageProject(actor, allocation.getProject().getId());
         Project project = findProject(request.getProjectId());
         assertCanManageProject(actor, project.getId());
@@ -300,33 +296,25 @@ public class ResourceAllocationService {
         if (!actor.isEnabled()) {
             throw new AccessDeniedException("Your account is disabled.");
         }
-        if (!isAdmin(actor) && !"ROLE_MEMBER".equalsIgnoreCase(actor.getRole())) {
-            throw new AccessDeniedException("Only HR/Admin or an assigned Project Manager can manage resources.");
+        if (!isResourceManager(actor)) {
+            throw new AccessDeniedException("Only the dedicated Resource Allocation account can manage resources.");
         }
         return actor;
     }
 
     private List<Project> getAccessibleProjects(User actor) {
-        if (isAdmin(actor)) {
-            return projectRepository.findAll().stream()
-                    .sorted(Comparator.comparing(Project::getTitle, String.CASE_INSENSITIVE_ORDER))
-                    .toList();
+        if (!isResourceManager(actor)) {
+            return List.of();
         }
-        return assignmentRepository.findByUserIdAndProjectRole(actor.getId(), ProjectRole.PM).stream()
-                .map(ProjectAssignment::getProject)
+        return projectRepository.findAll().stream()
                 .sorted(Comparator.comparing(Project::getTitle, String.CASE_INSENSITIVE_ORDER))
                 .toList();
     }
 
     private void assertCanManageProject(User actor, Long projectId) {
-        if (isAdmin(actor)) {
-            return;
-        }
-        boolean isProjectManager = assignmentRepository
-                .existsByProjectIdAndUserIdAndProjectRole(projectId, actor.getId(), ProjectRole.PM);
-        if (!isProjectManager) {
+        if (!isResourceManager(actor)) {
             throw new AccessDeniedException(
-                    "Access denied: you can only manage resources for projects where you are assigned as PM.");
+                    "Access denied: only the dedicated Resource Allocation account can manage projects.");
         }
     }
 
@@ -353,8 +341,8 @@ public class ResourceAllocationService {
         return milestone == null ? null : milestone.getId();
     }
 
-    private boolean isAdmin(User user) {
-        return "ROLE_ADMIN".equalsIgnoreCase(user.getRole());
+    private boolean isResourceManager(User user) {
+        return "ROLE_RESOURCE".equalsIgnoreCase(user.getRole());
     }
 
     private int calculateSkillMatch(List<String> staffSkills, List<String> requiredTechnologies) {

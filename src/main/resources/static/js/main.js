@@ -357,7 +357,9 @@ function initModalLoginForm() {
         showModalAlert("Login successful! Redirecting...", true, "modal-login-alert");
 
         setTimeout(() => {
-          if (data.role === "ROLE_ADMIN") {
+          if (data.role === "ROLE_RESOURCE") {
+            window.location.href = "resource-allocation.html";
+          } else if (data.role === "ROLE_ADMIN") {
             window.location.href = "admin.html";
           } else if (data.role === "Team_Member" || data.role === "ROLE_MEMBER") {
             window.location.href = "member-contact.html";
@@ -442,6 +444,14 @@ function checkRouteGuard() {
 
   const token = localStorage.getItem("token") || sessionStorage.getItem("token");
   const role  = localStorage.getItem("role") || sessionStorage.getItem("role");
+
+  // Dedicated Resource Manager only uses the standalone Resource Allocation workspace.
+  if (token && role === "ROLE_RESOURCE") {
+    if (page !== "resource-allocation.html") {
+      window.location.href = "resource-allocation.html";
+      return;
+    }
+  }
 
   // Admin MUST stay in admin.html or user-profile.html
   if (token && role === "ROLE_ADMIN") {
@@ -752,7 +762,9 @@ function initLoginForm() {
         showAlert("Login successful! Redirecting...", true);
 
         setTimeout(() => {
-          if (data.role === "ROLE_ADMIN") {
+          if (data.role === "ROLE_RESOURCE") {
+            window.location.href = "resource-allocation.html";
+          } else if (data.role === "ROLE_ADMIN") {
             window.location.href = "admin.html";
           } else if (data.role === "ROLE_MEMBER") {
             // Internal team member — goes to PM Dashboard
@@ -1463,9 +1475,6 @@ async function fetchAdminProjectsTable() {
           <div class="action-btns">
             <button class="btn-edit" style="background:#2563eb; color:#fff; border-color:#2563eb;" onclick="openMilestoneModal(${p.id})">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;margin-right:2px;"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>Milestones
-            </button>
-            <button class="btn-edit" style="background:#059669; color:#fff; border-color:#059669;" onclick="openAssignmentModal(${p.id}, '${escapeHtml(p.title || '')}')">
-              &#128101; Assign
             </button>
             <button class="btn-edit"   onclick="openCrudModal('project', ${p.id})">
               <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit
@@ -3672,164 +3681,6 @@ function closeAuditTrail() {
   if (wrapper) {
     wrapper.style.display = "none";
   }
-}
-
-// =============================================
-//  ASSIGNMENT MODAL — Admin-only project assignments
-// =============================================
-
-let currentAssignmentProjectId = null;
-
-async function openAssignmentModal(projectId, projectTitle) {
-  currentAssignmentProjectId = projectId;
-  document.getElementById("assignment-project-title").textContent = `👥 Assignments: ${projectTitle}`;
-  
-  const overlay = document.getElementById("assignment-modal-overlay");
-  if (overlay) {
-    overlay.classList.add("is-open");
-  }
-  await loadAssignmentData(projectId);
-}
-
-function closeAssignmentModal() {
-  const overlay = document.getElementById("assignment-modal-overlay");
-  if (overlay) {
-    overlay.classList.remove("is-open");
-  }
-  currentAssignmentProjectId = null;
-}
-
-async function loadAssignmentData(projectId) {
-  const token = localStorage.getItem("token") || localStorage.getItem("authToken");
-  const headers = { "Authorization": `Bearer ${token}` };
-
-  // Load existing assignments and clients
-  const [assignRes, clientRes, allUsersRes] = await Promise.all([
-    fetch(`/api/projects/${projectId}/assignments`, { headers }),
-    fetch(`/api/projects/${projectId}/clients`,     { headers }),
-    fetch(`/api/admin/users`,                        { headers }).catch(() => ({ ok: false }))
-  ]);
-
-  const assignments = assignRes.ok ? await assignRes.json() : [];
-  const clients     = clientRes.ok ? await clientRes.json() : [];
-  const allUsers    = allUsersRes.ok ? await allUsersRes.json() : [];
-
-  renderAssignmentList(assignments);
-  renderClientList(clients);
-  populateMemberDropdown(allUsers.filter(u => u.role === "ROLE_MEMBER"), assignments.map(a => a.userId));
-  populateClientDropdown(allUsers.filter(u => u.role === "ROLE_USER"), clients.map(c => c.userId));
-}
-
-function renderAssignmentList(assignments) {
-  const el = document.getElementById("assignment-member-list");
-  if (!assignments.length) {
-    el.innerHTML = '<p style="color:#64748b;font-size:0.85rem;">No members assigned yet.</p>';
-    return;
-  }
-  el.innerHTML = assignments.map(a => `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;">
-      <div>
-        <strong style="font-size:0.88rem;">${escapeHtml(a.fullName)}</strong>
-        <span style="font-size:0.75rem;color:#64748b;margin-left:6px;">(${escapeHtml(a.username)})</span><br/>
-        <span style="font-size:0.75rem;padding:2px 8px;border-radius:10px;font-weight:700;${a.projectRole==='PM'?'background:rgba(37,99,235,.12);color:#2563eb':'background:rgba(245,158,11,.12);color:#d97706'}">
-          ${a.projectRole === 'PM' ? '★ PM' : '⚙ STAFF'}
-        </span>
-      </div>
-      <button onclick="removeAssignment(${a.userId})" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:0.75rem;text-decoration:underline;">Remove</button>
-    </div>`).join('');
-}
-
-function renderClientList(clients) {
-  const el = document.getElementById("assignment-client-list");
-  if (!clients.length) {
-    el.innerHTML = '<p style="color:#64748b;font-size:0.85rem;">No clients linked yet.</p>';
-    return;
-  }
-  el.innerHTML = clients.map(c => `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;">
-      <div>
-        <strong style="font-size:0.88rem;">${escapeHtml(c.fullName)}</strong>
-        <span style="font-size:0.75rem;color:#64748b;margin-left:6px;">${escapeHtml(c.email)}</span>
-      </div>
-      <button onclick="removeClient(${c.userId})" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:0.75rem;text-decoration:underline;">Unlink</button>
-    </div>`).join('');
-}
-
-function populateMemberDropdown(members, alreadyAssignedIds) {
-  const sel = document.getElementById("assign-user-select");
-  sel.innerHTML = '<option value="">— Select a member —</option>';
-  members.forEach(u => {
-    if (!alreadyAssignedIds.includes(u.id)) {
-      sel.innerHTML += `<option value="${u.id}">${escapeHtml(u.fullName)} (${escapeHtml(u.username)})</option>`;
-    }
-  });
-}
-
-function populateClientDropdown(users, alreadyLinkedIds) {
-  const sel = document.getElementById("assign-client-select");
-  sel.innerHTML = '<option value="">— Select a client —</option>';
-  users.forEach(u => {
-    if (!alreadyLinkedIds.includes(u.id)) {
-      sel.innerHTML += `<option value="${u.id}">${escapeHtml(u.fullName)} (${escapeHtml(u.email)})</option>`;
-    }
-  });
-}
-
-async function submitAssignMember() {
-  const userId = document.getElementById("assign-user-select").value;
-  const role   = document.getElementById("assign-role-select").value;
-  if (!userId) { alert("Please select a member."); return; }
-
-  const token = localStorage.getItem("token") || localStorage.getItem("authToken");
-  const res = await fetch(`/api/projects/${currentAssignmentProjectId}/assignments`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-    body: JSON.stringify({ userId: parseInt(userId), projectRole: role })
-  });
-  const data = await res.json();
-  if (res.ok) {
-    await loadAssignmentData(currentAssignmentProjectId);
-  } else {
-    alert(data.message || "Failed to assign member.");
-  }
-}
-
-async function submitAssignClient() {
-  const userId = document.getElementById("assign-client-select").value;
-  if (!userId) { alert("Please select a client."); return; }
-
-  const token = localStorage.getItem("token") || localStorage.getItem("authToken");
-  const res = await fetch(`/api/projects/${currentAssignmentProjectId}/clients`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-    body: JSON.stringify({ userId: parseInt(userId) })
-  });
-  const data = await res.json();
-  if (res.ok) {
-    await loadAssignmentData(currentAssignmentProjectId);
-  } else {
-    alert(data.message || "Failed to link client.");
-  }
-}
-
-async function removeAssignment(userId) {
-  if (!confirm("Remove this member from the project?")) return;
-  const token = localStorage.getItem("token") || localStorage.getItem("authToken");
-  await fetch(`/api/projects/${currentAssignmentProjectId}/assignments/${userId}`, {
-    method: "DELETE",
-    headers: { "Authorization": `Bearer ${token}` }
-  });
-  await loadAssignmentData(currentAssignmentProjectId);
-}
-
-async function removeClient(userId) {
-  if (!confirm("Unlink this client from the project?")) return;
-  const token = localStorage.getItem("token") || localStorage.getItem("authToken");
-  await fetch(`/api/projects/${currentAssignmentProjectId}/clients/${userId}`, {
-    method: "DELETE",
-    headers: { "Authorization": `Bearer ${token}` }
-  });
-  await loadAssignmentData(currentAssignmentProjectId);
 }
 
 // Hero H1 text click animation

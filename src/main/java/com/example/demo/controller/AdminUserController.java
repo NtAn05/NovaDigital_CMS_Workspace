@@ -30,6 +30,7 @@ public class AdminUserController {
     public ResponseEntity<List<UserResponse>> getAllUsers() {
         List<UserResponse> users = userRepository.findAll(Sort.by(Sort.Direction.DESC, "updatedAt"))
                 .stream()
+                .filter(u -> !isResourceAccount(u))
                 .map(this::toResponse)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(users);
@@ -39,6 +40,7 @@ public class AdminUserController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getUserById(@PathVariable Long id) {
         return userRepository.findById(id)
+                .filter(u -> !isResourceAccount(u))
                 .map(u -> ResponseEntity.ok(toResponse(u)))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -94,6 +96,10 @@ public class AdminUserController {
         }
 
         User user = optional.get();
+        if (isResourceAccount(user)) {
+            error.put("message", "The dedicated Resource Allocation account cannot be managed from Admin.");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+        }
 
         if (request.getFullName() != null && !request.getFullName().isBlank()) {
             user.setFullName(request.getFullName().trim());
@@ -133,10 +139,16 @@ public class AdminUserController {
     // ── DELETE ───────────────────────────────────────────
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteUser(@PathVariable Long id) {
-        if (!userRepository.existsById(id)) {
+        Optional<User> optional = userRepository.findById(id);
+        if (optional.isEmpty()) {
             Map<String, Object> error = new HashMap<>();
             error.put("message", "Cannot find user with id = " + id);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+        }
+        if (isResourceAccount(optional.get())) {
+            Map<String, Object> error = new HashMap<>();
+            error.put("message", "The dedicated Resource Allocation account cannot be deleted from Admin.");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
         }
         userRepository.deleteById(id);
         Map<String, Object> result = new HashMap<>();
@@ -146,6 +158,10 @@ public class AdminUserController {
     }
 
     // ── HELPER ───────────────────────────────────────────
+    private boolean isResourceAccount(User user) {
+        return user != null && "ROLE_RESOURCE".equalsIgnoreCase(user.getRole());
+    }
+
     private String standardizeRole(String role) {
         if (role == null || role.isBlank()) return "ROLE_USER";
         String r = role.trim().toUpperCase().replace("_", " ");
