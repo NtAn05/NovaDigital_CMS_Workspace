@@ -305,6 +305,7 @@
     let confirmedStart = null;
     let captchaVerified = false;
     let attachedFile = null;
+    let defaultExpertId = null; // Loaded dynamically to satisfy the backend API requirements
 
     // ── CAPTCHA callbacks ───────────────────────────────────────────
     function onCaptchaVerified() {
@@ -331,21 +332,56 @@
       // Auto-fill user info from session
       fillUserInfo();
       loadServices();
+      loadDefaultExpert();
       bindEvents();
     });
 
-    function fillUserInfo() {
-      const userId   = localStorage.getItem('userId')   || sessionStorage.getItem('userId')   || '';
+    async function loadDefaultExpert() {
+      try {
+        const res = await fetch(`${API}/api/members`);
+        const members = await res.json();
+        if (members && members.length > 0) {
+          defaultExpertId = members[0].id; // Pick first member as default expert
+        } else {
+          defaultExpertId = 1; // Fallback
+        }
+      } catch (e) {
+        console.error('Failed to load members', e);
+        defaultExpertId = 1; // Fallback
+      }
+    }
+
+    async function fillUserInfo() {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
+      let userId   = localStorage.getItem('userId')   || sessionStorage.getItem('userId')   || '';
       const fullName = localStorage.getItem('fullName') || sessionStorage.getItem('fullName') ||
                        localStorage.getItem('username') || sessionStorage.getItem('username') || 'You';
       const email    = localStorage.getItem('email')    || sessionStorage.getItem('email')    || '';
 
-      document.getElementById('clientIdInput').value = userId;
       document.getElementById('userDisplayName').textContent = fullName;
       document.getElementById('userDisplayEmail').textContent = email;
       // Avatar initial
       const initial = fullName.charAt(0).toUpperCase();
       document.getElementById('userAvatar').textContent = initial;
+
+      if (!userId && token) {
+        try {
+          const res = await fetch(`${API}/api/profile`, {
+            headers: { 'Authorization': 'Bearer ' + token }
+          });
+          if (res.ok) {
+            const profile = await res.json();
+            userId = profile.id;
+            localStorage.setItem('userId', userId);
+            sessionStorage.setItem('userId', userId);
+          }
+        } catch (e) {
+          console.error('Failed to load profile userId', e);
+        }
+      }
+
+      document.getElementById('clientIdInput').value = userId;
+      validateForm();
     }
 
     async function loadServices() {
@@ -504,7 +540,8 @@
       document.getElementById('confirmSlotBtn').disabled = true;
 
       try {
-        const res = await fetch(`${API}/api/bookings/slots?date=${chosenDate}`);
+        const expertQuery = defaultExpertId ? `&expertId=${defaultExpertId}` : '';
+        const res = await fetch(`${API}/api/bookings/slots?date=${chosenDate}${expertQuery}`);
         if (!res.ok) throw new Error('Failed to load slots');
         const slots = await res.json();
 
@@ -561,25 +598,53 @@
       const clientId = document.getElementById('clientIdInput').value;
       const token    = localStorage.getItem('token') || sessionStorage.getItem('token') || '';
 
-      // Build FormData to support optional file attachment
-      const formData = new FormData();
-      formData.append('serviceId',       document.getElementById('serviceSelect').value);
-      formData.append('clientId',        clientId);
-      formData.append('addonIds',        JSON.stringify(Array.from(selectedAddonIds)));
-      formData.append('appointmentDate', chosenDate);
-      formData.append('timeSlot',        confirmedStart);
-      formData.append('messageContent',  document.getElementById('messageContent').value.trim());
-      if (attachedFile) formData.append('attachment', attachedFile);
-
       const submitBtn = document.getElementById('submitBtn');
       submitBtn.disabled = true;
       submitBtn.textContent = 'Booking...';
 
+      let finalMessage = document.getElementById('messageContent').value.trim();
+
       try {
+        // 1. If there's an attached file, upload it first to /api/upload
+        if (attachedFile) {
+          const uploadData = new FormData();
+          uploadData.append('file', attachedFile);
+
+          const uploadRes = await fetch(`${API}/api/upload`, {
+            method: 'POST',
+            headers: token ? { 'Authorization': 'Bearer ' + token } : {},
+            body: uploadData
+          });
+
+          if (!uploadRes.ok) {
+            throw new Error('File upload failed.');
+          }
+
+          const uploadResult = await uploadRes.json();
+          if (uploadResult.url) {
+            const fileLink = window.location.origin + uploadResult.url;
+            finalMessage += (finalMessage ? '\n\n' : '') + `📎 Attachment: ${fileLink}`;
+          }
+        }
+
+        // 2. Build JSON payload for the main booking endpoint
+        const payload = {
+          serviceId: Number(document.getElementById('serviceSelect').value),
+          clientId: Number(clientId),
+          expertId: Number(defaultExpertId || 1),
+          addonIds: Array.from(selectedAddonIds),
+          appointmentDate: chosenDate,
+          timeSlot: confirmedStart,
+          messageContent: finalMessage
+        };
+
         const res = await fetch(`${API}/api/bookings`, {
           method: 'POST',
-          headers: token ? { 'Authorization': 'Bearer ' + token } : {},
-          body: formData
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': 'Bearer ' + token } : {})
+          },
+          body: JSON.stringify(payload)
         });
         const data = await res.json();
 
