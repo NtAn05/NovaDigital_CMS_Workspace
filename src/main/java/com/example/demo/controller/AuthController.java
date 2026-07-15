@@ -6,6 +6,7 @@ import com.example.demo.dto.LoginRequest;
 import com.example.demo.dto.RegisterRequest;
 import com.example.demo.entity.User;
 import com.example.demo.service.UserService;
+import com.example.demo.audit.service.AuditService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -37,6 +38,9 @@ public class AuthController {
 
     @Autowired
     private com.example.demo.repository.UserRepository userRepository;
+
+    @Autowired
+    private AuditService auditService;
 
     @Autowired
     private com.example.demo.service.OtpService otpService;
@@ -73,6 +77,9 @@ public class AuthController {
             String token = tokenProvider.generateToken(authentication);
 
             User authenticatedUser = userService.getUserByUsernameOrEmail(request.getUsernameOrEmail());
+
+            // ── Audit Log: Ghi nhận đăng nhập thành công ──
+            auditService.logAuthAction("LOGIN", authenticatedUser.getUsername());
 
             AuthResponse response = new AuthResponse(
                     token,

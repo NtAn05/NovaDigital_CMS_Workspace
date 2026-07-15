@@ -182,8 +182,19 @@
 
   <script src="/js/main.js"></script>
   <script>
-    // Scroll animations
     document.addEventListener('DOMContentLoaded', () => {
+      // Yêu cầu đăng nhập mới được xem trang liên hệ
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      if (!token) {
+        sessionStorage.setItem('redirectAttempt', 'contact.html');
+        showContactAuthBanner();
+        setTimeout(() => {
+          if (typeof openAuthModal === 'function') openAuthModal('login');
+        }, 0);
+        return;
+      }
+
+      // Scroll animations
       const observerOptions = {
         threshold: 0.1,
         rootMargin: '0px 0px -50px 0px'
@@ -202,6 +213,50 @@
         observer.observe(el);
       });
     });
+
+    // Overlay thông báo cần đăng nhập phủ lên toàn trang contact
+    function showContactAuthBanner() {
+      const banner = document.createElement('div');
+      banner.id = 'contact-auth-banner';
+      banner.style.cssText = [
+        'position:fixed', 'inset:0', 'z-index:900',
+        'background:rgba(255,255,255,0.88)',
+        'backdrop-filter:blur(8px)',
+        '-webkit-backdrop-filter:blur(8px)',
+        'display:flex', 'flex-direction:column',
+        'align-items:center', 'justify-content:center',
+        'gap:18px', 'text-align:center', 'padding:24px'
+      ].join(';');
+      banner.innerHTML = `
+        <div style="font-size:56px;line-height:1;">&#128274;</div>
+        <h2 style="margin:0;font-size:1.6rem;font-weight:800;color:#111;">
+          Login Required
+        </h2>
+        <p style="margin:0;color:#555;max-width:360px;font-size:0.95rem;line-height:1.6;">
+          You need to <strong>log in</strong> or <strong>register</strong>
+          to contact us.
+        </p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:4px;">
+          <button
+            onclick="openAuthModal('login')"
+            style="padding:13px 32px;border:none;border-radius:10px;
+                   background:var(--accent2,#6c5ce7);color:#fff;
+                   font-weight:700;font-size:15px;cursor:pointer;
+                   box-shadow:0 4px 14px rgba(108,92,231,.35);">
+            Log In
+          </button>
+          <button
+            onclick="openAuthModal('register')"
+            style="padding:13px 32px;border:2px solid var(--accent2,#6c5ce7);
+                   border-radius:10px;background:#fff;
+                   color:var(--accent2,#6c5ce7);
+                   font-weight:700;font-size:15px;cursor:pointer;">
+            Register
+          </button>
+        </div>
+      `;
+      document.body.appendChild(banner);
+    }
   </script>
 </body>
 </html>
