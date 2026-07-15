@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Google Sign-In Processing</title>
+</head>
+<body>
+  <h3 style="font-family: sans-serif; text-align: center; margin-top: 50px;">Processing Google Login...</h3>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const hash = window.location.hash;
+      if (!hash) {
+        document.body.innerHTML = "<h3 style='color:red; text-align:center;'>Authentication failed. No token received.</h3>";
+        return;
+      }
+
+      const params = new URLSearchParams(hash.substring(1));
+      const accessToken = params.get('access_token');
+      const error = params.get('error');
+
+      if (error) {
+        document.body.innerHTML = "<h3 style='color:red; text-align:center;'>Login cancelled or failed: " + error + "</h3>";
+        return;
+      }
+
+      if (accessToken) {
+        // Ghi token vào localStorage để báo cho cửa sổ chính (main window)
+        localStorage.setItem('google_auth_token_temp', accessToken);
+        
+        // Đóng popup ngay lập tức
+        window.close();
+        
+        // Dự phòng nếu window.close() bị trình duyệt chặn
+        document.body.innerHTML = "<h3 style='color:green; text-align:center;'>Login successful! You can close this window.</h3>";
+      } else {
+        document.body.innerHTML = "<h3 style='color:red; text-align:center;'>No access token found.</h3>";
+      }
+    });
+  </script>
+</body>
+</html>

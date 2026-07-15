@@ -1,6 +1,6 @@
-package com.example.demo.audit.service;
+package com.example.demo.service;
 
-import com.example.demo.audit.event.AuthActionEvent;
+import com.example.demo.event.AuthActionEvent;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.context.ApplicationEventPublisher;

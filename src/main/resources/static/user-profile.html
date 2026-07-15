@@ -723,6 +723,32 @@
                   </span>
                 </div>
 
+                <!-- Divider -->
+                <hr class="form-divider">
+
+                <!-- Password Settings Header -->
+                <div class="span-full" style="padding-top:0.5rem; padding-bottom:0.2rem;">
+                  <h3 style="font-size:0.95rem; font-weight:700; color:var(--text-dark);">Password Settings</h3>
+                </div>
+
+                <!-- Current Password -->
+                <div class="input-group" id="group-old-password">
+                  <label for="profile-old-password">Current Password</label>
+                  <div class="input-wrap">
+                    <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    <input type="password" id="profile-old-password" placeholder="Leave blank if unchanged">
+                  </div>
+                </div>
+
+                <!-- New Password -->
+                <div class="input-group">
+                  <label for="profile-new-password">New Password</label>
+                  <div class="input-wrap">
+                    <svg class="input-icon" xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    <input type="password" id="profile-new-password" placeholder="Minimum 6 characters">
+                  </div>
+                </div>
+
                 <!-- Save Button -->
                 <div class="span-full" style="display:flex; justify-content:flex-end; padding-top:0.75rem;">
                   <button type="submit" class="profile-save-btn" id="profile-save-btn">
@@ -889,6 +915,17 @@
           // Role
           renderRoleBadge(data.role || sessionStorage.getItem("role") || "ROLE_USER");
 
+          // Password logic
+          if (data.hasPassword === false) {
+             document.getElementById("group-old-password").style.display = "none";
+             document.querySelector("label[for='profile-new-password']").textContent = "Set Password";
+             document.getElementById("profile-new-password").placeholder = "Set a password for your account";
+          } else {
+             document.getElementById("group-old-password").style.display = "flex";
+             document.querySelector("label[for='profile-new-password']").textContent = "New Password";
+             document.getElementById("profile-new-password").placeholder = "Minimum 6 characters";
+          }
+
         } catch (err) {
           showAlert("❌ Could not load your profile. Please try again.", false);
         }
@@ -947,6 +984,8 @@
         const fullName  = document.getElementById("profile-fullname").value.trim();
         const phone     = document.getElementById("profile-phone").value.trim();
         const avatarUrl = avatarHidden.value.trim();
+        const oldPassword = document.getElementById("profile-old-password").value.trim();
+        const newPassword = document.getElementById("profile-new-password").value.trim();
 
         if (!fullName) {
           showAlert("❌ Full Name is required.", false);
@@ -963,7 +1002,7 @@
               "Content-Type": "application/json",
               "Authorization": "Bearer " + token
             },
-            body: JSON.stringify({ fullName, phone, avatarUrl })
+            body: JSON.stringify({ fullName, phone, avatarUrl, oldPassword, newPassword })
           });
           const data = await res.json().catch(() => ({}));
 
@@ -987,6 +1026,15 @@
 
             // Refresh navbar
             if (window.updateNavbarAuth) updateNavbarAuth();
+            
+            // Clear passwords
+            document.getElementById("profile-old-password").value = "";
+            document.getElementById("profile-new-password").value = "";
+            
+            // Reload to update hasPassword status if they just set a new password
+            if (newPassword) {
+                fetchProfileData();
+            }
 
           } else {
             showAlert(data.message || "❌ Failed to save profile.", false);
