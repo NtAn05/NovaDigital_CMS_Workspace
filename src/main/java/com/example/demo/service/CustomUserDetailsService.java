@@ -50,7 +50,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         return new org.springframework.security.core.userdetails.User(
                 user.getUsername(),
-                user.getPassword(),
+                (user.getPassword() != null && !user.getPassword().isEmpty()) ? user.getPassword() : "", // Google OAuth2 users không có password
                 user.isEnabled(),
                 true,
                 true,

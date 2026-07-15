@@ -42,6 +42,7 @@ public class UserProfileController {
         profile.put("role",      u.getRole());
         profile.put("createdAt", u.getCreatedAt());
         profile.put("lastLogin", u.getLastLogin());
+        profile.put("hasPassword", u.getPassword() != null && !u.getPassword().isEmpty());
 
         // Check if user is a member -> separate profile details
         if ("ROLE_MEMBER".equalsIgnoreCase(u.getRole()) || "Team_Member".equalsIgnoreCase(u.getRole())) {
@@ -125,11 +126,13 @@ public class UserProfileController {
                     return ResponseEntity.badRequest()
                             .body(Map.of("message", "New password must be at least 6 characters"));
                 }
-                // Verify old password first
-                String oldPw = body.containsKey("oldPassword") ? ((String) body.get("oldPassword")).trim() : "";
-                if (!PasswordHasher.verify(oldPw, user.getPassword())) {
-                    return ResponseEntity.badRequest()
-                            .body(Map.of("message", "Current password is incorrect"));
+                // Verify old password first ONLY IF user already has a password
+                if (user.getPassword() != null && !user.getPassword().isEmpty()) {
+                    String oldPw = body.containsKey("oldPassword") ? ((String) body.get("oldPassword")).trim() : "";
+                    if (!PasswordHasher.verify(oldPw, user.getPassword())) {
+                        return ResponseEntity.badRequest()
+                                .body(Map.of("message", "Current password is incorrect"));
+                    }
                 }
                 user.setPassword(PasswordHasher.hash(np));
             }

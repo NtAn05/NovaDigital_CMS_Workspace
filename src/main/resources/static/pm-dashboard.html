@@ -249,6 +249,9 @@
       <a class="nav-item active" href="pm-dashboard.html">
         <span class="nav-icon">🚀</span> My Projects
       </a>
+      <a class="nav-item" href="resource-allocation.html">
+        <span class="nav-icon">▦</span> Resource Allocation
+      </a>
       <a class="nav-item" href="user-profile.html">
         <span class="nav-icon">👤</span> My Profile
       </a>
@@ -370,8 +373,8 @@
   }
 
   document.getElementById('btnLogout').addEventListener('click', () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('user');
+    localStorage.clear();
+    sessionStorage.clear();
     window.location.href = '/login.html';
   });
 

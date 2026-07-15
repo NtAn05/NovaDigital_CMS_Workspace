@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Staff Resource Allocation Matrix — NovaDigital</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f3f6fb;
+      --surface: #ffffff;
+      --surface-soft: #f8fafc;
+      --sidebar: #10172a;
+      --sidebar-soft: #19233c;
+      --border: #dce3ee;
+      --text: #152033;
+      --muted: #667085;
+      --primary: #4f46e5;
+      --primary-dark: #3730a3;
+      --cyan: #0891b2;
+      --green: #059669;
+      --amber: #d97706;
+      --red: #dc2626;
+      --shadow: 0 18px 50px rgba(15, 23, 42, .08);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body { font-family: Inter, Arial, sans-serif; background: var(--bg); color: var(--text); }
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+
+    .layout { display: flex; min-height: 100vh; }
+    .sidebar {
+      width: 248px; flex: 0 0 248px; background: var(--sidebar); color: #e5e7eb;
+      padding: 24px 18px; display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh;
+    }
+    .brand { display: flex; align-items: center; gap: 11px; padding: 4px 8px 22px; border-bottom: 1px solid rgba(255,255,255,.08); }
+    .brand-mark { width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center; color: white; font-weight: 800; background: linear-gradient(135deg, #6366f1, #06b6d4); }
+    .brand-name { font-size: 17px; font-weight: 800; }
+    .brand-sub { font-size: 10px; color: #94a3b8; margin-top: 2px; letter-spacing: .06em; text-transform: uppercase; }
+
+    .actor-card { margin: 20px 0; padding: 14px; background: var(--sidebar-soft); border: 1px solid rgba(255,255,255,.08); border-radius: 14px; }
+    .actor-name { font-size: 14px; font-weight: 700; }
+    .actor-mode { display: inline-flex; margin-top: 7px; padding: 4px 8px; border-radius: 999px; background: rgba(99,102,241,.18); color: #c7d2fe; font-size: 10px; font-weight: 800; letter-spacing: .04em; }
+
+    .side-label { margin: 4px 10px 8px; font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: .1em; }
+    .nav { display: flex; flex-direction: column; gap: 5px; }
+    .nav a { display: flex; align-items: center; gap: 10px; color: #aab5c8; text-decoration: none; padding: 11px 12px; border-radius: 10px; font-size: 13px; font-weight: 600; }
+    .nav a:hover, .nav a.active { color: white; background: rgba(99,102,241,.19); }
+    .nav a.active { box-shadow: inset 3px 0 0 #818cf8; }
+    .sidebar-spacer { flex: 1; }
+    .logout { width: 100%; border: 1px solid rgba(255,255,255,.12); background: transparent; color: #cbd5e1; border-radius: 10px; padding: 10px 12px; }
+    .logout:hover { color: #fecaca; border-color: rgba(248,113,113,.5); background: rgba(220,38,38,.08); }
+
+    .main { min-width: 0; flex: 1; padding: 28px; }
+    .header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 22px; }
+    .eyebrow { color: var(--primary); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .11em; margin-bottom: 7px; }
+    h1 { margin: 0; font-size: clamp(23px, 3vw, 31px); line-height: 1.15; }
+    .subtitle { color: var(--muted); font-size: 13px; margin-top: 8px; max-width: 760px; line-height: 1.55; }
+    .primary-btn { border: 0; border-radius: 10px; padding: 11px 15px; background: var(--primary); color: white; font-weight: 700; box-shadow: 0 8px 20px rgba(79,70,229,.22); white-space: nowrap; }
+    .primary-btn:hover { background: var(--primary-dark); }
+    .primary-btn:disabled { opacity: .55; cursor: not-allowed; }
+
+    .filters { background: var(--surface); border: 1px solid var(--border); border-radius: 15px; padding: 15px; box-shadow: var(--shadow); display: grid; grid-template-columns: minmax(220px, 1.5fr) minmax(145px, .75fr) minmax(180px, 1fr) minmax(145px, .75fr) minmax(145px, .75fr); gap: 12px; align-items: end; }
+    .field label { display: block; color: var(--muted); font-size: 11px; font-weight: 700; margin-bottom: 6px; }
+    .field input, .field select, .field textarea { width: 100%; border: 1px solid #cfd8e5; background: white; color: var(--text); border-radius: 9px; padding: 10px 11px; outline: none; }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: #818cf8; box-shadow: 0 0 0 3px rgba(99,102,241,.12); }
+
+    .kpis { display: grid; grid-template-columns: repeat(4, minmax(140px, 1fr)); gap: 13px; margin: 16px 0; }
+    .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 15px 16px; }
+    .kpi-label { color: var(--muted); font-size: 11px; font-weight: 700; }
+    .kpi-value { margin-top: 7px; font-size: 24px; font-weight: 800; }
+    .kpi-note { margin-top: 4px; color: var(--muted); font-size: 10px; }
+
+    .matrix-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); overflow: hidden; }
+    .matrix-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 18px; border-bottom: 1px solid var(--border); }
+    .matrix-title { font-size: 15px; font-weight: 800; }
+    .matrix-meta { color: var(--muted); font-size: 11px; margin-top: 4px; }
+    .legend { display: flex; gap: 12px; color: var(--muted); font-size: 10px; }
+    .legend span { display: flex; align-items: center; gap: 5px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .dot.green { background: var(--green); } .dot.amber { background: var(--amber); } .dot.red { background: var(--red); }
+
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 1120px; }
+    th { text-align: left; background: #f8fafc; color: #5d6878; padding: 11px 13px; border-bottom: 1px solid var(--border); font-size: 10px; text-transform: uppercase; letter-spacing: .05em; }
+    td { padding: 13px; border-bottom: 1px solid #eef2f7; vertical-align: top; font-size: 12px; }
+    tbody tr:hover { background: #fbfcff; }
+    tbody tr:last-child td { border-bottom: 0; }
+
+    .person { display: flex; gap: 10px; min-width: 180px; }
+    .avatar { width: 39px; height: 39px; border-radius: 11px; background: linear-gradient(135deg,#6366f1,#06b6d4); color: white; display: grid; place-items: center; font-weight: 800; flex: 0 0 39px; position: relative; overflow: hidden; }
+    .avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .person-name { font-weight: 800; margin-top: 1px; }
+    .person-sub { color: var(--muted); font-size: 10px; margin-top: 3px; }
+    .assigned-badge { display: inline-flex; margin-top: 5px; border-radius: 999px; padding: 3px 7px; color: #047857; background: #d1fae5; font-size: 9px; font-weight: 800; }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 5px; max-width: 230px; }
+    .chip { background: #eef2ff; color: #4338ca; padding: 4px 7px; border-radius: 999px; font-size: 9px; font-weight: 700; }
+    .empty-chip { color: #98a2b3; font-style: italic; font-size: 10px; }
+    .match { margin-top: 7px; color: var(--muted); font-size: 10px; }
+    .match strong { color: var(--cyan); }
+
+    .progress-row { min-width: 145px; }
+    .progress-label { display: flex; justify-content: space-between; font-size: 10px; margin-bottom: 6px; }
+    .progress-track { height: 8px; border-radius: 999px; overflow: hidden; background: #e8edf4; }
+    .progress-fill { height: 100%; border-radius: inherit; background: var(--green); }
+    .progress-fill.medium { background: var(--amber); }
+    .progress-fill.high { background: var(--red); }
+    .capacity { margin-top: 6px; font-size: 10px; font-weight: 700; }
+    .capacity.ok { color: var(--green); } .capacity.warn { color: var(--amber); } .capacity.full { color: var(--red); }
+
+    .allocation-list { display: flex; flex-direction: column; gap: 7px; min-width: 280px; }
+    .allocation { border: 1px solid #dde4ef; border-radius: 10px; padding: 8px 9px; background: #fbfcfe; }
+    .allocation-top { display: flex; justify-content: space-between; gap: 8px; }
+    .allocation-name { font-weight: 750; }
+    .allocation-percent { font-weight: 800; color: var(--primary); }
+    .allocation-meta { color: var(--muted); font-size: 9px; margin-top: 5px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .status { border-radius: 999px; padding: 2px 6px; font-size: 8px; font-weight: 800; }
+    .status.ACTIVE { color: #047857; background: #d1fae5; }
+    .status.PLANNED { color: #4338ca; background: #e0e7ff; }
+    .status.COMPLETED { color: #0369a1; background: #e0f2fe; }
+    .status.CANCELLED { color: #991b1b; background: #fee2e2; }
+    .allocation-actions { margin-top: 7px; display: flex; gap: 10px; }
+    .text-btn { border: 0; padding: 0; background: none; color: var(--primary); font-size: 9px; font-weight: 700; }
+    .text-btn.danger { color: var(--red); }
+
+    .row-btn { border: 1px solid #c7d2fe; background: #eef2ff; color: #4338ca; border-radius: 9px; padding: 8px 10px; font-size: 10px; font-weight: 800; }
+    .row-btn:hover { background: #e0e7ff; }
+    .empty-state { padding: 50px 20px; text-align: center; color: var(--muted); }
+    .empty-state strong { display: block; color: var(--text); margin-bottom: 7px; }
+    .loading { padding: 45px; text-align: center; color: var(--muted); }
+
+    .modal-backdrop { position: fixed; inset: 0; z-index: 80; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(15,23,42,.65); backdrop-filter: blur(3px); }
+    .modal-backdrop.open { display: flex; }
+    .modal { width: min(720px, 100%); max-height: 92vh; overflow-y: auto; background: white; border-radius: 17px; box-shadow: 0 30px 100px rgba(0,0,0,.25); }
+    .modal-head { padding: 18px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .modal-head h2 { margin: 0; font-size: 18px; }
+    .close-btn { width: 34px; height: 34px; border: 0; border-radius: 9px; background: #f1f5f9; color: #475569; font-size: 18px; }
+    .modal-body { padding: 20px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .field.full { grid-column: 1 / -1; }
+    .field textarea { min-height: 82px; resize: vertical; }
+    .form-error { min-height: 19px; margin-top: 10px; color: var(--red); font-size: 11px; font-weight: 600; }
+    .modal-foot { padding: 15px 20px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
+    .secondary-btn { border: 1px solid #cfd8e5; background: white; color: #475569; border-radius: 9px; padding: 10px 14px; font-weight: 700; }
+
+    .toast-wrap { position: fixed; right: 20px; bottom: 20px; z-index: 120; display: flex; flex-direction: column; gap: 8px; }
+    .toast { width: min(360px, calc(100vw - 40px)); color: white; border-radius: 11px; padding: 12px 14px; box-shadow: 0 15px 40px rgba(0,0,0,.2); font-size: 12px; animation: slide .2s ease; }
+    .toast.success { background: #047857; } .toast.error { background: #b91c1c; } .toast.info { background: #334155; }
+    @keyframes slide { from { transform: translateY(8px); opacity: 0; } }
+
+    @media (max-width: 1040px) {
+      .sidebar { width: 205px; flex-basis: 205px; }
+      .filters { grid-template-columns: repeat(2, minmax(160px,1fr)); }
+      .kpis { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 760px) {
+      .layout { display: block; }
+      .sidebar { width: 100%; height: auto; position: static; padding: 14px; }
+      .brand { padding-bottom: 13px; }
+      .actor-card, .side-label { display: none; }
+      .nav { flex-direction: row; overflow-x: auto; margin-top: 12px; }
+      .nav a { white-space: nowrap; }
+      .sidebar-spacer, .logout { display: none; }
+      .main { padding: 17px; }
+      .header { flex-direction: column; }
+      .filters { grid-template-columns: 1fr; }
+      .kpis { grid-template-columns: 1fr 1fr; }
+      .legend { display: none; }
+      .form-grid { grid-template-columns: 1fr; }
+      .field.full { grid-column: auto; }
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">N</div>
+      <div><div class="brand-name">NovaDigital</div><div class="brand-sub">CMS Workspace</div></div>
+    </div>
+    <div class="actor-card">
+      <div class="actor-name" id="actorName">Loading...</div>
+      <div class="actor-mode" id="actorMode">RESOURCE MANAGER</div>
+    </div>
+    <div class="side-label">Workspace</div>
+    <nav class="nav">
+      <a href="resource-allocation.html" class="active">▦ Resource Matrix</a>
+      <a href="pm-dashboard.html" id="pmBackLink">⌂ PM Dashboard</a>
+      <a href="admin.html" id="adminBackLink">⚙ Admin Panel</a>
+      <a href="user-profile.html">◉ My Profile</a>
+    </nav>
+    <div class="sidebar-spacer"></div>
+    <button class="logout" id="logoutBtn">Sign Out</button>
+  </aside>
+
+  <main class="main">
+    <div class="header">
+      <div>
+        <div class="eyebrow">UC-14 · Internal Operations</div>
+        <h1>Staff Resource Allocation Matrix</h1>
+        <div class="subtitle">Assign internal staff to projects and individual tasks using their skills and real-time workload availability. Planned and active allocations cannot exceed 100% capacity.</div>
+      </div>
+      <button class="primary-btn" id="newAllocationBtn">+ New Allocation</button>
+    </div>
+
+    <section class="filters">
+      <div class="field">
+        <label>Project</label>
+        <select id="projectFilter"><option value="">Loading projects...</option></select>
+      </div>
+      <div class="field">
+        <label>Workload date</label>
+        <input type="date" id="focusDate" />
+      </div>
+      <div class="field">
+        <label>Search staff</label>
+        <input type="search" id="searchInput" placeholder="Name, username, email..." />
+      </div>
+      <div class="field">
+        <label>Skill</label>
+        <select id="skillFilter"><option value="">All skills</option></select>
+      </div>
+      <div class="field">
+        <label>Availability</label>
+        <select id="availabilityFilter">
+          <option value="">All capacity levels</option>
+          <option value="available">Available (&gt; 20%)</option>
+          <option value="limited">Limited (1–20%)</option>
+          <option value="full">Fully allocated (0%)</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="kpis">
+      <div class="kpi"><div class="kpi-label">Internal staff</div><div class="kpi-value" id="kpiStaff">—</div><div class="kpi-note">Enabled ROLE_MEMBER accounts</div></div>
+      <div class="kpi"><div class="kpi-label">Available staff</div><div class="kpi-value" id="kpiAvailable">—</div><div class="kpi-note">More than 20% capacity</div></div>
+      <div class="kpi"><div class="kpi-label">Near / at capacity</div><div class="kpi-value" id="kpiCapacity">—</div><div class="kpi-note">80% workload or higher</div></div>
+      <div class="kpi"><div class="kpi-label">Project allocations</div><div class="kpi-value" id="kpiAllocations">—</div><div class="kpi-note">All statuses for selected project</div></div>
+    </section>
+
+    <section class="matrix-card">
+      <div class="matrix-head">
+        <div>
+          <div class="matrix-title" id="matrixTitle">Resource Matrix</div>
+          <div class="matrix-meta" id="matrixMeta">Loading allocation data...</div>
+        </div>
+        <div class="legend"><span><i class="dot green"></i> Available</span><span><i class="dot amber"></i> Limited</span><span><i class="dot red"></i> Full</span></div>
+      </div>
+      <div class="table-wrap">
+        <div class="loading" id="loadingState">Loading resource allocation matrix...</div>
+        <table id="matrixTable" hidden>
+          <thead><tr><th>Staff member</th><th>Skills / match</th><th>Total workload</th><th>Availability</th><th>Project & task allocations</th><th>Action</th></tr></thead>
+          <tbody id="matrixBody"></tbody>
+        </table>
+        <div class="empty-state" id="emptyState" hidden><strong>No matching staff found</strong>Change the filters or add internal team members first.</div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="modal-backdrop" id="allocationModal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-head"><h2 id="modalTitle">New Staff Allocation</h2><button class="close-btn" id="modalClose" type="button">×</button></div>
+    <form id="allocationForm">
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="field">
+            <label>Staff member *</label>
+            <select id="formUser" required></select>
+          </div>
+          <div class="field">
+            <label>Project *</label>
+            <select id="formProject" required></select>
+          </div>
+          <div class="field full">
+            <label>Task / milestone</label>
+            <select id="formTask"><option value="">Project-level allocation</option></select>
+          </div>
+          <div class="field">
+            <label>Allocation percentage *</label>
+            <input id="formPercentage" type="number" min="1" max="100" value="25" required />
+          </div>
+          <div class="field">
+            <label>Status *</label>
+            <select id="formStatus" required>
+              <option value="PLANNED">PLANNED</option>
+              <option value="ACTIVE">ACTIVE</option>
+              <option value="COMPLETED">COMPLETED</option>
+              <option value="CANCELLED">CANCELLED</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Start date *</label>
+            <input id="formStart" type="date" required />
+          </div>
+          <div class="field">
+            <label>End date *</label>
+            <input id="formEnd" type="date" required />
+          </div>
+          <div class="field full">
+            <label>Notes</label>
+            <textarea id="formNotes" maxlength="2000" placeholder="Responsibilities, expected output, or allocation reason..."></textarea>
+          </div>
+        </div>
+        <div class="form-error" id="formError"></div>
+      </div>
+      <div class="modal-foot"><button class="secondary-btn" id="modalCancel" type="button">Cancel</button><button class="primary-btn" id="saveBtn" type="submit">Save Allocation</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+  const state = { matrix: null, editingId: null };
+  const token = localStorage.getItem('authToken') || localStorage.getItem('token') || sessionStorage.getItem('authToken') || sessionStorage.getItem('token');
+  const storedUser = safeJson(localStorage.getItem('user')) || safeJson(sessionStorage.getItem('user')) || {
+    username: localStorage.getItem('username') || sessionStorage.getItem('username'),
+    fullName: localStorage.getItem('fullName') || sessionStorage.getItem('fullName'),
+    role: localStorage.getItem('role') || sessionStorage.getItem('role')
+  };
+
+  if (!token) window.location.replace('/login.html');
+
+  const els = {
+    project: document.getElementById('projectFilter'), focusDate: document.getElementById('focusDate'),
+    search: document.getElementById('searchInput'), skill: document.getElementById('skillFilter'),
+    availability: document.getElementById('availabilityFilter'), body: document.getElementById('matrixBody'),
+    table: document.getElementById('matrixTable'), loading: document.getElementById('loadingState'), empty: document.getElementById('emptyState'),
+    modal: document.getElementById('allocationModal'), form: document.getElementById('allocationForm'), formError: document.getElementById('formError'),
+    formUser: document.getElementById('formUser'), formProject: document.getElementById('formProject'), formTask: document.getElementById('formTask'),
+    formPercentage: document.getElementById('formPercentage'), formStatus: document.getElementById('formStatus'),
+    formStart: document.getElementById('formStart'), formEnd: document.getElementById('formEnd'), formNotes: document.getElementById('formNotes'),
+    saveBtn: document.getElementById('saveBtn')
+  };
+
+  els.focusDate.value = todayString();
+  document.getElementById('actorName').textContent = storedUser?.fullName || storedUser?.username || 'Authenticated user';
+  document.getElementById('adminBackLink').style.display = storedUser?.role === 'ROLE_ADMIN' ? 'flex' : 'none';
+  document.getElementById('pmBackLink').style.display = storedUser?.role === 'ROLE_ADMIN' ? 'none' : 'flex';
+
+  document.getElementById('logoutBtn').addEventListener('click', logout);
+  document.getElementById('newAllocationBtn').addEventListener('click', () => openModal());
+  document.getElementById('modalClose').addEventListener('click', closeModal);
+  document.getElementById('modalCancel').addEventListener('click', closeModal);
+  els.modal.addEventListener('click', e => { if (e.target === els.modal) closeModal(); });
+  els.form.addEventListener('submit', saveAllocation);
+  els.project.addEventListener('change', () => loadMatrix());
+  els.focusDate.addEventListener('change', () => loadMatrix());
+  [els.search, els.skill, els.availability].forEach(el => el.addEventListener('input', renderMatrix));
+
+  loadMatrix();
+
+  async function loadMatrix() {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (els.project.value) params.set('projectId', els.project.value);
+      if (els.focusDate.value) params.set('focusDate', els.focusDate.value);
+      const data = await api(`/api/resource-allocations/matrix?${params.toString()}`);
+      state.matrix = data;
+      renderContext();
+      renderMatrix();
+    } catch (error) {
+      state.matrix = null;
+      els.loading.innerHTML = `<strong style="display:block;color:#b91c1c;margin-bottom:7px;">Unable to load resource matrix</strong>${escapeHtml(error.message)}`;
+      showToast(error.message, 'error');
+    } finally {
+      if (state.matrix) setLoading(false);
+    }
+  }
+
+  function renderContext() {
+    const m = state.matrix;
+    document.getElementById('actorName').textContent = m.actorName || storedUser?.fullName || 'Resource manager';
+    document.getElementById('actorMode').textContent = m.actorMode === 'HR_ADMIN' ? 'HR / ADMIN' : 'PROJECT MANAGER';
+    document.getElementById('adminBackLink').style.display = m.actorMode === 'HR_ADMIN' ? 'flex' : 'none';
+    document.getElementById('pmBackLink').style.display = m.actorMode === 'HR_ADMIN' ? 'none' : 'flex';
+
+    const previousProject = String(m.selectedProjectId || '');
+    els.project.innerHTML = m.projects.length
+      ? m.projects.map(p => `<option value="${p.id}" ${String(p.id) === previousProject ? 'selected' : ''}>${escapeHtml(p.title)}</option>`).join('')
+      : '<option value="">No manageable projects</option>';
+    els.project.disabled = !m.projects.length;
+    document.getElementById('newAllocationBtn').disabled = !m.selectedProjectId || !m.staff.length;
+
+    const oldSkill = els.skill.value;
+    const skills = [...new Set(m.staff.flatMap(s => s.skills || []))].sort((a,b) => a.localeCompare(b));
+    els.skill.innerHTML = '<option value="">All skills</option>' + skills.map(s => `<option value="${escapeAttr(s)}">${escapeHtml(s)}</option>`).join('');
+    if (skills.includes(oldSkill)) els.skill.value = oldSkill;
+
+    populateFormOptions();
+    updateKpis();
+    const selected = m.projects.find(p => p.id === m.selectedProjectId);
+    document.getElementById('matrixTitle').textContent = selected ? `${selected.title} — Allocation Matrix` : 'Resource Allocation Matrix';
+    document.getElementById('matrixMeta').textContent = selected
+      ? `${m.tasks.length} task/milestone option(s) · Workload calculated on ${m.focusDate}`
+      : 'No project is available for your account.';
+  }
+
+  function updateKpis() {
+    const m = state.matrix;
+    document.getElementById('kpiStaff').textContent = m.staff.length;
+    document.getElementById('kpiAvailable').textContent = m.staff.filter(s => s.availablePercentage > 20).length;
+    document.getElementById('kpiCapacity').textContent = m.staff.filter(s => s.currentWorkload >= 80).length;
+    document.getElementById('kpiAllocations').textContent = m.allocations.length;
+  }
+
+  function renderMatrix() {
+    const m = state.matrix;
+    if (!m) return;
+    const query = els.search.value.trim().toLowerCase();
+    const skill = els.skill.value.toLowerCase();
+    const availability = els.availability.value;
+    const allocationsByUser = groupBy(m.allocations, a => a.userId);
+
+    const rows = m.staff.filter(s => {
+      const haystack = `${s.fullName} ${s.username} ${s.email} ${(s.skills || []).join(' ')}`.toLowerCase();
+      if (query && !haystack.includes(query)) return false;
+      if (skill && !(s.skills || []).some(v => v.toLowerCase() === skill)) return false;
+      if (availability === 'available' && s.availablePercentage <= 20) return false;
+      if (availability === 'limited' && !(s.availablePercentage > 0 && s.availablePercentage <= 20)) return false;
+      if (availability === 'full' && s.availablePercentage > 0) return false;
+      return true;
+    });
+
+    els.body.innerHTML = rows.map(s => staffRowHtml(s, allocationsByUser[s.userId] || [])).join('');
+    els.table.hidden = rows.length === 0;
+    els.empty.hidden = rows.length !== 0;
+  }
+
+  function staffRowHtml(s, allocations) {
+    const workloadClass = s.currentWorkload >= 100 ? 'high' : s.currentWorkload >= 80 ? 'medium' : '';
+    const capacityClass = s.availablePercentage <= 0 ? 'full' : s.availablePercentage <= 20 ? 'warn' : 'ok';
+    const capacityText = s.availablePercentage <= 0 ? 'Fully allocated' : `${s.availablePercentage}% available`;
+    const initials = (s.fullName || s.username || '?').split(/\s+/).map(x => x[0]).slice(0,2).join('').toUpperCase();
+    const avatar = `<div class="avatar">${escapeHtml(initials)}${s.avatarUrl ? `<img src="${escapeAttr(s.avatarUrl)}" alt="" onerror="this.remove()">` : ''}</div>`;
+    const skills = s.skills?.length ? s.skills.map(v => `<span class="chip">${escapeHtml(v)}</span>`).join('') : '<span class="empty-chip">No skills recorded</span>';
+    const assignmentHtml = allocations.length ? allocations.map(allocationHtml).join('') : '<span class="empty-chip">No allocation on this project</span>';
+
+    return `<tr>
+      <td><div class="person">${avatar}<div><div class="person-name">${escapeHtml(s.fullName)}</div><div class="person-sub">${escapeHtml(s.username)} · ${escapeHtml(s.email)}</div>${s.projectAssigned ? '<span class="assigned-badge">PROJECT MEMBER</span>' : ''}</div></div></td>
+      <td><div class="chips">${skills}</div><div class="match">Project technology match: <strong>${s.skillMatchPercentage}%</strong></div></td>
+      <td><div class="progress-row"><div class="progress-label"><span>All projects</span><strong>${s.currentWorkload}%</strong></div><div class="progress-track"><div class="progress-fill ${workloadClass}" style="width:${Math.min(100,s.currentWorkload)}%"></div></div><div class="person-sub">${s.currentProjectWorkload}% on selected project</div></div></td>
+      <td><div class="capacity ${capacityClass}">${capacityText}</div>${s.overallocated ? '<div class="person-sub" style="color:#dc2626">Existing data is over 100%</div>' : ''}</td>
+      <td><div class="allocation-list">${assignmentHtml}</div></td>
+      <td><button class="row-btn" onclick="openModal(null, ${s.userId})">+ Assign</button></td>
+    </tr>`;
+  }
+
+  function allocationHtml(a) {
+    return `<div class="allocation">
+      <div class="allocation-top"><span class="allocation-name">${escapeHtml(a.milestoneName || 'Project-level allocation')}</span><span class="allocation-percent">${a.allocationPercentage}%</span></div>
+      <div class="allocation-meta"><span class="status ${a.status}">${a.status}</span><span>${formatDate(a.startDate)} → ${formatDate(a.endDate)}</span><span>by ${escapeHtml(a.assignedBy || 'unknown')}</span></div>
+      ${a.notes ? `<div class="person-sub" title="${escapeAttr(a.notes)}">${escapeHtml(shorten(a.notes, 80))}</div>` : ''}
+      <div class="allocation-actions"><button class="text-btn" onclick="openModal(${a.id})">Edit</button><button class="text-btn danger" onclick="deleteAllocation(${a.id})">Delete</button></div>
+    </div>`;
+  }
+
+  function populateFormOptions() {
+    const m = state.matrix;
+    if (!m) return;
+    els.formUser.innerHTML = m.staff.map(s => `<option value="${s.userId}">${escapeHtml(s.fullName)} — ${s.availablePercentage}% available</option>`).join('');
+    els.formProject.innerHTML = m.projects.map(p => `<option value="${p.id}" ${p.id === m.selectedProjectId ? 'selected' : ''}>${escapeHtml(p.title)}</option>`).join('');
+    els.formProject.disabled = true;
+    renderTaskOptions();
+  }
+
+  function renderTaskOptions(selectedId = '') {
+    const tasks = state.matrix?.tasks || [];
+    els.formTask.innerHTML = '<option value="">Project-level allocation</option>' + tasks.map(t => `<option value="${t.id}" ${String(t.id) === String(selectedId) ? 'selected' : ''}>${escapeHtml(t.name)} (${t.status})</option>`).join('');
+  }
+
+  window.openModal = function(allocationId = null, presetUserId = null) {
+    if (!state.matrix?.selectedProjectId) return;
+    if (!state.matrix.staff.length) { showToast('No enabled internal staff account is available.', 'error'); return; }
+    state.editingId = allocationId;
+    const allocation = allocationId ? state.matrix.allocations.find(a => a.id === allocationId) : null;
+    document.getElementById('modalTitle').textContent = allocation ? 'Edit Staff Allocation' : 'New Staff Allocation';
+    els.formError.textContent = '';
+    populateFormOptions();
+
+    const start = allocation?.startDate || todayString();
+    const end = allocation?.endDate || addDaysString(14);
+    els.formUser.value = String(allocation?.userId || presetUserId || state.matrix.staff[0]?.userId || '');
+    els.formProject.value = String(state.matrix.selectedProjectId);
+    renderTaskOptions(allocation?.milestoneId || '');
+    els.formPercentage.value = allocation?.allocationPercentage || 25;
+    els.formStatus.value = allocation?.status || 'PLANNED';
+    els.formStart.value = start;
+    els.formEnd.value = end;
+    els.formNotes.value = allocation?.notes || '';
+    els.modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  };
+
+  function closeModal() {
+    els.modal.classList.remove('open');
+    document.body.style.overflow = '';
+    state.editingId = null;
+    els.form.reset();
+    els.formError.textContent = '';
+  }
+
+  async function saveAllocation(event) {
+    event.preventDefault();
+    els.formError.textContent = '';
+    const payload = {
+      userId: Number(els.formUser.value),
+      projectId: Number(state.matrix.selectedProjectId),
+      milestoneId: els.formTask.value ? Number(els.formTask.value) : null,
+      allocationPercentage: Number(els.formPercentage.value),
+      startDate: els.formStart.value,
+      endDate: els.formEnd.value,
+      status: els.formStatus.value,
+      notes: els.formNotes.value.trim()
+    };
+    if (payload.endDate < payload.startDate) {
+      els.formError.textContent = 'End date cannot be earlier than start date.';
+      return;
+    }
+    els.saveBtn.disabled = true;
+    els.saveBtn.textContent = 'Saving...';
+    try {
+      await api(state.editingId ? `/api/resource-allocations/${state.editingId}` : '/api/resource-allocations', {
+        method: state.editingId ? 'PUT' : 'POST',
+        body: JSON.stringify(payload)
+      });
+      showToast(state.editingId ? 'Allocation updated successfully.' : 'Staff allocated successfully.', 'success');
+      closeModal();
+      await loadMatrix();
+    } catch (error) {
+      els.formError.textContent = error.message;
+      showToast(error.message, 'error');
+    } finally {
+      els.saveBtn.disabled = false;
+      els.saveBtn.textContent = 'Save Allocation';
+    }
+  }
+
+  window.deleteAllocation = async function(id) {
+    const allocation = state.matrix.allocations.find(a => a.id === id);
+    if (!allocation || !confirm(`Delete the ${allocation.allocationPercentage}% allocation for ${allocation.fullName}?`)) return;
+    try {
+      await api(`/api/resource-allocations/${id}`, { method: 'DELETE' });
+      showToast('Allocation deleted successfully.', 'success');
+      await loadMatrix();
+    } catch (error) { showToast(error.message, 'error'); }
+  };
+
+  async function api(url, options = {}) {
+    const response = await fetch(url, {
+      ...options,
+      headers: { 'Authorization': `Bearer ${token}`, ...(options.body ? {'Content-Type':'application/json'} : {}), ...(options.headers || {}) }
+    });
+    let data = null;
+    try { data = await response.json(); } catch (_) { data = {}; }
+    if (response.status === 401) { logout(); throw new Error('Your session has expired.'); }
+    if (!response.ok) throw new Error(data.message || `Request failed (${response.status}).`);
+    return data;
+  }
+
+  function setLoading(isLoading) {
+    els.loading.style.display = isLoading ? 'block' : 'none';
+    if (isLoading) { els.table.hidden = true; els.empty.hidden = true; }
+  }
+  function showToast(message, type = 'info') {
+    const toast = document.createElement('div'); toast.className = `toast ${type}`; toast.textContent = message;
+    document.getElementById('toastWrap').appendChild(toast); setTimeout(() => toast.remove(), 3500);
+  }
+  function logout() {
+    ['token','authToken','username','fullName','role','email','avatarUrl','user'].forEach(k => { localStorage.removeItem(k); sessionStorage.removeItem(k); });
+    window.location.replace('/login.html');
+  }
+  function groupBy(items, keyFn) { return items.reduce((acc, item) => { const k = keyFn(item); (acc[k] ||= []).push(item); return acc; }, {}); }
+  function todayString() { const d = new Date(); return localDateString(d); }
+  function addDaysString(days) { const d = new Date(); d.setDate(d.getDate() + days); return localDateString(d); }
+  function localDateString(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+  function formatDate(v) { if (!v) return '—'; const [y,m,d] = v.split('-'); return `${d}/${m}/${y}`; }
+  function shorten(v, n) { return v.length > n ? v.slice(0,n-1) + '…' : v; }
+  function safeJson(v) { try { return v ? JSON.parse(v) : null; } catch (_) { return null; } }
+  function escapeHtml(v) { return String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+  function escapeAttr(v) { return escapeHtml(v).replace(/`/g, '&#96;'); }
+</script>
+</body>
+</html>

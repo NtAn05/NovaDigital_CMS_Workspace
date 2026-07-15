@@ -9,6 +9,8 @@ import com.example.demo.entity.enums.AppointmentStatus;
 import com.example.demo.repository.AppointmentAddonRepository;
 import com.example.demo.repository.ConsultationAppointmentRepository;
 import com.example.demo.service.BookingService;
+import com.example.demo.service.CaptchaService;
+import com.example.demo.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -125,6 +127,7 @@ public class BookingController {
         appointment.setTimeSlot(timeSlot);
         appointment.setStatus(AppointmentStatus.PENDING);
         appointment.setMessageContent(request.getMessageContent());
+        appointment.setAttachmentUrl(request.getAttachmentUrl());
         appointment.setTotalPrice(totalPrice);
 
         ConsultationAppointment saved = appointmentRepository.save(appointment);
@@ -141,6 +144,54 @@ public class BookingController {
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(saved, basePrice, addonsPrice, request.getAddonIds()));
     }
 
+    @GetMapping
+    public ResponseEntity<?> getAllBookings() {
+        List<ConsultationAppointment> appointments = appointmentRepository.findAll();
+        List<BookingResponse> responses = appointments.stream().map(a -> {
+            List<Long> addonIds = appointmentAddonRepository.findByAppointmentId(a.getId())
+                    .stream().map(AppointmentAddon::getAddonId).collect(Collectors.toList());
+            double basePrice = 0;
+            try {
+                basePrice = bookingService.resolveBasePrice(a.getServiceId());
+            } catch (Exception e) {}
+            double addonsPrice = a.getTotalPrice() - basePrice;
+            return toResponse(a, basePrice, addonsPrice, addonIds);
+        }).collect(Collectors.toList());
+        return ResponseEntity.ok(responses);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateBooking(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        return appointmentRepository.findById(id)
+                .<ResponseEntity<?>>map(a -> {
+                    if (body.containsKey("expertId")) {
+                        Object expId = body.get("expertId");
+                        if (expId != null && !expId.toString().isBlank()) {
+                            a.setExpertId(Long.valueOf(expId.toString()));
+                        } else {
+                            a.setExpertId(null);
+                        }
+                    }
+                    if (body.containsKey("status")) {
+                        a.setStatus(AppointmentStatus.valueOf(body.get("status").toString()));
+                    }
+                    ConsultationAppointment saved = appointmentRepository.save(a);
+                    List<Long> addonIds = appointmentAddonRepository.findByAppointmentId(saved.getId())
+                            .stream().map(AppointmentAddon::getAddonId).collect(Collectors.toList());
+                    double basePrice = 0;
+                    try {
+                        basePrice = bookingService.resolveBasePrice(saved.getServiceId());
+                    } catch (Exception e) {}
+                    double addonsPrice = saved.getTotalPrice() - basePrice;
+                    return ResponseEntity.ok(toResponse(saved, basePrice, addonsPrice, addonIds));
+                })
+                .orElseGet(() -> {
+                    Map<String, Object> error = new HashMap<>();
+                    error.put("message", "Appointment not found with id = " + id);
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+                });
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<?> getBooking(@PathVariable Long id) {
         return appointmentRepository.findById(id)
@@ -150,6 +201,25 @@ public class BookingController {
                     double basePrice = bookingService.resolveBasePrice(a.getServiceId());
                     double addonsPrice = a.getTotalPrice() - basePrice;
                     return ResponseEntity.ok(toResponse(a, basePrice, addonsPrice, addonIds));
+                })
+                .orElseGet(() -> {
+                    Map<String, Object> error = new HashMap<>();
+                    error.put("message", "Appointment not found with id = " + id);
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+                });
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteBooking(@PathVariable Long id) {
+        return appointmentRepository.findById(id)
+                .<ResponseEntity<?>>map(a -> {
+                    List<AppointmentAddon> addons = appointmentAddonRepository.findByAppointmentId(id);
+                    appointmentAddonRepository.deleteAll(addons);
+                    appointmentRepository.delete(a);
+                    Map<String, Object> res = new HashMap<>();
+                    res.put("success", true);
+                    res.put("message", "Deleted successfully");
+                    return ResponseEntity.ok(res);
                 })
                 .orElseGet(() -> {
                     Map<String, Object> error = new HashMap<>();
@@ -172,6 +242,7 @@ public class BookingController {
         r.setTimeSlot(a.getTimeSlot().toString());
         r.setStatus(a.getStatus().name());
         r.setMessageContent(a.getMessageContent());
+        r.setAttachmentUrl(a.getAttachmentUrl());
         return r;
     }
 }
