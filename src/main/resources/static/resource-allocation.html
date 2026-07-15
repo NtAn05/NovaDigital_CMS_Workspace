@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="NovaDigital Resource Allocation Workspace — manage staff workload, project capacity and task assignments." />
+  <title>Resource Allocation | NovaDigital</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <script>
+    if ((localStorage.getItem('theme') || 'light') === 'dark') {
+      document.documentElement.classList.add('dark-theme');
+    }
+  </script>
+  <style>
+    body.resource-dashboard-page {
+      overflow-x: hidden;
+      background: #f1f5f9;
+    }
+
+    /* ===== Floating top navigation — visually aligned with the NovaDigital portal ===== */
+    .resource-header {
+      position: fixed;
+      top: 1.25rem;
+      left: 2rem;
+      right: 2rem;
+      width: auto;
+      z-index: 1000;
+      border: 1px solid var(--border-color);
+      border-radius: 50px;
+      background: rgba(255, 255, 255, 0.92) !important;
+      box-shadow: 0 10px 32px -12px rgba(15, 23, 42, 0.2);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .resource-navbar {
+      max-width: none;
+      min-height: 72px;
+      padding: 0.7rem 2rem;
+    }
+
+    .resource-navbar .logo {
+      cursor: default;
+    }
+
+    .resource-navbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+    }
+
+    .resource-account {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      min-width: 0;
+      padding: 0.35rem 0.6rem 0.35rem 0.35rem;
+      border: 1px solid transparent;
+      border-radius: 999px;
+    }
+
+    .resource-account-avatar {
+      width: 38px;
+      height: 38px;
+      flex: 0 0 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: #fff;
+      background: linear-gradient(135deg, #2563eb, #6366f1);
+      box-shadow: 0 5px 14px rgba(37, 99, 235, 0.25);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    .resource-account-copy {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      line-height: 1.15;
+    }
+
+    .resource-account-name {
+      max-width: 220px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text-muted);
+      font-size: 0.94rem;
+      font-weight: 700;
+    }
+
+    .resource-account-role {
+      margin-top: 0.2rem;
+      color: #94a3b8;
+      font-size: 0.64rem;
+      font-weight: 700;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+
+    .resource-theme-btn {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      border: none;
+      border-radius: 50%;
+      background: transparent;
+      color: #6366f1;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .resource-theme-btn:hover {
+      background: var(--primary-light);
+      transform: translateY(-1px);
+    }
+
+    .resource-theme-btn svg { width: 20px; height: 20px; }
+
+    /* ===== Portal layout ===== */
+    .resource-layout {
+      display: flex;
+      min-height: 100vh;
+      padding-top: 102px;
+    }
+
+    .resource-sidebar {
+      width: 252px;
+      min-height: calc(100vh - 102px);
+      padding: 1.75rem 0 2rem;
+      position: fixed;
+      top: 102px;
+      left: 0;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      border-right: 1px solid rgba(255,255,255,0.06);
+      background: linear-gradient(175deg, #0f172a 0%, #1e1b4b 55%, #0f172a 100%);
+    }
+
+    .resource-sidebar-brand {
+      padding: 0 1.5rem 1.5rem;
+      margin-bottom: 1.25rem;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .resource-sidebar-brand span,
+    .resource-sidebar-title {
+      display: block;
+      color: rgba(255,255,255,0.34);
+      font-size: 0.67rem;
+      font-weight: 700;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    .resource-sidebar-title {
+      padding: 0 1.5rem;
+      margin: 1.25rem 0 0.5rem;
+    }
+
+    .resource-sidebar-nav {
+      flex: 1;
+      list-style: none;
+      padding: 0 0.75rem;
+    }
+
+    .resource-sidebar-nav li { margin-bottom: 2px; }
+
+    .resource-sidebar-nav a {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      padding: 0.7rem 0.85rem;
+      border-radius: 10px;
+      color: rgba(255,255,255,0.55);
+      font-size: 0.88rem;
+      font-weight: 500;
+      text-decoration: none;
+      user-select: none;
+    }
+
+    .resource-sidebar-nav a.active {
+      color: #fff;
+      background: linear-gradient(135deg, rgba(37,99,235,0.96), rgba(79,70,229,0.96));
+      box-shadow: 0 4px 14px rgba(37,99,235,0.35);
+    }
+
+    .resource-sidebar-nav svg,
+    .resource-sidebar-footer svg {
+      width: 17px;
+      height: 17px;
+      flex-shrink: 0;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .workspace-note {
+      margin: 0.8rem 1.5rem 0;
+      padding: 0.9rem;
+      border: 1px solid rgba(129,140,248,0.18);
+      border-radius: 12px;
+      color: rgba(255,255,255,0.58);
+      background: rgba(79,70,229,0.09);
+      font-size: 0.72rem;
+      line-height: 1.55;
+    }
+
+    .workspace-note strong {
+      display: block;
+      margin-bottom: 0.25rem;
+      color: #c7d2fe;
+      font-size: 0.73rem;
+    }
+
+    .resource-sidebar-footer {
+      padding: 1.25rem 1.5rem 0;
+      margin-top: auto;
+      border-top: 1px solid rgba(255,255,255,0.07);
+    }
+
+    .resource-logout {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      padding: 0.65rem 0.85rem;
+      border: none;
+      border-radius: 10px;
+      color: rgba(239,68,68,0.78);
+      background: transparent;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .resource-logout:hover { color: #ef4444; background: rgba(239,68,68,0.1); }
+
+    .resource-main {
+      flex: 1;
+      min-width: 0;
+      min-height: calc(100vh - 102px);
+      margin-left: 252px;
+      padding: 2.25rem 2.5rem 3rem;
+    }
+
+    .resource-panel-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1.7rem;
+    }
+
+    .resource-panel-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-bottom: 0.45rem;
+      color: var(--primary);
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .resource-panel-kicker::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 0 4px rgba(16,185,129,0.12);
+    }
+
+    .resource-panel-header h1 {
+      margin: 0;
+      color: var(--text-dark);
+      font-family: var(--font-heading);
+      font-size: 1.8rem;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+
+    .resource-panel-subtitle {
+      max-width: 760px;
+      margin-top: 0.35rem;
+      color: var(--text-muted);
+      font-size: 0.88rem;
+      line-height: 1.6;
+    }
+
+    .resource-primary-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      flex-shrink: 0;
+      padding: 0.65rem 1.3rem;
+      border: none;
+      border-radius: 50px;
+      color: #fff;
+      background: linear-gradient(135deg, #2563eb, #4f46e5);
+      box-shadow: 0 4px 14px rgba(37,99,235,0.28);
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .resource-primary-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(37,99,235,0.4); }
+    .resource-primary-btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+    .resource-primary-btn svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; }
+
+    /* ===== KPI cards ===== */
+    .resource-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(190px, 1fr));
+      gap: 1.15rem;
+      margin-bottom: 1.4rem;
+    }
+
+    .resource-stat-card {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.25rem 1.3rem;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      background: var(--bg-white);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+      transition: var(--transition);
+    }
+
+    .resource-stat-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+
+    .resource-stat-icon {
+      width: 46px;
+      height: 46px;
+      flex: 0 0 46px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+    }
+
+    .resource-stat-icon svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .resource-stat-icon.blue { color: #2563eb; background: #eff6ff; }
+    .resource-stat-icon.green { color: #10b981; background: #ecfdf5; }
+    .resource-stat-icon.amber { color: #f59e0b; background: #fffbeb; }
+    .resource-stat-icon.purple { color: #8b5cf6; background: #f5f3ff; }
+
+    .resource-stat-data { min-width: 0; }
+    .resource-stat-data h3 { margin: 0; color: var(--text-dark); font-size: 1.65rem; font-weight: 800; line-height: 1.05; }
+    .resource-stat-data p { margin: 0.22rem 0 0; color: var(--text-muted); font-size: 0.71rem; font-weight: 700; letter-spacing: 0.055em; text-transform: uppercase; }
+    .resource-stat-data small { display: block; margin-top: 0.15rem; color: #94a3b8; font-size: 0.65rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* ===== Filter card ===== */
+    .resource-filter-card,
+    .resource-table-card {
+      margin-bottom: 1.4rem;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      background: var(--bg-white);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    }
+
+    .resource-card-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1rem 1.4rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .resource-card-heading-copy { min-width: 0; }
+    .resource-card-heading h2 { margin: 0; color: var(--text-dark); font-family: var(--font-heading); font-size: 1rem; font-weight: 700; }
+    .resource-card-heading p { margin: 0.2rem 0 0; color: var(--text-muted); font-size: 0.74rem; }
+
+    .resource-filters {
+      display: grid;
+      grid-template-columns: minmax(230px, 1.45fr) minmax(150px, 0.8fr) minmax(210px, 1.2fr) minmax(160px, 0.85fr) minmax(175px, 0.9fr);
+      gap: 1rem;
+      padding: 1.25rem 1.4rem 1.35rem;
+      align-items: end;
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 0.42rem;
+      color: var(--text-dark);
+      font-size: 0.76rem;
+      font-weight: 700;
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+      width: 100%;
+      padding: 0.66rem 0.78rem;
+      border: 1px solid var(--input-border, var(--border-color));
+      border-radius: 9px;
+      outline: none;
+      color: var(--input-text, var(--text-dark));
+      background: var(--input-bg, #fff);
+      font-family: var(--font-body);
+      font-size: 0.82rem;
+      transition: all 0.2s ease;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+      border-color: #60a5fa;
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    }
+
+    /* ===== Allocation matrix ===== */
+    .resource-table-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      padding: 1rem 1.4rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .resource-legend {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+
+    .resource-legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .legend-dot.available { background: #10b981; }
+    .legend-dot.limited { background: #f59e0b; }
+    .legend-dot.full { background: #ef4444; }
+
+    .table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+    .resource-table {
+      width: 100%;
+      min-width: 1180px;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.82rem;
+    }
+
+    .resource-table th {
+      padding: 0.82rem 1.15rem;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-dark);
+      background: #f8fafc;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.055em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .resource-table td {
+      padding: 1rem 1.15rem;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-dark);
+      vertical-align: top;
+    }
+
+    .resource-table tbody tr { transition: background 0.18s ease; }
+    .resource-table tbody tr:hover { background: #fbfdff; }
+    .resource-table tbody tr:last-child td { border-bottom: 0; }
+
+    .person { display: flex; gap: 0.7rem; min-width: 210px; }
+    .avatar {
+      width: 42px;
+      height: 42px;
+      flex: 0 0 42px;
+      position: relative;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      color: #fff;
+      background: linear-gradient(135deg, #2563eb, #6366f1);
+      box-shadow: 0 4px 10px rgba(37,99,235,0.18);
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .person-name { margin-top: 0.02rem; color: var(--text-dark); font-weight: 750; }
+    .person-sub { margin-top: 0.2rem; color: var(--text-muted); font-size: 0.68rem; line-height: 1.45; }
+    .assigned-badge { display: inline-flex; margin-top: 0.38rem; padding: 0.2rem 0.48rem; border-radius: 999px; color: #047857; background: #d1fae5; font-size: 0.57rem; font-weight: 800; letter-spacing: 0.04em; }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 0.32rem; max-width: 240px; }
+    .chip { padding: 0.24rem 0.48rem; border-radius: 999px; color: #1d4ed8; background: #eff6ff; font-size: 0.62rem; font-weight: 700; }
+    .empty-chip { color: #94a3b8; font-size: 0.68rem; font-style: italic; }
+    .match { margin-top: 0.5rem; color: var(--text-muted); font-size: 0.67rem; }
+    .match strong { color: #0891b2; }
+
+    .progress-row { min-width: 150px; }
+    .progress-label { display: flex; justify-content: space-between; margin-bottom: 0.42rem; color: var(--text-muted); font-size: 0.67rem; }
+    .progress-label strong { color: var(--text-dark); }
+    .progress-track { height: 8px; overflow: hidden; border-radius: 999px; background: #e8edf4; }
+    .progress-fill { height: 100%; border-radius: inherit; background: #10b981; }
+    .progress-fill.medium { background: #f59e0b; }
+    .progress-fill.high { background: #ef4444; }
+    .capacity { margin-top: 0.2rem; font-size: 0.7rem; font-weight: 800; }
+    .capacity.ok { color: #059669; }
+    .capacity.warn { color: #d97706; }
+    .capacity.full { color: #dc2626; }
+
+    .allocation-list { display: flex; flex-direction: column; gap: 0.5rem; min-width: 290px; }
+    .allocation { padding: 0.72rem 0.78rem; border: 1px solid var(--border-color); border-radius: 10px; background: #fbfdff; }
+    .allocation-top { display: flex; justify-content: space-between; gap: 0.7rem; }
+    .allocation-name { color: var(--text-dark); font-weight: 750; }
+    .allocation-percent { color: #4f46e5; font-weight: 800; }
+    .allocation-meta { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.42rem; color: var(--text-muted); font-size: 0.61rem; }
+    .status { padding: 0.15rem 0.38rem; border-radius: 999px; font-size: 0.54rem; font-weight: 800; }
+    .status.ACTIVE { color: #047857; background: #d1fae5; }
+    .status.PLANNED { color: #4338ca; background: #e0e7ff; }
+    .status.COMPLETED { color: #0369a1; background: #e0f2fe; }
+    .status.CANCELLED { color: #991b1b; background: #fee2e2; }
+    .allocation-actions { display: flex; gap: 0.8rem; margin-top: 0.48rem; }
+    .text-btn { padding: 0; border: none; color: #2563eb; background: transparent; font-size: 0.64rem; font-weight: 750; cursor: pointer; }
+    .text-btn.danger { color: #ef4444; }
+
+    .row-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.45rem 0.72rem;
+      border: 1px solid #bfdbfe;
+      border-radius: 8px;
+      color: #2563eb;
+      background: #eff6ff;
+      font-size: 0.68rem;
+      font-weight: 750;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      white-space: nowrap;
+    }
+
+    .row-btn:hover { color: #fff; border-color: #2563eb; background: #2563eb; }
+    .loading, .empty-state { padding: 3.4rem 1.4rem; text-align: center; color: var(--text-muted); font-size: 0.85rem; }
+    .empty-state strong { display: block; margin-bottom: 0.35rem; color: var(--text-dark); }
+
+    /* ===== Modal ===== */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem;
+      background: rgba(15,23,42,0.62);
+      backdrop-filter: blur(5px);
+    }
+
+    .modal-backdrop.open { display: flex; }
+    .modal {
+      width: min(720px, 100%);
+      max-height: 92vh;
+      overflow-y: auto;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      background: var(--bg-white);
+      box-shadow: 0 28px 90px rgba(15,23,42,0.28);
+      animation: modalIn 0.2s ease;
+    }
+
+    @keyframes modalIn { from { opacity: 0; transform: translateY(12px) scale(0.98); } }
+    .modal-head { display: flex; align-items: center; justify-content: space-between; padding: 1.15rem 1.35rem; border-bottom: 1px solid var(--border-color); }
+    .modal-head h2 { margin: 0; color: var(--text-dark); font-family: var(--font-heading); font-size: 1.1rem; }
+    .close-btn { width: 34px; height: 34px; border: none; border-radius: 9px; color: var(--text-muted); background: var(--bg-light); font-size: 1.2rem; cursor: pointer; }
+    .modal-body { padding: 1.3rem 1.35rem; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .field.full { grid-column: 1 / -1; }
+    .field textarea { min-height: 90px; resize: vertical; }
+    .form-error { min-height: 1.2rem; margin-top: 0.65rem; color: #dc2626; font-size: 0.72rem; font-weight: 650; }
+    .modal-foot { display: flex; justify-content: flex-end; gap: 0.7rem; padding: 1rem 1.35rem; border-top: 1px solid var(--border-color); }
+    .secondary-btn { padding: 0.6rem 1rem; border: 1px solid var(--border-color); border-radius: 9px; color: var(--text-muted); background: var(--bg-white); font-weight: 700; cursor: pointer; }
+
+    .toast-wrap { position: fixed; right: 1.25rem; bottom: 1.25rem; z-index: 2300; display: flex; flex-direction: column; gap: 0.55rem; }
+    .toast { width: min(360px, calc(100vw - 2.5rem)); padding: 0.78rem 0.95rem; border-radius: 11px; color: #fff; box-shadow: 0 14px 38px rgba(0,0,0,0.2); font-size: 0.76rem; animation: toastIn 0.2s ease; }
+    .toast.success { background: #047857; }
+    .toast.error { background: #b91c1c; }
+    .toast.info { background: #334155; }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(8px); } }
+
+    /* ===== Dark theme ===== */
+    html.dark-theme .resource-header { background: rgba(22,27,43,0.94) !important; border-color: var(--border-color); }
+    html.dark-theme .resource-account-name { color: #cbd5e1; }
+    html.dark-theme .resource-main { background: var(--bg-light); }
+    html.dark-theme .resource-stat-card,
+    html.dark-theme .resource-filter-card,
+    html.dark-theme .resource-table-card,
+    html.dark-theme .modal { background: var(--bg-white); border-color: var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
+    html.dark-theme .resource-table th { background: var(--table-header-bg); }
+    html.dark-theme .resource-table tbody tr:hover,
+    html.dark-theme .allocation { background: var(--card-bg-hover); }
+    html.dark-theme .progress-track { background: #2d3758; }
+    html.dark-theme .chip { color: #93c5fd; background: rgba(37,99,235,0.16); }
+    html.dark-theme .assigned-badge { color: #6ee7b7; background: rgba(16,185,129,0.16); }
+    html.dark-theme .row-btn { color: #93c5fd; border-color: rgba(96,165,250,0.38); background: rgba(37,99,235,0.13); }
+    html.dark-theme .row-btn:hover { color: #fff; background: #2563eb; }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 1280px) {
+      .resource-stats-grid { grid-template-columns: repeat(2, minmax(190px, 1fr)); }
+      .resource-filters { grid-template-columns: repeat(2, minmax(180px, 1fr)); }
+    }
+
+    @media (max-width: 900px) {
+      .resource-header { top: 0.75rem; left: 1rem; right: 1rem; }
+      .resource-navbar { min-height: 64px; padding: 0.55rem 1.1rem; }
+      .resource-layout { padding-top: 88px; }
+      .resource-sidebar { width: 220px; top: 88px; min-height: calc(100vh - 88px); }
+      .resource-main { margin-left: 220px; padding: 1.6rem 1.4rem 2.5rem; }
+      .resource-account-role { display: none; }
+    }
+
+    @media (max-width: 720px) {
+      .resource-header { border-radius: 22px; }
+      .resource-navbar .logo span { display: inline; font-size: 1.2rem; }
+      .resource-account-copy { display: none; }
+      .resource-sidebar { display: none; }
+      .resource-main { margin-left: 0; padding: 1.25rem 1rem 2.5rem; }
+      .resource-panel-header { flex-direction: column; }
+      .resource-stats-grid, .resource-filters { grid-template-columns: 1fr; }
+      .resource-card-heading, .resource-table-toolbar { align-items: flex-start; flex-direction: column; }
+      .resource-legend { flex-wrap: wrap; }
+      .form-grid { grid-template-columns: 1fr; }
+      .field.full { grid-column: auto; }
+      .resource-primary-btn { width: 100%; justify-content: center; }
+    }
+
+    @media (max-width: 480px) {
+      .resource-navbar .logo span { display: none; }
+      .resource-panel-header h1 { font-size: 1.45rem; }
+      .resource-stats-grid { gap: 0.85rem; }
+      .resource-account-avatar { width: 34px; height: 34px; flex-basis: 34px; }
+    }
+  </style>
+</head>
+<body class="dashboard-page resource-dashboard-page">
+  <header class="resource-header">
+    <nav class="navbar resource-navbar">
+      <a href="resource-allocation.html" class="logo" id="header-logo" aria-label="NovaDigital Resource Allocation">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+        <span>NovaDigital</span>
+      </a>
+      <div class="resource-navbar-actions">
+        <div class="resource-account" aria-label="Signed-in Resource Manager">
+          <div class="resource-account-avatar" id="accountInitials">RM</div>
+          <div class="resource-account-copy">
+            <span class="resource-account-name" id="actorName">Loading...</span>
+            <span class="resource-account-role" id="actorMode">Resource Manager</span>
+          </div>
+        </div>
+        <button class="resource-theme-btn" id="resourceThemeToggle" type="button" aria-label="Toggle dark or light theme">
+          <svg id="themeMoonIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg id="themeSunIcon" hidden xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <div class="resource-layout">
+    <aside class="resource-sidebar">
+      <div class="resource-sidebar-brand"><span>Resource Control Panel</span></div>
+      <p class="resource-sidebar-title">Workspace</p>
+      <ul class="resource-sidebar-nav">
+        <li>
+          <a href="resource-allocation.html" class="active" aria-current="page">
+            <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+            Resource Allocation
+          </a>
+        </li>
+      </ul>
+      <div class="workspace-note">
+        <strong>Independent workspace</strong>
+        Resource Allocation is separated from the Admin portal and protected by its own Resource Manager role.
+      </div>
+      <div class="resource-sidebar-footer">
+        <button class="resource-logout" id="logoutBtn" type="button">
+          <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Logout
+        </button>
+      </div>
+    </aside>
+
+    <main class="resource-main">
+      <div class="resource-panel-header">
+        <div>
+          <div class="resource-panel-kicker">Resource Workspace</div>
+          <h1>Staff Resource Allocation</h1>
+          <p class="resource-panel-subtitle">Plan internal staff capacity by project and milestone, compare skills with workload, and keep planned or active allocations within the 100% capacity rule.</p>
+        </div>
+        <button class="resource-primary-btn" id="newAllocationBtn" type="button">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          New Allocation
+        </button>
+      </div>
+
+      <section class="resource-stats-grid" aria-label="Resource allocation statistics">
+        <article class="resource-stat-card">
+          <div class="resource-stat-icon blue"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+          <div class="resource-stat-data"><h3 id="kpiStaff">—</h3><p>Internal Staff</p><small>Enabled team-member accounts</small></div>
+        </article>
+        <article class="resource-stat-card">
+          <div class="resource-stat-icon green"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div class="resource-stat-data"><h3 id="kpiAvailable">—</h3><p>Available Staff</p><small>More than 20% capacity</small></div>
+        </article>
+        <article class="resource-stat-card">
+          <div class="resource-stat-icon amber"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+          <div class="resource-stat-data"><h3 id="kpiCapacity">—</h3><p>Near Capacity</p><small>80% workload or higher</small></div>
+        </article>
+        <article class="resource-stat-card">
+          <div class="resource-stat-icon purple"><svg viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></div>
+          <div class="resource-stat-data"><h3 id="kpiAllocations">—</h3><p>Allocations</p><small>Selected project, all statuses</small></div>
+        </article>
+      </section>
+
+      <section class="resource-filter-card">
+        <div class="resource-card-heading">
+          <div class="resource-card-heading-copy">
+            <h2>Allocation Filters</h2>
+            <p>Select a project and narrow the staff matrix by date, skill or remaining capacity.</p>
+          </div>
+        </div>
+        <div class="resource-filters">
+          <div class="field">
+            <label for="projectFilter">Project</label>
+            <select id="projectFilter"><option value="">Loading projects...</option></select>
+          </div>
+          <div class="field">
+            <label for="focusDate">Workload date</label>
+            <input type="date" id="focusDate" />
+          </div>
+          <div class="field">
+            <label for="searchInput">Search staff</label>
+            <input type="search" id="searchInput" placeholder="Name, username, email..." />
+          </div>
+          <div class="field">
+            <label for="skillFilter">Skill</label>
+            <select id="skillFilter"><option value="">All skills</option></select>
+          </div>
+          <div class="field">
+            <label for="availabilityFilter">Availability</label>
+            <select id="availabilityFilter">
+              <option value="">All capacity levels</option>
+              <option value="available">Available (&gt; 20%)</option>
+              <option value="limited">Limited (1–20%)</option>
+              <option value="full">Fully allocated (0%)</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <section class="resource-table-card">
+        <div class="resource-table-toolbar">
+          <div class="resource-card-heading-copy">
+            <h2 id="matrixTitle">Resource Matrix</h2>
+            <p id="matrixMeta">Loading allocation data...</p>
+          </div>
+          <div class="resource-legend" aria-label="Capacity legend">
+            <span><i class="legend-dot available"></i>Available</span>
+            <span><i class="legend-dot limited"></i>Limited</span>
+            <span><i class="legend-dot full"></i>Full</span>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <div class="loading" id="loadingState">Loading resource allocation matrix...</div>
+          <table class="resource-table" id="matrixTable" hidden>
+            <thead><tr><th>Staff member</th><th>Skills / match</th><th>Total workload</th><th>Availability</th><th>Project &amp; task allocations</th><th>Action</th></tr></thead>
+            <tbody id="matrixBody"></tbody>
+          </table>
+          <div class="empty-state" id="emptyState" hidden><strong>No matching staff found</strong>Change the filters or add internal team members first.</div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="allocationModal">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-head"><h2 id="modalTitle">New Staff Allocation</h2><button class="close-btn" id="modalClose" type="button" aria-label="Close">×</button></div>
+      <form id="allocationForm">
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="field"><label for="formUser">Staff member *</label><select id="formUser" required></select></div>
+            <div class="field"><label for="formProject">Project *</label><select id="formProject" required></select></div>
+            <div class="field full"><label for="formTask">Task / milestone</label><select id="formTask"><option value="">Project-level allocation</option></select></div>
+            <div class="field"><label for="formPercentage">Allocation percentage *</label><input id="formPercentage" type="number" min="1" max="100" value="25" required /></div>
+            <div class="field"><label for="formStatus">Status *</label><select id="formStatus" required><option value="PLANNED">PLANNED</option><option value="ACTIVE">ACTIVE</option><option value="COMPLETED">COMPLETED</option><option value="CANCELLED">CANCELLED</option></select></div>
+            <div class="field"><label for="formStart">Start date *</label><input id="formStart" type="date" required /></div>
+            <div class="field"><label for="formEnd">End date *</label><input id="formEnd" type="date" required /></div>
+            <div class="field full"><label for="formNotes">Notes</label><textarea id="formNotes" maxlength="2000" placeholder="Responsibilities, expected output, or allocation reason..."></textarea></div>
+          </div>
+          <div class="form-error" id="formError"></div>
+        </div>
+        <div class="modal-foot"><button class="secondary-btn" id="modalCancel" type="button">Cancel</button><button class="resource-primary-btn" id="saveBtn" type="submit">Save Allocation</button></div>
+      </form>
+    </div>
+  </div>
+
+  <div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+  const state = { matrix: null, editingId: null };
+  const themeToggle = document.getElementById('resourceThemeToggle');
+  const moonIcon = document.getElementById('themeMoonIcon');
+  const sunIcon = document.getElementById('themeSunIcon');
+
+  function applyStoredTheme() {
+    const isDark = (localStorage.getItem('theme') || 'light') === 'dark';
+    document.documentElement.classList.toggle('dark-theme', isDark);
+    if (moonIcon) moonIcon.hidden = isDark;
+    if (sunIcon) sunIcon.hidden = !isDark;
+  }
+  applyStoredTheme();
+  themeToggle?.addEventListener('click', () => {
+    const nextDark = !document.documentElement.classList.contains('dark-theme');
+    document.documentElement.classList.toggle('dark-theme', nextDark);
+    localStorage.setItem('theme', nextDark ? 'dark' : 'light');
+    if (moonIcon) moonIcon.hidden = nextDark;
+    if (sunIcon) sunIcon.hidden = !nextDark;
+  });
+  const token = localStorage.getItem('authToken') || localStorage.getItem('token')
+    || sessionStorage.getItem('authToken') || sessionStorage.getItem('token');
+  const storedUser = safeJson(localStorage.getItem('user')) || safeJson(sessionStorage.getItem('user')) || {
+    username: localStorage.getItem('username') || sessionStorage.getItem('username'),
+    fullName: localStorage.getItem('fullName') || sessionStorage.getItem('fullName'),
+    role: localStorage.getItem('role') || sessionStorage.getItem('role')
+  };
+
+  if (!token || storedUser?.role !== 'ROLE_RESOURCE') {
+    window.location.replace('/index.html?error=unauthorized#login');
+  }
+
+  const els = {
+    project: document.getElementById('projectFilter'), focusDate: document.getElementById('focusDate'),
+    search: document.getElementById('searchInput'), skill: document.getElementById('skillFilter'),
+    availability: document.getElementById('availabilityFilter'), body: document.getElementById('matrixBody'),
+    table: document.getElementById('matrixTable'), loading: document.getElementById('loadingState'), empty: document.getElementById('emptyState'),
+    modal: document.getElementById('allocationModal'), form: document.getElementById('allocationForm'), formError: document.getElementById('formError'),
+    formUser: document.getElementById('formUser'), formProject: document.getElementById('formProject'), formTask: document.getElementById('formTask'),
+    formPercentage: document.getElementById('formPercentage'), formStatus: document.getElementById('formStatus'),
+    formStart: document.getElementById('formStart'), formEnd: document.getElementById('formEnd'), formNotes: document.getElementById('formNotes'),
+    saveBtn: document.getElementById('saveBtn')
+  };
+
+  els.focusDate.value = todayString();
+  document.getElementById('actorName').textContent = storedUser?.fullName || storedUser?.username || 'Authenticated user';
+  document.getElementById('accountInitials').textContent = getInitials(storedUser?.fullName || storedUser?.username || 'Resource Manager');
+
+  document.getElementById('logoutBtn').addEventListener('click', logout);
+  document.getElementById('newAllocationBtn').addEventListener('click', () => openModal());
+  document.getElementById('modalClose').addEventListener('click', closeModal);
+  document.getElementById('modalCancel').addEventListener('click', closeModal);
+  els.modal.addEventListener('click', e => { if (e.target === els.modal) closeModal(); });
+  els.form.addEventListener('submit', saveAllocation);
+  els.project.addEventListener('change', () => loadMatrix());
+  els.focusDate.addEventListener('change', () => loadMatrix());
+  [els.search, els.skill, els.availability].forEach(el => el.addEventListener('input', renderMatrix));
+
+  loadMatrix();
+
+  async function loadMatrix() {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (els.project.value) params.set('projectId', els.project.value);
+      if (els.focusDate.value) params.set('focusDate', els.focusDate.value);
+      const data = await api(`/api/resource-allocations/matrix?${params.toString()}`);
+      state.matrix = data;
+      renderContext();
+      renderMatrix();
+    } catch (error) {
+      state.matrix = null;
+      els.loading.innerHTML = `<strong style="display:block;color:#b91c1c;margin-bottom:7px;">Unable to load resource matrix</strong>${escapeHtml(error.message)}`;
+      showToast(error.message, 'error');
+    } finally {
+      if (state.matrix) setLoading(false);
+    }
+  }
+
+  function renderContext() {
+    const m = state.matrix;
+    document.getElementById('actorName').textContent = m.actorName || storedUser?.fullName || 'Resource manager';
+    document.getElementById('accountInitials').textContent = getInitials(m.actorName || storedUser?.fullName || storedUser?.username || 'Resource Manager');
+    document.getElementById('actorMode').textContent = 'RESOURCE MANAGER';
+
+    const previousProject = String(m.selectedProjectId || '');
+    els.project.innerHTML = m.projects.length
+      ? m.projects.map(p => `<option value="${p.id}" ${String(p.id) === previousProject ? 'selected' : ''}>${escapeHtml(p.title)}</option>`).join('')
+      : '<option value="">No manageable projects</option>';
+    els.project.disabled = !m.projects.length;
+    document.getElementById('newAllocationBtn').disabled = !m.selectedProjectId || !m.staff.length;
+
+    const oldSkill = els.skill.value;
+    const skills = [...new Set(m.staff.flatMap(s => s.skills || []))].sort((a,b) => a.localeCompare(b));
+    els.skill.innerHTML = '<option value="">All skills</option>' + skills.map(s => `<option value="${escapeAttr(s)}">${escapeHtml(s)}</option>`).join('');
+    if (skills.includes(oldSkill)) els.skill.value = oldSkill;
+
+    populateFormOptions();
+    updateKpis();
+    const selected = m.projects.find(p => p.id === m.selectedProjectId);
+    document.getElementById('matrixTitle').textContent = selected ? `${selected.title} — Allocation Matrix` : 'Resource Allocation Matrix';
+    document.getElementById('matrixMeta').textContent = selected
+      ? `${m.tasks.length} task/milestone option(s) · Workload calculated on ${m.focusDate}`
+      : 'No project is available for your account.';
+  }
+
+  function updateKpis() {
+    const m = state.matrix;
+    document.getElementById('kpiStaff').textContent = m.staff.length;
+    document.getElementById('kpiAvailable').textContent = m.staff.filter(s => s.availablePercentage > 20).length;
+    document.getElementById('kpiCapacity').textContent = m.staff.filter(s => s.currentWorkload >= 80).length;
+    document.getElementById('kpiAllocations').textContent = m.allocations.length;
+  }
+
+  function renderMatrix() {
+    const m = state.matrix;
+    if (!m) return;
+    const query = els.search.value.trim().toLowerCase();
+    const skill = els.skill.value.toLowerCase();
+    const availability = els.availability.value;
+    const allocationsByUser = groupBy(m.allocations, a => a.userId);
+
+    const rows = m.staff.filter(s => {
+      const haystack = `${s.fullName} ${s.username} ${s.email} ${(s.skills || []).join(' ')}`.toLowerCase();
+      if (query && !haystack.includes(query)) return false;
+      if (skill && !(s.skills || []).some(v => v.toLowerCase() === skill)) return false;
+      if (availability === 'available' && s.availablePercentage <= 20) return false;
+      if (availability === 'limited' && !(s.availablePercentage > 0 && s.availablePercentage <= 20)) return false;
+      if (availability === 'full' && s.availablePercentage > 0) return false;
+      return true;
+    });
+
+    els.body.innerHTML = rows.map(s => staffRowHtml(s, allocationsByUser[s.userId] || [])).join('');
+    els.table.hidden = rows.length === 0;
+    els.empty.hidden = rows.length !== 0;
+  }
+
+  function staffRowHtml(s, allocations) {
+    const workloadClass = s.currentWorkload >= 100 ? 'high' : s.currentWorkload >= 80 ? 'medium' : '';
+    const capacityClass = s.availablePercentage <= 0 ? 'full' : s.availablePercentage <= 20 ? 'warn' : 'ok';
+    const capacityText = s.availablePercentage <= 0 ? 'Fully allocated' : `${s.availablePercentage}% available`;
+    const initials = (s.fullName || s.username || '?').split(/\s+/).map(x => x[0]).slice(0,2).join('').toUpperCase();
+    const avatar = `<div class="avatar">${escapeHtml(initials)}${s.avatarUrl ? `<img src="${escapeAttr(s.avatarUrl)}" alt="" onerror="this.remove()">` : ''}</div>`;
+    const skills = s.skills?.length ? s.skills.map(v => `<span class="chip">${escapeHtml(v)}</span>`).join('') : '<span class="empty-chip">No skills recorded</span>';
+    const assignmentHtml = allocations.length ? allocations.map(allocationHtml).join('') : '<span class="empty-chip">No allocation on this project</span>';
+
+    return `<tr>
+      <td><div class="person">${avatar}<div><div class="person-name">${escapeHtml(s.fullName)}</div><div class="person-sub">${escapeHtml(s.username)} · ${escapeHtml(s.email)}</div>${s.projectAssigned ? '<span class="assigned-badge">PROJECT MEMBER</span>' : ''}</div></div></td>
+      <td><div class="chips">${skills}</div><div class="match">Project technology match: <strong>${s.skillMatchPercentage}%</strong></div></td>
+      <td><div class="progress-row"><div class="progress-label"><span>All projects</span><strong>${s.currentWorkload}%</strong></div><div class="progress-track"><div class="progress-fill ${workloadClass}" style="width:${Math.min(100,s.currentWorkload)}%"></div></div><div class="person-sub">${s.currentProjectWorkload}% on selected project</div></div></td>
+      <td><div class="capacity ${capacityClass}">${capacityText}</div>${s.overallocated ? '<div class="person-sub" style="color:#dc2626">Existing data is over 100%</div>' : ''}</td>
+      <td><div class="allocation-list">${assignmentHtml}</div></td>
+      <td><button class="row-btn" onclick="openModal(null, ${s.userId})">+ Assign</button></td>
+    </tr>`;
+  }
+
+  function allocationHtml(a) {
+    return `<div class="allocation">
+      <div class="allocation-top"><span class="allocation-name">${escapeHtml(a.milestoneName || 'Project-level allocation')}</span><span class="allocation-percent">${a.allocationPercentage}%</span></div>
+      <div class="allocation-meta"><span class="status ${a.status}">${a.status}</span><span>${formatDate(a.startDate)} → ${formatDate(a.endDate)}</span><span>by ${escapeHtml(a.assignedBy || 'unknown')}</span></div>
+      ${a.notes ? `<div class="person-sub" title="${escapeAttr(a.notes)}">${escapeHtml(shorten(a.notes, 80))}</div>` : ''}
+      <div class="allocation-actions"><button class="text-btn" onclick="openModal(${a.id})">Edit</button><button class="text-btn danger" onclick="deleteAllocation(${a.id})">Delete</button></div>
+    </div>`;
+  }
+
+  function populateFormOptions() {
+    const m = state.matrix;
+    if (!m) return;
+    els.formUser.innerHTML = m.staff.map(s => `<option value="${s.userId}">${escapeHtml(s.fullName)} — ${s.availablePercentage}% available</option>`).join('');
+    els.formProject.innerHTML = m.projects.map(p => `<option value="${p.id}" ${p.id === m.selectedProjectId ? 'selected' : ''}>${escapeHtml(p.title)}</option>`).join('');
+    els.formProject.disabled = true;
+    renderTaskOptions();
+  }
+
+  function renderTaskOptions(selectedId = '') {
+    const tasks = state.matrix?.tasks || [];
+    els.formTask.innerHTML = '<option value="">Project-level allocation</option>' + tasks.map(t => `<option value="${t.id}" ${String(t.id) === String(selectedId) ? 'selected' : ''}>${escapeHtml(t.name)} (${t.status})</option>`).join('');
+  }
+
+  window.openModal = function(allocationId = null, presetUserId = null) {
+    if (!state.matrix?.selectedProjectId) return;
+    if (!state.matrix.staff.length) { showToast('No enabled internal staff account is available.', 'error'); return; }
+    state.editingId = allocationId;
+    const allocation = allocationId ? state.matrix.allocations.find(a => a.id === allocationId) : null;
+    document.getElementById('modalTitle').textContent = allocation ? 'Edit Staff Allocation' : 'New Staff Allocation';
+    els.formError.textContent = '';
+    populateFormOptions();
+
+    const start = allocation?.startDate || todayString();
+    const end = allocation?.endDate || addDaysString(14);
+    els.formUser.value = String(allocation?.userId || presetUserId || state.matrix.staff[0]?.userId || '');
+    els.formProject.value = String(state.matrix.selectedProjectId);
+    renderTaskOptions(allocation?.milestoneId || '');
+    els.formPercentage.value = allocation?.allocationPercentage || 25;
+    els.formStatus.value = allocation?.status || 'PLANNED';
+    els.formStart.value = start;
+    els.formEnd.value = end;
+    els.formNotes.value = allocation?.notes || '';
+    els.modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  };
+
+  function closeModal() {
+    els.modal.classList.remove('open');
+    document.body.style.overflow = '';
+    state.editingId = null;
+    els.form.reset();
+    els.formError.textContent = '';
+  }
+
+  async function saveAllocation(event) {
+    event.preventDefault();
+    els.formError.textContent = '';
+    const payload = {
+      userId: Number(els.formUser.value),
+      projectId: Number(state.matrix.selectedProjectId),
+      milestoneId: els.formTask.value ? Number(els.formTask.value) : null,
+      allocationPercentage: Number(els.formPercentage.value),
+      startDate: els.formStart.value,
+      endDate: els.formEnd.value,
+      status: els.formStatus.value,
+      notes: els.formNotes.value.trim()
+    };
+    if (payload.endDate < payload.startDate) {
+      els.formError.textContent = 'End date cannot be earlier than start date.';
+      return;
+    }
+    els.saveBtn.disabled = true;
+    els.saveBtn.textContent = 'Saving...';
+    try {
+      await api(state.editingId ? `/api/resource-allocations/${state.editingId}` : '/api/resource-allocations', {
+        method: state.editingId ? 'PUT' : 'POST',
+        body: JSON.stringify(payload)
+      });
+      showToast(state.editingId ? 'Allocation updated successfully.' : 'Staff allocated successfully.', 'success');
+      closeModal();
+      await loadMatrix();
+    } catch (error) {
+      els.formError.textContent = error.message;
+      showToast(error.message, 'error');
+    } finally {
+      els.saveBtn.disabled = false;
+      els.saveBtn.textContent = 'Save Allocation';
+    }
+  }
+
+  window.deleteAllocation = async function(id) {
+    const allocation = state.matrix.allocations.find(a => a.id === id);
+    if (!allocation || !confirm(`Delete the ${allocation.allocationPercentage}% allocation for ${allocation.fullName}?`)) return;
+    try {
+      await api(`/api/resource-allocations/${id}`, { method: 'DELETE' });
+      showToast('Allocation deleted successfully.', 'success');
+      await loadMatrix();
+    } catch (error) { showToast(error.message, 'error'); }
+  };
+
+  async function api(url, options = {}) {
+    const response = await fetch(url, {
+      ...options,
+      headers: { 'Authorization': `Bearer ${token}`, ...(options.body ? {'Content-Type':'application/json'} : {}), ...(options.headers || {}) }
+    });
+    let data = null;
+    try { data = await response.json(); } catch (_) { data = {}; }
+    if (response.status === 401 || response.status === 403) { logout(); throw new Error('Your Resource Allocation session is invalid or has expired.'); }
+    if (!response.ok) throw new Error(data.message || `Request failed (${response.status}).`);
+    return data;
+  }
+
+  function setLoading(isLoading) {
+    els.loading.style.display = isLoading ? 'block' : 'none';
+    if (isLoading) { els.table.hidden = true; els.empty.hidden = true; }
+  }
+  function showToast(message, type = 'info') {
+    const toast = document.createElement('div'); toast.className = `toast ${type}`; toast.textContent = message;
+    document.getElementById('toastWrap').appendChild(toast); setTimeout(() => toast.remove(), 3500);
+  }
+  function logout() {
+    ['token','authToken','username','fullName','role','email','avatarUrl','user'].forEach(k => { localStorage.removeItem(k); sessionStorage.removeItem(k); });
+    window.location.replace('/index.html#login');
+  }
+  function getInitials(name) {
+    const parts = String(name || 'RM').trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return 'RM';
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+  }
+  function groupBy(items, keyFn) { return items.reduce((acc, item) => { const k = keyFn(item); (acc[k] ||= []).push(item); return acc; }, {}); }
+  function todayString() { const d = new Date(); return localDateString(d); }
+  function addDaysString(days) { const d = new Date(); d.setDate(d.getDate() + days); return localDateString(d); }
+  function localDateString(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+  function formatDate(v) { if (!v) return '—'; const [y,m,d] = v.split('-'); return `${d}/${m}/${y}`; }
+  function shorten(v, n) { return v.length > n ? v.slice(0,n-1) + '…' : v; }
+  function safeJson(v) { try { return v ? JSON.parse(v) : null; } catch (_) { return null; } }
+  function escapeHtml(v) { return String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+  function escapeAttr(v) { return escapeHtml(v).replace(/`/g, '&#96;'); }
+</script>
+</body>
+</html>

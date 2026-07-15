@@ -50,13 +50,19 @@ public class SecurityConfig {
             return corsConfiguration;
         }))
             .csrf(csrf -> csrf.disable())
+            .headers(headers -> headers
+                .crossOriginOpenerPolicy(coop -> coop.policy(
+                    org.springframework.security.web.header.writers.CrossOriginOpenerPolicyHeaderWriter.CrossOriginOpenerPolicy.SAME_ORIGIN_ALLOW_POPUPS
+                ))
+            )
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 // Public pages (Frontend)
 
                 .requestMatchers("/", "/index.html", "/about.html", "/services.html", "/portfolio.html",
                                "/contact.html", "/login.html", "/register.html", "/member.html", "/member-contact.html", "/admin.html", "/forgot-password.html", "/inbox.html", "/user-profile.html",
-                               "/pm-dashboard.html", "/client-dashboard.html", "/booking.html","/rented-project.html", "/member-profile.html").permitAll()
+                               "/pm-dashboard.html", "/client-dashboard.html", "/booking.html","/rented-project.html", "/member-profile.html",
+                               "/resource-allocation.html").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/uploads/**", "/favicon.ico").permitAll()
                 
                 // Auth APIs
@@ -89,6 +95,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/projects/*/assignments/**").hasRole("ADMIN")
                 .requestMatchers("/api/projects/*/clients").hasRole("ADMIN")
                 .requestMatchers("/api/projects/*/clients/**").hasRole("ADMIN")
+
+                // Dedicated Resource Allocation workspace: only the standalone resource account.
+                .requestMatchers("/api/resource-allocations/**").hasRole("RESOURCE")
 
                 // My-projects endpoints: any authenticated user
                 .requestMatchers("/api/my/**").authenticated()

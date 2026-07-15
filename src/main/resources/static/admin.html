@@ -136,6 +136,7 @@
       flex: 1;
       padding: 2.25rem 2.5rem;
       min-height: calc(100vh - 72px);
+      min-width: 0;
     }
 
     /* ================================================
@@ -220,6 +221,8 @@
       gap: 1.1rem;
       box-shadow: 0 1px 4px rgba(0,0,0,0.04);
       transition: var(--transition);
+      opacity: 1 !important;
+      transform: none !important;
     }
 
     .stat-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
@@ -656,6 +659,105 @@
     .audit-log-line.create { border-left-color: #10b981; }
     .audit-log-line.delete { border-left-color: #ef4444; }
     .audit-log-line.sync { border-left-color: #2563eb; }
+    /* ================================================
+       REVENUE CHART STYLES
+    ================================================ */
+    .chart-container-wrapper {
+      background: var(--bg-white);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      transition: var(--transition);
+    }
+    .chart-container-wrapper:hover {
+      box-shadow: var(--shadow-md);
+    }
+    .chart-header {
+      margin-bottom: 1.5rem;
+    }
+    .chart-header h2 {
+      font-family: var(--font-heading);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      margin: 0 0 0.25rem 0;
+    }
+    .chart-header p {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      margin: 0;
+      font-weight: 500;
+    }
+    .chart-body {
+      position: relative;
+      width: 100%;
+      height: 320px;
+    }
+
+    /* ================================================
+       SIDEBAR COLLAPSE TOGGLE
+    ================================================ */
+    .admin-sidebar {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .admin-main {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .sidebar-toggle-btn {
+      position: fixed;
+      top: 50%;
+      left: 238px;
+      transform: translateY(-50%);
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--bg-white, #ffffff);
+      border: 1px solid var(--border-color, #e2e8f0);
+      color: var(--text-dark, #0f172a);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 1001;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      padding: 0;
+      outline: none;
+    }
+    .sidebar-toggle-btn:hover {
+      background: var(--card-bg-hover, #f1f5f9);
+      color: var(--color-primary, #2563eb);
+    }
+    .sidebar-toggle-btn svg {
+      width: 14px;
+      height: 14px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    /* Collapsed state styles */
+    body.sidebar-collapsed .admin-sidebar {
+      transform: translateX(-252px);
+      width: 0 !important;
+      opacity: 0;
+      pointer-events: none;
+    }
+    body.sidebar-collapsed .admin-main {
+      margin-left: 0;
+    }
+    body.sidebar-collapsed .sidebar-toggle-btn {
+      left: 12px;
+    }
+    body.sidebar-collapsed .sidebar-toggle-btn svg {
+      transform: rotate(180deg);
+    }
   </style>
 </head>
 <body class="dashboard-page">
@@ -753,6 +855,13 @@
       </div>
     </aside>
 
+    <!-- ===== SIDEBAR COLLAPSE TOGGLE BUTTON ===== -->
+    <button id="sidebar-toggle-btn" class="sidebar-toggle-btn" onclick="toggleSidebar()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"></polyline>
+      </svg>
+    </button>
+
     <!-- ===== MAIN CONTENT ===== -->
     <main class="admin-main">
 
@@ -764,35 +873,8 @@
             <p class="panel-subtitle">Monitor stats and manage client contact messages</p>
           </div>
         </div>
-
         <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon">
-              <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-            </div>
-            <div class="stat-data">
-              <h3 id="stat-messages-count">—</h3>
-              <p>Total Messages</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon" style="background:#ecfdf5;color:#10b981;">
-              <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            </div>
-            <div class="stat-data">
-              <h3 id="stat-members-count">—</h3>
-              <p>Team Members</p>
-            </div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon" style="background:#fef3c7;color:#f59e0b;">
-              <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-            </div>
-            <div class="stat-data">
-              <h3 id="stat-users-count">—</h3>
-              <p>Registered Users</p>
-            </div>
-          </div>
+          <!-- Projects -->
           <div class="stat-card">
             <div class="stat-icon" style="background:#f5f3ff;color:#8b5cf6;">
               <svg viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
@@ -802,28 +884,69 @@
               <p>Active Projects</p>
             </div>
           </div>
-        </div>
-
-        <div class="table-container">
-          <div class="table-toolbar">
-            <h2>Client Submissions</h2>
+          <!-- Messages -->
+          <div class="stat-card">
+            <div class="stat-icon" style="background:#eff6ff;color:#3b82f6;">
+              <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            </div>
+            <div class="stat-data">
+              <h3 id="stat-messages-count">—</h3>
+              <p>Total Messages</p>
+            </div>
           </div>
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Client Info</th>
-                <th>Subject Title</th>
-                <th>Message Body</th>
-                <th>Submitted Date</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody id="contacts-table-body">
-              <tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);">Loading...</td></tr>
-            </tbody>
-          </table>
+          <!-- Accounts -->
+          <div class="stat-card">
+            <div class="stat-icon" style="background:#fef3c7;color:#f59e0b;">
+              <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div class="stat-data">
+              <h3 id="stat-users-count">—</h3>
+              <p>User Accounts</p>
+            </div>
+          </div>
+          <!-- Team Members -->
+          <div class="stat-card">
+            <div class="stat-icon" style="background:#ecfdf5;color:#10b981;">
+              <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <div class="stat-data">
+              <h3 id="stat-members-count">—</h3>
+              <p>Team Members</p>
+            </div>
+          </div>
+          <!-- Services -->
+          <div class="stat-card">
+            <div class="stat-icon" style="background:#fff1f2;color:#f43f5e;">
+              <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+            </div>
+            <div class="stat-data">
+              <h3 id="stat-services-count">—</h3>
+              <p>Services</p>
+            </div>
+          </div>
+          <!-- Transactions -->
+          <div class="stat-card">
+            <div class="stat-icon" style="background:#ecfeff;color:#06b6d4;">
+              <svg viewBox="0 0 24 24" style="width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            </div>
+            <div class="stat-data">
+              <h3 id="stat-appointments-count">—</h3>
+              <p>Transactions</p>
+            </div>
+          </div>
         </div>
-      </div>
+ 
+        <!-- Revenue Chart Container -->
+        <div class="chart-container-wrapper">
+          <div class="chart-header">
+            <h2>Revenue Analytics (Doanh thu thực tế)</h2>
+            <p>Monthly overview of closed booking payments (Excluding cancelled appointments)</p>
+          </div>
+          <div class="chart-body">
+            <canvas id="revenueChart"></canvas>
+          </div>
+        </div>
+        </div>
 
       <!-- ========== USERS PANEL ========== -->
       <div class="admin-panel" id="panel-users">
@@ -851,7 +974,7 @@
                 <th>Role</th>
                 <th>Status</th>
                 <th>Online</th>
-                <th>Actions</th>
+                <th style="min-width: 290px;">Actions</th>
               </tr>
             </thead>
             <tbody id="users-table-body">
@@ -927,7 +1050,7 @@
                 <th>Title</th>
                 <th>Category</th>
                 <th>Description</th>
-                <th>Actions</th>
+                <th style="min-width: 360px;">Actions</th>
               </tr>
             </thead>
             <tbody id="projects-table-body">
@@ -1072,6 +1195,53 @@
     </main>
   </div>
 
+  <!-- ===== USER MESSAGES MODAL ===== -->
+  <div id="user-messages-modal-overlay" class="crud-modal-overlay">
+    <div class="crud-modal" style="max-width: 850px; width: 95%;">
+      <div class="crud-modal-header">
+        <h3 id="user-messages-modal-title" style="margin:0; font-size:1.25rem;">User Messages</h3>
+        <button class="crud-modal-close" onclick="closeUserMessagesModal()">&times;</button>
+      </div>
+      <div style="padding: 1.5rem; max-height: 70vh; overflow-y: auto;">
+        
+        <!-- Toggle buttons for Replied vs Not Replied -->
+        <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem;">
+          <button id="btn-msg-not-replied" style="background: linear-gradient(135deg, rgba(37,99,235,0.1), rgba(79,70,229,0.1)); border: 1px solid rgba(37,99,235,0.2); color: #2563eb; font-size: 0.9rem; font-weight: 600; padding: 0.5rem 1.1rem; cursor: pointer; border-radius: 50px; transition: all 0.3s ease; display: flex; align-items: center; gap: 0.4rem;" onclick="switchMessageTab('not-replied')">
+            Chưa phản hồi (Not Replied)
+          </button>
+          <button id="btn-msg-replied" style="background: transparent; border: 1px solid transparent; color: var(--text-muted); font-size: 0.9rem; font-weight: 600; padding: 0.5rem 1.1rem; cursor: pointer; border-radius: 50px; transition: all 0.3s ease; display: flex; align-items: center; gap: 0.4rem;" onclick="switchMessageTab('replied')">
+            Đã phản hồi (Replied)
+          </button>
+        </div>
+
+        <!-- Table displaying messages -->
+        <table class="admin-table">
+          <thead>
+            <tr id="messages-table-header">
+              <!-- Dynamically populated headers -->
+            </tr>
+          </thead>
+          <tbody id="messages-table-body">
+            <!-- Dynamically populated body -->
+          </tbody>
+        </table>
+        
+        <!-- Reply form section (visible when clicking Reply) -->
+        <div id="message-reply-section" style="display: none; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px dotted var(--border-color);">
+          <h4 style="margin: 0 0 0.75rem 0; font-size: 0.95rem; color: var(--text-dark);" id="reply-to-title">Reply to: ...</h4>
+          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            <textarea id="reply-text-area" rows="4" style="width: 100%; border: 1px solid var(--border-color); border-radius: 8px; padding: 0.75rem; background: var(--bg-light); color: var(--text-dark); font-family: inherit; font-size: 0.88rem; outline: none; resize: vertical;" placeholder="Type your reply message here..."></textarea>
+            <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+              <button class="btn-cancel" style="padding: 0.45rem 1rem; font-size: 0.85rem;" onclick="hideReplySection()">Cancel</button>
+              <button class="btn-save" style="padding: 0.45rem 1rem; font-size: 0.85rem;" id="btn-send-reply" onclick="submitMessageReply()">Send Reply</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
   <!-- ===== CRUD MODAL ===== -->
   <div id="crud-modal-overlay" class="crud-modal-overlay">
     <div class="crud-modal">
@@ -1124,52 +1294,6 @@
     </div>
   </div>
 
-  <!-- ===== MANAGE ASSIGNMENTS MODAL ===== -->
-  <div id="assignment-modal-overlay" class="crud-modal-overlay">
-    <div class="crud-modal" style="max-width: 820px; width: 95%;">
-      <div class="crud-modal-header">
-        <h3 id="assignment-project-title" style="margin:0; font-size:1.25rem;">&#128101; Project Assignments</h3>
-        <button class="crud-modal-close" onclick="closeAssignmentModal()">&times;</button>
-      </div>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; padding:1.5rem; max-height:65vh; overflow-y:auto;">
-
-        <!-- Left: Team Members -->
-        <div>
-          <h4 style="margin:0 0 1rem 0;font-size:0.95rem;font-weight:700;color:#1e293b;">&#128105;&#8205;&#128187; Team Members (PM / Staff)</h4>
-          <div id="assignment-member-list" style="display:flex;flex-direction:column;gap:0.65rem;margin-bottom:1.25rem;">
-            <p style="color:#64748b;font-size:0.85rem;">Loading...</p>
-          </div>
-          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:1rem;">
-            <p style="font-size:0.8rem;font-weight:700;color:#475569;margin-bottom:0.6rem;">+ Assign Member</p>
-            <select id="assign-user-select" style="width:100%;padding:0.4rem;border-radius:6px;border:1px solid #cbd5e1;font-size:0.85rem;margin-bottom:0.5rem;">
-              <option value="">&#8212; Select a member &#8212;</option>
-            </select>
-            <select id="assign-role-select" style="width:100%;padding:0.4rem;border-radius:6px;border:1px solid #cbd5e1;font-size:0.85rem;margin-bottom:0.65rem;">
-              <option value="PM">&#9733; PM (Project Manager)</option>
-              <option value="STAFF">&#9881; STAFF / Coder</option>
-            </select>
-            <button onclick="submitAssignMember()" class="btn-save" style="width:100%;justify-content:center;font-size:0.85rem;border-radius:6px;padding:0.5rem;">Assign</button>
-          </div>
-        </div>
-
-        <!-- Right: Clients -->
-        <div style="border-left:1px solid #e2e8f0;padding-left:1.5rem;">
-          <h4 style="margin:0 0 1rem 0;font-size:0.95rem;font-weight:700;color:#1e293b;">&#129309; Clients (Hired this project)</h4>
-          <div id="assignment-client-list" style="display:flex;flex-direction:column;gap:0.65rem;margin-bottom:1.25rem;">
-            <p style="color:#64748b;font-size:0.85rem;">Loading...</p>
-          </div>
-          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:1rem;">
-            <p style="font-size:0.8rem;font-weight:700;color:#475569;margin-bottom:0.6rem;">+ Link Client</p>
-            <select id="assign-client-select" style="width:100%;padding:0.4rem;border-radius:6px;border:1px solid #cbd5e1;font-size:0.85rem;margin-bottom:0.65rem;">
-              <option value="">&#8212; Select a client &#8212;</option>
-            </select>
-            <button onclick="submitAssignClient()" class="btn-save" style="width:100%;justify-content:center;font-size:0.85rem;border-radius:6px;padding:0.5rem;background:linear-gradient(135deg,#059669,#10b981);">Link Client</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- ===== CONFIRM DELETE MODAL ===== -->
   <div id="confirm-modal-overlay" class="crud-modal-overlay">
     <div class="crud-modal confirm-modal-box">
@@ -1184,6 +1308,7 @@
       </div>
     </div>
   </div>
+
 
   <!-- Modal for User Audit Logs -->
   <div class="crud-modal-overlay" id="auditModal">
@@ -1264,6 +1389,9 @@
 
       </div>
   </div>
+
+  <script src="/js/main.js?v=resource-integrated-v2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <script src="/js/main.js"></script>
 </body>

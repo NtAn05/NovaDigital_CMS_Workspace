@@ -571,10 +571,7 @@
 
     document.getElementById('member-logout-btn').addEventListener('click', e => {
       e.preventDefault();
-      localStorage.removeItem('authToken');
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login.html';
+      logoutUser();
     });
 
     // ─────────────────────────────────────────────────────────────────────────
