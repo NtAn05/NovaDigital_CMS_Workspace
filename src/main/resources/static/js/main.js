@@ -639,6 +639,9 @@ function updateNavbarAuth() {
 
     navLinksContainer.appendChild(dropdownLi);
 
+    // Chuông thông báo - chỉ hiện khi đã đăng nhập, đặt ngay trước avatar dropdown
+    injectNotificationBell(navLinksContainer, dropdownLi);
+
     const trigger = dropdownLi.querySelector("#user-avatar-trigger");
     const menu = dropdownLi.querySelector("#user-dropdown-menu");
 
@@ -1598,6 +1601,149 @@ async function fetchAdminContacts() {
 }
 
 // =============================================
+//  In-App Notification Bell
+// =============================================
+
+function getAuthToken() {
+  return localStorage.getItem("token") || sessionStorage.getItem("token") || "";
+}
+
+function injectNotificationBell(navLinksContainer, beforeEl) {
+  // Tránh chèn trùng nếu hàm này bị gọi lại (updateNavbarAuth có thể chạy nhiều lần)
+  const old = navLinksContainer.querySelector(".notification-bell-container");
+  if (old) old.remove();
+
+  const bellLi = document.createElement("li");
+  bellLi.className = "auth-item notification-bell-container";
+  bellLi.style.position = "relative";
+  bellLi.innerHTML = `
+    <button id="notification-bell-btn" title="Notifications" style="position:relative;background:none;border:none;cursor:pointer;padding:6px;display:flex;align-items:center;color:var(--text-muted);">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+      </svg>
+      <span id="notification-badge" style="display:none;position:absolute;top:0;right:0;background:#ef4444;color:#fff;font-size:10px;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:none;align-items:center;justify-content:center;padding:0 3px;">0</span>
+    </button>
+    <div id="notification-dropdown" style="display:none;position:absolute;top:100%;right:0;margin-top:8px;width:320px;max-height:400px;overflow-y:auto;background:var(--bg-card,#fff);border:1px solid var(--border-color,#e5e7eb);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.15);z-index:1200;">
+      <div style="padding:12px 16px;border-bottom:1px solid var(--border-color,#e5e7eb);display:flex;justify-content:space-between;align-items:center;">
+        <strong style="font-size:0.9rem;">Notifications</strong>
+        <button id="notification-mark-all-btn" style="background:none;border:none;color:#2563eb;font-size:0.78rem;cursor:pointer;">Mark all as read</button>
+      </div>
+      <div id="notification-list" style="padding:8px;">
+        <p style="text-align:center;color:var(--text-muted);font-size:0.85rem;padding:1.5rem 0;">Loading...</p>
+      </div>
+    </div>
+  `;
+
+  navLinksContainer.insertBefore(bellLi, beforeEl);
+
+  const btn = bellLi.querySelector("#notification-bell-btn");
+  const dropdown = bellLi.querySelector("#notification-dropdown");
+
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const isOpen = dropdown.style.display === "block";
+    document.querySelectorAll("#notification-dropdown").forEach(d => d.style.display = "none");
+    if (!isOpen) {
+      dropdown.style.display = "block";
+      loadNotificationList();
+    }
+  });
+  document.addEventListener("click", () => { dropdown.style.display = "none"; });
+  dropdown.addEventListener("click", (e) => e.stopPropagation());
+
+  bellLi.querySelector("#notification-mark-all-btn").addEventListener("click", async () => {
+    try {
+      await fetch("/api/notifications/read-all", {
+        method: "PATCH",
+        headers: { "Authorization": "Bearer " + getAuthToken() }
+      });
+      loadNotificationList();
+      loadNotificationUnreadCount();
+    } catch (e) { console.error(e); }
+  });
+
+  // Tải số thông báo chưa đọc ngay khi vào trang, rồi poll mỗi 30s để cập nhật gần-realtime
+  loadNotificationUnreadCount();
+  if (window._notificationPollInterval) clearInterval(window._notificationPollInterval);
+  window._notificationPollInterval = setInterval(loadNotificationUnreadCount, 30000);
+}
+
+async function loadNotificationUnreadCount() {
+  const badge = document.getElementById("notification-badge");
+  if (!badge) return;
+  try {
+    const res = await fetch("/api/notifications/unread-count", {
+      headers: { "Authorization": "Bearer " + getAuthToken() }
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.count > 0) {
+      badge.textContent = data.count > 9 ? "9+" : data.count;
+      badge.style.display = "flex";
+    } else {
+      badge.style.display = "none";
+    }
+  } catch (e) { /* im lặng bỏ qua - không làm phiền người dùng vì lỗi phụ này */ }
+}
+
+async function loadNotificationList() {
+  const listEl = document.getElementById("notification-list");
+  if (!listEl) return;
+  try {
+    const res = await fetch("/api/notifications", {
+      headers: { "Authorization": "Bearer " + getAuthToken() }
+    });
+    if (!res.ok) throw new Error("Failed to load notifications");
+    const list = await res.json();
+
+    if (!list.length) {
+      listEl.innerHTML = `<p style="text-align:center;color:var(--text-muted);font-size:0.85rem;padding:1.5rem 0;">No notifications yet.</p>`;
+      return;
+    }
+
+    listEl.innerHTML = list.map(n => `
+      <a href="${escapeHtml(n.link || '#')}" class="notification-item" data-id="${n.id}"
+         style="display:block;padding:10px 12px;border-radius:8px;text-decoration:none;color:inherit;margin-bottom:4px;
+                background:${n.read ? 'transparent' : 'rgba(37,99,235,0.06)'};border-left:3px solid ${n.read ? 'transparent' : '#2563eb'};">
+        <div style="font-weight:600;font-size:0.85rem;color:var(--text-dark,#111);">${escapeHtml(n.title)}</div>
+        <div style="font-size:0.8rem;color:var(--text-muted);margin-top:2px;line-height:1.4;">${escapeHtml(n.message)}</div>
+        <div style="font-size:0.72rem;color:var(--text-muted);margin-top:4px;">${formatNotificationTime(n.createdAt)}</div>
+      </a>
+    `).join("");
+
+    listEl.querySelectorAll(".notification-item").forEach(item => {
+      item.addEventListener("click", async (e) => {
+        const id = item.dataset.id;
+        try {
+          await fetch(`/api/notifications/${id}/read`, {
+            method: "PATCH",
+            headers: { "Authorization": "Bearer " + getAuthToken() }
+          });
+          loadNotificationUnreadCount();
+        } catch (err) { /* không chặn điều hướng nếu lỗi đánh dấu đã đọc */ }
+      });
+    });
+  } catch (e) {
+    listEl.innerHTML = `<p style="text-align:center;color:#ef4444;font-size:0.85rem;padding:1.5rem 0;">Could not load notifications.</p>`;
+  }
+}
+
+function formatNotificationTime(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const diffMs = Date.now() - d.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return "just now";
+  if (diffMin < 60) return `${diffMin} min ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}h ago`;
+  const diffDay = Math.floor(diffHr / 24);
+  if (diffDay < 7) return `${diffDay}d ago`;
+  return d.toLocaleDateString();
+}
+
+// =============================================
 //  Toast Notification System
 // =============================================
 
@@ -1654,15 +1800,15 @@ async function fetchAdminBookings() {
     const bookings = await response.json();
 
     // Ensure dependent caches are loaded
-    if (Object.keys(_cache.members).length === 0) {
-      await fetchAdminMembersTable();
-    }
     if (Object.keys(_cache.services).length === 0) {
       await fetchAdminServicesTable();
     }
     if (Object.keys(_cache.users).length === 0) {
       await fetchAdminUsers();
     }
+
+    // Expert (chuyên gia tư vấn) = User có role ROLE_MEMBER, KHÔNG phải bảng members cũ
+    const memberUsers = Object.values(_cache.users).filter(u => u.role === "ROLE_MEMBER");
 
     tbody.innerHTML = "";
 
@@ -1680,11 +1826,11 @@ async function fetchAdminBookings() {
       
       tr.setAttribute("data-searchable", `${client.fullName} ${service.title} ${b.appointmentDate} ${b.status}`);
 
-      // Expert select options
+      // Expert select options - lấy từ User role=ROLE_MEMBER (đúng người sẽ nhận thông báo/đăng nhập)
       let expertOptions = `<option value="">-- Assign Expert --</option>`;
-      Object.values(_cache.members).forEach(m => {
-        const selected = (b.expertId && String(b.expertId) === String(m.id)) ? "selected" : "";
-        expertOptions += `<option value="${m.id}" ${selected}>${escapeHtml(m.name)}</option>`;
+      memberUsers.forEach(u => {
+        const selected = (b.expertId && String(b.expertId) === String(u.id)) ? "selected" : "";
+        expertOptions += `<option value="${u.id}" ${selected}>${escapeHtml(u.fullName)}</option>`;
       });
 
       // Status options
@@ -4104,4 +4250,3 @@ function initFooterMove() {
     container.appendChild(bottom);
   }
 }
-

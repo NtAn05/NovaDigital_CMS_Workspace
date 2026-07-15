@@ -92,6 +92,9 @@ public class SecurityConfig {
 
                 // My-projects endpoints: any authenticated user
                 .requestMatchers("/api/my/**").authenticated()
+
+                // In-app notifications: any authenticated user (scoped tới user hiện tại trong controller)
+                .requestMatchers("/api/notifications/**").authenticated()
                 
                 // Contact submission: any authenticated user can POST to /api/contacts (send message)
                 .requestMatchers(HttpMethod.POST, "/api/contacts").authenticated()
