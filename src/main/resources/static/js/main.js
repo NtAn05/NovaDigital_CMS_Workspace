@@ -679,6 +679,9 @@ function updateNavbarAuth() {
 
     navLinksContainer.appendChild(dropdownLi);
 
+    // Chuông thông báo - chỉ hiện khi đã đăng nhập, đặt ngay trước avatar dropdown
+    injectNotificationBell(navLinksContainer, dropdownLi);
+
     const trigger = dropdownLi.querySelector("#user-avatar-trigger");
     const menu = dropdownLi.querySelector("#user-dropdown-menu");
 
@@ -1634,13 +1637,156 @@ function initAdminDashboard() {
         <td>${date}</td>
         <td><span class="status-badge ${contact.status === 'DONE' ? 'status-done' : 'status-pending'}">${escapeHtml(contact.status)}</span></td>
       `;
-        tableBody.appendChild(row);
-      });
-    } catch (error) {
-      console.error("Error loading admin contacts:", error);
-      tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:#ef4444;">Could not load contacts list. Please reload the page.</td></tr>`;
-    }
+      tableBody.appendChild(row);
+    });
+  } catch (error) {
+    console.error("Error loading admin contacts:", error);
+    tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:#ef4444;">Could not load contacts list. Please reload the page.</td></tr>`;
   }
+}
+
+// =============================================
+//  In-App Notification Bell
+// =============================================
+
+function getAuthToken() {
+  return localStorage.getItem("token") || sessionStorage.getItem("token") || "";
+}
+
+function injectNotificationBell(navLinksContainer, beforeEl) {
+  // Tránh chèn trùng nếu hàm này bị gọi lại (updateNavbarAuth có thể chạy nhiều lần)
+  const old = navLinksContainer.querySelector(".notification-bell-container");
+  if (old) old.remove();
+
+  const bellLi = document.createElement("li");
+  bellLi.className = "auth-item notification-bell-container";
+  bellLi.style.position = "relative";
+  bellLi.innerHTML = `
+    <button id="notification-bell-btn" title="Notifications" style="position:relative;background:none;border:none;cursor:pointer;padding:6px;display:flex;align-items:center;color:var(--text-muted);">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+      </svg>
+      <span id="notification-badge" style="display:none;position:absolute;top:0;right:0;background:#ef4444;color:#fff;font-size:10px;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:none;align-items:center;justify-content:center;padding:0 3px;">0</span>
+    </button>
+    <div id="notification-dropdown" style="display:none;position:absolute;top:100%;right:0;margin-top:8px;width:320px;max-height:400px;overflow-y:auto;background:var(--bg-card,#fff);border:1px solid var(--border-color,#e5e7eb);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.15);z-index:1200;">
+      <div style="padding:12px 16px;border-bottom:1px solid var(--border-color,#e5e7eb);display:flex;justify-content:space-between;align-items:center;">
+        <strong style="font-size:0.9rem;">Notifications</strong>
+        <button id="notification-mark-all-btn" style="background:none;border:none;color:#2563eb;font-size:0.78rem;cursor:pointer;">Mark all as read</button>
+      </div>
+      <div id="notification-list" style="padding:8px;">
+        <p style="text-align:center;color:var(--text-muted);font-size:0.85rem;padding:1.5rem 0;">Loading...</p>
+      </div>
+    </div>
+  `;
+
+  navLinksContainer.insertBefore(bellLi, beforeEl);
+
+  const btn = bellLi.querySelector("#notification-bell-btn");
+  const dropdown = bellLi.querySelector("#notification-dropdown");
+
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const isOpen = dropdown.style.display === "block";
+    document.querySelectorAll("#notification-dropdown").forEach(d => d.style.display = "none");
+    if (!isOpen) {
+      dropdown.style.display = "block";
+      loadNotificationList();
+    }
+  });
+  document.addEventListener("click", () => { dropdown.style.display = "none"; });
+  dropdown.addEventListener("click", (e) => e.stopPropagation());
+
+  bellLi.querySelector("#notification-mark-all-btn").addEventListener("click", async () => {
+    try {
+      await fetch("/api/notifications/read-all", {
+        method: "PATCH",
+        headers: { "Authorization": "Bearer " + getAuthToken() }
+      });
+      loadNotificationList();
+      loadNotificationUnreadCount();
+    } catch (e) { console.error(e); }
+  });
+
+  // Tải số thông báo chưa đọc ngay khi vào trang, rồi poll mỗi 30s để cập nhật gần-realtime
+  loadNotificationUnreadCount();
+  if (window._notificationPollInterval) clearInterval(window._notificationPollInterval);
+  window._notificationPollInterval = setInterval(loadNotificationUnreadCount, 30000);
+}
+
+async function loadNotificationUnreadCount() {
+  const badge = document.getElementById("notification-badge");
+  if (!badge) return;
+  try {
+    const res = await fetch("/api/notifications/unread-count", {
+      headers: { "Authorization": "Bearer " + getAuthToken() }
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.count > 0) {
+      badge.textContent = data.count > 9 ? "9+" : data.count;
+      badge.style.display = "flex";
+    } else {
+      badge.style.display = "none";
+    }
+  } catch (e) { /* im lặng bỏ qua - không làm phiền người dùng vì lỗi phụ này */ }
+}
+
+async function loadNotificationList() {
+  const listEl = document.getElementById("notification-list");
+  if (!listEl) return;
+  try {
+    const res = await fetch("/api/notifications", {
+      headers: { "Authorization": "Bearer " + getAuthToken() }
+    });
+    if (!res.ok) throw new Error("Failed to load notifications");
+    const list = await res.json();
+
+    if (!list.length) {
+      listEl.innerHTML = `<p style="text-align:center;color:var(--text-muted);font-size:0.85rem;padding:1.5rem 0;">No notifications yet.</p>`;
+      return;
+    }
+
+    listEl.innerHTML = list.map(n => `
+      <a href="${escapeHtml(n.link || '#')}" class="notification-item" data-id="${n.id}"
+         style="display:block;padding:10px 12px;border-radius:8px;text-decoration:none;color:inherit;margin-bottom:4px;
+                background:${n.read ? 'transparent' : 'rgba(37,99,235,0.06)'};border-left:3px solid ${n.read ? 'transparent' : '#2563eb'};">
+        <div style="font-weight:600;font-size:0.85rem;color:var(--text-dark,#111);">${escapeHtml(n.title)}</div>
+        <div style="font-size:0.8rem;color:var(--text-muted);margin-top:2px;line-height:1.4;">${escapeHtml(n.message)}</div>
+        <div style="font-size:0.72rem;color:var(--text-muted);margin-top:4px;">${formatNotificationTime(n.createdAt)}</div>
+      </a>
+    `).join("");
+
+    listEl.querySelectorAll(".notification-item").forEach(item => {
+      item.addEventListener("click", async (e) => {
+        const id = item.dataset.id;
+        try {
+          await fetch(`/api/notifications/${id}/read`, {
+            method: "PATCH",
+            headers: { "Authorization": "Bearer " + getAuthToken() }
+          });
+          loadNotificationUnreadCount();
+        } catch (err) { /* không chặn điều hướng nếu lỗi đánh dấu đã đọc */ }
+      });
+    });
+  } catch (e) {
+    listEl.innerHTML = `<p style="text-align:center;color:#ef4444;font-size:0.85rem;padding:1.5rem 0;">Could not load notifications.</p>`;
+  }
+}
+
+function formatNotificationTime(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const diffMs = Date.now() - d.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return "just now";
+  if (diffMin < 60) return `${diffMin} min ago`;
+  const diffHr = Math.floor(diffMin / 60);
+  if (diffHr < 24) return `${diffHr}h ago`;
+  const diffDay = Math.floor(diffHr / 24);
+  if (diffDay < 7) return `${diffDay}d ago`;
+  return d.toLocaleDateString();
+}
 
   // =============================================
   //  Toast Notification System
@@ -1698,16 +1844,16 @@ function initAdminDashboard() {
       if (!response.ok) throw new Error("Failed to fetch bookings");
       const bookings = await response.json();
 
-      // Ensure dependent caches are loaded
-      if (Object.keys(_cache.members).length === 0) {
-        await fetchAdminMembersTable();
-      }
-      if (Object.keys(_cache.services).length === 0) {
-        await fetchAdminServicesTable();
-      }
-      if (Object.keys(_cache.users).length === 0) {
-        await fetchAdminUsers();
-      }
+    // Ensure dependent caches are loaded
+    if (Object.keys(_cache.services).length === 0) {
+      await fetchAdminServicesTable();
+    }
+    if (Object.keys(_cache.users).length === 0) {
+      await fetchAdminUsers();
+    }
+
+    // Expert (chuyên gia tư vấn) = User có role ROLE_MEMBER, KHÔNG phải bảng members cũ
+    const memberUsers = Object.values(_cache.users).filter(u => u.role === "ROLE_MEMBER");
 
       tbody.innerHTML = "";
 
@@ -1725,12 +1871,12 @@ function initAdminDashboard() {
 
         tr.setAttribute("data-searchable", `${client.fullName} ${service.title} ${b.appointmentDate} ${b.status}`);
 
-        // Expert select options
-        let expertOptions = `<option value="">-- Assign Expert --</option>`;
-        Object.values(_cache.members).forEach(m => {
-          const selected = (b.expertId && String(b.expertId) === String(m.id)) ? "selected" : "";
-          expertOptions += `<option value="${m.id}" ${selected}>${escapeHtml(m.name)}</option>`;
-        });
+      // Expert select options - lấy từ User role=ROLE_MEMBER (đúng người sẽ nhận thông báo/đăng nhập)
+      let expertOptions = `<option value="">-- Assign Expert --</option>`;
+      memberUsers.forEach(u => {
+        const selected = (b.expertId && String(b.expertId) === String(u.id)) ? "selected" : "";
+        expertOptions += `<option value="${u.id}" ${selected}>${escapeHtml(u.fullName)}</option>`;
+      });
 
         // Status options
         const statuses = ["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"];
@@ -4143,554 +4289,15 @@ function initAdminDashboard() {
         }
       }
 
-      lastScrollY = currentScrollY;
-    });
-  }
-
-  // =============================================
-  //  Google Sign-In Logic (TikTok-style Popup Flow)
-  // =============================================
-  function initGoogleSignIn() {
-    const modalGoogleBtn = document.getElementById('modalGoogleSignInBtn');
-    if (modalGoogleBtn) {
-      modalGoogleBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        loginWithGooglePopup();
-      });
-    }
-
-    const loginGoogleBtn = document.getElementById('googleSignInBtn');
-    if (loginGoogleBtn) {
-      loginGoogleBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        loginWithGooglePopup();
-      });
-    }
-  }
-
-  function loginWithGooglePopup() {
-    const clientId = "675937212349-d7ihb1c7a0u53no9d71cdt0jcmjrbil9.apps.googleusercontent.com";
-    const modalAlert = document.getElementById("modal-login-alert") || document.getElementById("alertMessage");
-
-    if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
-      if (modalAlert) {
-        modalAlert.textContent = "Google Sign-In SDK chưa được tải, vui lòng tải lại trang.";
-        modalAlert.classList.add("alert-error");
-        modalAlert.style.display = "block";
-      } else {
-        alert("Google Sign-In SDK chưa được tải.");
-      }
-      return;
-    }
-
-    if (modalAlert) {
-      modalAlert.textContent = "Đang chờ bạn đăng nhập qua Google...";
-      modalAlert.classList.remove("alert-error", "alert-success");
-      modalAlert.style.display = "block";
-    }
-
-    try {
-      const client = google.accounts.oauth2.initTokenClient({
-        client_id: clientId,
-        scope: 'email profile',
-        callback: (response) => {
-          if (response && response.access_token) {
-            processGoogleToken(response.access_token, modalAlert);
-          } else {
-            if (modalAlert) {
-              modalAlert.textContent = "Đăng nhập Google bị hủy hoặc thất bại.";
-              modalAlert.classList.add("alert-error");
-            }
-          }
-        }
-      });
-      client.requestAccessToken();
-    } catch (error) {
-      console.error("Google initTokenClient error:", error);
-      if (modalAlert) {
-        modalAlert.textContent = "Không thể mở cửa sổ đăng nhập Google.";
-        modalAlert.classList.add("alert-error");
-      }
-    }
-  }
-
-  async function processGoogleToken(accessToken, modalAlert) {
-    try {
-      if (modalAlert) modalAlert.textContent = "Đang xác thực với server...";
-
-      const res = await fetch("/api/auth/google", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ credential: accessToken })
-      });
-
-      const data = await res.json();
-      if (res.ok && data.token) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("authToken", data.token);
-        localStorage.setItem("username", data.username);
-        localStorage.setItem("fullName", data.fullName);
-        localStorage.setItem("role", data.role);
-        localStorage.setItem("email", data.email);
-        localStorage.setItem("avatarUrl", data.avatarUrl || "");
-        localStorage.setItem("user", JSON.stringify({
-          username: data.username,
-          fullName: data.fullName,
-          email: data.email,
-          role: data.role,
-          avatarUrl: data.avatarUrl || null
-        }));
-        sessionStorage.setItem("token", data.token);
-        sessionStorage.setItem("authToken", data.token);
-        sessionStorage.setItem("username", data.username);
-        sessionStorage.setItem("fullName", data.fullName);
-        sessionStorage.setItem("role", data.role);
-        sessionStorage.setItem("email", data.email);
-        sessionStorage.setItem("avatarUrl", data.avatarUrl || "");
-
-        if (modalAlert) {
-          modalAlert.textContent = "Đăng nhập thành công! Đang chuyển hướng...";
-          modalAlert.classList.add("alert-success");
-        }
-
-        setTimeout(() => {
-          if (data.role === "ROLE_ADMIN") window.location.href = "admin.html";
-          else if (data.role === "Team_Member" || data.role === "ROLE_MEMBER") window.location.href = "member-contact.html";
-          else {
-            const redirect = sessionStorage.getItem("redirectAttempt");
-            if (redirect) {
-              sessionStorage.removeItem("redirectAttempt");
-              window.location.href = redirect;
-            } else {
-              window.location.href = "index.html";
-            }
-          }
-        }, 1000);
-      } else {
-        if (modalAlert) {
-          modalAlert.textContent = "Đăng nhập thất bại: " + (data.message || "");
-          modalAlert.classList.add("alert-error");
-        } else {
-          alert("Đăng nhập thất bại: " + (data.message || ""));
-        }
-      }
-    } catch (error) {
-      console.error("Google login error:", error);
-      if (modalAlert) {
-        modalAlert.textContent = "Không thể kết nối đến máy chủ.";
-        modalAlert.classList.add("alert-error");
-      }
-    }
-  }
-
-  window.addEventListener('load', () => {
-    initGoogleSignIn();
+    lastScrollY = currentScrollY;
   });
+}
 
-  // Dynamically move footer-bottom inside footer-container for unified layout
-  function initFooterMove() {
-    const container = document.querySelector(".footer-container");
-    const bottom = document.querySelector(".footer-bottom");
-    if (container && bottom) {
-      container.appendChild(bottom);
-    }
+// Dynamically move footer-bottom inside footer-container for unified layout
+function initFooterMove() {
+  const container = document.querySelector(".footer-container");
+  const bottom = document.querySelector(".footer-bottom");
+  if (container && bottom) {
+    container.appendChild(bottom);
   }
-
-  // =============================================
-  //  Admin – Dashboard Overview Analytics
-  // =============================================
-  let myRevenueChartInstance = null;
-
-  function getChartColors() {
-    const isDark = document.documentElement.classList.contains("dark-theme");
-    return {
-      textColor: isDark ? "#94a3b8" : "#64748b",
-      gridColor: isDark ? "#272e48" : "#e2e8f0",
-      tooltipBg: isDark ? "#161b2b" : "#ffffff",
-      tooltipBorder: isDark ? "#272e48" : "#e2e8f0",
-      gradientStart: isDark ? "rgba(99, 102, 241, 0.4)" : "rgba(37, 99, 235, 0.35)",
-      gradientEnd: isDark ? "rgba(99, 102, 241, 0.0)" : "rgba(37, 99, 235, 0.0)",
-      borderColor: isDark ? "#6366f1" : "#2563eb"
-    };
-  }
-
-  function updateChartTheme() {
-    if (myRevenueChartInstance) {
-      const colors = getChartColors();
-      myRevenueChartInstance.options.scales.x.grid.color = colors.gridColor;
-      myRevenueChartInstance.options.scales.x.ticks.color = colors.textColor;
-      myRevenueChartInstance.options.scales.y.grid.color = colors.gridColor;
-      myRevenueChartInstance.options.scales.y.ticks.color = colors.textColor;
-      myRevenueChartInstance.options.plugins.tooltip.backgroundColor = colors.tooltipBg;
-      myRevenueChartInstance.options.plugins.tooltip.borderColor = colors.tooltipBorder;
-      myRevenueChartInstance.options.plugins.tooltip.titleColor = document.documentElement.classList.contains("dark-theme") ? "#f8fafc" : "#0f172a";
-      myRevenueChartInstance.options.plugins.tooltip.bodyColor = document.documentElement.classList.contains("dark-theme") ? "#f8fafc" : "#0f172a";
-
-      const canvas = document.getElementById("revenueChart");
-      if (canvas) {
-        const ctx = canvas.getContext("2d");
-        if (ctx) {
-          const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-          gradient.addColorStop(0, colors.gradientStart);
-          gradient.addColorStop(1, colors.gradientEnd);
-          myRevenueChartInstance.data.datasets[0].backgroundColor = gradient;
-        }
-      }
-      myRevenueChartInstance.data.datasets[0].borderColor = colors.borderColor;
-      myRevenueChartInstance.data.datasets[0].pointBackgroundColor = colors.borderColor;
-
-      myRevenueChartInstance.update();
-    }
-  }
-
-  async function fetchAdminDashboardStats() {
-    const chartCanvas = document.getElementById("revenueChart");
-    if (!chartCanvas) return;
-
-    try {
-      const token = getAdminToken();
-      const response = await fetch("/api/admin/dashboard-stats", {
-        headers: token ? { "Authorization": "Bearer " + token } : {}
-      });
-      if (!response.ok) throw new Error("Failed to fetch dashboard stats");
-      const data = await response.json();
-
-      // Set counts in cards
-      const cardMessages = document.getElementById("stat-messages-count");
-      const cardUsers = document.getElementById("stat-users-count");
-      const cardMembers = document.getElementById("stat-members-count");
-      const cardProjects = document.getElementById("stat-projects-count");
-      const cardServices = document.getElementById("stat-services-count");
-      const cardAppointments = document.getElementById("stat-appointments-count");
-
-      if (cardMessages) cardMessages.textContent = data.messagesCount;
-      if (cardUsers) cardUsers.textContent = data.accountsCount;
-      if (cardMembers) cardMembers.textContent = data.membersCount;
-      if (cardProjects) cardProjects.textContent = data.projectsCount;
-      if (cardServices) cardServices.textContent = data.servicesCount;
-      if (cardAppointments) cardAppointments.textContent = data.appointmentsCount;
-
-      // Render the chart
-      renderRevenueChart(data.revenueData);
-    } catch (err) {
-      console.error("fetchAdminDashboardStats error:", err);
-    }
-  }
-
-  function renderRevenueChart(revenueData) {
-    const canvas = document.getElementById("revenueChart");
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    const months = Object.keys(revenueData);
-    const amounts = Object.values(revenueData);
-
-    const colors = getChartColors();
-
-    if (myRevenueChartInstance) {
-      myRevenueChartInstance.destroy();
-    }
-
-    // Create gradient
-    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-    gradient.addColorStop(0, colors.gradientStart);
-    gradient.addColorStop(1, colors.gradientEnd);
-
-    myRevenueChartInstance = new Chart(ctx, {
-      type: "line",
-      data: {
-        labels: months.map(m => {
-          const parts = m.split("-");
-          return parts.length === 2 ? `Tháng ${parts[1]}/${parts[0]}` : m;
-        }),
-        datasets: [{
-          label: "Doanh thu (USD)",
-          data: amounts,
-          borderColor: colors.borderColor,
-          borderWidth: 3,
-          backgroundColor: gradient,
-          fill: true,
-          tension: 0.4,
-          pointBackgroundColor: colors.borderColor,
-          pointBorderColor: "#ffffff",
-          pointBorderWidth: 2,
-          pointRadius: 5,
-          pointHoverRadius: 7
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            display: false
-          },
-          tooltip: {
-            backgroundColor: colors.tooltipBg,
-            titleColor: document.documentElement.classList.contains("dark-theme") ? "#f8fafc" : "#0f172a",
-            bodyColor: document.documentElement.classList.contains("dark-theme") ? "#f8fafc" : "#0f172a",
-            borderColor: colors.tooltipBorder,
-            borderWidth: 1,
-            padding: 12,
-            displayColors: false,
-            callbacks: {
-              label: function (context) {
-                let value = context.raw || 0;
-                return " Doanh thu: $" + value.toLocaleString();
-              }
-            }
-          }
-        },
-        scales: {
-          x: {
-            grid: {
-              color: colors.gridColor,
-              drawBorder: false
-            },
-            ticks: {
-              color: colors.textColor,
-              font: {
-                family: "Inter",
-                size: 11,
-                weight: 500
-              }
-            }
-          },
-          y: {
-            grid: {
-              color: colors.gridColor,
-              drawBorder: false
-            },
-            ticks: {
-              color: colors.textColor,
-              font: {
-                family: "Inter",
-                size: 11,
-                weight: 500
-              },
-              callback: function (value) {
-                return "$" + value.toLocaleString();
-              }
-            }
-          }
-        }
-      }
-    });
-  }
-
-  // =============================================
-  //  Admin – User Messages & Replies Management
-  // =============================================
-  let currentMessageUser = null;
-  let currentUserMessages = [];
-  let activeMessageTab = 'not-replied';
-  let activeReplyMessageId = null;
-
-  window.openUserMessagesModal = async function (userId) {
-    const user = _cache.users[userId];
-    if (!user) return;
-
-    currentMessageUser = user;
-    activeMessageTab = 'not-replied';
-    activeReplyMessageId = null;
-
-    document.getElementById("user-messages-modal-title").textContent = `Messages from ${user.fullName} (${user.email})`;
-    hideReplySection();
-
-    // Set tab buttons initial states
-    updateMessageTabStyles();
-
-    const tbody = document.getElementById("messages-table-body");
-    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--text-muted);">Loading messages...</td></tr>`;
-
-    const modal = document.getElementById("user-messages-modal-overlay");
-    modal.classList.add("open");
-
-    try {
-      const token = getAdminToken();
-      const response = await fetch(`/api/contacts/my?email=${encodeURIComponent(user.email)}`, {
-        headers: token ? { "Authorization": "Bearer " + token } : {}
-      });
-      if (!response.ok) throw new Error("Failed to fetch user messages");
-      currentUserMessages = await response.json();
-
-      renderUserMessagesTable();
-    } catch (err) {
-      console.error(err);
-      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:2rem;color:#ef4444;">Error: ${err.message}</td></tr>`;
-    }
-  }
-
-  window.closeUserMessagesModal = function () {
-    const modal = document.getElementById("user-messages-modal-overlay");
-    modal.classList.remove("open");
-    currentMessageUser = null;
-    currentUserMessages = [];
-    activeMessageTab = 'not-replied';
-    activeReplyMessageId = null;
-  }
-
-  window.switchMessageTab = function (tab) {
-    activeMessageTab = tab;
-    updateMessageTabStyles();
-    hideReplySection();
-    renderUserMessagesTable();
-  }
-
-  function updateMessageTabStyles() {
-    const btnNotReplied = document.getElementById("btn-msg-not-replied");
-    const btnReplied = document.getElementById("btn-msg-replied");
-
-    if (activeMessageTab === 'not-replied') {
-      btnNotReplied.style.background = "linear-gradient(135deg, rgba(37,99,235,0.1), rgba(79,70,229,0.1))";
-      btnNotReplied.style.border = "1px solid rgba(37,99,235,0.2)";
-      btnNotReplied.style.color = "#2563eb";
-
-      btnReplied.style.background = "transparent";
-      btnReplied.style.border = "1px solid transparent";
-      btnReplied.style.color = "var(--text-muted)";
-    } else {
-      btnReplied.style.background = "linear-gradient(135deg, rgba(37,99,235,0.1), rgba(79,70,229,0.1))";
-      btnReplied.style.border = "1px solid rgba(37,99,235,0.2)";
-      btnReplied.style.color = "#2563eb";
-
-      btnNotReplied.style.background = "transparent";
-      btnNotReplied.style.border = "1px solid transparent";
-      btnNotReplied.style.color = "var(--text-muted)";
-    }
-  }
-
-  function renderUserMessagesTable() {
-    const headerRow = document.getElementById("messages-table-header");
-    const tbody = document.getElementById("messages-table-body");
-
-    if (!tbody || !headerRow) return;
-
-    // Filter messages
-    const filtered = currentUserMessages.filter(msg => {
-      const hasReply = msg.reply && msg.reply.trim().length > 0;
-      return activeMessageTab === 'not-replied' ? !hasReply : hasReply;
-    });
-
-    if (activeMessageTab === 'not-replied') {
-      headerRow.innerHTML = `
-      <th style="width: 150px;">Sent At</th>
-      <th style="width: 150px;">Title</th>
-      <th>Content</th>
-      <th style="width: 100px;">Actions</th>
-    `;
-
-      if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--text-muted);">No unreplied messages from this user.</td></tr>`;
-        return;
-      }
-
-      tbody.innerHTML = filtered.map(msg => `
-      <tr>
-        <td style="white-space:nowrap;font-size:0.8rem;">${new Date(msg.createdAt).toLocaleString()}</td>
-        <td style="font-weight:600;color:var(--text-dark);">${escapeHtml(msg.title || "")}</td>
-        <td style="max-width:300px;white-space:pre-wrap;font-size:0.85rem;">${escapeHtml(msg.content || "")}</td>
-        <td>
-          <button class="btn-edit" style="background:#2563eb; color:#fff; border-color:#2563eb;" onclick="showReplySection(${msg.id}, '${escapeHtml(msg.title || '')}')">
-            Reply
-          </button>
-        </td>
-      </tr>
-    `).join('');
-    } else {
-      headerRow.innerHTML = `
-      <th style="width: 120px;">Sent At</th>
-      <th style="width: 120px;">Title</th>
-      <th>Content</th>
-      <th>Reply Message</th>
-      <th style="width: 120px;">Replied At</th>
-    `;
-
-      if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);">No replied messages from this user.</td></tr>`;
-        return;
-      }
-
-      tbody.innerHTML = filtered.map(msg => `
-      <tr>
-        <td style="white-space:nowrap;font-size:0.8rem;">${new Date(msg.createdAt).toLocaleString()}</td>
-        <td style="font-weight:600;color:var(--text-dark);">${escapeHtml(msg.title || "")}</td>
-        <td style="max-width:200px;white-space:pre-wrap;font-size:0.85rem;color:var(--text-muted);">${escapeHtml(msg.content || "")}</td>
-        <td style="max-width:250px;white-space:pre-wrap;font-size:0.85rem;color:#059669;font-weight:500;">${escapeHtml(msg.reply || "")}</td>
-        <td style="white-space:nowrap;font-size:0.8rem;">${new Date(msg.repliedAt).toLocaleString()}</td>
-      </tr>
-    `).join('');
-    }
-  }
-
-  window.showReplySection = function (msgId, title) {
-    activeReplyMessageId = msgId;
-    document.getElementById("reply-to-title").textContent = `Reply to Message: "${title}"`;
-    document.getElementById("reply-text-area").value = "";
-    document.getElementById("message-reply-section").style.display = "block";
-    document.getElementById("reply-text-area").focus();
-  }
-
-  window.hideReplySection = function () {
-    activeReplyMessageId = null;
-    document.getElementById("message-reply-section").style.display = "none";
-    document.getElementById("reply-text-area").value = "";
-  }
-
-  window.submitMessageReply = async function () {
-    if (!activeReplyMessageId) return;
-
-    const textarea = document.getElementById("reply-text-area");
-    const text = textarea.value.trim();
-
-    if (!text) {
-      alert("Please enter a reply message.");
-      return;
-    }
-
-    const btn = document.getElementById("btn-send-reply");
-    btn.disabled = true;
-    btn.textContent = "Sending...";
-
-    try {
-      const token = getAdminToken();
-      const response = await fetch(`/api/contacts/${activeReplyMessageId}/reply`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": token ? "Bearer " + token : ""
-        },
-        body: JSON.stringify({ message: text })
-      });
-
-      if (!response.ok) throw new Error("Failed to send reply");
-
-      hideReplySection();
-
-      // Refresh messages
-      if (currentMessageUser) {
-        const refreshRes = await fetch(`/api/contacts/my?email=${encodeURIComponent(currentMessageUser.email)}`, {
-          headers: token ? { "Authorization": "Bearer " + token } : {}
-        });
-        if (refreshRes.ok) {
-          currentUserMessages = await refreshRes.json();
-        }
-      }
-
-      renderUserMessagesTable();
-    } catch (err) {
-      console.error(err);
-      alert("Error sending reply: " + err.message);
-    } finally {
-      btn.disabled = false;
-      btn.textContent = "Send Reply";
-    }
-  }
-
-  window.toggleSidebar = function () {
-    document.body.classList.toggle("sidebar-collapsed");
-    const isCollapsed = document.body.classList.contains("sidebar-collapsed");
-    localStorage.setItem("adminSidebarCollapsed", isCollapsed);
-  }
-
+}

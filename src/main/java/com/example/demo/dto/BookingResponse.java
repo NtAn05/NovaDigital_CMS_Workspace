@@ -19,4 +19,7 @@ public class BookingResponse {
     private String status;
     private String messageContent;
     private String attachmentUrl;
+    private String clientName;
+    private String clientEmail;
+    private String serviceName;
 }
