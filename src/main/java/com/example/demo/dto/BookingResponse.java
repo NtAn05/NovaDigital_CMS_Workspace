@@ -18,4 +18,5 @@ public class BookingResponse {
     private String timeSlot;
     private String status;
     private String messageContent;
+    private String attachmentUrl;
 }
