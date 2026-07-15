@@ -915,6 +915,7 @@ function initAdminDashboard() {
   fetchAdminMembersTable();
   fetchAdminProjectsTable();
   fetchAdminServicesTable();
+  fetchAdminBookings();
 }
 
 // =============================================
@@ -933,6 +934,9 @@ function switchAdminPanel(panelName, el) {
 
   if (panelName === "audit" || panelName === "audit-logs") {
     loadDataUsers(0);
+  }
+  if (panelName === "bookings") {
+    fetchAdminBookings();
   }
 }
 
@@ -973,7 +977,7 @@ let _crudState = { type: null, item: null };
 let _deleteState = { type: null, id: null };
 
 // Cache for loaded data (used to pass objects to modal)
-const _cache = { users: {}, members: {}, projects: {}, services: {} };
+const _cache = { users: {}, members: {}, projects: {}, services: {}, bookings: {} };
 
 function openCrudModal(type, id) {
   const item = id !== null ? (_cache[type + "s"] || _cache[type])[id] : null;
@@ -1590,6 +1594,201 @@ async function fetchAdminContacts() {
   } catch (error) {
     console.error("Error loading admin contacts:", error);
     tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:#ef4444;">Could not load contacts list. Please reload the page.</td></tr>`;
+  }
+}
+
+// =============================================
+//  Toast Notification System
+// =============================================
+
+function showToast(message, type = "success") {
+  let container = document.getElementById("toast-container");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "toast-container";
+    container.className = "toast-container";
+    document.body.appendChild(container);
+  }
+
+  const toast = document.createElement("div");
+  toast.className = `toast-item ${type}`;
+  
+  let iconSvg = "";
+  if (type === "success") {
+    iconSvg = `<svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#10b981;fill:none;stroke-width:2.5;"><polyline points="20 6 9 17 4 12"/></svg>`;
+  } else if (type === "error") {
+    iconSvg = `<svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#ef4444;fill:none;stroke-width:2.5;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+  } else {
+    iconSvg = `<svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#3b82f6;fill:none;stroke-width:2.5;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`;
+  }
+
+  toast.innerHTML = `
+    ${iconSvg}
+    <div class="toast-message">${escapeHtml(message)}</div>
+  `;
+
+  container.appendChild(toast);
+
+  setTimeout(() => toast.classList.add("show"), 10);
+
+  setTimeout(() => {
+    toast.classList.remove("show");
+    setTimeout(() => toast.remove(), 400);
+  }, 4000);
+}
+
+// =============================================
+//  Admin – Consultation Bookings
+// =============================================
+
+async function fetchAdminBookings() {
+  const tbody = document.getElementById("bookings-table-body");
+  if (!tbody) return;
+
+  try {
+    const token = getAdminToken();
+    const response = await fetch("/api/bookings", {
+      headers: adminHeaders()
+    });
+    if (!response.ok) throw new Error("Failed to fetch bookings");
+    const bookings = await response.json();
+
+    // Ensure dependent caches are loaded
+    if (Object.keys(_cache.members).length === 0) {
+      await fetchAdminMembersTable();
+    }
+    if (Object.keys(_cache.services).length === 0) {
+      await fetchAdminServicesTable();
+    }
+    if (Object.keys(_cache.users).length === 0) {
+      await fetchAdminUsers();
+    }
+
+    tbody.innerHTML = "";
+
+    if (!bookings.length) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text-muted);">No bookings found.</td></tr>`;
+      return;
+    }
+
+    bookings.forEach(b => {
+      _cache.bookings[b.id] = b;
+
+      const tr = document.createElement("tr");
+      const client = _cache.users[b.clientId] || { fullName: `User #${b.clientId}`, email: "" };
+      const service = _cache.services[b.serviceId] || { title: `Service #${b.serviceId}` };
+      
+      tr.setAttribute("data-searchable", `${client.fullName} ${service.title} ${b.appointmentDate} ${b.status}`);
+
+      // Expert select options
+      let expertOptions = `<option value="">-- Assign Expert --</option>`;
+      Object.values(_cache.members).forEach(m => {
+        const selected = (b.expertId && String(b.expertId) === String(m.id)) ? "selected" : "";
+        expertOptions += `<option value="${m.id}" ${selected}>${escapeHtml(m.name)}</option>`;
+      });
+
+      // Status options
+      const statuses = ["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"];
+      let statusOptions = "";
+      statuses.forEach(s => {
+        const selected = (b.status === s) ? "selected" : "";
+        statusOptions += `<option value="${s}" ${selected}>${s}</option>`;
+      });
+
+      // Display files beautifully
+      let attachmentHtml = "—";
+      if (b.attachmentUrl) {
+        const fileName = b.attachmentUrl.split("/").pop();
+        attachmentHtml = `<a href="${escapeHtml(b.attachmentUrl)}" target="_blank" class="attachment-link" style="display:inline-flex;align-items:center;gap:4px;color:#2563eb;font-size:0.85rem;"><svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>${escapeHtml(fileName)}</a>`;
+      }
+
+      tr.innerHTML = `
+        <td>
+          <div class="text-dark-inline">${escapeHtml(client.fullName)}</div>
+          <div style="font-size:0.8rem;color:var(--text-muted);">${escapeHtml(client.email)}</div>
+        </td>
+        <td class="text-dark-inline">${escapeHtml(service.title)}</td>
+        <td>
+          <div class="text-dark-inline">${escapeHtml(b.appointmentDate)}</div>
+          <div style="font-size:0.85rem;color:var(--text-muted);">${escapeHtml(b.timeSlot.substring(0, 5))}</div>
+        </td>
+        <td class="text-dark-inline">$${b.totalPrice.toFixed(2)}</td>
+        <td style="max-width:250px;">
+          <div style="font-size:0.85rem;white-space:pre-wrap;margin-bottom:4px;">${escapeHtml(b.messageContent || "")}</div>
+          <div>${attachmentHtml}</div>
+        </td>
+        <td>
+          <select class="admin-select" onchange="updateBookingExpert(${b.id}, this.value)" style="padding:0.35rem;border-radius:6px;border:1px solid var(--border-color);font-size:0.85rem;width:100%;max-width:160px;background:var(--bg-card);color:var(--text-dark);">
+            ${expertOptions}
+          </select>
+        </td>
+        <td>
+          <select class="admin-select status-select status-${b.status.toLowerCase()}" onchange="updateBookingStatus(${b.id}, this.value)" style="padding:0.35rem;border-radius:6px;border:1px solid var(--border-color);font-weight:600;font-size:0.85rem;width:100%;max-width:130px;">
+            ${statusOptions}
+          </select>
+        </td>
+        <td>
+          <div style="display:flex;gap:4px;">
+            <button class="btn-delete" onclick="deleteBooking(${b.id})" style="padding:0.35rem 0.6rem;font-size:0.8rem;gap:4px;border-radius:6px;background-color:#ef4444;color:#fff;border:none;cursor:pointer;">
+              <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>Delete
+            </button>
+          </div>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+  } catch (err) {
+    console.error("fetchAdminBookings error:", err);
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:2rem;color:#ef4444;">Could not load bookings.</td></tr>`;
+  }
+}
+
+async function updateBookingExpert(bookingId, expertId) {
+  try {
+    const response = await fetch(`/api/bookings/${bookingId}`, {
+      method: "PUT",
+      headers: adminHeaders(),
+      body: JSON.stringify({ expertId: expertId ? Number(expertId) : null })
+    });
+    if (!response.ok) throw new Error("Failed to update expert");
+    showToast("Expert assigned successfully!", "success");
+    fetchAdminBookings();
+  } catch (err) {
+    console.error(err);
+    showToast("Failed to assign expert: " + err.message, "error");
+  }
+}
+
+async function updateBookingStatus(bookingId, status) {
+  try {
+    const response = await fetch(`/api/bookings/${bookingId}`, {
+      method: "PUT",
+      headers: adminHeaders(),
+      body: JSON.stringify({ status })
+    });
+    if (!response.ok) throw new Error("Failed to update status");
+    showToast("Booking status updated successfully!", "success");
+    fetchAdminBookings();
+  } catch (err) {
+    console.error(err);
+    showToast("Failed to update status: " + err.message, "error");
+  }
+}
+
+async function deleteBooking(bookingId) {
+  if (!confirm("Are you sure you want to delete this booking appointment? This action cannot be undone.")) return;
+  try {
+    const response = await fetch(`/api/bookings/${bookingId}`, {
+      method: "DELETE",
+      headers: adminHeaders()
+    });
+    if (!response.ok) throw new Error("Failed to delete booking");
+    showToast("Booking deleted successfully!", "success");
+    fetchAdminBookings();
+  } catch (err) {
+    console.error(err);
+    showToast("Failed to delete booking: " + err.message, "error");
   }
 }
 

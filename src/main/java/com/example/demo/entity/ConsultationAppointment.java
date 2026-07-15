@@ -27,7 +27,7 @@ public class ConsultationAppointment {
     @Column(name = "client_id", nullable = false)
     private Long clientId; // FK -> User.id (thông tin khách hàng đã có sẵn ở User/user-profile)
 
-    @Column(name = "expert_id", nullable = false)
+    @Column(name = "expert_id", nullable = true)
     private Long expertId; // FK -> Member.id (bảng chuyên gia/tư vấn viên có sẵn)
 
     @Column(name = "appointment_date", nullable = false)
@@ -42,6 +42,9 @@ public class ConsultationAppointment {
 
     @Column(name = "message_content", columnDefinition = "TEXT")
     private String messageContent;
+
+    @Column(name = "attachment_url", length = 500)
+    private String attachmentUrl;
 
     // Không có trong schema gốc nhưng cần lưu để hiển thị lại giá đã chốt
     // (server luôn tính lại theo Service.base_price + Service_Addon đã chọn)

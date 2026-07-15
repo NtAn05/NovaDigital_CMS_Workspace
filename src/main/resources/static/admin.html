@@ -736,6 +736,13 @@
           </a>
         </li>
         <li>
+          <a id="nav-bookings"
+             onclick="switchAdminPanel('bookings', this); return false;">
+            <svg viewBox="0 0 24 24" style="width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Bookings
+          </a>
+        </li>
+        <li>
           <a id="nav-audit"
              onclick="switchAdminPanel('audit', this); return false;">
             <svg viewBox="0 0 24 24" style="width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg>
@@ -1029,6 +1036,42 @@
                 </table>
                 <div id="authPagination" style="display:flex;justify-content:flex-end;align-items:center;gap:0.4rem;padding:1rem 0 0;"></div>
             </div>
+        </div>
+      </div>
+
+      <!-- ========== CONSULTATION BOOKINGS PANEL ========== -->
+      <div class="admin-panel" id="panel-bookings">
+        <div class="panel-header">
+          <div>
+            <h1>Consultation Bookings</h1>
+            <p class="panel-subtitle">Manage client consultation appointments, update status, and assign team members</p>
+          </div>
+        </div>
+        <div class="table-container">
+          <div class="table-toolbar">
+            <h2>All Appointments</h2>
+            <div class="table-search">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" placeholder="Search appointments..." oninput="filterTable('bookings-table-body', this.value)">
+            </div>
+          </div>
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Client</th>
+                <th>Service</th>
+                <th>Schedule</th>
+                <th>Price</th>
+                <th>Message / Attachment</th>
+                <th>Assigned Expert</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="bookings-table-body">
+              <tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text-muted);">Loading...</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
