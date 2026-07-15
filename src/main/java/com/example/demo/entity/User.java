@@ -31,7 +31,7 @@ public class User {
     @Column(length = 20)
     private String phone;
 
-    @Column(name = "avatar_url", length = 512)
+    @Column(name = "avatar_url", length = 2048)
     private String avatarUrl;
 
     @Column(name = "facebook_url", length = 255)

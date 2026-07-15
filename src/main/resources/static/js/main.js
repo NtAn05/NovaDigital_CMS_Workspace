@@ -4290,8 +4290,149 @@ function formatNotificationTime(iso) {
       }
 
     lastScrollY = currentScrollY;
+
+    });
+  }
+
+  // =============================================
+  //  Google Sign-In Logic (TikTok-style Popup Flow)
+  // =============================================
+  function initGoogleSignIn() {
+    const modalGoogleBtn = document.getElementById('modalGoogleSignInBtn');
+    if (modalGoogleBtn) {
+      modalGoogleBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        loginWithGooglePopup();
+      });
+    }
+
+    const loginGoogleBtn = document.getElementById('googleSignInBtn');
+    if (loginGoogleBtn) {
+      loginGoogleBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        loginWithGooglePopup();
+      });
+    }
+  }
+
+  function loginWithGooglePopup() {
+    const clientId = "675937212349-d7ihb1c7a0u53no9d71cdt0jcmjrbil9.apps.googleusercontent.com";
+    const modalAlert = document.getElementById("modal-login-alert") || document.getElementById("alertMessage");
+
+    if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
+      if (modalAlert) {
+        modalAlert.textContent = "Google Sign-In SDK chưa được tải, vui lòng tải lại trang.";
+        modalAlert.classList.add("alert-error");
+        modalAlert.style.display = "block";
+      } else {
+        alert("Google Sign-In SDK chưa được tải.");
+      }
+      return;
+    }
+
+    if (modalAlert) {
+      modalAlert.textContent = "Đang chờ bạn đăng nhập qua Google...";
+      modalAlert.classList.remove("alert-error", "alert-success");
+      modalAlert.style.display = "block";
+    }
+
+    try {
+      const client = google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: 'email profile',
+        callback: (response) => {
+          if (response && response.access_token) {
+            processGoogleToken(response.access_token, modalAlert);
+          } else {
+            if (modalAlert) {
+              modalAlert.textContent = "Đăng nhập Google bị hủy hoặc thất bại.";
+              modalAlert.classList.add("alert-error");
+            }
+          }
+        }
+      });
+      client.requestAccessToken();
+    } catch (error) {
+      console.error("Google initTokenClient error:", error);
+      if (modalAlert) {
+        modalAlert.textContent = "Không thể mở cửa sổ đăng nhập Google.";
+        modalAlert.classList.add("alert-error");
+      }
+    }
+  }
+
+  async function processGoogleToken(accessToken, modalAlert) {
+    try {
+      if (modalAlert) modalAlert.textContent = "Đang xác thực với server...";
+
+      const res = await fetch("/api/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credential: accessToken })
+      });
+
+      const data = await res.json();
+      if (res.ok && data.token) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("authToken", data.token);
+        localStorage.setItem("username", data.username);
+        localStorage.setItem("fullName", data.fullName);
+        localStorage.setItem("role", data.role);
+        localStorage.setItem("email", data.email);
+        localStorage.setItem("avatarUrl", data.avatarUrl || "");
+        localStorage.setItem("user", JSON.stringify({
+          username: data.username,
+          fullName: data.fullName,
+          email: data.email,
+          role: data.role,
+          avatarUrl: data.avatarUrl || null
+        }));
+        sessionStorage.setItem("token", data.token);
+        sessionStorage.setItem("authToken", data.token);
+        sessionStorage.setItem("username", data.username);
+        sessionStorage.setItem("fullName", data.fullName);
+        sessionStorage.setItem("role", data.role);
+        sessionStorage.setItem("email", data.email);
+        sessionStorage.setItem("avatarUrl", data.avatarUrl || "");
+
+        if (modalAlert) {
+          modalAlert.textContent = "Đăng nhập thành công! Đang chuyển hướng...";
+          modalAlert.classList.add("alert-success");
+        }
+
+        setTimeout(() => {
+          if (data.role === "ROLE_ADMIN") window.location.href = "admin.html";
+          else if (data.role === "Team_Member" || data.role === "ROLE_MEMBER") window.location.href = "member-contact.html";
+          else {
+            const redirect = sessionStorage.getItem("redirectAttempt");
+            if (redirect) {
+              sessionStorage.removeItem("redirectAttempt");
+              window.location.href = redirect;
+            } else {
+              window.location.href = "index.html";
+            }
+          }
+        }, 1000);
+      } else {
+        if (modalAlert) {
+          modalAlert.textContent = "Đăng nhập thất bại: " + (data.message || "");
+          modalAlert.classList.add("alert-error");
+        } else {
+          alert("Đăng nhập thất bại: " + (data.message || ""));
+        }
+      }
+    } catch (error) {
+      console.error("Google login error:", error);
+      if (modalAlert) {
+        modalAlert.textContent = "Không thể kết nối đến máy chủ.";
+        modalAlert.classList.add("alert-error");
+      }
+    }
+  }
+
+  window.addEventListener('load', () => {
+    initGoogleSignIn();
   });
-}
 
 // Dynamically move footer-bottom inside footer-container for unified layout
 function initFooterMove() {
@@ -4299,5 +4440,403 @@ function initFooterMove() {
   const bottom = document.querySelector(".footer-bottom");
   if (container && bottom) {
     container.appendChild(bottom);
+   }
   }
+
+  // =============================================
+  //  Admin – Dashboard Overview Analytics
+  // =============================================
+  let myRevenueChartInstance = null;
+
+  function getChartColors() {
+    const isDark = document.documentElement.classList.contains("dark-theme");
+    return {
+      textColor: isDark ? "#94a3b8" : "#64748b",
+      gridColor: isDark ? "#272e48" : "#e2e8f0",
+      tooltipBg: isDark ? "#161b2b" : "#ffffff",
+      tooltipBorder: isDark ? "#272e48" : "#e2e8f0",
+      gradientStart: isDark ? "rgba(99, 102, 241, 0.4)" : "rgba(37, 99, 235, 0.35)",
+      gradientEnd: isDark ? "rgba(99, 102, 241, 0.0)" : "rgba(37, 99, 235, 0.0)",
+      borderColor: isDark ? "#6366f1" : "#2563eb"
+    };
+  }
+
+  function updateChartTheme() {
+    if (myRevenueChartInstance) {
+      const colors = getChartColors();
+      myRevenueChartInstance.options.scales.x.grid.color = colors.gridColor;
+      myRevenueChartInstance.options.scales.x.ticks.color = colors.textColor;
+      myRevenueChartInstance.options.scales.y.grid.color = colors.gridColor;
+      myRevenueChartInstance.options.scales.y.ticks.color = colors.textColor;
+      myRevenueChartInstance.options.plugins.tooltip.backgroundColor = colors.tooltipBg;
+      myRevenueChartInstance.options.plugins.tooltip.borderColor = colors.tooltipBorder;
+      myRevenueChartInstance.options.plugins.tooltip.titleColor = document.documentElement.classList.contains("dark-theme") ? "#f8fafc" : "#0f172a";
+      myRevenueChartInstance.options.plugins.tooltip.bodyColor = document.documentElement.classList.contains("dark-theme") ? "#f8fafc" : "#0f172a";
+
+      const canvas = document.getElementById("revenueChart");
+      if (canvas) {
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+          gradient.addColorStop(0, colors.gradientStart);
+          gradient.addColorStop(1, colors.gradientEnd);
+          myRevenueChartInstance.data.datasets[0].backgroundColor = gradient;
+        }
+      }
+      myRevenueChartInstance.data.datasets[0].borderColor = colors.borderColor;
+      myRevenueChartInstance.data.datasets[0].pointBackgroundColor = colors.borderColor;
+
+      myRevenueChartInstance.update();
+    }
+  }
+
+  async function fetchAdminDashboardStats() {
+    const chartCanvas = document.getElementById("revenueChart");
+    if (!chartCanvas) return;
+
+    try {
+      const token = getAdminToken();
+      const response = await fetch("/api/admin/dashboard-stats", {
+        headers: token ? { "Authorization": "Bearer " + token } : {}
+      });
+      if (!response.ok) throw new Error("Failed to fetch dashboard stats");
+      const data = await response.json();
+
+      // Set counts in cards
+      const cardMessages = document.getElementById("stat-messages-count");
+      const cardUsers = document.getElementById("stat-users-count");
+      const cardMembers = document.getElementById("stat-members-count");
+      const cardProjects = document.getElementById("stat-projects-count");
+      const cardServices = document.getElementById("stat-services-count");
+      const cardAppointments = document.getElementById("stat-appointments-count");
+
+      if (cardMessages) cardMessages.textContent = data.messagesCount;
+      if (cardUsers) cardUsers.textContent = data.accountsCount;
+      if (cardMembers) cardMembers.textContent = data.membersCount;
+      if (cardProjects) cardProjects.textContent = data.projectsCount;
+      if (cardServices) cardServices.textContent = data.servicesCount;
+      if (cardAppointments) cardAppointments.textContent = data.appointmentsCount;
+
+      // Render the chart
+      renderRevenueChart(data.revenueData);
+    } catch (err) {
+      console.error("fetchAdminDashboardStats error:", err);
+    }
+  }
+
+  function renderRevenueChart(revenueData) {
+    const canvas = document.getElementById("revenueChart");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const months = Object.keys(revenueData);
+    const amounts = Object.values(revenueData);
+
+    const colors = getChartColors();
+
+    if (myRevenueChartInstance) {
+      myRevenueChartInstance.destroy();
+    }
+
+    // Create gradient
+    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, colors.gradientStart);
+    gradient.addColorStop(1, colors.gradientEnd);
+
+    myRevenueChartInstance = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: months.map(m => {
+          const parts = m.split("-");
+          return parts.length === 2 ? `Tháng ${parts[1]}/${parts[0]}` : m;
+        }),
+        datasets: [{
+          label: "Doanh thu (USD)",
+          data: amounts,
+          borderColor: colors.borderColor,
+          borderWidth: 3,
+          backgroundColor: gradient,
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: colors.borderColor,
+          pointBorderColor: "#ffffff",
+          pointBorderWidth: 2,
+          pointRadius: 5,
+          pointHoverRadius: 7
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            backgroundColor: colors.tooltipBg,
+            titleColor: document.documentElement.classList.contains("dark-theme") ? "#f8fafc" : "#0f172a",
+            bodyColor: document.documentElement.classList.contains("dark-theme") ? "#f8fafc" : "#0f172a",
+            borderColor: colors.tooltipBorder,
+            borderWidth: 1,
+            padding: 12,
+            displayColors: false,
+            callbacks: {
+              label: function (context) {
+                let value = context.raw || 0;
+                return " Doanh thu: $" + value.toLocaleString();
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: {
+              color: colors.gridColor,
+              drawBorder: false
+            },
+            ticks: {
+              color: colors.textColor,
+              font: {
+                family: "Inter",
+                size: 11,
+                weight: 500
+              }
+            }
+          },
+          y: {
+            grid: {
+              color: colors.gridColor,
+              drawBorder: false
+            },
+            ticks: {
+              color: colors.textColor,
+              font: {
+                family: "Inter",
+                size: 11,
+                weight: 500
+              },
+              callback: function (value) {
+                return "$" + value.toLocaleString();
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // =============================================
+  //  Admin – User Messages & Replies Management
+  // =============================================
+  let currentMessageUser = null;
+  let currentUserMessages = [];
+  let activeMessageTab = 'not-replied';
+  let activeReplyMessageId = null;
+
+  window.openUserMessagesModal = async function (userId) {
+    const user = _cache.users[userId];
+    if (!user) return;
+
+    currentMessageUser = user;
+    activeMessageTab = 'not-replied';
+    activeReplyMessageId = null;
+
+    document.getElementById("user-messages-modal-title").textContent = `Messages from ${user.fullName} (${user.email})`;
+    hideReplySection();
+
+    // Set tab buttons initial states
+    updateMessageTabStyles();
+
+    const tbody = document.getElementById("messages-table-body");
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--text-muted);">Loading messages...</td></tr>`;
+
+    const modal = document.getElementById("user-messages-modal-overlay");
+    modal.classList.add("open");
+
+    try {
+      const token = getAdminToken();
+      const response = await fetch(`/api/contacts/my?email=${encodeURIComponent(user.email)}`, {
+        headers: token ? { "Authorization": "Bearer " + token } : {}
+      });
+      if (!response.ok) throw new Error("Failed to fetch user messages");
+      currentUserMessages = await response.json();
+
+      renderUserMessagesTable();
+    } catch (err) {
+      console.error(err);
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:2rem;color:#ef4444;">Error: ${err.message}</td></tr>`;
+    }
+  }
+
+  window.closeUserMessagesModal = function () {
+    const modal = document.getElementById("user-messages-modal-overlay");
+    modal.classList.remove("open");
+    currentMessageUser = null;
+    currentUserMessages = [];
+    activeMessageTab = 'not-replied';
+    activeReplyMessageId = null;
+  }
+
+  window.switchMessageTab = function (tab) {
+    activeMessageTab = tab;
+    updateMessageTabStyles();
+    hideReplySection();
+    renderUserMessagesTable();
+  }
+
+  function updateMessageTabStyles() {
+    const btnNotReplied = document.getElementById("btn-msg-not-replied");
+    const btnReplied = document.getElementById("btn-msg-replied");
+
+    if (activeMessageTab === 'not-replied') {
+      btnNotReplied.style.background = "linear-gradient(135deg, rgba(37,99,235,0.1), rgba(79,70,229,0.1))";
+      btnNotReplied.style.border = "1px solid rgba(37,99,235,0.2)";
+      btnNotReplied.style.color = "#2563eb";
+
+      btnReplied.style.background = "transparent";
+      btnReplied.style.border = "1px solid transparent";
+      btnReplied.style.color = "var(--text-muted)";
+    } else {
+      btnReplied.style.background = "linear-gradient(135deg, rgba(37,99,235,0.1), rgba(79,70,229,0.1))";
+      btnReplied.style.border = "1px solid rgba(37,99,235,0.2)";
+      btnReplied.style.color = "#2563eb";
+
+      btnNotReplied.style.background = "transparent";
+      btnNotReplied.style.border = "1px solid transparent";
+      btnNotReplied.style.color = "var(--text-muted)";
+    }
+  }
+
+  function renderUserMessagesTable() {
+    const headerRow = document.getElementById("messages-table-header");
+    const tbody = document.getElementById("messages-table-body");
+
+    if (!tbody || !headerRow) return;
+
+    // Filter messages
+    const filtered = currentUserMessages.filter(msg => {
+      const hasReply = msg.reply && msg.reply.trim().length > 0;
+      return activeMessageTab === 'not-replied' ? !hasReply : hasReply;
+    });
+
+    if (activeMessageTab === 'not-replied') {
+      headerRow.innerHTML = `
+      <th style="width: 150px;">Sent At</th>
+      <th style="width: 150px;">Title</th>
+      <th>Content</th>
+      <th style="width: 100px;">Actions</th>
+    `;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--text-muted);">No unreplied messages from this user.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(msg => `
+      <tr>
+        <td style="white-space:nowrap;font-size:0.8rem;">${new Date(msg.createdAt).toLocaleString()}</td>
+        <td style="font-weight:600;color:var(--text-dark);">${escapeHtml(msg.title || "")}</td>
+        <td style="max-width:300px;white-space:pre-wrap;font-size:0.85rem;">${escapeHtml(msg.content || "")}</td>
+        <td>
+          <button class="btn-edit" style="background:#2563eb; color:#fff; border-color:#2563eb;" onclick="showReplySection(${msg.id}, '${escapeHtml(msg.title || '')}')">
+            Reply
+          </button>
+        </td>
+      </tr>
+    `).join('');
+    } else {
+      headerRow.innerHTML = `
+      <th style="width: 120px;">Sent At</th>
+      <th style="width: 120px;">Title</th>
+      <th>Content</th>
+      <th>Reply Message</th>
+      <th style="width: 120px;">Replied At</th>
+    `;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);">No replied messages from this user.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(msg => `
+      <tr>
+        <td style="white-space:nowrap;font-size:0.8rem;">${new Date(msg.createdAt).toLocaleString()}</td>
+        <td style="font-weight:600;color:var(--text-dark);">${escapeHtml(msg.title || "")}</td>
+        <td style="max-width:200px;white-space:pre-wrap;font-size:0.85rem;color:var(--text-muted);">${escapeHtml(msg.content || "")}</td>
+        <td style="max-width:250px;white-space:pre-wrap;font-size:0.85rem;color:#059669;font-weight:500;">${escapeHtml(msg.reply || "")}</td>
+        <td style="white-space:nowrap;font-size:0.8rem;">${new Date(msg.repliedAt).toLocaleString()}</td>
+      </tr>
+    `).join('');
+    }
+  }
+
+  window.showReplySection = function (msgId, title) {
+    activeReplyMessageId = msgId;
+    document.getElementById("reply-to-title").textContent = `Reply to Message: "${title}"`;
+    document.getElementById("reply-text-area").value = "";
+    document.getElementById("message-reply-section").style.display = "block";
+    document.getElementById("reply-text-area").focus();
+  }
+
+  window.hideReplySection = function () {
+    activeReplyMessageId = null;
+    document.getElementById("message-reply-section").style.display = "none";
+    document.getElementById("reply-text-area").value = "";
+  }
+
+  window.submitMessageReply = async function () {
+    if (!activeReplyMessageId) return;
+
+    const textarea = document.getElementById("reply-text-area");
+    const text = textarea.value.trim();
+
+    if (!text) {
+      alert("Please enter a reply message.");
+      return;
+    }
+
+    const btn = document.getElementById("btn-send-reply");
+    btn.disabled = true;
+    btn.textContent = "Sending...";
+
+    try {
+      const token = getAdminToken();
+      const response = await fetch(`/api/contacts/${activeReplyMessageId}/reply`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": token ? "Bearer " + token : ""
+        },
+        body: JSON.stringify({ message: text })
+      });
+
+      if (!response.ok) throw new Error("Failed to send reply");
+
+      hideReplySection();
+
+      // Refresh messages
+      if (currentMessageUser) {
+        const refreshRes = await fetch(`/api/contacts/my?email=${encodeURIComponent(currentMessageUser.email)}`, {
+          headers: token ? { "Authorization": "Bearer " + token } : {}
+        });
+        if (refreshRes.ok) {
+          currentUserMessages = await refreshRes.json();
+        }
+      }
+
+      renderUserMessagesTable();
+    } catch (err) {
+      console.error(err);
+      alert("Error sending reply: " + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Send Reply";
+    }
+  }
+
+  window.toggleSidebar = function () {
+    document.body.classList.toggle("sidebar-collapsed");
+    const isCollapsed = document.body.classList.contains("sidebar-collapsed");
+    localStorage.setItem("adminSidebarCollapsed", isCollapsed);
 }

@@ -21,7 +21,7 @@ public class Member {
     @Column(nullable = false, length = 100)
     private String role; // Examples: "PROJECT LEADER", "MEMBER"
 
-    @Column(name = "avatar_url", length = 255)
+    @Column(name = "avatar_url", length = 2048)
     private String avatarUrl; // Path to member avatar image
 
     @Column(name = "facebook_url", length = 255)
