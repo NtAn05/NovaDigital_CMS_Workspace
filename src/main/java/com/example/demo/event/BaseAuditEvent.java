@@ -1,4 +1,4 @@
-package com.example.demo.audit.event;
+package com.example.demo.event;
 
 import org.springframework.context.ApplicationEvent;
 import java.time.Instant;

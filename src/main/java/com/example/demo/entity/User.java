@@ -19,8 +19,8 @@ public class User {
     @Column(nullable = false, unique = true, length = 50)
     private String username;
 
-    @Column(nullable = false, length = 255)
-    private String password; // Stores BCrypt hashed password
+    @Column(length = 255)
+    private String password; // Stores BCrypt hashed password (null cho user đăng nhập Google)
 
     @Column(name = "full_name", nullable = false, length = 100)
     private String fullName;
@@ -48,6 +48,13 @@ public class User {
 
     @Column(name = "projects_worked", length = 1000)
     private String projectsWorked;
+
+    // ── Google OAuth2 fields ──
+    @Column(length = 20)
+    private String provider = "LOCAL"; // LOCAL hoặc GOOGLE
+
+    @Column(name = "provider_id", length = 255)
+    private String providerId; // Google Subject ID (sub)
 
     @Column(nullable = false, length = 20)
     private String role = "ROLE_USER"; // Default registered role is ROLE_USER

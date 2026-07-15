@@ -1,6 +1,6 @@
-package com.example.demo.audit.repository;
+package com.example.demo.repository;
 
-import com.example.demo.audit.entity.AuthLog;
+import com.example.demo.entity.AuthLog;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

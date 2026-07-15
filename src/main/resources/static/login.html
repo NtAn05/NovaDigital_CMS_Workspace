@@ -101,7 +101,228 @@
         <button type="submit" class="submit-btn">Log In</button>
         <div id="alertMessage" class="alert-message"></div>
       </form>
+
+      <!-- Divider -->
+      <div style="display: flex; align-items: center; gap: 1rem; margin: 1.5rem 0;">
+        <div style="flex: 1; height: 1px; background: #e2e8f0;"></div>
+        <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 500; white-space: nowrap;">hoặc</span>
+        <div style="flex: 1; height: 1px; background: #e2e8f0;"></div>
+      </div>
+
+      <!-- Google Sign-In Button -->
+      <button id="googleSignInBtn" type="button" style="
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        padding: 0.85rem 1.5rem;
+        background: #fff;
+        border: 1.5px solid #dadce0;
+        border-radius: 50px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #3c4043;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-family: 'Google Sans', system-ui, -apple-system, sans-serif;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      " onmouseover="this.style.background='#f8f9fa'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.12)'" onmouseout="this.style.background='#fff'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.08)'">
+        <svg width="20" height="20" viewBox="0 0 48 48">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+          <path fill="none" d="M0 0h48v48H0z"/>
+        </svg>
+        Continue with Google
+      </button>
+
+      <div class="auth-links">
+        Don't have an account? <a href="register.html">Register here</a>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer Section -->
+  <footer>
+    <div class="footer-container">
+      <div class="footer-col">
+        <a href="index.html" class="footer-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+          <span>NovaDigital</span>
+        </a>
+        <p>Bring your business closer to millions of customers through comprehensive UI/UX design and technology solutions.</p>
+      </div>
+      <div class="footer-col">
+        <h3>Quick Links</h3>
+        <ul class="footer-links">
+          <li><a href="about.html">About Us</a></li>
+          <li><a href="services.html">Service</a></li>
+          <li><a href="portfolio.html">Product</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h3>Information</h3>
+        <div class="footer-info">
+          <div class="footer-info-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            <span>Fv1</span>
+          </div>
+          <div class="footer-info-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+            <a href="mailto:contact@novadigital.com">contact@novadigital.com</a>
+          </div>
+        </div>
+      </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="NovaDigital - Log in to access your digital workspace.">
+  <title>Log In | NovaDigital</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .auth-wrapper {
+      min-height: 80vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6rem 2rem 4rem 2rem;
+    }
+    .auth-card {
+      background: rgba(255, 255, 255, 0.8);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      border-radius: var(--radius-lg);
+      padding: 3.5rem 3rem;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.05);
+      text-align: center;
+    }
+    .auth-card h2 {
+      font-family: var(--font-heading);
+      font-size: 2.25rem;
+      font-weight: 800;
+      color: var(--text-dark);
+      margin-bottom: 0.5rem;
+    }
+    .auth-card p.subtitle {
+      color: var(--text-muted);
+      margin-bottom: 2.5rem;
+      font-size: 0.95rem;
+    }
+    .auth-card .form-group {
+      text-align: left;
+    }
+    .auth-links {
+      margin-top: 1.5rem;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+    .auth-links a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+      transition: var(--transition);
+    }
+    .auth-links a:hover {
+      color: var(--primary-hover);
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header Section -->
+  <header>
+    <nav class="navbar">
+      <a href="index.html" class="logo" id="header-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+        <span>NovaDigital</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">Introduce</a></li>
+        <li><a href="services.html">Services</a></li>
+        <li><a href="portfolio.html">Project</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        <li><a href="#" class="nav-btn" id="default-get-started">Get Started Now</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- Login Form Wrapper -->
+  <main class="auth-wrapper">
+    <div class="auth-card">
+      <h2>Welcome Back</h2>
+      <p class="subtitle">Enter your credentials to access your account</p>
       
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="usernameOrEmail">Username or Email *</label>
+          <input type="text" id="usernameOrEmail" placeholder="Enter username or email" required>
+        </div>
+        <div class="form-group">
+          <label for="password">Password *</label>
+          <input type="password" id="password" placeholder="••••••••" required>
+        </div>
+        <div style="text-align: right; margin-top: -0.5rem; margin-bottom: 1rem;">
+          <a href="forgot-password.html" style="font-size: 0.85rem; color: var(--primary); text-decoration: none; font-weight: 500;">Forgot password?</a>
+        </div>
+        <button type="submit" class="submit-btn">Log In</button>
+        <div id="alertMessage" class="alert-message"></div>
+      </form>
+
+      <!-- Divider -->
+      <div style="display: flex; align-items: center; gap: 1rem; margin: 1.5rem 0;">
+        <div style="flex: 1; height: 1px; background: #e2e8f0;"></div>
+        <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 500; white-space: nowrap;">hoặc</span>
+        <div style="flex: 1; height: 1px; background: #e2e8f0;"></div>
+      </div>
+
+      <!-- Google Sign-In Button -->
+      <button id="googleSignInBtn" type="button" style="
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        padding: 0.85rem 1.5rem;
+        background: #fff;
+        border: 1.5px solid #dadce0;
+        border-radius: 50px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: #3c4043;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-family: 'Google Sans', system-ui, -apple-system, sans-serif;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      " onmouseover="this.style.background='#f8f9fa'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.12)'" onmouseout="this.style.background='#fff'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.08)'">
+        <svg width="20" height="20" viewBox="0 0 48 48">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+          <path fill="none" d="M0 0h48v48H0z"/>
+        </svg>
+        Continue with Google
+      </button>
+
       <div class="auth-links">
         Don't have an account? <a href="register.html">Register here</a>
       </div>
@@ -153,6 +374,7 @@
     </div>
   </footer>
 
-  <script src="/js/main.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="js/main.js?v=4"></script>
 </body>
 </html>
