@@ -1,13 +1,17 @@
 // Dynamic Data Loading, Authentication, and UI logic for NovaDigital Creative Agency
 
-// Clear persistent authentication keys if a new browser session starts (empty sessionStorage)
+// Sync auth from localStorage → sessionStorage for new tabs/windows
 function initSessionClean() {
   const sessionToken = sessionStorage.getItem("token");
-  const localToken = localStorage.getItem("token") || localStorage.getItem("authToken");
+  const localToken   = localStorage.getItem("token") || localStorage.getItem("authToken");
+
   if (!sessionToken && localToken) {
-    console.log("New session detected. Clearing persistent auth storage...");
-    const authKeys = ["token", "authToken", "username", "fullName", "role", "email", "avatarUrl", "user"];
-    authKeys.forEach(key => localStorage.removeItem(key));
+    // New tab/window: copy localStorage → sessionStorage so route guards work
+    const authKeys = ["token", "authToken", "username", "fullName", "role", "email", "avatarUrl", "user", "userId"];
+    authKeys.forEach(key => {
+      const val = localStorage.getItem(key);
+      if (val) sessionStorage.setItem(key, val);
+    });
   }
 }
 initSessionClean();
@@ -467,11 +471,7 @@ function checkRouteGuard() {
   }
 
   // Protected client pages
-<
-  const protectedPages = [];
-
-  const protectedPages = ["contact.html", "rented-project.html"];
-
+  const protectedPages = ["rented-project.html"];
 
   if (protectedPages.includes(page) && !token) {
     sessionStorage.setItem("redirectAttempt", page);
