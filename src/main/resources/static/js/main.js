@@ -402,7 +402,9 @@ function initModalLoginForm() {
         showModalAlert("Login successful! Redirecting...", true, "modal-login-alert");
 
         setTimeout(() => {
-          if (data.role === "ROLE_ADMIN") {
+          if (data.role === "ROLE_RESOURCE") {
+            window.location.href = "resource-allocation.html";
+          } else if (data.role === "ROLE_ADMIN") {
             window.location.href = "admin.html";
           } else if (data.role === "Team_Member" || data.role === "ROLE_MEMBER") {
             window.location.href = "member-contact.html";
@@ -487,6 +489,14 @@ function checkRouteGuard() {
 
   const token = localStorage.getItem("token") || sessionStorage.getItem("token");
   const role = localStorage.getItem("role") || sessionStorage.getItem("role");
+
+  // Dedicated Resource Manager only uses the standalone Resource Allocation workspace.
+  if (token && role === "ROLE_RESOURCE") {
+    if (page !== "resource-allocation.html") {
+      window.location.href = "resource-allocation.html";
+      return;
+    }
+  }
 
   // Admin MUST stay in admin.html or user-profile.html
   if (token && role === "ROLE_ADMIN") {
@@ -797,7 +807,9 @@ function initLoginForm() {
         showAlert("Login successful! Redirecting...", true);
 
         setTimeout(() => {
-          if (data.role === "ROLE_ADMIN") {
+          if (data.role === "ROLE_RESOURCE") {
+            window.location.href = "resource-allocation.html";
+          } else if (data.role === "ROLE_ADMIN") {
             window.location.href = "admin.html";
           } else if (data.role === "ROLE_MEMBER") {
             // Internal team member — goes to PM Dashboard
@@ -1517,9 +1529,6 @@ async function fetchAdminProjectsTable() {
           <div class="action-btns">
             <button class="btn-edit" style="background:#2563eb; color:#fff; border-color:#2563eb;" onclick="openMilestoneModal(${p.id})">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;margin-right:2px;"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>Milestones
-            </button>
-            <button class="btn-edit" style="background:#059669; color:#fff; border-color:#059669;" onclick="openAssignmentModal(${p.id}, '${escapeHtml(p.title || '')}')">
-              &#128101; Assign
             </button>
             <button class="btn-edit"   onclick="openCrudModal('project', ${p.id})">
               <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit

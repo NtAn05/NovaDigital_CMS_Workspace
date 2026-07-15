@@ -96,9 +96,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/projects/*/clients").hasRole("ADMIN")
                 .requestMatchers("/api/projects/*/clients/**").hasRole("ADMIN")
 
-                // UC-14 Resource Allocation Matrix: HR/Admin or authenticated internal member.
-                // Project-level PM ownership is enforced again in ResourceAllocationService.
-                .requestMatchers("/api/resource-allocations/**").hasAnyRole("ADMIN", "MEMBER")
+                // Dedicated Resource Allocation workspace: only the standalone resource account.
+                .requestMatchers("/api/resource-allocations/**").hasRole("RESOURCE")
 
                 // My-projects endpoints: any authenticated user
                 .requestMatchers("/api/my/**").authenticated()
