@@ -5,7 +5,7 @@ import com.example.demo.repository.ContactRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.example.demo.audit.annotation.Auditable;
+import com.example.demo.annotation.Auditable;
 
 @Service
 public class ContactService {

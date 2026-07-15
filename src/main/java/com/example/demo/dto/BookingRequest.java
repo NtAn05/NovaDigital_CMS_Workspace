@@ -13,4 +13,7 @@ public class BookingRequest {
     private String appointmentDate;   // "yyyy-MM-dd"
     private String timeSlot;          // "HH:mm"
     private String messageContent;
+    private String attachmentUrl;
+    private String captchaToken;
+    private Integer captchaAnswer;
 }

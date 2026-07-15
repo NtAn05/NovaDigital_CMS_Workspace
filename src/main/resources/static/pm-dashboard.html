@@ -373,8 +373,8 @@
   }
 
   document.getElementById('btnLogout').addEventListener('click', () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('user');
+    localStorage.clear();
+    sessionStorage.clear();
     window.location.href = '/login.html';
   });
 

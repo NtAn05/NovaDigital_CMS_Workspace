@@ -1,9 +1,9 @@
 package com.example.demo.controller;
 
-import com.example.demo.audit.entity.AuthLog;
-import com.example.demo.audit.entity.DataAuditLog;
-import com.example.demo.audit.repository.AuthLogRepository;
-import com.example.demo.audit.repository.DataAuditLogRepository;
+import com.example.demo.entity.AuthLog;
+import com.example.demo.entity.DataAuditLog;
+import com.example.demo.repository.AuthLogRepository;
+import com.example.demo.repository.DataAuditLogRepository;
 import com.example.demo.entity.User;
 import com.example.demo.repository.UserRepository;
 import org.springframework.data.domain.Page;

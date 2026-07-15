@@ -1,13 +1,13 @@
-package com.example.demo.audit.listener;
+package com.example.demo.listener;
 
-import com.example.demo.audit.entity.AuthLog;
-import com.example.demo.audit.entity.DataAuditLog;
-import com.example.demo.audit.event.AuthActionEvent;
-import com.example.demo.audit.event.BaseAuditEvent;
-import com.example.demo.audit.event.DataAuditEvent;
-import com.example.demo.audit.event.DataPayloadEvent;
-import com.example.demo.audit.repository.AuthLogRepository;
-import com.example.demo.audit.repository.DataAuditLogRepository;
+import com.example.demo.entity.AuthLog;
+import com.example.demo.entity.DataAuditLog;
+import com.example.demo.event.AuthActionEvent;
+import com.example.demo.event.BaseAuditEvent;
+import com.example.demo.event.DataAuditEvent;
+import com.example.demo.event.DataPayloadEvent;
+import com.example.demo.repository.AuthLogRepository;
+import com.example.demo.repository.DataAuditLogRepository;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;

@@ -1,4 +1,4 @@
-package com.example.demo.audit.event;
+package com.example.demo.event;
 
 /**
  * Event cho các hành động thay đổi dữ liệu (Object Diff strategy - legacy).

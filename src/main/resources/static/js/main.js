@@ -1,13 +1,17 @@
 // Dynamic Data Loading, Authentication, and UI logic for NovaDigital Creative Agency
 
-// Clear persistent authentication keys if a new browser session starts (empty sessionStorage)
+// Sync auth from localStorage → sessionStorage for new tabs/windows
 function initSessionClean() {
   const sessionToken = sessionStorage.getItem("token");
-  const localToken = localStorage.getItem("token") || localStorage.getItem("authToken");
+  const localToken   = localStorage.getItem("token") || localStorage.getItem("authToken");
+
   if (!sessionToken && localToken) {
-    console.log("New session detected. Clearing persistent auth storage...");
-    const authKeys = ["token", "authToken", "username", "fullName", "role", "email", "avatarUrl", "user"];
-    authKeys.forEach(key => localStorage.removeItem(key));
+    // New tab/window: copy localStorage → sessionStorage so route guards work
+    const authKeys = ["token", "authToken", "username", "fullName", "role", "email", "avatarUrl", "user", "userId"];
+    authKeys.forEach(key => {
+      const val = localStorage.getItem(key);
+      if (val) sessionStorage.setItem(key, val);
+    });
   }
 }
 initSessionClean();
@@ -49,6 +53,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // 4c. Initialize Navbar scroll effects (detached floating and show/hide)
   initNavbarScrollEffects();
 
+  // 4d. Move footer bottom inside footer container
+  initFooterMove();
+
   // 5. Detect current page and fetch corresponding data
   const path = window.location.pathname;
   const page = path.substring(path.lastIndexOf('/') + 1) || "index.html";
@@ -75,7 +82,7 @@ document.addEventListener("DOMContentLoaded", () => {
   } else if (page === "inbox.html" || page === "index.html") {
     // Fetch inbox if user is logged in
     const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-    const email = localStorage.getItem("email") || sessionStorage.getItem("email"); 
+    const email = localStorage.getItem("email") || sessionStorage.getItem("email");
     console.log("Token:", token);
     console.log("Email:", email);
     if (token && email) {
@@ -166,6 +173,34 @@ function injectAuthModal() {
             <button type="submit" class="submit-btn" style="margin-top:0.5rem;">Login</button>
             <div id="modal-login-alert" class="alert-message"></div>
           </form>
+
+          <button type="button" id="modalGoogleSignInBtn" style="
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            padding: 0.85rem 1.5rem;
+            background: #fff;
+            border: 1.5px solid #dadce0;
+            border-radius: 50px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #3c4043;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+          " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='#fff'">
+            <svg width="20" height="20" viewBox="0 0 48 48">
+              <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+              <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+              <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+              <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+              <path fill="none" d="M0 0h48v48H0z"/>
+            </svg>
+            Continue with Google
+          </button>
 
           <div class="auth-modal-divider">
             Don't have an account?
@@ -330,28 +365,28 @@ function initModalLoginForm() {
 
       if (response.ok && data.token) {
         // Write to localStorage
-        localStorage.setItem("token",     data.token);
+        localStorage.setItem("token", data.token);
         localStorage.setItem("authToken", data.token);
-        localStorage.setItem("username",  data.username);
-        localStorage.setItem("fullName",  data.fullName);
-        localStorage.setItem("role",      data.role);
-        localStorage.setItem("email",     data.email);
+        localStorage.setItem("username", data.username);
+        localStorage.setItem("fullName", data.fullName);
+        localStorage.setItem("role", data.role);
+        localStorage.setItem("email", data.email);
         localStorage.setItem("avatarUrl", data.avatarUrl || "");
         localStorage.setItem("user", JSON.stringify({
-          username:  data.username,
-          fullName:  data.fullName,
-          email:     data.email,
-          role:      data.role,
+          username: data.username,
+          fullName: data.fullName,
+          email: data.email,
+          role: data.role,
           avatarUrl: data.avatarUrl || null
         }));
 
         // Write to sessionStorage for route guard and header sync compatibility
-        sessionStorage.setItem("token",     data.token);
+        sessionStorage.setItem("token", data.token);
         sessionStorage.setItem("authToken", data.token);
-        sessionStorage.setItem("username",  data.username);
-        sessionStorage.setItem("fullName",  data.fullName);
-        sessionStorage.setItem("role",      data.role);
-        sessionStorage.setItem("email",     data.email);
+        sessionStorage.setItem("username", data.username);
+        sessionStorage.setItem("fullName", data.fullName);
+        sessionStorage.setItem("role", data.role);
+        sessionStorage.setItem("email", data.email);
         sessionStorage.setItem("avatarUrl", data.avatarUrl || "");
 
         showModalAlert("Login successful! Redirecting...", true, "modal-login-alert");
@@ -443,7 +478,7 @@ function checkRouteGuard() {
   const page = path.substring(path.lastIndexOf('/') + 1) || "index.html";
 
   const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-  const role  = localStorage.getItem("role") || sessionStorage.getItem("role");
+  const role = localStorage.getItem("role") || sessionStorage.getItem("role");
 
   // Dedicated Resource Manager only uses the standalone Resource Allocation workspace.
   if (token && role === "ROLE_RESOURCE") {
@@ -470,7 +505,7 @@ function checkRouteGuard() {
   }
 
   // Protected client pages
-  const protectedPages = ["contact.html", "rented-project.html"];
+  const protectedPages = ["rented-project.html"];
 
   if (protectedPages.includes(page) && !token) {
     sessionStorage.setItem("redirectAttempt", page);
@@ -514,8 +549,8 @@ function updateNavbarAuth() {
   const navLinksContainer = document.querySelector(".nav-links");
   if (!navLinksContainer) return;
 
-  const token    = localStorage.getItem("token") || sessionStorage.getItem("token");
-  const role     = localStorage.getItem("role") || sessionStorage.getItem("role");
+  const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+  const role = localStorage.getItem("role") || sessionStorage.getItem("role");
   const fullName = localStorage.getItem("fullName") || sessionStorage.getItem("fullName");
 
   const isPortalUser = token && (role === "ROLE_ADMIN" || role === "ROLE_MEMBER" || role === "Team_Member");
@@ -562,7 +597,7 @@ function updateNavbarAuth() {
     dropdownLi.className = "auth-item user-dropdown-container";
     dropdownLi.style.position = "relative";
 
-    const username  = localStorage.getItem("username") || sessionStorage.getItem("username");
+    const username = localStorage.getItem("username") || sessionStorage.getItem("username");
     const avatarUrl = localStorage.getItem("avatarUrl") || sessionStorage.getItem("avatarUrl");
 
     function getInitials(name) {
@@ -615,10 +650,10 @@ function updateNavbarAuth() {
 
     dropdownLi.innerHTML = `
       <div class="user-avatar-trigger" id="user-avatar-trigger" style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;padding:0.25rem 0;">
-        ${avatarUrl ? 
-          `<img src="${escapeHtml(avatarUrl)}" alt="Avatar" class="nav-avatar-img" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid var(--primary);">` :
-          `<div class="nav-avatar-initials" style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg, var(--primary) 0%, var(--primary-purple) 100%);color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;">${escapeHtml(initials)}</div>`
-        }
+        ${avatarUrl ?
+        `<img src="${escapeHtml(avatarUrl)}" alt="Avatar" class="nav-avatar-img" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid var(--primary);">` :
+        `<div class="nav-avatar-initials" style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg, var(--primary) 0%, var(--primary-purple) 100%);color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;">${escapeHtml(initials)}</div>`
+      }
         <span class="nav-username-txt" style="font-weight:600;font-size:0.95rem;color:var(--text-muted);">${escapeHtml(fullName || username)}</span>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="12" height="12" style="color:var(--text-muted);"><polyline points="6 9 12 15 18 9"></polyline></svg>
       </div>
@@ -734,29 +769,29 @@ function initLoginForm() {
 
       if (response.ok && data.token) {
         // Store both 'token' (legacy) and 'authToken' (used by new dashboards) in localStorage
-        localStorage.setItem("token",     data.token);
+        localStorage.setItem("token", data.token);
         localStorage.setItem("authToken", data.token);
-        localStorage.setItem("username",  data.username);
-        localStorage.setItem("fullName",  data.fullName);
-        localStorage.setItem("role",      data.role);
-        localStorage.setItem("email",     data.email);
+        localStorage.setItem("username", data.username);
+        localStorage.setItem("fullName", data.fullName);
+        localStorage.setItem("role", data.role);
+        localStorage.setItem("email", data.email);
         localStorage.setItem("avatarUrl", data.avatarUrl || "");
         // Store full user object for PM / Client dashboards
         localStorage.setItem("user", JSON.stringify({
-          username:  data.username,
-          fullName:  data.fullName,
-          email:     data.email,
-          role:      data.role,
+          username: data.username,
+          fullName: data.fullName,
+          email: data.email,
+          role: data.role,
           avatarUrl: data.avatarUrl || null
         }));
 
         // Write to sessionStorage for route guard and header sync compatibility
-        sessionStorage.setItem("token",     data.token);
+        sessionStorage.setItem("token", data.token);
         sessionStorage.setItem("authToken", data.token);
-        sessionStorage.setItem("username",  data.username);
-        sessionStorage.setItem("fullName",  data.fullName);
-        sessionStorage.setItem("role",      data.role);
-        sessionStorage.setItem("email",     data.email);
+        sessionStorage.setItem("username", data.username);
+        sessionStorage.setItem("fullName", data.fullName);
+        sessionStorage.setItem("role", data.role);
+        sessionStorage.setItem("email", data.email);
         sessionStorage.setItem("avatarUrl", data.avatarUrl || "");
 
         showAlert("Login successful! Redirecting...", true);
@@ -912,6 +947,7 @@ function initAdminDashboard() {
   fetchAdminMembersTable();
   fetchAdminProjectsTable();
   fetchAdminServicesTable();
+  fetchAdminBookings();
 }
 
 // =============================================
@@ -931,6 +967,9 @@ function switchAdminPanel(panelName, el) {
   if (panelName === "audit" || panelName === "audit-logs") {
     loadDataUsers(0);
   }
+  if (panelName === "bookings") {
+    fetchAdminBookings();
+  }
 }
 
 // =============================================
@@ -938,7 +977,7 @@ function switchAdminPanel(panelName, el) {
 // =============================================
 
 function getAdminToken() {
-  return sessionStorage.getItem("token") || "";
+  return localStorage.getItem("token") || sessionStorage.getItem("token") || "";
 }
 
 function adminHeaders() {
@@ -970,7 +1009,7 @@ let _crudState = { type: null, item: null };
 let _deleteState = { type: null, id: null };
 
 // Cache for loaded data (used to pass objects to modal)
-const _cache = { users: {}, members: {}, projects: {}, services: {} };
+const _cache = { users: {}, members: {}, projects: {}, services: {}, bookings: {} };
 
 function openCrudModal(type, id) {
   const item = id !== null ? (_cache[type + "s"] || _cache[type])[id] : null;
@@ -991,21 +1030,21 @@ function openCrudModal(type, id) {
   // Bind file upload trigger for projects or members
   if (type === "project" || type === "member") {
     const fileInputId = type === "project" ? "cf-imageFile" : "cf-avatarFile";
-    const urlInputId  = type === "project" ? "cf-imageUrl"  : "cf-avatarUrl";
-    const fileInput   = document.getElementById(fileInputId);
+    const urlInputId = type === "project" ? "cf-imageUrl" : "cf-avatarUrl";
+    const fileInput = document.getElementById(fileInputId);
 
     if (fileInput) {
       fileInput.addEventListener("change", async (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
-        const preview   = document.getElementById("cf-preview");
-        const urlInput  = document.getElementById(urlInputId);
+        const preview = document.getElementById("cf-preview");
+        const urlInput = document.getElementById(urlInputId);
 
         // Helper: read file as Base64 Data URL (always works, no server needed)
         const readAsDataUrl = (f) => new Promise((resolve, reject) => {
           const reader = new FileReader();
-          reader.onload  = () => resolve(reader.result);
+          reader.onload = () => resolve(reader.result);
           reader.onerror = reject;
           reader.readAsDataURL(f);
         });
@@ -1017,7 +1056,7 @@ function openCrudModal(type, id) {
           const formData = new FormData();
           formData.append("file", file);
 
-          const res  = await fetch("/api/upload", {
+          const res = await fetch("/api/upload", {
             method: "POST",
             headers: { "Authorization": "Bearer " + getAdminToken() },
             body: formData
@@ -1088,13 +1127,13 @@ function buildCrudForm(type, item) {
     </div>`;
 
   if (type === "user") return `
-    ${fld("cf-username",  "Username *", "text",  v.username, `placeholder="Enter username" required ${item ? 'readonly style="background:#f8fafc;cursor:not-allowed;"' : ""}`)}
-    ${fld("cf-fullName",  "Full Name *",     "text",  v.fullName, 'placeholder="Enter full name" required')}
-    ${fld("cf-email",     "Email *",          "email", v.email,    'placeholder="name@domain.com" required')}
-    ${fld("cf-phone",     "Phone Number",   "tel",   v.phone,    'placeholder="0123456789" pattern="[0-9]{10}"')}
+    ${fld("cf-username", "Username *", "text", v.username, `placeholder="Enter username" required ${item ? 'readonly style="background:#f8fafc;cursor:not-allowed;"' : ""}`)}
+    ${fld("cf-fullName", "Full Name *", "text", v.fullName, 'placeholder="Enter full name" required')}
+    ${fld("cf-email", "Email *", "email", v.email, 'placeholder="name@domain.com" required')}
+    ${fld("cf-phone", "Phone Number", "tel", v.phone, 'placeholder="0123456789" pattern="[0-9]{10}"')}
     ${!item ? fld("cf-password", "Password *", "password", "", 'placeholder="Min 6 characters" required minlength="6"') : ""}
 
-    ${sel("cf-role", "Role *", [["ROLE_USER","User"],["ROLE_ADMIN","Admin"],["ROLE_MEMBER","Team Member"]], v.role || "ROLE_USER")}
+    ${sel("cf-role", "Role *", [["ROLE_USER", "User"], ["ROLE_ADMIN", "Admin"], ["ROLE_MEMBER", "Team Member"]], v.role || "ROLE_USER")}
 
     <div class="form-group" style="width: 100%;">
       <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; justify-content: flex-start;">
@@ -1105,40 +1144,40 @@ function buildCrudForm(type, item) {
   `;
 
   if (type === "member") return `
-    ${fld("cf-name",       "Member Name *",         "text", v.name,        'placeholder="Enter member name" required')}
-    ${fld("cf-role",       "Position / Role *",       "text", v.role,        'placeholder="e.g. Frontend Developer" required')}
+    ${fld("cf-name", "Member Name *", "text", v.name, 'placeholder="Enter member name" required')}
+    ${fld("cf-role", "Position / Role *", "text", v.role, 'placeholder="e.g. Frontend Developer" required')}
     <div class="form-group">
       <label for="cf-avatarFile">Avatar Image *</label>
       <input type="file" id="cf-avatarFile" accept="image/*" style="width:100%; padding:0.5rem; border:1px dashed var(--border-color); border-radius:var(--radius-sm); background:var(--bg-light); cursor:pointer;">
       <input type="hidden" id="cf-avatarUrl" value="${escapeHtml(String(v.avatarUrl || ""))}">
       ${v.avatarUrl ? `<img id="cf-preview" src="${escapeHtml(v.avatarUrl)}" style="margin-top: 0.75rem; max-width: 150px; height: auto; border-radius: 6px; border: 1px solid var(--border-color); display: block;">` : `<img id="cf-preview" style="margin-top: 0.75rem; max-width: 150px; height: auto; border-radius: 6px; border: 1px solid var(--border-color); display: none;">`}
     </div>
-    ${fld("cf-facebookUrl","Facebook URL",               "url",  v.facebookUrl, 'placeholder="https://facebook.com/..."')}
-    ${fld("cf-githubUrl",  "GitHub URL",                 "url",  v.githubUrl,   'placeholder="https://github.com/..."')}
-    ${fld("cf-linkedinUrl","LinkedIn URL",               "url",  v.linkedinUrl, 'placeholder="https://linkedin.com/in/..."')}
-    ${fld("cf-skills",     "Professional Skills",       "text", v.skills,      'placeholder="e.g. Java, React, SQL"')}
-    ${fld("cf-projects",   "Projects Worked On",        "text", v.projectsWorked, 'placeholder="e.g. CMS Portal, E-Commerce App"')}
+    ${fld("cf-facebookUrl", "Facebook URL", "url", v.facebookUrl, 'placeholder="https://facebook.com/..."')}
+    ${fld("cf-githubUrl", "GitHub URL", "url", v.githubUrl, 'placeholder="https://github.com/..."')}
+    ${fld("cf-linkedinUrl", "LinkedIn URL", "url", v.linkedinUrl, 'placeholder="https://linkedin.com/in/..."')}
+    ${fld("cf-skills", "Professional Skills", "text", v.skills, 'placeholder="e.g. Java, React, SQL"')}
+    ${fld("cf-projects", "Projects Worked On", "text", v.projectsWorked, 'placeholder="e.g. CMS Portal, E-Commerce App"')}
   `;
 
   if (type === "project") return `
-    ${fld("cf-title",       "Project Title *",   "text", v.title,       'placeholder="Enter project title" required')}
-    ${fld("cf-category",    "Category *",    "text", v.category,    'placeholder="e.g. Web Development" required')}
+    ${fld("cf-title", "Project Title *", "text", v.title, 'placeholder="Enter project title" required')}
+    ${fld("cf-category", "Category *", "text", v.category, 'placeholder="e.g. Web Development" required')}
     <div class="form-group">
       <label for="cf-imageFile">Cover Image *</label>
       <input type="file" id="cf-imageFile" accept="image/*" style="width:100%; padding:0.5rem; border:1px dashed var(--border-color); border-radius:var(--radius-sm); background:var(--bg-light); cursor:pointer;">
       <input type="hidden" id="cf-imageUrl" value="${escapeHtml(String(v.imageUrl || ""))}">
       ${v.imageUrl ? `<img id="cf-preview" src="${escapeHtml(v.imageUrl)}" style="margin-top: 0.75rem; max-width: 150px; height: auto; border-radius: 6px; border: 1px solid var(--border-color); display: block;">` : `<img id="cf-preview" style="margin-top: 0.75rem; max-width: 150px; height: auto; border-radius: 6px; border: 1px solid var(--border-color); display: none;">`}
     </div>
-    ${txt("cf-description", "Description *",               v.description, 'placeholder="Project description..." required')}
+    ${txt("cf-description", "Description *", v.description, 'placeholder="Project description..." required')}
     ${txt("cf-technologies", "Technologies Used", v.technologies, 'placeholder="e.g. React, Node.js, MongoDB..."')}
   `;
 
   if (type === "service") return `
     ${fld("cf-title", "Service Title *", "text", v.title, 'placeholder="Enter service title" required')}
     ${sel("cf-iconUrl", "Service Icon *",
-      [["web","🌐 Web Design"],["design","🎨 UI/UX Design"],["marketing","📊 Marketing"],
-       ["mobile","📱 Mobile App"],["branding","🎯 Branding"],["cloud","☁️ Cloud Solutions"]],
-      v.iconUrl || "web")}
+    [["web", "🌐 Web Design"], ["design", "🎨 UI/UX Design"], ["marketing", "📊 Marketing"],
+    ["mobile", "📱 Mobile App"], ["branding", "🎯 Branding"], ["cloud", "☁️ Cloud Solutions"]],
+    v.iconUrl || "web")}
     ${txt("cf-description", "Description *", v.description, 'placeholder="Service description..." required')}
   `;
 
@@ -1170,9 +1209,11 @@ async function submitCrudForm() {
   }
 
   if (type === "member") {
-    payload = { name: g("cf-name"), role: g("cf-role"), avatarUrl: g("cf-avatarUrl"),
-                facebookUrl: g("cf-facebookUrl"), githubUrl: g("cf-githubUrl"), linkedinUrl: g("cf-linkedinUrl"),
-                skills: g("cf-skills"), projects: g("cf-projects") };
+    payload = {
+      name: g("cf-name"), role: g("cf-role"), avatarUrl: g("cf-avatarUrl"),
+      facebookUrl: g("cf-facebookUrl"), githubUrl: g("cf-githubUrl"), linkedinUrl: g("cf-linkedinUrl"),
+      skills: g("cf-skills"), projects: g("cf-projects")
+    };
     if (!payload.name || !payload.avatarUrl) valid = false;
   }
 
@@ -1240,7 +1281,7 @@ function showCrudAlert(msg, isSuccess) {
 function openDeleteConfirm(type, id, name) {
   _deleteState = { type, id };
   const overlay = document.getElementById("confirm-modal-overlay");
-  const text    = document.getElementById("confirm-modal-text");
+  const text = document.getElementById("confirm-modal-text");
   if (text) text.textContent = `Are you sure you want to delete "${name}"? This action cannot be undone.`;
   if (overlay) overlay.classList.add("is-open");
   document.body.style.overflow = "hidden";
@@ -1563,7 +1604,7 @@ async function fetchAdminContacts() {
     if (statsCount) statsCount.textContent = contacts.length;
 
     contacts.forEach(contact => {
-      const row  = document.createElement("tr");
+      const row = document.createElement("tr");
       const date = new Date(contact.createdAt).toLocaleDateString("en-US", {
         hour: "2-digit", minute: "2-digit",
         day: "2-digit", month: "2-digit", year: "numeric"
@@ -1584,6 +1625,201 @@ async function fetchAdminContacts() {
   } catch (error) {
     console.error("Error loading admin contacts:", error);
     tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:#ef4444;">Could not load contacts list. Please reload the page.</td></tr>`;
+  }
+}
+
+// =============================================
+//  Toast Notification System
+// =============================================
+
+function showToast(message, type = "success") {
+  let container = document.getElementById("toast-container");
+  if (!container) {
+    container = document.createElement("div");
+    container.id = "toast-container";
+    container.className = "toast-container";
+    document.body.appendChild(container);
+  }
+
+  const toast = document.createElement("div");
+  toast.className = `toast-item ${type}`;
+  
+  let iconSvg = "";
+  if (type === "success") {
+    iconSvg = `<svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#10b981;fill:none;stroke-width:2.5;"><polyline points="20 6 9 17 4 12"/></svg>`;
+  } else if (type === "error") {
+    iconSvg = `<svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#ef4444;fill:none;stroke-width:2.5;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+  } else {
+    iconSvg = `<svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#3b82f6;fill:none;stroke-width:2.5;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`;
+  }
+
+  toast.innerHTML = `
+    ${iconSvg}
+    <div class="toast-message">${escapeHtml(message)}</div>
+  `;
+
+  container.appendChild(toast);
+
+  setTimeout(() => toast.classList.add("show"), 10);
+
+  setTimeout(() => {
+    toast.classList.remove("show");
+    setTimeout(() => toast.remove(), 400);
+  }, 4000);
+}
+
+// =============================================
+//  Admin – Consultation Bookings
+// =============================================
+
+async function fetchAdminBookings() {
+  const tbody = document.getElementById("bookings-table-body");
+  if (!tbody) return;
+
+  try {
+    const token = getAdminToken();
+    const response = await fetch("/api/bookings", {
+      headers: adminHeaders()
+    });
+    if (!response.ok) throw new Error("Failed to fetch bookings");
+    const bookings = await response.json();
+
+    // Ensure dependent caches are loaded
+    if (Object.keys(_cache.members).length === 0) {
+      await fetchAdminMembersTable();
+    }
+    if (Object.keys(_cache.services).length === 0) {
+      await fetchAdminServicesTable();
+    }
+    if (Object.keys(_cache.users).length === 0) {
+      await fetchAdminUsers();
+    }
+
+    tbody.innerHTML = "";
+
+    if (!bookings.length) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text-muted);">No bookings found.</td></tr>`;
+      return;
+    }
+
+    bookings.forEach(b => {
+      _cache.bookings[b.id] = b;
+
+      const tr = document.createElement("tr");
+      const client = _cache.users[b.clientId] || { fullName: `User #${b.clientId}`, email: "" };
+      const service = _cache.services[b.serviceId] || { title: `Service #${b.serviceId}` };
+      
+      tr.setAttribute("data-searchable", `${client.fullName} ${service.title} ${b.appointmentDate} ${b.status}`);
+
+      // Expert select options
+      let expertOptions = `<option value="">-- Assign Expert --</option>`;
+      Object.values(_cache.members).forEach(m => {
+        const selected = (b.expertId && String(b.expertId) === String(m.id)) ? "selected" : "";
+        expertOptions += `<option value="${m.id}" ${selected}>${escapeHtml(m.name)}</option>`;
+      });
+
+      // Status options
+      const statuses = ["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"];
+      let statusOptions = "";
+      statuses.forEach(s => {
+        const selected = (b.status === s) ? "selected" : "";
+        statusOptions += `<option value="${s}" ${selected}>${s}</option>`;
+      });
+
+      // Display files beautifully
+      let attachmentHtml = "—";
+      if (b.attachmentUrl) {
+        const fileName = b.attachmentUrl.split("/").pop();
+        attachmentHtml = `<a href="${escapeHtml(b.attachmentUrl)}" target="_blank" class="attachment-link" style="display:inline-flex;align-items:center;gap:4px;color:#2563eb;font-size:0.85rem;"><svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>${escapeHtml(fileName)}</a>`;
+      }
+
+      tr.innerHTML = `
+        <td>
+          <div class="text-dark-inline">${escapeHtml(client.fullName)}</div>
+          <div style="font-size:0.8rem;color:var(--text-muted);">${escapeHtml(client.email)}</div>
+        </td>
+        <td class="text-dark-inline">${escapeHtml(service.title)}</td>
+        <td>
+          <div class="text-dark-inline">${escapeHtml(b.appointmentDate)}</div>
+          <div style="font-size:0.85rem;color:var(--text-muted);">${escapeHtml(b.timeSlot.substring(0, 5))}</div>
+        </td>
+        <td class="text-dark-inline">$${b.totalPrice.toFixed(2)}</td>
+        <td style="max-width:250px;">
+          <div style="font-size:0.85rem;white-space:pre-wrap;margin-bottom:4px;">${escapeHtml(b.messageContent || "")}</div>
+          <div>${attachmentHtml}</div>
+        </td>
+        <td>
+          <select class="admin-select" onchange="updateBookingExpert(${b.id}, this.value)" style="padding:0.35rem;border-radius:6px;border:1px solid var(--border-color);font-size:0.85rem;width:100%;max-width:160px;background:var(--bg-card);color:var(--text-dark);">
+            ${expertOptions}
+          </select>
+        </td>
+        <td>
+          <select class="admin-select status-select status-${b.status.toLowerCase()}" onchange="updateBookingStatus(${b.id}, this.value)" style="padding:0.35rem;border-radius:6px;border:1px solid var(--border-color);font-weight:600;font-size:0.85rem;width:100%;max-width:130px;">
+            ${statusOptions}
+          </select>
+        </td>
+        <td>
+          <div style="display:flex;gap:4px;">
+            <button class="btn-delete" onclick="deleteBooking(${b.id})" style="padding:0.35rem 0.6rem;font-size:0.8rem;gap:4px;border-radius:6px;background-color:#ef4444;color:#fff;border:none;cursor:pointer;">
+              <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>Delete
+            </button>
+          </div>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+  } catch (err) {
+    console.error("fetchAdminBookings error:", err);
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:2rem;color:#ef4444;">Could not load bookings.</td></tr>`;
+  }
+}
+
+async function updateBookingExpert(bookingId, expertId) {
+  try {
+    const response = await fetch(`/api/bookings/${bookingId}`, {
+      method: "PUT",
+      headers: adminHeaders(),
+      body: JSON.stringify({ expertId: expertId ? Number(expertId) : null })
+    });
+    if (!response.ok) throw new Error("Failed to update expert");
+    showToast("Expert assigned successfully!", "success");
+    fetchAdminBookings();
+  } catch (err) {
+    console.error(err);
+    showToast("Failed to assign expert: " + err.message, "error");
+  }
+}
+
+async function updateBookingStatus(bookingId, status) {
+  try {
+    const response = await fetch(`/api/bookings/${bookingId}`, {
+      method: "PUT",
+      headers: adminHeaders(),
+      body: JSON.stringify({ status })
+    });
+    if (!response.ok) throw new Error("Failed to update status");
+    showToast("Booking status updated successfully!", "success");
+    fetchAdminBookings();
+  } catch (err) {
+    console.error(err);
+    showToast("Failed to update status: " + err.message, "error");
+  }
+}
+
+async function deleteBooking(bookingId) {
+  if (!confirm("Are you sure you want to delete this booking appointment? This action cannot be undone.")) return;
+  try {
+    const response = await fetch(`/api/bookings/${bookingId}`, {
+      method: "DELETE",
+      headers: adminHeaders()
+    });
+    if (!response.ok) throw new Error("Failed to delete booking");
+    showToast("Booking deleted successfully!", "success");
+    fetchAdminBookings();
+  } catch (err) {
+    console.error(err);
+    showToast("Failed to delete booking: " + err.message, "error");
   }
 }
 
@@ -1722,7 +1958,7 @@ function openProjectModal(project) {
 
   modalOverlay.classList.add('is-open');
   document.body.style.overflow = 'hidden';
-  
+
   // Set active project tracker and fetch milestones in real-time
   activeProjectInModal = project.id;
   fetchAndRenderProjectMilestones(project.id);
@@ -1733,7 +1969,7 @@ function closeProjectModal() {
   if (!modalOverlay) return;
   modalOverlay.classList.remove('is-open');
   document.body.style.overflow = '';
-  
+
   // Clear active project tracker
   activeProjectInModal = null;
 }
@@ -1814,7 +2050,7 @@ function initMilestoneSSE() {
       // 2. If this update belongs to the active project in the open modal, update UI in real-time
       if (activeProjectInModal === payload.projectId && payload.milestone) {
         const m = payload.milestone;
-        
+
         // Update progress bar
         const progressFill = document.getElementById(`milestone-progress-fill-${m.id}`);
         const progressText = document.getElementById(`milestone-progress-text-${m.id}`);
@@ -1868,7 +2104,7 @@ function showLiveToast(eventType, message) {
 
   const toast = document.createElement('div');
   toast.className = 'live-toast';
-  
+
   let title = 'Project Milestone Update';
   let iconSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2z"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>`;
 
@@ -1911,26 +2147,26 @@ function showLiveToast(eventType, message) {
 let allProjects = [];
 
 function renderFilteredProjects(category) {
-    const projectsGrid = document.getElementById("projects-grid");
-    if (!projectsGrid) return;
+  const projectsGrid = document.getElementById("projects-grid");
+  if (!projectsGrid) return;
 
-    const filtered = category === "all"
-        ? allProjects
-        : allProjects.filter(p => (p.category || "").toLowerCase().includes(category.toLowerCase()));
+  const filtered = category === "all"
+    ? allProjects
+    : allProjects.filter(p => (p.category || "").toLowerCase().includes(category.toLowerCase()));
 
-    projectsGrid.innerHTML = "";
+  projectsGrid.innerHTML = "";
 
-    if (filtered.length === 0) {
-        projectsGrid.innerHTML = `<p style="text-align: center; grid-column: 1 / -1; color: var(--text-muted); padding: 3rem 0; font-weight: 500;">No projects found in this category.</p>`;
-        return;
-    }
+  if (filtered.length === 0) {
+    projectsGrid.innerHTML = `<p style="text-align: center; grid-column: 1 / -1; color: var(--text-muted); padding: 3rem 0; font-weight: 500;">No projects found in this category.</p>`;
+    return;
+  }
 
-    filtered.forEach((project, index) => {
-        const card = document.createElement("div");
-        card.className = "project-card project-card-anim";
-        card.style.animationDelay = `${index * 0.06}s`;
+  filtered.forEach((project, index) => {
+    const card = document.createElement("div");
+    card.className = "project-card project-card-anim";
+    card.style.animationDelay = `${index * 0.06}s`;
 
-        card.innerHTML = `
+    card.innerHTML = `
             <div class="project-image-wrapper">
                 <img class="project-image" src="${project.imageUrl}" alt="${escapeHtml(project.title)}"
                     onerror="this.src='https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=500&h=300'">
@@ -1946,67 +2182,67 @@ function renderFilteredProjects(category) {
             </div>
         `;
 
-        const elementsToClick = [
-            card.querySelector('.project-title-clickable'),
-            card.querySelector('.project-link'),
-            card.querySelector('.project-image-wrapper')
-        ];
-        elementsToClick.forEach(el => {
-            if (el) {
-                el.addEventListener('click', () => {
-                    openProjectModal(project);
-                });
-            }
+    const elementsToClick = [
+      card.querySelector('.project-title-clickable'),
+      card.querySelector('.project-link'),
+      card.querySelector('.project-image-wrapper')
+    ];
+    elementsToClick.forEach(el => {
+      if (el) {
+        el.addEventListener('click', () => {
+          openProjectModal(project);
         });
-
-        projectsGrid.appendChild(card);
+      }
     });
+
+    projectsGrid.appendChild(card);
+  });
 }
 
 async function fetchProjects() {
-    const projectsGrid = document.getElementById("projects-grid");
-    if (!projectsGrid) return;
+  const projectsGrid = document.getElementById("projects-grid");
+  if (!projectsGrid) return;
 
-    try {
-        const response = await fetch("/api/projects");
-        if (!response.ok) throw new Error("Failed to fetch projects");
-        allProjects = await response.json();
+  try {
+    const response = await fetch("/api/projects");
+    if (!response.ok) throw new Error("Failed to fetch projects");
+    allProjects = await response.json();
 
-        renderFilteredProjects("all");
+    renderFilteredProjects("all");
 
-        const filterContainer = document.getElementById("project-filters");
-        if (filterContainer) {
-            const buttons = filterContainer.querySelectorAll(".filter-btn");
-            buttons.forEach(btn => {
-                btn.addEventListener("click", () => {
-                    buttons.forEach(b => b.classList.remove("active"));
-                    btn.classList.add("active");
-                    renderFilteredProjects(btn.getAttribute("data-filter"));
-                });
-            });
-        }
-
-        const projectModalClose = document.getElementById('project-modal-close');
-        const projectModalOverlay = document.getElementById('project-modal-overlay');
-
-        if (projectModalClose) {
-            projectModalClose.addEventListener('click', closeProjectModal);
-        }
-
-        if (projectModalOverlay) {
-            projectModalOverlay.addEventListener('click', (e) => {
-                if (e.target === projectModalOverlay) closeProjectModal();
-            });
-        }
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') closeProjectModal();
+    const filterContainer = document.getElementById("project-filters");
+    if (filterContainer) {
+      const buttons = filterContainer.querySelectorAll(".filter-btn");
+      buttons.forEach(btn => {
+        btn.addEventListener("click", () => {
+          buttons.forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          renderFilteredProjects(btn.getAttribute("data-filter"));
         });
-    } catch (error) {
-        console.error("Error loading projects:", error);
-        projectsGrid.innerHTML = `<p class="error-msg">Could not load projects list. Please try again later.</p>`;
+      });
     }
-       
+
+    const projectModalClose = document.getElementById('project-modal-close');
+    const projectModalOverlay = document.getElementById('project-modal-overlay');
+
+    if (projectModalClose) {
+      projectModalClose.addEventListener('click', closeProjectModal);
+    }
+
+    if (projectModalOverlay) {
+      projectModalOverlay.addEventListener('click', (e) => {
+        if (e.target === projectModalOverlay) closeProjectModal();
+      });
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeProjectModal();
+    });
+  } catch (error) {
+    console.error("Error loading projects:", error);
+    projectsGrid.innerHTML = `<p class="error-msg">Could not load projects list. Please try again later.</p>`;
+  }
+
 }
 
 // =============================================
@@ -2025,11 +2261,11 @@ function initContactForm() {
   const selectOverlay = document.getElementById("service-select-overlay");
 
   if (nameInput) {
-    nameInput.value = sessionStorage.getItem("fullName") || sessionStorage.getItem("username") || "";
+    nameInput.value = localStorage.getItem("fullName") || sessionStorage.getItem("fullName") || localStorage.getItem("username") || sessionStorage.getItem("username") || "";
     nameInput.readOnly = true;
   }
   if (emailInput) {
-    emailInput.value = sessionStorage.getItem("email") || "";
+    emailInput.value = localStorage.getItem("email") || sessionStorage.getItem("email") || "";
     emailInput.readOnly = true;
   }
 
@@ -2108,12 +2344,12 @@ function initContactForm() {
       const finalTitle = `[Service: ${service}] ${title}`;
 
       const response = await fetch("/api/contacts", {
-        method:  "POST",
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": "Bearer " + (localStorage.getItem("token") || "")
         },
-        body:    JSON.stringify({ name, email, title: finalTitle, content })
+        body: JSON.stringify({ name, email, title: finalTitle, content })
       });
 
       const result = await response.json();
@@ -2192,11 +2428,11 @@ async function fetchInbox(email) {
       headers: { "Authorization": "Bearer " + token }
     });
     if (!response.ok) throw new Error(`Failed to fetch inbox: ${response.status}`);
-    
+
     const contacts = await response.json();
     window.inboxState.contacts = contacts;
     window.inboxState.selectedIds.clear(); // Reset selections
-    
+
     // Update "Select All" checkbox
     const selectAllCheckbox = document.getElementById("select-all-checkbox");
     if (selectAllCheckbox) selectAllCheckbox.checked = false;
@@ -2210,7 +2446,7 @@ async function fetchInbox(email) {
 
     inboxSection.style.display = "block";
     console.log("Inbox section displayed");
-    
+
     // Update quick inbox badge
     const quickInbox = document.getElementById("quick-inbox");
     if (quickInbox) {
@@ -2240,7 +2476,7 @@ function renderInboxPage() {
 
   const state = window.inboxState;
   const contacts = state.contacts;
-  
+
   if (contacts.length === 0) {
     container.innerHTML = `
       <div style="text-align:center;padding:3rem;color:var(--text-muted);">
@@ -2256,12 +2492,12 @@ function renderInboxPage() {
   // Calculate page bounds
   const totalItems = contacts.length;
   const totalPages = Math.ceil(totalItems / state.pageSize);
-  
+
   // Guard current page
   if (state.currentPage > totalPages) {
     state.currentPage = Math.max(1, totalPages);
   }
-  
+
   const startIndex = (state.currentPage - 1) * state.pageSize;
   const endIndex = Math.min(startIndex + state.pageSize, totalItems);
   const pageItems = contacts.slice(startIndex, endIndex);
@@ -2352,7 +2588,7 @@ function renderInboxPage() {
         pageBtn.className = "pagination-btn";
         pageBtn.textContent = i;
         pageBtn.style.cssText = "width:36px; height:36px; display:flex; align-items:center; justify-content:center; border-radius:50%; font-weight:600; font-size:0.85rem; border:1px solid var(--border-color); transition:all 0.2s; cursor:pointer;";
-        
+
         if (i === state.currentPage) {
           pageBtn.style.background = "linear-gradient(135deg, #00f0ff, #0070f3)";
           pageBtn.style.color = "#fff";
@@ -2394,10 +2630,10 @@ function renderInboxPage() {
 function updateDeleteSelectedBtnState() {
   const deleteSelectedBtn = document.getElementById("delete-selected-btn");
   if (!deleteSelectedBtn) return;
-  
+
   const state = window.inboxState;
   const count = state.selectedIds.size;
-  
+
   if (count > 0) {
     deleteSelectedBtn.removeAttribute("disabled");
     deleteSelectedBtn.style.background = "rgba(239, 68, 68, 0.3)";
@@ -2432,7 +2668,7 @@ function initInboxEventListeners(email) {
       }
       return;
     }
-    
+
     // Check if clicked individual checkbox
     const checkbox = e.target.closest(".message-checkbox");
     if (checkbox) {
@@ -2443,14 +2679,14 @@ function initInboxEventListeners(email) {
       } else {
         state.selectedIds.delete(id);
       }
-      
+
       // Update select-all checkbox state
       if (selectAll) {
         const visibleCheckboxes = container.querySelectorAll(".message-checkbox");
         const allChecked = Array.from(visibleCheckboxes).every(cb => cb.checked);
         selectAll.checked = allChecked && visibleCheckboxes.length > 0;
       }
-      
+
       updateDeleteSelectedBtnState();
     }
   });
@@ -2460,7 +2696,7 @@ function initInboxEventListeners(email) {
     selectAll.addEventListener("change", (e) => {
       const state = window.inboxState;
       const checked = e.target.checked;
-      
+
       // Select/deselect items on the CURRENT page
       const currentCheckboxes = container.querySelectorAll(".message-checkbox");
       currentCheckboxes.forEach(checkbox => {
@@ -2472,7 +2708,7 @@ function initInboxEventListeners(email) {
           state.selectedIds.delete(id);
         }
       });
-      
+
       updateDeleteSelectedBtnState();
     });
   }
@@ -2482,7 +2718,7 @@ function initInboxEventListeners(email) {
     deleteSelected.addEventListener("click", async () => {
       const state = window.inboxState;
       if (state.selectedIds.size === 0) return;
-      
+
       if (confirm(`Are you sure you want to delete the ${state.selectedIds.size} selected message(s)? This action cannot be undone.`)) {
         const idsArray = Array.from(state.selectedIds);
         const idsParam = idsArray.join(",");
@@ -3097,28 +3333,28 @@ async function loadAuthLogs(page = 0) {
 function switchAuditTab(tabId) {
   document.getElementById('dataTab').style.display = tabId === 'dataTab' ? 'block' : 'none';
   document.getElementById('authTab').style.display = tabId === 'authTab' ? 'block' : 'none';
-  
+
   const btnData = document.getElementById('btn-tab-data');
   const btnAuth = document.getElementById('btn-tab-auth');
-  
+
   if (tabId === 'dataTab') {
-      btnData.style.background = 'linear-gradient(135deg, rgba(37,99,235,0.1), rgba(79,70,229,0.1))';
-      btnData.style.border = '1px solid rgba(37,99,235,0.2)';
-      btnData.style.color = '#2563eb';
-      
-      btnAuth.style.background = 'transparent';
-      btnAuth.style.border = '1px solid transparent';
-      btnAuth.style.color = 'var(--text-muted)';
-      loadDataUsers(0);
+    btnData.style.background = 'linear-gradient(135deg, rgba(37,99,235,0.1), rgba(79,70,229,0.1))';
+    btnData.style.border = '1px solid rgba(37,99,235,0.2)';
+    btnData.style.color = '#2563eb';
+
+    btnAuth.style.background = 'transparent';
+    btnAuth.style.border = '1px solid transparent';
+    btnAuth.style.color = 'var(--text-muted)';
+    loadDataUsers(0);
   } else {
-      btnAuth.style.background = 'linear-gradient(135deg, rgba(37,99,235,0.1), rgba(79,70,229,0.1))';
-      btnAuth.style.border = '1px solid rgba(37,99,235,0.2)';
-      btnAuth.style.color = '#2563eb';
-      
-      btnData.style.background = 'transparent';
-      btnData.style.border = '1px solid transparent';
-      btnData.style.color = 'var(--text-muted)';
-      loadAuthLogs(0);
+    btnAuth.style.background = 'linear-gradient(135deg, rgba(37,99,235,0.1), rgba(79,70,229,0.1))';
+    btnAuth.style.border = '1px solid rgba(37,99,235,0.2)';
+    btnAuth.style.color = '#2563eb';
+
+    btnData.style.background = 'transparent';
+    btnData.style.border = '1px solid transparent';
+    btnData.style.color = 'var(--text-muted)';
+    loadAuthLogs(0);
   }
 }
 
@@ -3151,7 +3387,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   const toggle = document.getElementById('detail-only-changes-toggle');
   if (toggle) {
-    toggle.addEventListener('change', function() {
+    toggle.addEventListener('change', function () {
       renderComparisonTable();
     });
   }
@@ -3179,24 +3415,24 @@ async function loadUserAuditLogs(page = 0) {
       entry.style.alignItems = 'center';
       entry.style.padding = '0.75rem 0';
       entry.style.borderBottom = '1px solid #e5e7eb';
-      
+
       const dt = log.createdAt ? new Date(log.createdAt) : null;
-      const timeStr = dt ? dt.toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit', second:'2-digit'}) : '';
-      const dateStr = dt ? dt.toLocaleDateString('vi-VN', {day:'2-digit', month:'2-digit', year:'numeric'}) : '';
-      
+      const timeStr = dt ? dt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '';
+      const dateStr = dt ? dt.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
+
       let summaryText = 'Thay đổi dữ liệu';
       try {
-          const clean = (log.detail || '').replace(/^\[FAILED\]\s*/,'').replace(/^[^{[]*?({|\[)/,'$1');
-          const parsed = JSON.parse(clean);
-          if (Array.isArray(parsed)) {
-              const fields = parsed.map(d => d.field).join(', ');
-              summaryText = `Cập nhật các trường: <strong style="color:#2563eb;">${fields}</strong>`;
-          } else if (typeof parsed === 'object') {
-              const fields = Object.keys(parsed).filter(k => k !== 'id' && k !== 'createdAt' && k !== 'updatedAt').join(', ');
-              summaryText = `Tạo mới với các trường: <strong style="color:#059669;">${fields}</strong>`;
-          }
-      } catch(e) {
-          summaryText = log.detail || 'Thay đổi dữ liệu';
+        const clean = (log.detail || '').replace(/^\[FAILED\]\s*/, '').replace(/^[^{[]*?({|\[)/, '$1');
+        const parsed = JSON.parse(clean);
+        if (Array.isArray(parsed)) {
+          const fields = parsed.map(d => d.field).join(', ');
+          summaryText = `Cập nhật các trường: <strong style="color:#2563eb;">${fields}</strong>`;
+        } else if (typeof parsed === 'object') {
+          const fields = Object.keys(parsed).filter(k => k !== 'id' && k !== 'createdAt' && k !== 'updatedAt').join(', ');
+          summaryText = `Tạo mới với các trường: <strong style="color:#059669;">${fields}</strong>`;
+        }
+      } catch (e) {
+        summaryText = log.detail || 'Thay đổi dữ liệu';
       }
 
       const logJsonString = encodeURIComponent(JSON.stringify(log));
@@ -3230,98 +3466,98 @@ async function loadUserAuditLogs(page = 0) {
 let activeDetailLog = null;
 
 function openDetailModal(logJsonString) {
-    const log = JSON.parse(decodeURIComponent(logJsonString));
-    activeDetailLog = log;
+  const log = JSON.parse(decodeURIComponent(logJsonString));
+  activeDetailLog = log;
 
-    // Set titles & metadata
-    document.getElementById('detail-user-title').innerText = log.username || 'N/A';
-    document.getElementById('detail-table-title').innerText = log.tableName || 'N/A';
-    
-    // Set action badge color & text
-    const badge = document.getElementById('detail-action-badge');
-    badge.innerText = (log.action || '').toUpperCase();
-    if (log.action && log.action.toUpperCase().includes('UPDATE')) {
-        badge.style.background = '#eff6ff';
-        badge.style.color = '#2563eb';
-        badge.style.border = '1px solid #bfdbfe';
-    } else if (log.action && log.action.toUpperCase().includes('CREATE')) {
-        badge.style.background = '#ecfdf5';
-        badge.style.color = '#059669';
-        badge.style.border = '1px solid #a7f3d0';
-    } else if (log.action && log.action.toUpperCase().includes('DELETE')) {
-        badge.style.background = '#fef2f2';
-        badge.style.color = '#dc2626';
-        badge.style.border = '1px solid #fca5a5';
-    } else {
-        badge.style.background = '#f3f4f6';
-        badge.style.color = '#374151';
-        badge.style.border = '1px solid #d1d5db';
-    }
+  // Set titles & metadata
+  document.getElementById('detail-user-title').innerText = log.username || 'N/A';
+  document.getElementById('detail-table-title').innerText = log.tableName || 'N/A';
 
-    // Set avatar initial
-    document.getElementById('detail-avatar').innerText = (log.username || '?').charAt(0).toUpperCase();
-    document.getElementById('detail-performed-by').innerText = log.username || 'N/A';
+  // Set action badge color & text
+  const badge = document.getElementById('detail-action-badge');
+  badge.innerText = (log.action || '').toUpperCase();
+  if (log.action && log.action.toUpperCase().includes('UPDATE')) {
+    badge.style.background = '#eff6ff';
+    badge.style.color = '#2563eb';
+    badge.style.border = '1px solid #bfdbfe';
+  } else if (log.action && log.action.toUpperCase().includes('CREATE')) {
+    badge.style.background = '#ecfdf5';
+    badge.style.color = '#059669';
+    badge.style.border = '1px solid #a7f3d0';
+  } else if (log.action && log.action.toUpperCase().includes('DELETE')) {
+    badge.style.background = '#fef2f2';
+    badge.style.color = '#dc2626';
+    badge.style.border = '1px solid #fca5a5';
+  } else {
+    badge.style.background = '#f3f4f6';
+    badge.style.color = '#374151';
+    badge.style.border = '1px solid #d1d5db';
+  }
 
-    // Format date and time
-    const dt = log.createdAt ? new Date(log.createdAt) : null;
-    if (dt) {
-        document.getElementById('detail-date').innerText = dt.toLocaleDateString('vi-VN', {day:'2-digit', month:'2-digit', year:'numeric'});
-        document.getElementById('detail-time').innerText = dt.toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'}) + ' (Hanoi, Vietnam time)';
-    } else {
-        document.getElementById('detail-date').innerText = '-';
-        document.getElementById('detail-time').innerText = '-';
-    }
+  // Set avatar initial
+  document.getElementById('detail-avatar').innerText = (log.username || '?').charAt(0).toUpperCase();
+  document.getElementById('detail-performed-by').innerText = log.username || 'N/A';
 
-    // Footer
-    document.getElementById('detail-source-ip').innerText = log.ipAddress || 'Unknown';
-    // Simple hashCode to generate consistent mock session
-    let hash = 0;
-    const uaStr = log.userAgent || '';
-    for (let i = 0; i < uaStr.length; i++) {
-        hash = uaStr.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    document.getElementById('detail-session-id').innerText = log.userAgent ? ('SESS-' + Math.abs(hash).toString(16).toUpperCase().substring(0, 8)) : 'N/A';
+  // Format date and time
+  const dt = log.createdAt ? new Date(log.createdAt) : null;
+  if (dt) {
+    document.getElementById('detail-date').innerText = dt.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    document.getElementById('detail-time').innerText = dt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + ' (Hanoi, Vietnam time)';
+  } else {
+    document.getElementById('detail-date').innerText = '-';
+    document.getElementById('detail-time').innerText = '-';
+  }
 
-    // Render table
-    renderComparisonTable();
+  // Footer
+  document.getElementById('detail-source-ip').innerText = log.ipAddress || 'Unknown';
+  // Simple hashCode to generate consistent mock session
+  let hash = 0;
+  const uaStr = log.userAgent || '';
+  for (let i = 0; i < uaStr.length; i++) {
+    hash = uaStr.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  document.getElementById('detail-session-id').innerText = log.userAgent ? ('SESS-' + Math.abs(hash).toString(16).toUpperCase().substring(0, 8)) : 'N/A';
 
-    // Open modal
-    document.getElementById('auditDetailModal').classList.add('is-open');
+  // Render table
+  renderComparisonTable();
+
+  // Open modal
+  document.getElementById('auditDetailModal').classList.add('is-open');
 }
 
 function closeDetailModal() {
-    document.getElementById('auditDetailModal').classList.remove('is-open');
+  document.getElementById('auditDetailModal').classList.remove('is-open');
 }
 
 function renderComparisonTable() {
-    const container = document.getElementById('detail-comparison-table-container');
-    if (!activeDetailLog || !activeDetailLog.detail) {
-        container.innerHTML = '<span style="color:#6b7280; font-style:italic;">Không có dữ liệu</span>';
-        return;
+  const container = document.getElementById('detail-comparison-table-container');
+  if (!activeDetailLog || !activeDetailLog.detail) {
+    container.innerHTML = '<span style="color:#6b7280; font-style:italic;">Không có dữ liệu</span>';
+    return;
+  }
+
+  const showOnlyChanges = document.getElementById('detail-only-changes-toggle').checked;
+  let detailStr = activeDetailLog.detail;
+
+  // Check if FAILED
+  let isFailed = false;
+  let errorMessage = '';
+  let jsonPart = detailStr;
+  if (detailStr.startsWith('[FAILED]')) {
+    isFailed = true;
+    const separatorIdx = detailStr.indexOf(' | ');
+    if (separatorIdx !== -1) {
+      errorMessage = detailStr.substring(8, separatorIdx);
+      jsonPart = detailStr.substring(separatorIdx + 3);
+    } else {
+      errorMessage = detailStr.substring(8);
+      jsonPart = '';
     }
+  }
 
-    const showOnlyChanges = document.getElementById('detail-only-changes-toggle').checked;
-    let detailStr = activeDetailLog.detail;
-
-    // Check if FAILED
-    let isFailed = false;
-    let errorMessage = '';
-    let jsonPart = detailStr;
-    if (detailStr.startsWith('[FAILED]')) {
-        isFailed = true;
-        const separatorIdx = detailStr.indexOf(' | ');
-        if (separatorIdx !== -1) {
-            errorMessage = detailStr.substring(8, separatorIdx);
-            jsonPart = detailStr.substring(separatorIdx + 3);
-        } else {
-            errorMessage = detailStr.substring(8);
-            jsonPart = '';
-        }
-    }
-
-    let html = '';
-    if (isFailed) {
-        html += `
+  let html = '';
+  if (isFailed) {
+    html += `
             <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 0.6rem 0.8rem; margin-bottom: 0.6rem; color: #dc2626; font-size: 0.8rem; font-family: system-ui, -apple-system, sans-serif;">
                 <div style="font-weight: 700; display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">
                     Thao tác thất bại
@@ -3329,19 +3565,19 @@ function renderComparisonTable() {
                 <div style="font-family: monospace; font-size: 0.75rem; word-break: break-all;">${errorMessage}</div>
             </div>
         `;
-    }
+  }
 
-    if (!jsonPart || jsonPart === '(no payload)') {
-        container.innerHTML = html + '<span style="color:#6b7280; font-style:italic;">Không có nội dung chi tiết</span>';
-        return;
-    }
+  if (!jsonPart || jsonPart === '(no payload)') {
+    container.innerHTML = html + '<span style="color:#6b7280; font-style:italic;">Không có nội dung chi tiết</span>';
+    return;
+  }
 
-    try {
-        const clean = jsonPart.replace(/^\[FAILED\]\s*/,'').replace(/^[^{[]*?({|\[)/,'$1');
-        const parsed = JSON.parse(clean);
-        
-        if (Array.isArray(parsed)) {
-            let tableHtml = html + `
+  try {
+    const clean = jsonPart.replace(/^\[FAILED\]\s*/, '').replace(/^[^{[]*?({|\[)/, '$1');
+    const parsed = JSON.parse(clean);
+
+    if (Array.isArray(parsed)) {
+      let tableHtml = html + `
                 <div style="overflow-x: auto; border: 1px solid #e5e7eb; border-radius: 12px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.05); font-family: system-ui, -apple-system, sans-serif;">
                     <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.82rem;">
                         <thead>
@@ -3354,54 +3590,54 @@ function renderComparisonTable() {
                         <tbody>
             `;
 
-            let rowIndex = 0;
-            let renderedCount = 0;
+      let rowIndex = 0;
+      let renderedCount = 0;
 
-            parsed.forEach((diff) => {
-                const field = diff.field || 'unknown';
-                const oldVal = diff.old !== null ? String(diff.old) : '';
-                const newVal = diff.new !== null ? String(diff.new) : '';
-                const isChanged = diff.changed !== false;
+      parsed.forEach((diff) => {
+        const field = diff.field || 'unknown';
+        const oldVal = diff.old !== null ? String(diff.old) : '';
+        const newVal = diff.new !== null ? String(diff.new) : '';
+        const isChanged = diff.changed !== false;
 
-                if (showOnlyChanges && !isChanged) {
-                    return; // Hide unchanged fields
-                }
+        if (showOnlyChanges && !isChanged) {
+          return; // Hide unchanged fields
+        }
 
-                renderedCount++;
-                rowIndex++;
+        renderedCount++;
+        rowIndex++;
 
-                let beforeContent = '';
-                let afterContent = '';
-                let cellBgBefore = '#fff';
-                let cellBgAfter = '#fff';
+        let beforeContent = '';
+        let afterContent = '';
+        let cellBgBefore = '#fff';
+        let cellBgAfter = '#fff';
 
-                if (!isChanged) {
-                    // Unchanged row
-                    cellBgBefore = '#f9fafb';
-                    cellBgAfter = '#f9fafb';
-                    beforeContent = `<span style="background: #e5e7eb; color: #4b5563; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.78rem; font-weight: 500;">${newVal || '(trống)'} (No change)</span>`;
-                    afterContent = `<span style="background: #e5e7eb; color: #4b5563; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.78rem; font-weight: 500;">${newVal || '(trống)'} (No change)</span>`;
-                } else {
-                    // Changed row
-                    cellBgBefore = '#fef2f2';
-                    cellBgAfter = '#ecfdf5';
+        if (!isChanged) {
+          // Unchanged row
+          cellBgBefore = '#f9fafb';
+          cellBgAfter = '#f9fafb';
+          beforeContent = `<span style="background: #e5e7eb; color: #4b5563; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.78rem; font-weight: 500;">${newVal || '(trống)'} (No change)</span>`;
+          afterContent = `<span style="background: #e5e7eb; color: #4b5563; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.78rem; font-weight: 500;">${newVal || '(trống)'} (No change)</span>`;
+        } else {
+          // Changed row
+          cellBgBefore = '#fef2f2';
+          cellBgAfter = '#ecfdf5';
 
-                    beforeContent = oldVal !== '' 
-                        ? `<span style="color: #dc2626; text-decoration: line-through; font-family: monospace; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 4px;">
+          beforeContent = oldVal !== ''
+            ? `<span style="color: #dc2626; text-decoration: line-through; font-family: monospace; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 4px;">
                             ~${oldVal}~
                            </span>`
-                        : `<span style="color: #9ca3af; font-style: italic; font-size: 0.78rem;">(null)</span>`;
+            : `<span style="color: #9ca3af; font-style: italic; font-size: 0.78rem;">(null)</span>`;
 
-                    afterContent = newVal !== ''
-                        ? `<span style="color: #059669; font-weight: 600; font-family: monospace; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 4px;">
+          afterContent = newVal !== ''
+            ? `<span style="color: #059669; font-weight: 600; font-family: monospace; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 4px;">
                             ✓ ${newVal}
                            </span>`
-                        : `<span style="color: #dc2626; background: #fee2e2; border: 1px solid #fca5a5; padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+            : `<span style="color: #dc2626; background: #fee2e2; border: 1px solid #fca5a5; padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
                             Đã xóa
                            </span>`;
-                }
+        }
 
-                tableHtml += `
+        tableHtml += `
                     <tr style="border-bottom: 1px solid #e5e7eb;">
                         <td style="padding: 0.75rem 1rem; font-weight: 700; color: #4b5563; font-size: 0.78rem; font-family: system-ui, -apple-system, sans-serif;">
                             <span style="color: #9ca3af; margin-right: 8px; font-weight: 400; font-family: monospace;">${rowIndex}</span>
@@ -3411,27 +3647,27 @@ function renderComparisonTable() {
                         <td style="padding: 0.75rem 1rem; background: ${cellBgAfter};">${afterContent}</td>
                     </tr>
                 `;
-            });
+      });
 
-            if (renderedCount === 0) {
-                tableHtml += `
+      if (renderedCount === 0) {
+        tableHtml += `
                     <tr>
                         <td colspan="3" style="text-align: center; color: #9ca3af; padding: 2rem; font-style: italic;">
                             Không có thay đổi nào được ghi nhận.
                         </td>
                     </tr>
                 `;
-            }
+      }
 
-            tableHtml += `
+      tableHtml += `
                         </tbody>
                     </table>
                 </div>
             `;
-            container.innerHTML = tableHtml;
-        } else if (typeof parsed === 'object') {
-            // JSON Object representing a CREATE operation
-            let tableHtml = html + `
+      container.innerHTML = tableHtml;
+    } else if (typeof parsed === 'object') {
+      // JSON Object representing a CREATE operation
+      let tableHtml = html + `
                 <div style="overflow-x: auto; border: 1px solid #e5e7eb; border-radius: 12px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.05); font-family: system-ui, -apple-system, sans-serif;">
                     <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.82rem;">
                         <thead>
@@ -3444,24 +3680,24 @@ function renderComparisonTable() {
                         <tbody>
             `;
 
-            let rowIndex = 0;
-            const entries = Object.entries(parsed).filter(([key]) => key !== 'id' && key !== 'createdAt' && key !== 'updatedAt');
-            
-            entries.forEach(([key, val]) => {
-                rowIndex++;
-                let formattedVal = val !== null ? val.toString() : '';
-                if (formattedVal.length > 200) {
-                    formattedVal = formattedVal.substring(0, 197) + '...';
-                }
+      let rowIndex = 0;
+      const entries = Object.entries(parsed).filter(([key]) => key !== 'id' && key !== 'createdAt' && key !== 'updatedAt');
 
-                const beforeCell = `<span style="color: #9ca3af; font-style: italic; font-size: 0.78rem;">(null)</span>`;
-                const afterCell = formattedVal !== ''
-                    ? `<span style="color: #059669; font-weight: 600; font-family: monospace; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 4px;">
+      entries.forEach(([key, val]) => {
+        rowIndex++;
+        let formattedVal = val !== null ? val.toString() : '';
+        if (formattedVal.length > 200) {
+          formattedVal = formattedVal.substring(0, 197) + '...';
+        }
+
+        const beforeCell = `<span style="color: #9ca3af; font-style: italic; font-size: 0.78rem;">(null)</span>`;
+        const afterCell = formattedVal !== ''
+          ? `<span style="color: #059669; font-weight: 600; font-family: monospace; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 4px;">
                         ✓ ${formattedVal}
                        </span>`
-                    : `<span style="color: #9ca3af; font-style: italic; font-size: 0.78rem;">(null)</span>`;
+          : `<span style="color: #9ca3af; font-style: italic; font-size: 0.78rem;">(null)</span>`;
 
-                tableHtml += `
+        tableHtml += `
                     <tr style="border-bottom: 1px solid #e5e7eb;">
                         <td style="padding: 0.75rem 1rem; font-weight: 700; color: #4b5563; font-size: 0.78rem; font-family: system-ui, -apple-system, sans-serif;">
                             <span style="color: #9ca3af; margin-right: 8px; font-weight: 400; font-family: monospace;">${rowIndex}</span>
@@ -3471,23 +3707,23 @@ function renderComparisonTable() {
                         <td style="padding: 0.75rem 1rem; background: #ecfdf5;">${afterCell}</td>
                     </tr>
                 `;
-            });
+      });
 
-            tableHtml += `
+      tableHtml += `
                         </tbody>
                     </table>
                 </div>
             `;
-            container.innerHTML = tableHtml;
-        }
-    } catch (e) {
-        // Fallback to text box
-        container.innerHTML = html + `
+      container.innerHTML = tableHtml;
+    }
+  } catch (e) {
+    // Fallback to text box
+    container.innerHTML = html + `
             <div style="font-family: monospace; font-size: 0.82rem; background: #f9fafb; padding: 1rem; border-radius: 8px; border: 1px solid #e5e7eb; word-break: break-all; white-space: pre-wrap; color: #374151;">
                 ${jsonPart}
             </div>
         `;
-    }
+  }
 }
 
 // =========================================================================
@@ -3498,7 +3734,7 @@ let currentAdminProjectId = null;
 
 function openMilestoneModal(projectId) {
   currentAdminProjectId = projectId;
-  
+
   const project = _cache.projects[projectId];
   const titleEl = document.getElementById("milestone-project-title");
   if (titleEl && project) {
@@ -3555,7 +3791,7 @@ async function fetchAndRenderAdminMilestones(projectId) {
             <div style="display:flex; gap:0.35rem; align-items:center;">
               <span class="status-badge status-${m.status}" 
                     style="font-size:0.75rem; font-weight:700; padding:3px 10px; border-radius:20px; text-transform:uppercase;
-                    ${m.status==='COMPLETED'?'background:rgba(16,185,129,0.12);color:#10b981':m.status==='IN_PROGRESS'?'background:rgba(59,130,246,0.12);color:#3b82f6':m.status==='BLOCKED'?'background:rgba(239,68,68,0.12);color:#ef4444':'background:rgba(100,116,139,0.12);color:#64748b'}">
+                    ${m.status === 'COMPLETED' ? 'background:rgba(16,185,129,0.12);color:#10b981' : m.status === 'IN_PROGRESS' ? 'background:rgba(59,130,246,0.12);color:#3b82f6' : m.status === 'BLOCKED' ? 'background:rgba(239,68,68,0.12);color:#ef4444' : 'background:rgba(100,116,139,0.12);color:#64748b'}">
                 ${m.status.replace('_', ' ')}
               </span>
             </div>
@@ -3683,6 +3919,164 @@ function closeAuditTrail() {
   }
 }
 
+// =============================================
+//  ASSIGNMENT MODAL — Admin-only project assignments
+// =============================================
+
+let currentAssignmentProjectId = null;
+
+async function openAssignmentModal(projectId, projectTitle) {
+  currentAssignmentProjectId = projectId;
+  document.getElementById("assignment-project-title").textContent = `👥 Assignments: ${projectTitle}`;
+
+  const overlay = document.getElementById("assignment-modal-overlay");
+  if (overlay) {
+    overlay.classList.add("is-open");
+  }
+  await loadAssignmentData(projectId);
+}
+
+function closeAssignmentModal() {
+  const overlay = document.getElementById("assignment-modal-overlay");
+  if (overlay) {
+    overlay.classList.remove("is-open");
+  }
+  currentAssignmentProjectId = null;
+}
+
+async function loadAssignmentData(projectId) {
+  const token = localStorage.getItem("token") || localStorage.getItem("authToken");
+  const headers = { "Authorization": `Bearer ${token}` };
+
+  // Load existing assignments and clients
+  const [assignRes, clientRes, allUsersRes] = await Promise.all([
+    fetch(`/api/projects/${projectId}/assignments`, { headers }),
+    fetch(`/api/projects/${projectId}/clients`, { headers }),
+    fetch(`/api/admin/users`, { headers }).catch(() => ({ ok: false }))
+  ]);
+
+  const assignments = assignRes.ok ? await assignRes.json() : [];
+  const clients = clientRes.ok ? await clientRes.json() : [];
+  const allUsers = allUsersRes.ok ? await allUsersRes.json() : [];
+
+  renderAssignmentList(assignments);
+  renderClientList(clients);
+  populateMemberDropdown(allUsers.filter(u => u.role === "ROLE_MEMBER"), assignments.map(a => a.userId));
+  populateClientDropdown(allUsers.filter(u => u.role === "ROLE_USER"), clients.map(c => c.userId));
+}
+
+function renderAssignmentList(assignments) {
+  const el = document.getElementById("assignment-member-list");
+  if (!assignments.length) {
+    el.innerHTML = '<p style="color:#64748b;font-size:0.85rem;">No members assigned yet.</p>';
+    return;
+  }
+  el.innerHTML = assignments.map(a => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;">
+      <div>
+        <strong style="font-size:0.88rem;">${escapeHtml(a.fullName)}</strong>
+        <span style="font-size:0.75rem;color:#64748b;margin-left:6px;">(${escapeHtml(a.username)})</span><br/>
+        <span style="font-size:0.75rem;padding:2px 8px;border-radius:10px;font-weight:700;${a.projectRole === 'PM' ? 'background:rgba(37,99,235,.12);color:#2563eb' : 'background:rgba(245,158,11,.12);color:#d97706'}">
+          ${a.projectRole === 'PM' ? '★ PM' : '⚙ STAFF'}
+        </span>
+      </div>
+      <button onclick="removeAssignment(${a.userId})" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:0.75rem;text-decoration:underline;">Remove</button>
+    </div>`).join('');
+}
+
+function renderClientList(clients) {
+  const el = document.getElementById("assignment-client-list");
+  if (!clients.length) {
+    el.innerHTML = '<p style="color:#64748b;font-size:0.85rem;">No clients linked yet.</p>';
+    return;
+  }
+  el.innerHTML = clients.map(c => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;">
+      <div>
+        <strong style="font-size:0.88rem;">${escapeHtml(c.fullName)}</strong>
+        <span style="font-size:0.75rem;color:#64748b;margin-left:6px;">${escapeHtml(c.email)}</span>
+      </div>
+      <button onclick="removeClient(${c.userId})" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:0.75rem;text-decoration:underline;">Unlink</button>
+    </div>`).join('');
+}
+
+function populateMemberDropdown(members, alreadyAssignedIds) {
+  const sel = document.getElementById("assign-user-select");
+  sel.innerHTML = '<option value="">— Select a member —</option>';
+  members.forEach(u => {
+    if (!alreadyAssignedIds.includes(u.id)) {
+      sel.innerHTML += `<option value="${u.id}">${escapeHtml(u.fullName)} (${escapeHtml(u.username)})</option>`;
+    }
+  });
+}
+
+function populateClientDropdown(users, alreadyLinkedIds) {
+  const sel = document.getElementById("assign-client-select");
+  sel.innerHTML = '<option value="">— Select a client —</option>';
+  users.forEach(u => {
+    if (!alreadyLinkedIds.includes(u.id)) {
+      sel.innerHTML += `<option value="${u.id}">${escapeHtml(u.fullName)} (${escapeHtml(u.email)})</option>`;
+    }
+  });
+}
+
+async function submitAssignMember() {
+  const userId = document.getElementById("assign-user-select").value;
+  const role = document.getElementById("assign-role-select").value;
+  if (!userId) { alert("Please select a member."); return; }
+
+  const token = localStorage.getItem("token") || localStorage.getItem("authToken");
+  const res = await fetch(`/api/projects/${currentAssignmentProjectId}/assignments`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+    body: JSON.stringify({ userId: parseInt(userId), projectRole: role })
+  });
+  const data = await res.json();
+  if (res.ok) {
+    await loadAssignmentData(currentAssignmentProjectId);
+  } else {
+    alert(data.message || "Failed to assign member.");
+  }
+}
+
+async function submitAssignClient() {
+  const userId = document.getElementById("assign-client-select").value;
+  if (!userId) { alert("Please select a client."); return; }
+
+  const token = localStorage.getItem("token") || localStorage.getItem("authToken");
+  const res = await fetch(`/api/projects/${currentAssignmentProjectId}/clients`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+    body: JSON.stringify({ userId: parseInt(userId) })
+  });
+  const data = await res.json();
+  if (res.ok) {
+    await loadAssignmentData(currentAssignmentProjectId);
+  } else {
+    alert(data.message || "Failed to link client.");
+  }
+}
+
+async function removeAssignment(userId) {
+  if (!confirm("Remove this member from the project?")) return;
+  const token = localStorage.getItem("token") || localStorage.getItem("authToken");
+  await fetch(`/api/projects/${currentAssignmentProjectId}/assignments/${userId}`, {
+    method: "DELETE",
+    headers: { "Authorization": `Bearer ${token}` }
+  });
+  await loadAssignmentData(currentAssignmentProjectId);
+}
+
+async function removeClient(userId) {
+  if (!confirm("Unlink this client from the project?")) return;
+  const token = localStorage.getItem("token") || localStorage.getItem("authToken");
+  await fetch(`/api/projects/${currentAssignmentProjectId}/clients/${userId}`, {
+    method: "DELETE",
+    headers: { "Authorization": `Bearer ${token}` }
+  });
+  await loadAssignmentData(currentAssignmentProjectId);
+}
+
 // Hero H1 text click animation
 function initHeroTextClick() {
   const heroH1 = document.querySelector(".hero-content h1");
@@ -3731,5 +4125,154 @@ function initNavbarScrollEffects() {
 
     lastScrollY = currentScrollY;
   });
+}
+
+// =============================================
+//  Google Sign-In Logic (TikTok-style Popup Flow)
+// =============================================
+function initGoogleSignIn() {
+  const modalGoogleBtn = document.getElementById('modalGoogleSignInBtn');
+  if (modalGoogleBtn) {
+    modalGoogleBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      loginWithGooglePopup();
+    });
+  }
+
+  const loginGoogleBtn = document.getElementById('googleSignInBtn');
+  if (loginGoogleBtn) {
+    loginGoogleBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      loginWithGooglePopup();
+    });
+  }
+}
+
+function loginWithGooglePopup() {
+  const clientId = "675937212349-d7ihb1c7a0u53no9d71cdt0jcmjrbil9.apps.googleusercontent.com";
+  const modalAlert = document.getElementById("modal-login-alert") || document.getElementById("alertMessage");
+
+  if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
+    if (modalAlert) {
+      modalAlert.textContent = "Google Sign-In SDK chưa được tải, vui lòng tải lại trang.";
+      modalAlert.classList.add("alert-error");
+      modalAlert.style.display = "block";
+    } else {
+      alert("Google Sign-In SDK chưa được tải.");
+    }
+    return;
+  }
+
+  if (modalAlert) {
+    modalAlert.textContent = "Đang chờ bạn đăng nhập qua Google...";
+    modalAlert.classList.remove("alert-error", "alert-success");
+    modalAlert.style.display = "block";
+  }
+
+  try {
+    const client = google.accounts.oauth2.initTokenClient({
+      client_id: clientId,
+      scope: 'email profile',
+      callback: (response) => {
+        if (response && response.access_token) {
+          processGoogleToken(response.access_token, modalAlert);
+        } else {
+          if (modalAlert) {
+            modalAlert.textContent = "Đăng nhập Google bị hủy hoặc thất bại.";
+            modalAlert.classList.add("alert-error");
+          }
+        }
+      }
+    });
+    client.requestAccessToken();
+  } catch (error) {
+    console.error("Google initTokenClient error:", error);
+    if (modalAlert) {
+      modalAlert.textContent = "Không thể mở cửa sổ đăng nhập Google.";
+      modalAlert.classList.add("alert-error");
+    }
+  }
+}
+
+async function processGoogleToken(accessToken, modalAlert) {
+  try {
+    if (modalAlert) modalAlert.textContent = "Đang xác thực với server...";
+
+    const res = await fetch("/api/auth/google", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ credential: accessToken })
+    });
+
+    const data = await res.json();
+    if (res.ok && data.token) {
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("authToken", data.token);
+      localStorage.setItem("username", data.username);
+      localStorage.setItem("fullName", data.fullName);
+      localStorage.setItem("role", data.role);
+      localStorage.setItem("email", data.email);
+      localStorage.setItem("avatarUrl", data.avatarUrl || "");
+      localStorage.setItem("user", JSON.stringify({
+        username: data.username,
+        fullName: data.fullName,
+        email: data.email,
+        role: data.role,
+        avatarUrl: data.avatarUrl || null
+      }));
+      sessionStorage.setItem("token", data.token);
+      sessionStorage.setItem("authToken", data.token);
+      sessionStorage.setItem("username", data.username);
+      sessionStorage.setItem("fullName", data.fullName);
+      sessionStorage.setItem("role", data.role);
+      sessionStorage.setItem("email", data.email);
+      sessionStorage.setItem("avatarUrl", data.avatarUrl || "");
+
+      if (modalAlert) {
+        modalAlert.textContent = "Đăng nhập thành công! Đang chuyển hướng...";
+        modalAlert.classList.add("alert-success");
+      }
+
+      setTimeout(() => {
+        if (data.role === "ROLE_ADMIN") window.location.href = "admin.html";
+        else if (data.role === "Team_Member" || data.role === "ROLE_MEMBER") window.location.href = "member-contact.html";
+        else {
+          const redirect = sessionStorage.getItem("redirectAttempt");
+          if (redirect) {
+            sessionStorage.removeItem("redirectAttempt");
+            window.location.href = redirect;
+          } else {
+            window.location.href = "index.html";
+          }
+        }
+      }, 1000);
+    } else {
+      if (modalAlert) {
+        modalAlert.textContent = "Đăng nhập thất bại: " + (data.message || "");
+        modalAlert.classList.add("alert-error");
+      } else {
+        alert("Đăng nhập thất bại: " + (data.message || ""));
+      }
+    }
+  } catch (error) {
+    console.error("Google login error:", error);
+    if (modalAlert) {
+      modalAlert.textContent = "Không thể kết nối đến máy chủ.";
+      modalAlert.classList.add("alert-error");
+    }
+  }
+}
+
+window.addEventListener('load', () => {
+  initGoogleSignIn();
+});
+
+// Dynamically move footer-bottom inside footer-container for unified layout
+function initFooterMove() {
+  const container = document.querySelector(".footer-container");
+  const bottom = document.querySelector(".footer-bottom");
+  if (container && bottom) {
+    container.appendChild(bottom);
+  }
 }
 
