@@ -49,6 +49,7 @@ public class UserProfileController {
             Optional<Member> memberOpt = memberRepository.findByUserId(u.getId());
             if (memberOpt.isPresent()) {
                 Member m = memberOpt.get();
+                profile.put("memberId",       m.getId());
                 profile.put("fullName",       m.getName());
                 profile.put("avatarUrl",      m.getAvatarUrl());
                 profile.put("facebookUrl",    m.getFacebookUrl());
@@ -57,6 +58,7 @@ public class UserProfileController {
                 profile.put("skills",         m.getSkills());
                 profile.put("projectsWorked", m.getProjects());
             } else {
+                profile.put("memberId",       null);
                 profile.put("fullName",       u.getFullName());
                 profile.put("avatarUrl",      u.getAvatarUrl());
                 profile.put("facebookUrl",    null);

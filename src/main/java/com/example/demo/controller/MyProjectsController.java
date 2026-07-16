@@ -4,9 +4,13 @@ import com.example.demo.entity.ProjectAssignment;
 import com.example.demo.entity.ProjectAssignment.ProjectRole;
 import com.example.demo.entity.ProjectClient;
 import com.example.demo.entity.User;
+import com.example.demo.entity.ConsultationAppointment;
+import com.example.demo.entity.Service;
 import com.example.demo.repository.ProjectAssignmentRepository;
 import com.example.demo.repository.ProjectClientRepository;
 import com.example.demo.repository.UserRepository;
+import com.example.demo.repository.ConsultationAppointmentRepository;
+import com.example.demo.repository.ServiceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -40,6 +44,53 @@ public class MyProjectsController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ConsultationAppointmentRepository appointmentRepository;
+
+    @Autowired
+    private ServiceRepository serviceRepository;
+
+    /**
+     * Trả về các consultation booking đang được gán cho member đang đăng nhập
+     * (expertId = User.id của user hiện tại, user này có role ROLE_MEMBER), kèm tên khách hàng thật.
+     * Dùng cho phần "My Consultation Bookings" bên PM/member dashboard.
+     *
+     * Lưu ý: expert_id trỏ thẳng về User.id (role ROLE_MEMBER), KHÔNG phải bảng members -
+     * bảng members hầu như không tham gia phân quyền/đăng nhập của hệ thống.
+     */
+    @GetMapping("/bookings")
+    public ResponseEntity<?> getMyBookings(Authentication authentication) {
+        User user = resolveUser(authentication);
+
+        List<ConsultationAppointment> appointments =
+                appointmentRepository.findByExpertIdOrderByAppointmentDateDesc(user.getId());
+
+        List<Map<String, Object>> result = appointments.stream().map(a -> {
+            Map<String, Object> m = new HashMap<>();
+            m.put("id", a.getId());
+            m.put("status", a.getStatus().name());
+            m.put("appointmentDate", a.getAppointmentDate());
+            m.put("timeSlot", a.getTimeSlot());
+            m.put("messageContent", a.getMessageContent());
+            m.put("attachmentUrl", a.getAttachmentUrl());
+            m.put("totalPrice", a.getTotalPrice());
+
+            // Tên + email khách hàng thật, lấy từ User qua clientId
+            User client = userRepository.findById(a.getClientId()).orElse(null);
+            m.put("customerName", client != null ? client.getFullName() : "Unknown");
+            m.put("customerEmail", client != null ? client.getEmail() : "");
+            m.put("customerPhone", client != null ? client.getPhone() : "");
+
+            // Tên dịch vụ
+            Service service = serviceRepository.findById(a.getServiceId()).orElse(null);
+            m.put("serviceTitle", service != null ? service.getTitle() : "Service #" + a.getServiceId());
+
+            return m;
+        }).collect(Collectors.toList());
+
+        return ResponseEntity.ok(result);
+    }
 
     /** Returns all projects where the logged-in member is assigned as PM. */
     @GetMapping("/pm-projects")

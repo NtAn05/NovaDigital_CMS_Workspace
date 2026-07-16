@@ -28,7 +28,7 @@ public class ConsultationAppointment {
     private Long clientId; // FK -> User.id (thông tin khách hàng đã có sẵn ở User/user-profile)
 
     @Column(name = "expert_id", nullable = true)
-    private Long expertId; // FK -> Member.id (bảng chuyên gia/tư vấn viên có sẵn)
+    private Long expertId; // FK -> User.id (user có role ROLE_MEMBER) - KHÔNG phải bảng members, bảng đó hầu như không tham gia phân quyền hệ thống
 
     @Column(name = "appointment_date", nullable = false)
     private LocalDate appointmentDate;

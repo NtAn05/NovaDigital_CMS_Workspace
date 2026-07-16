@@ -6,6 +6,7 @@ import com.example.demo.repository.*;
 import com.example.demo.service.PasswordHasher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +17,7 @@ import java.time.LocalDate;
  * Only runs if the `users` table is empty, preventing duplicate seeding on restarts.
  */
 @Component
+@Order(1)
 public class DataSeeder implements CommandLineRunner {
 
     @Autowired private UserRepository userRepository;

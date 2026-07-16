@@ -20,4 +20,6 @@ public interface ConsultationAppointmentRepository extends JpaRepository<Consult
 
     // Lấy toàn bộ booking của khách hàng (client)
     List<ConsultationAppointment> findByClientIdOrderByAppointmentDateDesc(Long clientId);
+    // Lấy toàn bộ booking được gán cho 1 expert -> dùng cho "My Consultation Bookings" của member
+    List<ConsultationAppointment> findByExpertIdOrderByAppointmentDateDesc(Long expertId);
 }

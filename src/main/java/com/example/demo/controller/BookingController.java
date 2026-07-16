@@ -5,9 +5,14 @@ import com.example.demo.dto.BookingResponse;
 import com.example.demo.entity.AppointmentAddon;
 import com.example.demo.entity.ConsultationAppointment;
 import com.example.demo.entity.ServiceAddon;
+import com.example.demo.entity.Notification;
+import com.example.demo.entity.Service;
+import com.example.demo.entity.User;
 import com.example.demo.entity.enums.AppointmentStatus;
 import com.example.demo.repository.AppointmentAddonRepository;
 import com.example.demo.repository.ConsultationAppointmentRepository;
+import com.example.demo.repository.NotificationRepository;
+import com.example.demo.repository.ServiceRepository;
 import com.example.demo.service.BookingService;
 import com.example.demo.service.CaptchaService;
 import com.example.demo.repository.UserRepository;
@@ -35,6 +40,15 @@ public class BookingController {
 
     @Autowired
     private AppointmentAddonRepository appointmentAddonRepository;
+
+    @Autowired
+    private NotificationRepository notificationRepository;
+
+    @Autowired
+    private ServiceRepository serviceRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     // ── UC-06: giá gốc + danh sách Service_Addon của 1 service (DB-driven) ──
     @GetMapping("/pricing")
@@ -190,6 +204,8 @@ public class BookingController {
     public ResponseEntity<?> updateBooking(@PathVariable Long id, @RequestBody Map<String, Object> body) {
         return appointmentRepository.findById(id)
                 .<ResponseEntity<?>>map(a -> {
+                    AppointmentStatus statusBefore = a.getStatus();
+
                     if (body.containsKey("expertId")) {
                         Object expId = body.get("expertId");
                         if (expId != null && !expId.toString().isBlank()) {
@@ -202,6 +218,18 @@ public class BookingController {
                         a.setStatus(AppointmentStatus.valueOf(body.get("status").toString()));
                     }
                     ConsultationAppointment saved = appointmentRepository.save(a);
+
+                    // Vừa chuyển sang CONFIRMED (không phải đã confirmed từ trước) và đã có expert được gán
+                    // -> báo cho member đó biết, kèm tên khách hàng thật
+                    boolean justConfirmed = saved.getStatus() == AppointmentStatus.CONFIRMED
+                            && statusBefore != AppointmentStatus.CONFIRMED;
+                    if (justConfirmed && saved.getExpertId() != null) {
+                        notifyExpertBookingConfirmed(saved);
+                    }
+                    if (justConfirmed) {
+                        notifyClientBookingConfirmed(saved);
+                    }
+
                     List<Long> addonIds = appointmentAddonRepository.findByAppointmentId(saved.getId())
                             .stream().map(AppointmentAddon::getAddonId).collect(Collectors.toList());
                     double basePrice = 0;
@@ -252,6 +280,67 @@ public class BookingController {
                     error.put("message", "Appointment not found with id = " + id);
                     return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
                 });
+    }
+
+    /**
+     * Tạo thông báo trong app cho member được gán khi booking chuyển sang CONFIRMED,
+     * hiện đúng tên khách hàng thật (không phải "Khách hàng #123").
+     *
+     * Lưu ý: expert_id trỏ thẳng về User.id (user có role ROLE_MEMBER), KHÔNG phải Member.id -
+     * vì bảng members hầu như không tham gia vào phân quyền/đăng nhập của hệ thống, chỉ có users mới có.
+     */
+    private void notifyExpertBookingConfirmed(ConsultationAppointment appointment) {
+        Long expertUserId = appointment.getExpertId(); // đã là User.id, không cần tra qua Member nữa
+        if (expertUserId == null) return;
+
+        String customerName = userRepository.findById(appointment.getClientId())
+                .map(User::getFullName)
+                .orElse("Khách hàng #" + appointment.getClientId());
+
+        String serviceTitle = serviceRepository.findById(appointment.getServiceId())
+                .map(Service::getTitle)
+                .orElse("dịch vụ #" + appointment.getServiceId());
+
+        Notification noti = new Notification();
+        noti.setUserId(expertUserId);
+        noti.setTitle("You've been assigned a new consultation booking");
+        noti.setMessage(String.format(
+                "Customer %s's consultation \"%s\" has been confirmed for %s at %s.",
+                customerName, serviceTitle, appointment.getAppointmentDate(),
+                appointment.getTimeSlot().toString().substring(0, 5)
+        ));
+        noti.setLink("member-contact.html#my-bookings");
+        notificationRepository.save(noti);
+    }
+
+    /**
+     * Tạo thông báo trong app cho khách hàng (ROLE_USER, chính là clientId) khi booking
+     * họ đặt được xác nhận (CONFIRMED), kèm tên chuyên gia phụ trách nếu đã được gán.
+     */
+    private void notifyClientBookingConfirmed(ConsultationAppointment appointment) {
+        Long clientUserId = appointment.getClientId();
+        if (clientUserId == null) return;
+
+        String serviceTitle = serviceRepository.findById(appointment.getServiceId())
+                .map(Service::getTitle)
+                .orElse("dịch vụ #" + appointment.getServiceId());
+
+        String expertName = appointment.getExpertId() != null
+                ? userRepository.findById(appointment.getExpertId())
+                        .map(User::getFullName)
+                        .orElse(null)
+                : null;
+
+        Notification noti = new Notification();
+        noti.setUserId(clientUserId);
+        noti.setTitle("Your consultation booking has been confirmed");
+        noti.setMessage(String.format(
+                "Your consultation \"%s\" on %s at %s has been confirmed%s.",
+                serviceTitle, appointment.getAppointmentDate(),
+                appointment.getTimeSlot().toString().substring(0, 5),
+                expertName != null ? " — your expert will be " + expertName : ""
+        ));
+        notificationRepository.save(noti);
     }
 
     private BookingResponse toResponse(ConsultationAppointment a, double basePrice, double addonsPrice, List<Long> addonIds) {

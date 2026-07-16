@@ -95,10 +95,17 @@
     .sse-dot { width: 8px; height: 8px; border-radius: 50%; background: #22d3a5; animation: pulse 1.5s infinite; flex-shrink: 0; }
     @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(1.5)} }
 
-    .section-header { display: flex; align-items: center; gap: 10px; font-size: 0.8rem; font-weight: 700; color: var(--text-muted, #64748b); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem; margin-top: 0.5rem; justify-content: flex-end; }
+    .section-header { display: flex; align-items: center; gap: 10px; font-size: 0.8rem; font-weight: 700; color: var(--text-muted, #64748b); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem; margin-top: 0.5rem; justify-content: flex-start; }
     .section-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
     .dot-pm { background: #22d3a5; }
     .dot-staff { background: #f59e0b; }
+    .dot-booking { background: #0891b2; }
+
+    .booking-status-badge { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; display: inline-block; margin-bottom: 10px; }
+    .booking-status-badge.status-pending { background: #fef3c7; color: #d97706; }
+    .booking-status-badge.status-confirmed { background: rgba(34,211,165,.12); color: #059669; }
+    .booking-status-badge.status-cancelled { background: rgba(239,68,68,.12); color: #dc2626; }
+    .booking-status-badge.status-completed { background: rgba(37,99,235,.12); color: #2563eb; }
 
     .project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.25rem; margin-bottom: 2.25rem; }
     .project-card { background: #fff; border: 1px solid var(--border-color, #e2e8f0); border-radius: 14px; overflow: hidden; transition: transform .2s, box-shadow .2s; box-shadow: 0 1px 4px rgba(0,0,0,.04); }
@@ -339,6 +346,12 @@
           </a>
         </li>
         <li>
+          <a id="nav-bookings" onclick="switchTab('bookings')">
+            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Bookings
+          </a>
+        </li>
+        <li>
           <a href="user-profile.html">
             <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             My Profile
@@ -433,6 +446,23 @@
               <tr><td colspan="6" style="text-align:center;padding:2rem;color:#64748b;">Loading...</td></tr>
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- Tab: Bookings -->
+      <div id="tab-bookings" class="tab-pane">
+        <div class="panel-header">
+          <div>
+            <h1>My Consultation Bookings</h1>
+            <p class="panel-subtitle">Consultation bookings assigned to you as an expert</p>
+          </div>
+        </div>
+        <div class="section-header">
+          <span class="section-dot dot-booking"></span>
+          Assigned Bookings
+        </div>
+        <div class="project-grid" id="myBookingsGrid">
+          <div class="spinner"></div>
         </div>
       </div>
 
@@ -559,6 +589,13 @@
       if (navEl) navEl.classList.add('active');
 
       if (name === 'contacts') fetchMemberContacts();
+      if (name === 'bookings') loadMyBookings();
+    }
+
+    // If arriving from a notification link like member-contact.html#my-bookings,
+    // jump straight into the Bookings tab so the anchor is actually visible.
+    if (window.location.hash === '#my-bookings') {
+      switchTab('bookings');
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -609,6 +646,52 @@
 
     function escHtml(str) {
       return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    //  Load My Consultation Bookings
+    // ─────────────────────────────────────────────────────────────────────────
+    async function loadMyBookings() {
+      const headers = { 'Authorization': `Bearer ${pmToken}` };
+      try {
+        const res = await fetch('/api/my/bookings', { headers });
+        if (!res.ok) throw new Error('bad response');
+        const bookings = await res.json();
+        renderMyBookings(bookings);
+      } catch (err) {
+        console.error('[loadMyBookings] fetch error:', err);
+        document.getElementById('myBookingsGrid').innerHTML =
+          `<div class="empty-state" style="color:#ef4444;">⚠ Could not load bookings.</div>`;
+      }
+    }
+
+    function renderMyBookings(bookings) {
+      const container = document.getElementById('myBookingsGrid');
+      if (!bookings.length) {
+        container.innerHTML = `<div class="empty-state"><span class="emoji">📅</span>No consultation bookings assigned to you yet.</div>`;
+        return;
+      }
+      container.innerHTML = bookings.map(b => `
+        <div class="project-card">
+          <div class="project-card-header">
+            <span class="booking-status-badge status-${b.status.toLowerCase()}">${b.status}</span>
+            <h3>${escHtml(b.customerName)}</h3>
+            <p>
+              <strong>${escHtml(b.serviceTitle)}</strong><br>
+              📅 ${escHtml(b.appointmentDate)} — 🕒 ${escHtml(String(b.timeSlot).substring(0, 5))}<br>
+              ${b.customerEmail ? `✉️ ${escHtml(b.customerEmail)}<br>` : ''}
+              ${b.customerPhone ? `📞 ${escHtml(b.customerPhone)}<br>` : ''}
+              ${b.messageContent ? `💬 ${escHtml(b.messageContent)}` : ''}
+            </p>
+          </div>
+          <div class="project-card-footer">
+            <span class="category">$${Number(b.totalPrice).toFixed(2)}</span>
+            ${b.attachmentUrl
+              ? `<a href="${escHtml(b.attachmentUrl)}" target="_blank" class="btn-manage btn-manage-staff">View Attachment</a>`
+              : ''}
+          </div>
+        </div>
+      `).join('');
     }
 
     function renderProjectGrid(containerId, projects, isPm) {
