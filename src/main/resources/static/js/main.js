@@ -10,17 +10,13 @@
   }
 })();
 
-// Sync auth from localStorage → sessionStorage for new tabs/windows
+// Clear persistent authentication keys if a new browser session starts (empty sessionStorage)
 function initSessionClean() {
   const sessionToken = sessionStorage.getItem("token");
-  const localToken = localStorage.getItem("token") || localStorage.getItem("authToken");
-
-  if (!sessionToken && localToken) {
-    // New tab/window: copy localStorage → sessionStorage so route guards work
+  if (!sessionToken) {
     const authKeys = ["token", "authToken", "username", "fullName", "role", "email", "avatarUrl", "user", "userId"];
     authKeys.forEach(key => {
-      const val = localStorage.getItem(key);
-      if (val) sessionStorage.setItem(key, val);
+      localStorage.removeItem(key);
     });
   }
 }
@@ -374,22 +370,6 @@ function initModalLoginForm() {
       const data = await response.json();
 
       if (response.ok && data.token) {
-        // Write to localStorage
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("authToken", data.token);
-        localStorage.setItem("username", data.username);
-        localStorage.setItem("fullName", data.fullName);
-        localStorage.setItem("role", data.role);
-        localStorage.setItem("email", data.email);
-        localStorage.setItem("avatarUrl", data.avatarUrl || "");
-        localStorage.setItem("user", JSON.stringify({
-          username: data.username,
-          fullName: data.fullName,
-          email: data.email,
-          role: data.role,
-          avatarUrl: data.avatarUrl || null
-        }));
-
         // Write to sessionStorage for route guard and header sync compatibility
         sessionStorage.setItem("token", data.token);
         sessionStorage.setItem("authToken", data.token);
@@ -398,6 +378,13 @@ function initModalLoginForm() {
         sessionStorage.setItem("role", data.role);
         sessionStorage.setItem("email", data.email);
         sessionStorage.setItem("avatarUrl", data.avatarUrl || "");
+        sessionStorage.setItem("user", JSON.stringify({
+          username: data.username,
+          fullName: data.fullName,
+          email: data.email,
+          role: data.role,
+          avatarUrl: data.avatarUrl || null
+        }));
 
         showModalAlert("Login successful! Redirecting...", true, "modal-login-alert");
 
@@ -781,23 +768,6 @@ function initLoginForm() {
       const data = await response.json();
 
       if (response.ok && data.token) {
-        // Store both 'token' (legacy) and 'authToken' (used by new dashboards) in localStorage
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("authToken", data.token);
-        localStorage.setItem("username", data.username);
-        localStorage.setItem("fullName", data.fullName);
-        localStorage.setItem("role", data.role);
-        localStorage.setItem("email", data.email);
-        localStorage.setItem("avatarUrl", data.avatarUrl || "");
-        // Store full user object for PM / Client dashboards
-        localStorage.setItem("user", JSON.stringify({
-          username: data.username,
-          fullName: data.fullName,
-          email: data.email,
-          role: data.role,
-          avatarUrl: data.avatarUrl || null
-        }));
-
         // Write to sessionStorage for route guard and header sync compatibility
         sessionStorage.setItem("token", data.token);
         sessionStorage.setItem("authToken", data.token);
@@ -806,6 +776,13 @@ function initLoginForm() {
         sessionStorage.setItem("role", data.role);
         sessionStorage.setItem("email", data.email);
         sessionStorage.setItem("avatarUrl", data.avatarUrl || "");
+        sessionStorage.setItem("user", JSON.stringify({
+          username: data.username,
+          fullName: data.fullName,
+          email: data.email,
+          role: data.role,
+          avatarUrl: data.avatarUrl || null
+        }));
 
         showAlert("Login successful! Redirecting...", true);
 
@@ -4373,20 +4350,6 @@ function formatNotificationTime(iso) {
 
       const data = await res.json();
       if (res.ok && data.token) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("authToken", data.token);
-        localStorage.setItem("username", data.username);
-        localStorage.setItem("fullName", data.fullName);
-        localStorage.setItem("role", data.role);
-        localStorage.setItem("email", data.email);
-        localStorage.setItem("avatarUrl", data.avatarUrl || "");
-        localStorage.setItem("user", JSON.stringify({
-          username: data.username,
-          fullName: data.fullName,
-          email: data.email,
-          role: data.role,
-          avatarUrl: data.avatarUrl || null
-        }));
         sessionStorage.setItem("token", data.token);
         sessionStorage.setItem("authToken", data.token);
         sessionStorage.setItem("username", data.username);
@@ -4394,6 +4357,13 @@ function formatNotificationTime(iso) {
         sessionStorage.setItem("role", data.role);
         sessionStorage.setItem("email", data.email);
         sessionStorage.setItem("avatarUrl", data.avatarUrl || "");
+        sessionStorage.setItem("user", JSON.stringify({
+          username: data.username,
+          fullName: data.fullName,
+          email: data.email,
+          role: data.role,
+          avatarUrl: data.avatarUrl || null
+        }));
 
         if (modalAlert) {
           modalAlert.textContent = "Đăng nhập thành công! Đang chuyển hướng...";

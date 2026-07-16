@@ -372,7 +372,6 @@
           if (res.ok) {
             const profile = await res.json();
             userId = profile.id;
-            localStorage.setItem('userId', userId);
             sessionStorage.setItem('userId', userId);
           }
         } catch (e) {
