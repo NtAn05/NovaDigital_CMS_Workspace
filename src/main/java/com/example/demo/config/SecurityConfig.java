@@ -62,7 +62,7 @@ public class SecurityConfig {
                 .requestMatchers("/", "/index.html", "/about.html", "/services.html", "/portfolio.html",
                                "/contact.html", "/login.html", "/register.html", "/member.html", "/member-contact.html", "/admin.html", "/forgot-password.html", "/inbox.html", "/user-profile.html",
                                "/pm-dashboard.html", "/client-dashboard.html", "/booking.html","/rented-project.html", "/member-profile.html",
-                               "/resource-allocation.html").permitAll()
+                               "/resource-allocation.html", "/transaction.html", "/payment-success.html", "/payment-cancel.html").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/uploads/**", "/favicon.ico").permitAll()
                 
                 // Auth APIs
@@ -72,7 +72,13 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/projects", "/api/projects/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/services", "/api/services/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/members", "/api/members/**").permitAll()
+                .requestMatchers("/api/bookings/my").authenticated()
                 .requestMatchers("/api/bookings/**").permitAll()
+
+                // PayOS Payment Routes
+                .requestMatchers("/api/payments/payos-webhook").permitAll()
+                .requestMatchers("/api/payments/status/*").permitAll()
+                .requestMatchers("/api/payments/**").authenticated()
 
                 // Milestone SSE Stream: public so Client View can subscribe without login
                 .requestMatchers(HttpMethod.GET, "/api/milestones/stream").permitAll()

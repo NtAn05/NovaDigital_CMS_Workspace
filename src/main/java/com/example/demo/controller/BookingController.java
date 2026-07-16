@@ -144,6 +144,32 @@ public class BookingController {
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(saved, basePrice, addonsPrice, request.getAddonIds()));
     }
 
+    @GetMapping("/my")
+    public ResponseEntity<?> getMyBookings() {
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || auth instanceof org.springframework.security.authentication.AnonymousAuthenticationToken) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Vui lòng đăng nhập"));
+        }
+        String username = auth.getName();
+        User user = userRepository.findByUsername(username).orElse(null);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Không tìm thấy tài khoản người dùng"));
+        }
+
+        List<ConsultationAppointment> appointments = appointmentRepository.findByClientIdOrderByAppointmentDateDesc(user.getId());
+        List<BookingResponse> responses = appointments.stream().map(a -> {
+            List<Long> addonIds = appointmentAddonRepository.findByAppointmentId(a.getId())
+                    .stream().map(AppointmentAddon::getAddonId).collect(Collectors.toList());
+            double basePrice = 0;
+            try {
+                basePrice = bookingService.resolveBasePrice(a.getServiceId());
+            } catch (Exception e) {}
+            double addonsPrice = a.getTotalPrice() - basePrice;
+            return toResponse(a, basePrice, addonsPrice, addonIds);
+        }).collect(Collectors.toList());
+        return ResponseEntity.ok(responses);
+    }
+
     @GetMapping
     public ResponseEntity<?> getAllBookings() {
         List<ConsultationAppointment> appointments = appointmentRepository.findAll();

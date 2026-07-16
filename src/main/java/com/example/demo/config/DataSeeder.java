@@ -194,6 +194,8 @@ public class DataSeeder implements CommandLineRunner {
         m.setStatus(status);
         m.setProgressPercentage(progress);
         m.setDueDate(dueDate);
+        m.setPrice(1000.0 + (double) (Math.abs(name.hashCode()) % 5) * 500.0);
+        m.setPaid(false);
         projectMilestoneRepository.save(m);
     }
 }
