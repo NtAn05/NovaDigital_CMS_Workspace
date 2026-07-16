@@ -27,6 +27,8 @@ public class MilestoneResponse {
     private MilestoneStatus status;
     private Integer progressPercentage;
     private LocalDate dueDate;
+    private Double price;
+    private Boolean paid;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -41,6 +43,8 @@ public class MilestoneResponse {
         dto.setStatus(m.getStatus());
         dto.setProgressPercentage(m.getProgressPercentage());
         dto.setDueDate(m.getDueDate());
+        dto.setPrice(m.getPrice());
+        dto.setPaid(m.getPaid());
         dto.setCreatedAt(m.getCreatedAt());
         dto.setUpdatedAt(m.getUpdatedAt());
         return dto;

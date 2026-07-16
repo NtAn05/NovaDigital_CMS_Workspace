@@ -55,6 +55,16 @@ public class ProjectMilestone {
     @Column(name = "due_date")
     private LocalDate dueDate;
 
+    @Column(name = "price")
+    private Double price = 1500.0;
+
+    @Column(name = "paid")
+    private Boolean paid = false;
+
+    public Boolean getPaid() {
+        return this.paid != null ? this.paid : false;
+    }
+
     // ── Audit Timestamps ──────────────────────────────────
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
