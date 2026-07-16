@@ -13,7 +13,7 @@ public interface ConsultationAppointmentRepository extends JpaRepository<Consult
     // -> dùng để khóa timeslot đã đặt trên calendar (UC-07)
     List<ConsultationAppointment> findByExpertIdAndAppointmentDateAndStatusNot(
             Long expertId, LocalDate appointmentDate, AppointmentStatus status);
-    
+
 
     // Lấy toàn bộ booking của khách hàng (client)
     List<ConsultationAppointment> findByClientIdOrderByAppointmentDateDesc(Long clientId);
