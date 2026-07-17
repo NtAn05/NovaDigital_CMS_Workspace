@@ -487,7 +487,7 @@ function checkRouteGuard() {
 
   // Admin MUST stay in admin.html or user-profile.html
   if (token && role === "ROLE_ADMIN") {
-    if (page !== "admin.html" && page !== "user-profile.html") {
+    if (page !== "admin.html" && page !== "user-profile.html" && page !== "admin-messages.html") {
       window.location.href = "admin.html";
       return;
     }
@@ -718,7 +718,7 @@ function updateNavbarAuth() {
   }
 
   // Inject theme toggle button next to navbar links
-  injectThemeToggle();
+  // injectThemeToggle();
 }
 
 // User Logout Logic
@@ -937,8 +937,18 @@ function initAdminDashboard() {
   fetchAdminMembersTable();
   fetchAdminProjectsTable();
   fetchAdminServicesTable();
-  fetchAdminDashboardStats();
   fetchAdminBookings();
+  fetchAdminDashboardStats();
+
+  // Handle cross-page panel routing via URL query parameter
+  const urlParams = new URLSearchParams(window.location.search);
+  const panelParam = urlParams.get('panel');
+  if (panelParam) {
+    const navLink = document.getElementById('nav-' + panelParam);
+    if (navLink) {
+      switchAdminPanel(panelParam, navLink);
+    }
+  }
 
 }
   // =============================================
@@ -1373,9 +1383,6 @@ function initAdminDashboard() {
         </td>
         <td>
           <div class="action-btns">
-            <button class="btn-edit" style="background:#6366f1; color:#fff; border-color:#6366f1;" onmouseover="this.style.background='#4f46e5'; this.style.borderColor='#4f46e5';" onmouseout="this.style.background='#6366f1'; this.style.borderColor='#6366f1';" onclick="openUserMessagesModal(${u.id})">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;margin-right:2px;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>Messages
-            </button>
             <button class="btn-edit"   onclick="openCrudModal('user', ${u.id})">
               <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit
             </button>
@@ -1577,7 +1584,6 @@ function initAdminDashboard() {
   async function fetchAdminContacts() {
     const tableBody = document.getElementById("contacts-table-body");
     const statsCount = document.getElementById("stat-messages-count");
-    if (!tableBody) return;
 
     try {
       const token = getAdminToken();
@@ -1587,11 +1593,13 @@ function initAdminDashboard() {
       if (!response.ok) throw new Error("Failed to fetch contact submissions");
       const contacts = await response.json();
 
+      if (statsCount) statsCount.textContent = contacts.length;
+
+      if (!tableBody) return;
       tableBody.innerHTML = "";
 
       if (contacts.length === 0) {
         tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;">No contact messages found.</td></tr>`;
-        if (statsCount) statsCount.textContent = "0";
         return;
       }
 
@@ -4478,14 +4486,14 @@ function initFooterMove() {
       const cardMembers = document.getElementById("stat-members-count");
       const cardProjects = document.getElementById("stat-projects-count");
       const cardServices = document.getElementById("stat-services-count");
-      const cardAppointments = document.getElementById("stat-appointments-count");
+      const cardTransactions = document.getElementById("stat-transactions-count");
 
-      if (cardMessages) cardMessages.textContent = data.messagesCount;
-      if (cardUsers) cardUsers.textContent = data.accountsCount;
-      if (cardMembers) cardMembers.textContent = data.membersCount;
-      if (cardProjects) cardProjects.textContent = data.projectsCount;
-      if (cardServices) cardServices.textContent = data.servicesCount;
-      if (cardAppointments) cardAppointments.textContent = data.appointmentsCount;
+      if (cardMessages) cardMessages.textContent = data.messagesCount ?? "—";
+      if (cardUsers) cardUsers.textContent = data.accountsCount ?? "—";
+      if (cardMembers) cardMembers.textContent = data.membersCount ?? "—";
+      if (cardProjects) cardProjects.textContent = data.projectsCount ?? "—";
+      if (cardServices) cardServices.textContent = data.servicesCount ?? "—";
+      if (cardTransactions) cardTransactions.textContent = data.transactionsCount ?? "—";
 
       // Render the chart
       renderRevenueChart(data.revenueData);
@@ -4596,217 +4604,10 @@ function initFooterMove() {
     });
   }
 
-  // =============================================
-  //  Admin – User Messages & Replies Management
-  // =============================================
-  let currentMessageUser = null;
-  let currentUserMessages = [];
-  let activeMessageTab = 'not-replied';
-  let activeReplyMessageId = null;
 
-  window.openUserMessagesModal = async function (userId) {
-    const user = _cache.users[userId];
-    if (!user) return;
-
-    currentMessageUser = user;
-    activeMessageTab = 'not-replied';
-    activeReplyMessageId = null;
-
-    document.getElementById("user-messages-modal-title").textContent = `Messages from ${user.fullName} (${user.email})`;
-    hideReplySection();
-
-    // Set tab buttons initial states
-    updateMessageTabStyles();
-
-    const tbody = document.getElementById("messages-table-body");
-    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--text-muted);">Loading messages...</td></tr>`;
-
-    const modal = document.getElementById("user-messages-modal-overlay");
-    modal.classList.add("open");
-
-    try {
-      const token = getAdminToken();
-      const response = await fetch(`/api/contacts/my?email=${encodeURIComponent(user.email)}`, {
-        headers: token ? { "Authorization": "Bearer " + token } : {}
-      });
-      if (!response.ok) throw new Error("Failed to fetch user messages");
-      currentUserMessages = await response.json();
-
-      renderUserMessagesTable();
-    } catch (err) {
-      console.error(err);
-      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:2rem;color:#ef4444;">Error: ${err.message}</td></tr>`;
-    }
-  }
-
-  window.closeUserMessagesModal = function () {
-    const modal = document.getElementById("user-messages-modal-overlay");
-    modal.classList.remove("open");
-    currentMessageUser = null;
-    currentUserMessages = [];
-    activeMessageTab = 'not-replied';
-    activeReplyMessageId = null;
-  }
-
-  window.switchMessageTab = function (tab) {
-    activeMessageTab = tab;
-    updateMessageTabStyles();
-    hideReplySection();
-    renderUserMessagesTable();
-  }
-
-  function updateMessageTabStyles() {
-    const btnNotReplied = document.getElementById("btn-msg-not-replied");
-    const btnReplied = document.getElementById("btn-msg-replied");
-
-    if (activeMessageTab === 'not-replied') {
-      btnNotReplied.style.background = "linear-gradient(135deg, rgba(37,99,235,0.1), rgba(79,70,229,0.1))";
-      btnNotReplied.style.border = "1px solid rgba(37,99,235,0.2)";
-      btnNotReplied.style.color = "#2563eb";
-
-      btnReplied.style.background = "transparent";
-      btnReplied.style.border = "1px solid transparent";
-      btnReplied.style.color = "var(--text-muted)";
-    } else {
-      btnReplied.style.background = "linear-gradient(135deg, rgba(37,99,235,0.1), rgba(79,70,229,0.1))";
-      btnReplied.style.border = "1px solid rgba(37,99,235,0.2)";
-      btnReplied.style.color = "#2563eb";
-
-      btnNotReplied.style.background = "transparent";
-      btnNotReplied.style.border = "1px solid transparent";
-      btnNotReplied.style.color = "var(--text-muted)";
-    }
-  }
-
-  function renderUserMessagesTable() {
-    const headerRow = document.getElementById("messages-table-header");
-    const tbody = document.getElementById("messages-table-body");
-
-    if (!tbody || !headerRow) return;
-
-    // Filter messages
-    const filtered = currentUserMessages.filter(msg => {
-      const hasReply = msg.reply && msg.reply.trim().length > 0;
-      return activeMessageTab === 'not-replied' ? !hasReply : hasReply;
-    });
-
-    if (activeMessageTab === 'not-replied') {
-      headerRow.innerHTML = `
-      <th style="width: 150px;">Sent At</th>
-      <th style="width: 150px;">Title</th>
-      <th>Content</th>
-      <th style="width: 100px;">Actions</th>
-    `;
-
-      if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--text-muted);">No unreplied messages from this user.</td></tr>`;
-        return;
-      }
-
-      tbody.innerHTML = filtered.map(msg => `
-      <tr>
-        <td style="white-space:nowrap;font-size:0.8rem;">${new Date(msg.createdAt).toLocaleString()}</td>
-        <td style="font-weight:600;color:var(--text-dark);">${escapeHtml(msg.title || "")}</td>
-        <td style="max-width:300px;white-space:pre-wrap;font-size:0.85rem;">${escapeHtml(msg.content || "")}</td>
-        <td>
-          <button class="btn-edit" style="background:#2563eb; color:#fff; border-color:#2563eb;" onclick="showReplySection(${msg.id}, '${escapeHtml(msg.title || '')}')">
-            Reply
-          </button>
-        </td>
-      </tr>
-    `).join('');
-    } else {
-      headerRow.innerHTML = `
-      <th style="width: 120px;">Sent At</th>
-      <th style="width: 120px;">Title</th>
-      <th>Content</th>
-      <th>Reply Message</th>
-      <th style="width: 120px;">Replied At</th>
-    `;
-
-      if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);">No replied messages from this user.</td></tr>`;
-        return;
-      }
-
-      tbody.innerHTML = filtered.map(msg => `
-      <tr>
-        <td style="white-space:nowrap;font-size:0.8rem;">${new Date(msg.createdAt).toLocaleString()}</td>
-        <td style="font-weight:600;color:var(--text-dark);">${escapeHtml(msg.title || "")}</td>
-        <td style="max-width:200px;white-space:pre-wrap;font-size:0.85rem;color:var(--text-muted);">${escapeHtml(msg.content || "")}</td>
-        <td style="max-width:250px;white-space:pre-wrap;font-size:0.85rem;color:#059669;font-weight:500;">${escapeHtml(msg.reply || "")}</td>
-        <td style="white-space:nowrap;font-size:0.8rem;">${new Date(msg.repliedAt).toLocaleString()}</td>
-      </tr>
-    `).join('');
-    }
-  }
-
-  window.showReplySection = function (msgId, title) {
-    activeReplyMessageId = msgId;
-    document.getElementById("reply-to-title").textContent = `Reply to Message: "${title}"`;
-    document.getElementById("reply-text-area").value = "";
-    document.getElementById("message-reply-section").style.display = "block";
-    document.getElementById("reply-text-area").focus();
-  }
-
-  window.hideReplySection = function () {
-    activeReplyMessageId = null;
-    document.getElementById("message-reply-section").style.display = "none";
-    document.getElementById("reply-text-area").value = "";
-  }
-
-  window.submitMessageReply = async function () {
-    if (!activeReplyMessageId) return;
-
-    const textarea = document.getElementById("reply-text-area");
-    const text = textarea.value.trim();
-
-    if (!text) {
-      alert("Please enter a reply message.");
-      return;
-    }
-
-    const btn = document.getElementById("btn-send-reply");
-    btn.disabled = true;
-    btn.textContent = "Sending...";
-
-    try {
-      const token = getAdminToken();
-      const response = await fetch(`/api/contacts/${activeReplyMessageId}/reply`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": token ? "Bearer " + token : ""
-        },
-        body: JSON.stringify({ message: text })
-      });
-
-      if (!response.ok) throw new Error("Failed to send reply");
-
-      hideReplySection();
-
-      // Refresh messages
-      if (currentMessageUser) {
-        const refreshRes = await fetch(`/api/contacts/my?email=${encodeURIComponent(currentMessageUser.email)}`, {
-          headers: token ? { "Authorization": "Bearer " + token } : {}
-        });
-        if (refreshRes.ok) {
-          currentUserMessages = await refreshRes.json();
-        }
-      }
-
-      renderUserMessagesTable();
-    } catch (err) {
-      console.error(err);
-      alert("Error sending reply: " + err.message);
-    } finally {
-      btn.disabled = false;
-      btn.textContent = "Send Reply";
-    }
-  }
 
   window.toggleSidebar = function () {
     document.body.classList.toggle("sidebar-collapsed");
     const isCollapsed = document.body.classList.contains("sidebar-collapsed");
     localStorage.setItem("adminSidebarCollapsed", isCollapsed);
-}
+  }

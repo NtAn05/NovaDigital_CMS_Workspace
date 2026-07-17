@@ -134,6 +134,36 @@ public class ContactController {
         }
     }
 
+    @GetMapping("/admin/user-messages")
+    public ResponseEntity<?> getAdminUserMessages() {
+        java.util.List<Contact> contacts = contactService.getAllContacts();
+        java.util.List<java.util.Map<String, Object>> result = new java.util.ArrayList<>();
+        
+        for (Contact contact : contacts) {
+            java.util.Optional<com.example.demo.entity.User> userOpt = userRepository.findByEmail(contact.getEmail());
+            if (userOpt.isPresent()) {
+                com.example.demo.entity.User u = userOpt.get();
+                if ("ROLE_USER".equalsIgnoreCase(u.getRole())) {
+                    java.util.Map<String, Object> map = new java.util.HashMap<>();
+                    map.put("id", contact.getId());
+                    map.put("username", u.getUsername());
+                    map.put("fullName", u.getFullName());
+                    map.put("email", contact.getEmail());
+                    map.put("phone", u.getPhone() != null ? u.getPhone() : "");
+                    map.put("title", contact.getTitle());
+                    map.put("content", contact.getContent());
+                    boolean isReplied = contact.getReply() != null && !contact.getReply().trim().isEmpty();
+                    map.put("replied", isReplied);
+                    map.put("reply", contact.getReply());
+                    map.put("createdAt", contact.getCreatedAt());
+                    map.put("repliedAt", contact.getRepliedAt());
+                    result.add(map);
+                }
+            }
+        }
+        return ResponseEntity.ok(result);
+    }
+
     private com.example.demo.entity.User getCurrentUser() {
         org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
         if (auth == null || !auth.isAuthenticated()) {
