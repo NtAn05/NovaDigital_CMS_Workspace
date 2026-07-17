@@ -50,6 +50,15 @@ public class BookingController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private CaptchaService captchaService;
+
+    // ── Chống spam: sinh captcha ký tự mới ──
+    @GetMapping("/captcha")
+    public ResponseEntity<?> getCaptcha() {
+        return ResponseEntity.ok(captchaService.generateCaptcha());
+    }
+
     // ── UC-06: giá gốc + danh sách Service_Addon của 1 service (DB-driven) ──
     @GetMapping("/pricing")
     public ResponseEntity<?> getPricing(@RequestParam Long serviceId) {
@@ -93,6 +102,12 @@ public class BookingController {
     @PostMapping
     public ResponseEntity<?> createBooking(@RequestBody BookingRequest request) {
         Map<String, Object> error = new HashMap<>();
+
+        // Chống spam: bắt buộc captcha đúng mới cho tạo booking (token dùng 1 lần, tự hết hạn sau 5 phút)
+        if (!captchaService.validateCaptcha(request.getCaptchaToken(), request.getCaptchaAnswer())) {
+            error.put("message", "Mã xác nhận không đúng hoặc đã hết hạn, vui lòng thử lại.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        }
 
         if (request.getServiceId() == null) { error.put("message", "Vui lòng chọn dịch vụ"); return ResponseEntity.badRequest().body(error); }
         if (request.getClientId() == null) { error.put("message", "Thiếu client_id (User)"); return ResponseEntity.badRequest().body(error); }

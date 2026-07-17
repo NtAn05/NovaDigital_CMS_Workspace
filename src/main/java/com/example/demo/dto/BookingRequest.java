@@ -15,5 +15,5 @@ public class BookingRequest {
     private String messageContent;
     private String attachmentUrl;
     private String captchaToken;
-    private Integer captchaAnswer;
+    private String captchaAnswer;
 }
