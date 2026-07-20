@@ -4642,129 +4642,40 @@ async function getChatbotConfig() {
   }
 }
 
-async function callGeminiDirectly(userMessage) {
+async function callGroqDirectly(userMessage) {
   const config = await getChatbotConfig();
   if (!config || !config.apiKey) throw new Error('[Debug] Could not fetch /api/chatbot/config — is the server running?');
 
   const apiKey = config.apiKey;
+  const groqModel = config.model || 'llama-3.3-70b-versatile';
+  const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+  
+  try {
+    const res = await fetch(GROQ_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: groqModel,
+        messages: [
+          { role: 'system', content: CHATBOT_SYSTEM_PROMPT },
+          { role: 'user', content: userMessage }
+        ]
+      })
+    });
 
-  // Try models in priority order (newer projects use gemini-2.0-flash)
-  const models = [
-    config.model || 'gemini-2.0-flash',
-    'gemini-2.0-flash',
-    'gemini-2.0-flash-lite',
-    'gemini-1.5-flash',
-    'gemini-pro',
-  ];
-
-  const body = JSON.stringify({
-    system_instruction: { parts: [{ text: CHATBOT_SYSTEM_PROMPT }] },
-    contents: [{ role: 'user', parts: [{ text: userMessage }] }],
-    generationConfig: { temperature: 0.7, maxOutputTokens: 512 }
-  });
-
-  const errors = [];
-
-  // Check if user is using an OpenRouter key (starts with sk-or-)
-  if (apiKey.startsWith('sk-or-')) {
-    const openRouterModel = config.model || 'google/gemini-2.0-flash:free';
-    const OR_URL = 'https://openrouter.ai/api/v1/chat/completions';
+    if (res.ok) {
+      const data = await res.json();
+      return data?.choices?.[0]?.message?.content || 'I received an empty response.';
+    }
     
-    try {
-      const res = await fetch(OR_URL, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model: openRouterModel,
-          messages: [
-            { role: 'system', content: CHATBOT_SYSTEM_PROMPT },
-            { role: 'user', content: userMessage }
-          ]
-        })
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        return data?.choices?.[0]?.message?.content || 'I received an empty response.';
-      }
-      
-      const errBody = await res.json().catch(() => ({}));
-      throw new Error(`OpenRouter HTTP ${res.status}: ${JSON.stringify(errBody)}`);
-    } catch (e) {
-      throw new Error(`[Debug] OpenRouter failed: ${e.message}`);
-    }
+    const errBody = await res.json().catch(() => ({}));
+    throw new Error(`Groq HTTP ${res.status}: ${JSON.stringify(errBody)}`);
+  } catch (e) {
+    throw new Error(`[Debug] Groq failed: ${e.message}`);
   }
-
-  // Check if user is using a Groq key (starts with gsk_)
-  if (apiKey.startsWith('gsk_')) {
-    const groqModel = config.model && config.model.includes('llama') ? config.model : 'llama-3.3-70b-versatile';
-    const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
-    
-    try {
-      const res = await fetch(GROQ_URL, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          model: groqModel,
-          messages: [
-            { role: 'system', content: CHATBOT_SYSTEM_PROMPT },
-            { role: 'user', content: userMessage }
-          ]
-        })
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        return data?.choices?.[0]?.message?.content || 'I received an empty response.';
-      }
-      
-      const errBody = await res.json().catch(() => ({}));
-      throw new Error(`Groq HTTP ${res.status}: ${JSON.stringify(errBody)}`);
-    } catch (e) {
-      throw new Error(`[Debug] Groq failed: ${e.message}`);
-    }
-  }
-
-  // Original Google Gemini Logic
-  for (const model of [...new Set(models)]) {
-    const BASE = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
-
-    // Auth methods: x-goog-api-key (for AQ. keys), then ?key= (for AIza. keys)
-    const attempts = [
-      { label: `${model}+x-goog-api-key`, url: BASE,              headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey } },
-      { label: `${model}+?key=`,          url: BASE + '?key=' + apiKey, headers: { 'Content-Type': 'application/json' } },
-    ];
-
-    for (const attempt of attempts) {
-      try {
-        const res = await fetch(attempt.url, { method: 'POST', headers: attempt.headers, body });
-        console.log(`[Chatbot] ${attempt.label} → HTTP ${res.status}`);
-
-        if (res.ok) {
-          const data = await res.json();
-          return data?.candidates?.[0]?.content?.parts?.[0]?.text
-            || 'I received a response but could not read it.';
-        }
-
-        const errBody = await res.json().catch(() => ({ error: { message: 'unknown' } }));
-        const msg = errBody?.error?.message || JSON.stringify(errBody);
-        console.warn(`[Chatbot] ${attempt.label} failed (${res.status}):`, msg);
-        errors.push(`${attempt.label}(${res.status}): ${msg}`);
-
-      } catch (e) {
-        console.warn(`[Chatbot] ${attempt.label} threw:`, e.message);
-        errors.push(`${attempt.label}: ${e.message}`);
-      }
-    }
-  }
-
-  throw new Error('[Debug] All attempts failed:\n' + errors.join('\n'));
 }
 
 function initChatbot() {
@@ -4843,7 +4754,7 @@ function initChatbot() {
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
     try {
-      const reply = await callGeminiDirectly(text);
+      const reply = await callGroqDirectly(text);
       typingDiv.remove();
       renderBubble('bot', reply);
       addToHistory('bot', reply);

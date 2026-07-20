@@ -17,18 +17,18 @@ import java.util.Map;
 @RequestMapping("/api/chatbot")
 public class ChatbotController {
 
-    @Value("${gemini.api.key}")
-    private String geminiApiKey;
+    @Value("${groq.api.key}")
+    private String groqApiKey;
 
-    @Value("${gemini.model:gemini-1.5-flash}")
-    private String geminiModel;
+    @Value("${groq.model:llama-3.3-70b-versatile}")
+    private String groqModel;
 
     /** Frontend fetches this once to get the key + model */
     @GetMapping("/config")
     public ResponseEntity<?> config() {
         return ResponseEntity.ok(Map.of(
-            "apiKey", geminiApiKey,
-            "model",  geminiModel
+            "apiKey", groqApiKey,
+            "model",  groqModel
         ));
     }
 }
