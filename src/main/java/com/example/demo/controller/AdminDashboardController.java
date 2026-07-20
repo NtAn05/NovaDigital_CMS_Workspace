@@ -1,6 +1,7 @@
 package com.example.demo.controller;
 
 import com.example.demo.entity.ConsultationAppointment;
+import com.example.demo.entity.PaymentTransaction;
 import com.example.demo.entity.enums.AppointmentStatus;
 import com.example.demo.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,10 +39,16 @@ public class AdminDashboardController {
     @Autowired
     private ConsultationAppointmentRepository appointmentRepository;
 
+    @Autowired
+    private PaymentTransactionRepository paymentTransactionRepository;
+
     @GetMapping
     public ResponseEntity<?> getDashboardStats() {
         long messagesCount = contactRepository.count();
-        long accountsCount = userRepository.count();
+        // Only count users with ROLE_USER
+        long accountsCount = userRepository.findAll().stream()
+                .filter(u -> "ROLE_USER".equals(u.getRole()))
+                .count();
         long membersCount = memberRepository.count();
         long projectsCount = projectRepository.count();
         long servicesCount = serviceRepository.count();
@@ -57,14 +65,19 @@ public class AdminDashboardController {
             monthlyRevenue.put(key, 0.0);
         }
 
-        for (ConsultationAppointment app : appointments) {
-            if (app.getStatus() != AppointmentStatus.CANCELLED && app.getAppointmentDate() != null) {
-                LocalDate date = app.getAppointmentDate();
-                String key = String.format("%d-%02d", date.getYear(), date.getMonthValue());
-                double price = app.getTotalPrice() != null ? app.getTotalPrice() : 0.0;
-                monthlyRevenue.merge(key, price, Double::sum);
+        List<PaymentTransaction> transactions = paymentTransactionRepository.findAll();
+        for (PaymentTransaction tx : transactions) {
+            if ("PAID".equalsIgnoreCase(tx.getStatus()) && tx.getCreatedAt() != null) {
+                LocalDateTime ldt = tx.getCreatedAt();
+                String key = String.format("%d-%02d", ldt.getYear(), ldt.getMonthValue());
+                double amount = tx.getAmount() != null ? tx.getAmount() : 0.0;
+                monthlyRevenue.merge(key, amount, Double::sum);
             }
         }
+
+        long transactionsCount = transactions.stream()
+                .filter(tx -> "PAID".equalsIgnoreCase(tx.getStatus()))
+                .count();
 
         Map<String, Object> response = new HashMap<>();
         response.put("messagesCount", messagesCount);
@@ -73,6 +86,7 @@ public class AdminDashboardController {
         response.put("projectsCount", projectsCount);
         response.put("servicesCount", servicesCount);
         response.put("appointmentsCount", appointmentsCount);
+        response.put("transactionsCount", transactionsCount);
         response.put("revenueData", monthlyRevenue);
 
         return ResponseEntity.ok(response);

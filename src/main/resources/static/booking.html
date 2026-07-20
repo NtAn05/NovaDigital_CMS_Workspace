@@ -6,8 +6,6 @@
   <meta name="description" content="NovaDigital - Book a consultation, pick add-on packages and see your price update live.">
   <title>Book a Consultation | NovaDigital</title>
   <link rel="stylesheet" href="/css/style.css">
-  <!-- Google reCAPTCHA v2 -->
-  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
   <style>
     .booking-wrap { max-width: 960px; margin: 0 auto; padding: 40px 20px 80px; }
     .booking-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 28px; }
@@ -93,6 +91,23 @@
     #formMsg { margin-top:10px; font-size:13px; }
     #formMsg.error { color:#d63031; }
     #formMsg.success { color:#00b894; }
+
+    .captcha-box { display:flex; align-items:center; gap:10px; margin-bottom: 8px; }
+    .captcha-code-display {
+      flex: 1; user-select: none; text-align:center; padding: 10px 14px;
+      background: repeating-linear-gradient(45deg, #f2f2f7, #f2f2f7 6px, #eaeaf2 6px, #eaeaf2 12px);
+      border: 1px solid #d9d9e6; border-radius: 10px;
+      font-family: 'Courier New', monospace; font-weight: 800; font-size: 22px; letter-spacing: 6px;
+      color: #333;
+    }
+    .captcha-code-display span { display:inline-block; }
+    .captcha-code-display span:nth-child(odd) { transform: rotate(-6deg); }
+    .captcha-code-display span:nth-child(even) { transform: rotate(6deg); color:#6c5ce7; }
+    .captcha-refresh-btn {
+      padding: 10px 14px; border: 1px solid #d9d9e6; border-radius: 10px;
+      background: #fff; cursor: pointer; font-size: 16px; line-height: 1;
+    }
+    .captcha-refresh-btn:hover { background: #f5f5f8; }
   </style>
 </head>
 <body>
@@ -186,17 +201,15 @@
               </div>
             </div>
 
-            <!-- CAPTCHA anti-spam -->
-            <div class="captcha-wrapper">
-              <div class="g-recaptcha" id="bookingCaptcha"
-                   data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"
-                   data-callback="onCaptchaVerified"
-                   data-expired-callback="onCaptchaExpired">
+            <!-- CAPTCHA anti-spam - chuỗi ký tự tự sinh, không cần dịch vụ ngoài -->
+            <div class="field">
+              <label>Security Check *</label>
+              <div class="captcha-box">
+                <div class="captcha-code-display" id="captchaCodeDisplay">Loading...</div>
+                <button type="button" class="captcha-refresh-btn" id="captchaRefreshBtn" title="Get a new code">⟳</button>
               </div>
+              <input type="text" id="captchaAnswerInput" placeholder="Type the code above" autocomplete="off">
             </div>
-            <small style="display:block;text-align:center;color:#aaa;font-size:11px;margin-bottom:8px;">
-              Using test key — replace with your real reCAPTCHA site key before going live.
-            </small>
 
             <button type="submit" class="btn-primary" id="submitBtn" disabled>Confirm Booking</button>
             <div id="formMsg"></div>
@@ -303,17 +316,25 @@
     let chosenDate = null;
     let chosenStart = null;
     let confirmedStart = null;
-    let captchaVerified = false;
+    let captchaToken = null;
     let attachedFile = null;
     let defaultExpertId = null; // Loaded dynamically to satisfy the backend API requirements
 
-    // ── CAPTCHA callbacks ───────────────────────────────────────────
-    function onCaptchaVerified() {
-      captchaVerified = true;
-      validateForm();
-    }
-    function onCaptchaExpired() {
-      captchaVerified = false;
+    // ── CAPTCHA: sinh chuỗi ký tự ngẫu nhiên, tự xác thực ở server ────
+    async function loadCaptcha() {
+      const displayEl = document.getElementById('captchaCodeDisplay');
+      displayEl.textContent = 'Loading...';
+      document.getElementById('captchaAnswerInput').value = '';
+      try {
+        const res = await fetch(`${API}/api/bookings/captcha`);
+        const data = await res.json();
+        captchaToken = data.token;
+        // Tách từng ký tự ra <span> riêng để CSS xoay lệch, khó bot OCR đơn giản đọc theo hàng thẳng
+        displayEl.innerHTML = data.code.split('').map(ch => `<span>${ch}</span>`).join('');
+      } catch (e) {
+        displayEl.textContent = 'Failed to load';
+        captchaToken = null;
+      }
       validateForm();
     }
 
@@ -333,6 +354,7 @@
       fillUserInfo();
       loadServices();
       loadDefaultExpert();
+      loadCaptcha();
       bindEvents();
     });
 
@@ -372,7 +394,6 @@
           if (res.ok) {
             const profile = await res.json();
             userId = profile.id;
-            localStorage.setItem('userId', userId);
             sessionStorage.setItem('userId', userId);
           }
         } catch (e) {
@@ -487,6 +508,8 @@
       document.getElementById('dateInput').addEventListener('change', onDateChange);
       document.getElementById('confirmSlotBtn').addEventListener('click', confirmSlot);
       document.getElementById('bookingForm').addEventListener('submit', submitBooking);
+      document.getElementById('captchaRefreshBtn').addEventListener('click', loadCaptcha);
+      document.getElementById('captchaAnswerInput').addEventListener('input', validateForm);
 
       const dateInput = document.getElementById('dateInput');
       dateInput.min = new Date().toISOString().split('T')[0];
@@ -578,7 +601,8 @@
       const ok = document.getElementById('serviceSelect').value &&
                  document.getElementById('clientIdInput').value &&
                  chosenDate && confirmedStart &&
-                 captchaVerified;
+                 captchaToken &&
+                 document.getElementById('captchaAnswerInput').value.trim() !== '';
       document.getElementById('submitBtn').disabled = !ok;
     }
 
@@ -589,8 +613,8 @@
       msg.className = '';
 
       // Double-check CAPTCHA
-      if (!captchaVerified) {
-        msg.textContent = 'Please complete the CAPTCHA.';
+      if (!captchaToken || !document.getElementById('captchaAnswerInput').value.trim()) {
+        msg.textContent = 'Please enter the security code.';
         msg.className = 'error';
         return;
       }
@@ -635,7 +659,9 @@
           addonIds: Array.from(selectedAddonIds),
           appointmentDate: chosenDate,
           timeSlot: confirmedStart,
-          messageContent: finalMessage
+          messageContent: finalMessage,
+          captchaToken: captchaToken,
+          captchaAnswer: document.getElementById('captchaAnswerInput').value.trim()
         };
 
         const res = await fetch(`${API}/api/bookings`, {
@@ -654,6 +680,7 @@
           if (res.status === 409) { confirmedStart = null; loadSlots(); }
           submitBtn.disabled = false;
           submitBtn.textContent = 'Confirm Booking';
+          loadCaptcha(); // token cũ đã bị server xoá sau khi verify -> luôn cần mã mới để thử lại
           return;
         }
 

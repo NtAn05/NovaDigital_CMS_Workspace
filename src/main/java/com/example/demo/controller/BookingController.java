@@ -50,6 +50,15 @@ public class BookingController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private CaptchaService captchaService;
+
+    // ── Chống spam: sinh captcha ký tự mới ──
+    @GetMapping("/captcha")
+    public ResponseEntity<?> getCaptcha() {
+        return ResponseEntity.ok(captchaService.generateCaptcha());
+    }
+
     // ── UC-06: giá gốc + danh sách Service_Addon của 1 service (DB-driven) ──
     @GetMapping("/pricing")
     public ResponseEntity<?> getPricing(@RequestParam Long serviceId) {
@@ -93,6 +102,12 @@ public class BookingController {
     @PostMapping
     public ResponseEntity<?> createBooking(@RequestBody BookingRequest request) {
         Map<String, Object> error = new HashMap<>();
+
+        // Chống spam: bắt buộc captcha đúng mới cho tạo booking (token dùng 1 lần, tự hết hạn sau 5 phút)
+        if (!captchaService.validateCaptcha(request.getCaptchaToken(), request.getCaptchaAnswer())) {
+            error.put("message", "Mã xác nhận không đúng hoặc đã hết hạn, vui lòng thử lại.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        }
 
         if (request.getServiceId() == null) { error.put("message", "Vui lòng chọn dịch vụ"); return ResponseEntity.badRequest().body(error); }
         if (request.getClientId() == null) { error.put("message", "Thiếu client_id (User)"); return ResponseEntity.badRequest().body(error); }
@@ -156,6 +171,32 @@ public class BookingController {
         }
 
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(saved, basePrice, addonsPrice, request.getAddonIds()));
+    }
+
+    @GetMapping("/my")
+    public ResponseEntity<?> getMyBookings() {
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || auth instanceof org.springframework.security.authentication.AnonymousAuthenticationToken) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Vui lòng đăng nhập"));
+        }
+        String username = auth.getName();
+        User user = userRepository.findByUsername(username).orElse(null);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Không tìm thấy tài khoản người dùng"));
+        }
+
+        List<ConsultationAppointment> appointments = appointmentRepository.findByClientIdOrderByAppointmentDateDesc(user.getId());
+        List<BookingResponse> responses = appointments.stream().map(a -> {
+            List<Long> addonIds = appointmentAddonRepository.findByAppointmentId(a.getId())
+                    .stream().map(AppointmentAddon::getAddonId).collect(Collectors.toList());
+            double basePrice = 0;
+            try {
+                basePrice = bookingService.resolveBasePrice(a.getServiceId());
+            } catch (Exception e) {}
+            double addonsPrice = a.getTotalPrice() - basePrice;
+            return toResponse(a, basePrice, addonsPrice, addonIds);
+        }).collect(Collectors.toList());
+        return ResponseEntity.ok(responses);
     }
 
     @GetMapping
