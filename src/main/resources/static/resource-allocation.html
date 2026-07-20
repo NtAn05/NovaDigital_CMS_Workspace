@@ -661,7 +661,7 @@
        RESOURCE ALLOCATION UI REDESIGN — isolated to this page
        ======================================================= */
     :root {
-      --resource-sidebar-width: 244px;
+      --resource-sidebar-width: 252px;
       --resource-header-height: 76px;
       --resource-page-gap: 0.9rem;
     }
@@ -751,9 +751,10 @@
       top: var(--resource-header-height);
       min-height: calc(100vh - var(--resource-header-height));
       padding: 1.05rem 0 1rem;
-      background:
-        radial-gradient(circle at 15% 15%, rgba(59, 130, 246, 0.14), transparent 14rem),
-        linear-gradient(175deg, #0f172a 0%, #191b4d 54%, #0f172a 100%);
+      background: linear-gradient(175deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 27, 75, 0.85) 55%, rgba(15, 23, 42, 0.8) 100%) !important;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
     }
 
     .resource-sidebar-brand {
@@ -937,7 +938,7 @@
     }
 
     @media (max-width: 900px) {
-      :root { --resource-sidebar-width: 216px; --resource-header-height: 68px; }
+      :root { --resource-sidebar-width: 220px; --resource-header-height: 68px; }
       .resource-header { top: 0; left: 0; right: 0; }
       .resource-header.is-scrolled { top: 10px; left: 10px; right: 10px; }
       .resource-navbar { min-height: var(--resource-header-height); padding: 0.48rem 0.9rem; }
@@ -958,6 +959,214 @@
       .resource-filters { grid-template-columns: 1fr; }
       .resource-theme-btn { right: 14px; bottom: 14px; width: 47px; height: 47px; border-radius: 15px; }
       .toast-wrap { right: 0.8rem; bottom: 4.8rem; }
+    }
+
+    @media (min-width: 721px) {
+      /* Scrolled header contracts onto the vertical sidebar */
+      body.resource-dashboard-page .resource-header.is-scrolled {
+        top: 0 !important;
+        left: 0 !important;
+        width: var(--resource-sidebar-width) !important; /* Sync width dynamically with sidebar */
+        height: 72px !important;
+        border-radius: 0 !important;
+        border: none !important;
+        border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+        background: #0f172a !important; /* Matches sidebar top background color */
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+        display: flex !important;
+        align-items: center !important;
+        z-index: 1000 !important;
+      }
+
+      /* Inner navbar padding inside contracted header */
+      body.resource-dashboard-page .resource-header.is-scrolled .resource-navbar {
+        width: 100% !important;
+        min-height: 100% !important;
+        padding: 0 1.25rem !important;
+        margin: 0 !important;
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+      }
+
+      /* White logo on dark background */
+      body.resource-dashboard-page .resource-header.is-scrolled .logo {
+        color: #ffffff !important;
+      }
+      body.resource-dashboard-page .resource-header.is-scrolled .logo svg {
+        fill: #ffffff !important;
+      }
+      body.resource-dashboard-page .resource-header.is-scrolled .logo span {
+        display: none !important; /* Hide logo text */
+      }
+
+      /* Hide account copy text (name and role) and border/padding */
+      body.resource-dashboard-page .resource-header.is-scrolled .resource-account {
+        padding: 0 !important;
+        border: none !important;
+      }
+      body.resource-dashboard-page .resource-header.is-scrolled .resource-account-copy {
+        display: none !important;
+      }
+
+      /* Adjust sidebar's top position and height to sit flush under scrolled header */
+      body.resource-dashboard-page .resource-header.is-scrolled ~ .resource-layout .resource-sidebar {
+        top: 72px !important;
+        min-height: calc(100vh - 72px) !important;
+      }
+    }
+
+    /* Enable smooth transitions for resource-sidebar layout updates */
+    body.resource-dashboard-page .resource-sidebar {
+      transition: top 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                  min-height 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                  width 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+                  background 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    /* Mobile/Tablet view (max-width 720px) where vertical sidebar is hidden */
+    @media (max-width: 720px) {
+      body.resource-dashboard-page .resource-header.is-scrolled {
+        /* Revert to default site/page floating layout style */
+        top: 10px !important;
+        left: 10px !important;
+        right: 10px !important;
+        width: auto !important;
+        height: auto !important;
+        border-radius: 18px !important;
+        border: 1px solid rgba(148, 163, 184, 0.24) !important;
+        background: rgba(255, 255, 255, 0.88) !important;
+        box-shadow: 0 18px 44px -20px rgba(15, 23, 42, 0.32) !important;
+      }
+      
+      body.resource-dashboard-page .resource-header.is-scrolled .logo {
+        color: var(--primary) !important;
+      }
+      body.resource-dashboard-page .resource-header.is-scrolled .logo svg {
+        fill: var(--primary) !important;
+      }
+      body.resource-dashboard-page .resource-header.is-scrolled .logo span {
+        display: inline !important;
+      }
+      body.resource-dashboard-page .resource-header.is-scrolled .resource-account {
+        padding: 0.35rem 0.6rem 0.35rem 0.35rem !important;
+        border: 1px solid transparent !important;
+      }
+      body.resource-dashboard-page .resource-header.is-scrolled .resource-account-copy {
+        display: none !important;
+      }
+    }
+
+    /* ================================================
+       RESOURCE SIDEBAR COLLAPSE TOGGLE
+       ================================================ */
+    .resource-sidebar {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .resource-main {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .sidebar-toggle-btn {
+      position: fixed;
+      top: 50%;
+      left: 238px; /* 252px - 14px */
+      transform: translateY(-50%);
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 1001;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      padding: 0;
+      outline: none;
+    }
+
+    html.dark-theme .sidebar-toggle-btn {
+      background: #1e293b;
+      border-color: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+    }
+
+    .sidebar-toggle-btn:hover {
+      background: #f1f5f9;
+      color: #2563eb;
+    }
+    html.dark-theme .sidebar-toggle-btn:hover {
+      background: #334155;
+      color: #3b82f6;
+    }
+
+    .sidebar-toggle-btn svg {
+      width: 14px;
+      height: 14px;
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Collapsed state styles */
+    body.sidebar-collapsed .resource-sidebar {
+      transform: translateX(-252px);
+      width: 0 !important;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    body.sidebar-collapsed .resource-main {
+      margin-left: 0 !important;
+    }
+
+    body.sidebar-collapsed .sidebar-toggle-btn {
+      left: 12px;
+    }
+
+    body.sidebar-collapsed .sidebar-toggle-btn svg {
+      transform: rotate(180deg);
+    }
+
+    /* Scrolled header when sidebar is collapsed (slides left with the sidebar) */
+    body.sidebar-collapsed .resource-header.is-scrolled {
+      transform: translateX(-252px) !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
+
+    @media (max-width: 900px) {
+      .sidebar-toggle-btn {
+        left: 206px; /* 220px - 14px */
+      }
+      body.sidebar-collapsed .sidebar-toggle-btn {
+        left: 12px;
+      }
+      body.sidebar-collapsed .resource-sidebar {
+        transform: translateX(-220px);
+      }
+      body.sidebar-collapsed .resource-main {
+        margin-left: 0 !important;
+      }
+      body.sidebar-collapsed .resource-header.is-scrolled {
+        transform: translateX(-220px) !important;
+      }
+    }
+
+    /* Hide toggle button on screens where vertical sidebar is hidden by default (mobile/tablet) */
+    @media (max-width: 720px) {
+      .sidebar-toggle-btn {
+        display: none !important;
+      }
     }
 
   </style>
@@ -982,6 +1191,12 @@
       </div>
     </nav>
   </header>
+
+  <button id="sidebar-toggle-btn" class="sidebar-toggle-btn" onclick="toggleSidebar()" aria-label="Toggle sidebar">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <polyline points="15 18 9 12 15 6" />
+    </svg>
+  </button>
 
   <div class="resource-layout">
     <aside class="resource-sidebar">
@@ -1124,7 +1339,21 @@
 
   <div class="toast-wrap" id="toastWrap"></div>
 
-<script>
+  <script>
+  // Initialize sidebar collapsed state based on localStorage preference
+  (function () {
+    const isCollapsed = localStorage.getItem("adminSidebarCollapsed") === "true";
+    if (isCollapsed) {
+      document.body.classList.add("sidebar-collapsed");
+    }
+  })();
+
+  window.toggleSidebar = function () {
+    document.body.classList.toggle("sidebar-collapsed");
+    const isCollapsed = document.body.classList.contains("sidebar-collapsed");
+    localStorage.setItem("adminSidebarCollapsed", isCollapsed);
+  };
+
   const state = { matrix: null, editingId: null };
   const themeToggle = document.getElementById('resourceThemeToggle');
   const themeIcon = document.getElementById('resourceThemeIcon');

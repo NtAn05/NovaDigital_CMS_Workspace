@@ -315,6 +315,12 @@
     </nav>
   </header>
 
+  <button id="sidebar-toggle-btn" class="sidebar-toggle-btn" onclick="toggleSidebar()" aria-label="Toggle sidebar">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <polyline points="15 18 9 12 15 6" />
+    </svg>
+  </button>
+
   <div class="admin-layout">
     <!-- Sidebar -->
     <aside class="admin-sidebar">
@@ -528,10 +534,10 @@
     // ─────────────────────────────────────────────────────────────────────────
     //  Auth & sidebar bootstrap
     // ─────────────────────────────────────────────────────────────────────────
-    const pmToken = localStorage.getItem('authToken') || localStorage.getItem('token') || '';
+    const pmToken = localStorage.getItem('authToken') || localStorage.getItem('token') || sessionStorage.getItem('token') || '';
     if (!pmToken) { window.location.href = '/login.html'; }
 
-    const savedUser = localStorage.getItem('user');
+    const savedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
     let currentUser = null;
     let displayName = 'Member';
     let avatarChar = '?';
@@ -861,7 +867,7 @@
       const tableBody = document.getElementById('member-contacts-table-body');
       if (!tableBody) return;
       try {
-        const token = localStorage.getItem('token') || localStorage.getItem('authToken') || '';
+        const token = localStorage.getItem('token') || localStorage.getItem('authToken') || sessionStorage.getItem('token') || '';
         const response = await fetch('/api/contacts', { headers: { 'Authorization': 'Bearer ' + token } });
         if (!response.ok) throw new Error('Failed to fetch');
         const contacts = await response.json();
@@ -896,7 +902,7 @@
       const body    = document.getElementById('reply-modal-body');
       const alert   = document.getElementById('reply-alert');
       if (alert) { alert.style.display = 'none'; alert.textContent = ''; alert.className = 'crud-alert alert-message'; }
-      const token = localStorage.getItem('token') || localStorage.getItem('authToken') || '';
+      const token = localStorage.getItem('token') || localStorage.getItem('authToken') || sessionStorage.getItem('token') || '';
       fetch('/api/contacts', { headers: { 'Authorization': 'Bearer ' + token } })
         .then(res => res.json()).then(contacts => {
           const contact = contacts.find(c => c.id === contactId);
@@ -937,7 +943,7 @@
         alert.textContent = 'Sending reply...';
         alert.className = 'crud-alert alert-message';
         alert.style.display = 'block';
-        const token = localStorage.getItem('token') || localStorage.getItem('authToken') || '';
+        const token = localStorage.getItem('token') || localStorage.getItem('authToken') || sessionStorage.getItem('token') || '';
         const response = await fetch(`/api/contacts/${currentContactId}/reply`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },

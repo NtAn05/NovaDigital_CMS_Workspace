@@ -4386,3 +4386,227 @@ html.dark-theme #chatbot-input {
   border-color: rgba(255,255,255,0.1);
   color: white;
 }
+/* =======================================================
+   ADMIN DASHBOARD SCROLL NAVBAR ALIGNMENT (REFINED)
+   ======================================================= */
+body.dashboard-page:has(.admin-sidebar) {
+  --header-transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.dashboard-page:has(.admin-sidebar) header {
+  transition: var(--header-transition) !important;
+}
+
+/* Scrolled / Detached Header Styles in Admin Dashboard - Contracts onto Left Sidebar */
+body.dashboard-page:has(.admin-sidebar) header.header-detached {
+  top: 0 !important;
+  left: 0 !important;
+  width: 252px !important; /* Matches vertical sidebar width */
+  height: 72px !important;
+  border-radius: 0 !important;
+  border: none !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  background: #0f172a !important; /* Matches sidebar top background color */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+  z-index: 1000 !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+/* Adjust inner navbar padding & logo for sidebar header style */
+body.dashboard-page:has(.admin-sidebar) header.header-detached .navbar {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 0 1.25rem !important;
+  margin: 0 !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+
+/* Contrasting logo on dark background */
+body.dashboard-page:has(.admin-sidebar) header.header-detached .logo {
+  color: #ffffff !important;
+}
+body.dashboard-page:has(.admin-sidebar) header.header-detached .logo svg {
+  fill: #ffffff !important;
+}
+/* Hide logo text inside contracted header */
+body.dashboard-page:has(.admin-sidebar) header.header-detached .logo span {
+  display: none !important;
+}
+
+/* Scrolled header when sidebar is collapsed (slides left with the sidebar) */
+body.dashboard-page.sidebar-collapsed:has(.admin-sidebar) header.header-detached {
+  transform: translateX(-252px) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Restrict hiding rules to desktop/laptop views (where sidebar is visible) */
+@media (min-width: 881px) {
+  /* Hide regular navigation links, showing only Bell & Avatar */
+  body.dashboard-page.header-is-detached:has(.admin-sidebar) .nav-links li:not(.auth-item) {
+    display: none !important;
+  }
+
+  /* Clean spacing for bell and avatar in the contracted navbar */
+  body.dashboard-page.header-is-detached:has(.admin-sidebar) .nav-links {
+    display: flex !important;
+    gap: 0.75rem !important;
+    align-items: center !important;
+  }
+
+  /* Hide username text & caret arrow inside the avatar dropdown trigger */
+  body.dashboard-page.header-is-detached:has(.admin-sidebar) .user-avatar-trigger .nav-username-txt,
+  body.dashboard-page.header-is-detached:has(.admin-sidebar) .user-avatar-trigger svg {
+    display: none !important;
+  }
+}
+
+/* Prevent header from hiding completely on scroll down in admin pages */
+body.dashboard-page:has(.admin-sidebar) header.header-hidden {
+  transform: none !important;
+}
+
+/* Responsive alignment for Laptop width (max-width 992px) */
+@media (max-width: 992px) {
+  body.dashboard-page:has(.admin-sidebar) header.header-detached {
+    width: 220px !important; /* Laptop sidebar width is 220px */
+  }
+  body.dashboard-page.sidebar-collapsed:has(.admin-sidebar) header.header-detached {
+    transform: translateX(-220px) !important;
+  }
+}
+
+/* Mobile/Tablet screens (max-width 880px) where vertical sidebar is hidden */
+@media (max-width: 880px) {
+  body.dashboard-page:has(.admin-sidebar) header.header-detached {
+    /* Revert to default site floating layout style */
+    top: 0.75rem !important;
+    left: 1.5rem !important;
+    right: 1.5rem !important;
+    width: calc(100% - 3rem) !important;
+    height: auto !important;
+    border-radius: 50px !important;
+    border: 1px solid var(--border-color) !important;
+    background: var(--header-bg) !important;
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.15) !important;
+    transform: none !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+  
+  body.dashboard-page.sidebar-collapsed:has(.admin-sidebar) header.header-detached {
+    transform: none !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+
+  body.dashboard-page:has(.admin-sidebar) header.header-detached .logo {
+    color: var(--primary) !important;
+  }
+  body.dashboard-page:has(.admin-sidebar) header.header-detached .logo svg {
+    fill: var(--primary) !important;
+  }
+  body.dashboard-page:has(.admin-sidebar) header.header-detached .logo span {
+    display: inline !important;
+  }
+}
+
+@media (max-width: 480px) {
+  body.dashboard-page:has(.admin-sidebar) header.header-detached {
+    left: 1rem !important;
+    right: 1rem !important;
+    width: calc(100% - 2rem) !important;
+  }
+}
+
+/* ================================================
+   GLOBAL SIDEBAR COLLAPSE TOGGLE
+   ================================================ */
+.sidebar-toggle-btn {
+  position: fixed;
+  top: 50%;
+  left: 238px; /* 252px - 14px */
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg-white, #ffffff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  color: var(--text-dark, #0f172a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 1001;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0;
+  outline: none;
+}
+
+html.dark-theme .sidebar-toggle-btn {
+  background: #1e293b;
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.sidebar-toggle-btn:hover {
+  background: var(--card-bg-hover, #f1f5f9);
+  color: var(--color-primary, #2563eb);
+}
+html.dark-theme .sidebar-toggle-btn:hover {
+  background: #334155;
+  color: #3b82f6;
+}
+
+.sidebar-toggle-btn svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Collapsed state styles for dashboard elements */
+body.sidebar-collapsed .admin-sidebar {
+  transform: translateX(-252px) !important;
+  width: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+body.sidebar-collapsed .admin-main {
+  margin-left: 0 !important;
+}
+
+body.sidebar-collapsed .sidebar-toggle-btn {
+  left: 12px;
+}
+
+body.sidebar-collapsed .sidebar-toggle-btn svg {
+  transform: rotate(180deg);
+}
+
+@media (max-width: 992px) {
+  .sidebar-toggle-btn {
+    left: 206px; /* 220px - 14px */
+  }
+  body.sidebar-collapsed .sidebar-toggle-btn {
+    left: 12px;
+  }
+}
+
+/* Hide toggle button on screens where vertical sidebar is hidden by default (mobile/tablet) */
+@media (max-width: 880px) {
+  .sidebar-toggle-btn {
+    display: none !important;
+  }
+}
+

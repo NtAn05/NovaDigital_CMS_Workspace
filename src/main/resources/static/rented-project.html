@@ -372,7 +372,7 @@
 
   <script src="/js/main.js"></script>
   <script>
-    const clientToken = localStorage.getItem('authToken') || localStorage.getItem('token') || '';
+    const clientToken = localStorage.getItem('authToken') || localStorage.getItem('token') || sessionStorage.getItem('token') || '';
     if (!clientToken) { window.location.href = '/login.html'; }
 
     let currentProjectId = null;

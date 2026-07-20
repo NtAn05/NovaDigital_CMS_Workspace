@@ -2492,7 +2492,7 @@ function formatNotificationTime(iso) {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": "Bearer " + (localStorage.getItem("token") || "")
+            "Authorization": "Bearer " + (localStorage.getItem("token") || sessionStorage.getItem("token") || "")
           },
           body: JSON.stringify({ name, email, title: finalTitle, content })
         });
@@ -4096,7 +4096,7 @@ function formatNotificationTime(iso) {
   }
 
   async function loadAssignmentData(projectId) {
-    const token = localStorage.getItem("token") || localStorage.getItem("authToken");
+    const token = localStorage.getItem("token") || localStorage.getItem("authToken") || sessionStorage.getItem("token");
     const headers = { "Authorization": `Bearer ${token}` };
 
     // Load existing assignments and clients
@@ -4176,7 +4176,7 @@ function formatNotificationTime(iso) {
     const role = document.getElementById("assign-role-select").value;
     if (!userId) { alert("Please select a member."); return; }
 
-    const token = localStorage.getItem("token") || localStorage.getItem("authToken");
+    const token = localStorage.getItem("token") || localStorage.getItem("authToken") || sessionStorage.getItem("token");
     const res = await fetch(`/api/projects/${currentAssignmentProjectId}/assignments`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
@@ -4194,7 +4194,7 @@ function formatNotificationTime(iso) {
     const userId = document.getElementById("assign-client-select").value;
     if (!userId) { alert("Please select a client."); return; }
 
-    const token = localStorage.getItem("token") || localStorage.getItem("authToken");
+    const token = localStorage.getItem("token") || localStorage.getItem("authToken") || sessionStorage.getItem("token");
     const res = await fetch(`/api/projects/${currentAssignmentProjectId}/clients`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
@@ -4210,7 +4210,7 @@ function formatNotificationTime(iso) {
 
   async function removeAssignment(userId) {
     if (!confirm("Remove this member from the project?")) return;
-    const token = localStorage.getItem("token") || localStorage.getItem("authToken");
+    const token = localStorage.getItem("token") || localStorage.getItem("authToken") || sessionStorage.getItem("token");
     await fetch(`/api/projects/${currentAssignmentProjectId}/assignments/${userId}`, {
       method: "DELETE",
       headers: { "Authorization": `Bearer ${token}` }
@@ -4220,7 +4220,7 @@ function formatNotificationTime(iso) {
 
   async function removeClient(userId) {
     if (!confirm("Unlink this client from the project?")) return;
-    const token = localStorage.getItem("token") || localStorage.getItem("authToken");
+    const token = localStorage.getItem("token") || localStorage.getItem("authToken") || sessionStorage.getItem("token");
     await fetch(`/api/projects/${currentAssignmentProjectId}/clients/${userId}`, {
       method: "DELETE",
       headers: { "Authorization": `Bearer ${token}` }
@@ -4258,8 +4258,10 @@ function formatNotificationTime(iso) {
       // 1. Detach/Attach logic
       if (currentScrollY > detachThreshold) {
         header.classList.add("header-detached");
+        document.body.classList.add("header-is-detached");
       } else {
         header.classList.remove("header-detached");
+        document.body.classList.remove("header-is-detached");
       }
 
       // 2. Hide/Show logic (Scroll-to-hide)

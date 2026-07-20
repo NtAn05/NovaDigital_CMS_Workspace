@@ -112,8 +112,8 @@ public class SecurityConfig {
                 // In-app notifications: any authenticated user (scoped tới user hiện tại trong controller)
                 .requestMatchers("/api/notifications/**").authenticated()
                 
-                // Contact submission: any authenticated user can POST to /api/contacts (send message)
-                .requestMatchers(HttpMethod.POST, "/api/contacts").authenticated()
+                // Contact submission: anyone can POST to /api/contacts (send message)
+                .requestMatchers(HttpMethod.POST, "/api/contacts").permitAll()
                 // Reply to a contact: only ADMIN or MEMBER
                 .requestMatchers(HttpMethod.POST, "/api/contacts/**").hasAnyRole("ADMIN", "MEMBER")
 
