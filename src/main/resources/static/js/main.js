@@ -4840,3 +4840,264 @@ function initFooterMove() {
     const isCollapsed = document.body.classList.contains("sidebar-collapsed");
     localStorage.setItem("adminSidebarCollapsed", isCollapsed);
 }
+
+// =============================================
+// AI Chatbot Integration
+// =============================================
+const CHATBOT_HISTORY_KEY = 'nova_chatbot_history';
+
+const CHATBOT_SYSTEM_PROMPT =
+  "You are Nova AI, a support assistant for NovaDigital Agency's website ONLY. " +
+  "Your knowledge is strictly limited to: NovaDigital's services "+
+  "STRICT RULE: If a question is not about NovaDigital or this website — including general knowledge, coding help, " +
+  "other companies, personal advice, math, current events, or any topic outside the list above — you MUST NOT answer it. " +
+  "Instead, reply briefly that you can only help with questions about NovaDigital's services and this website, " +
+  "and ask if they'd like help with one of those instead. Do not attempt to be helpful on off-topic requests, " +
+  "even if you know the answer. Be warm, professional, and concise.";
+
+// Cached config from backend
+let _chatbotConfig = null;
+
+async function getChatbotConfig() {
+  if (_chatbotConfig) return _chatbotConfig;
+  try {
+    const res = await fetch('/api/chatbot/config');
+    if (!res.ok) throw new Error('Config fetch failed');
+    _chatbotConfig = await res.json();
+    return _chatbotConfig;
+  } catch (e) {
+    console.error('[Chatbot] Could not fetch config:', e);
+    return null;
+  }
+}
+
+async function callGeminiDirectly(userMessage) {
+  const config = await getChatbotConfig();
+  if (!config || !config.apiKey) throw new Error('[Debug] Could not fetch /api/chatbot/config — is the server running?');
+
+  const apiKey = config.apiKey;
+
+  // Try models in priority order (newer projects use gemini-2.0-flash)
+  const models = [
+    config.model || 'gemini-2.0-flash',
+    'gemini-2.0-flash',
+    'gemini-2.0-flash-lite',
+    'gemini-1.5-flash',
+    'gemini-pro',
+  ];
+
+  const body = JSON.stringify({
+    system_instruction: { parts: [{ text: CHATBOT_SYSTEM_PROMPT }] },
+    contents: [{ role: 'user', parts: [{ text: userMessage }] }],
+    generationConfig: { temperature: 0.7, maxOutputTokens: 512 }
+  });
+
+  const errors = [];
+
+  // Check if user is using an OpenRouter key (starts with sk-or-)
+  if (apiKey.startsWith('sk-or-')) {
+    const openRouterModel = config.model || 'google/gemini-2.0-flash:free';
+    const OR_URL = 'https://openrouter.ai/api/v1/chat/completions';
+    
+    try {
+      const res = await fetch(OR_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: openRouterModel,
+          messages: [
+            { role: 'system', content: CHATBOT_SYSTEM_PROMPT },
+            { role: 'user', content: userMessage }
+          ]
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        return data?.choices?.[0]?.message?.content || 'I received an empty response.';
+      }
+      
+      const errBody = await res.json().catch(() => ({}));
+      throw new Error(`OpenRouter HTTP ${res.status}: ${JSON.stringify(errBody)}`);
+    } catch (e) {
+      throw new Error(`[Debug] OpenRouter failed: ${e.message}`);
+    }
+  }
+
+  // Check if user is using a Groq key (starts with gsk_)
+  if (apiKey.startsWith('gsk_')) {
+    const groqModel = config.model && config.model.includes('llama') ? config.model : 'llama-3.3-70b-versatile';
+    const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+    
+    try {
+      const res = await fetch(GROQ_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: groqModel,
+          messages: [
+            { role: 'system', content: CHATBOT_SYSTEM_PROMPT },
+            { role: 'user', content: userMessage }
+          ]
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        return data?.choices?.[0]?.message?.content || 'I received an empty response.';
+      }
+      
+      const errBody = await res.json().catch(() => ({}));
+      throw new Error(`Groq HTTP ${res.status}: ${JSON.stringify(errBody)}`);
+    } catch (e) {
+      throw new Error(`[Debug] Groq failed: ${e.message}`);
+    }
+  }
+
+  // Original Google Gemini Logic
+  for (const model of [...new Set(models)]) {
+    const BASE = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+
+    // Auth methods: x-goog-api-key (for AQ. keys), then ?key= (for AIza. keys)
+    const attempts = [
+      { label: `${model}+x-goog-api-key`, url: BASE,              headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey } },
+      { label: `${model}+?key=`,          url: BASE + '?key=' + apiKey, headers: { 'Content-Type': 'application/json' } },
+    ];
+
+    for (const attempt of attempts) {
+      try {
+        const res = await fetch(attempt.url, { method: 'POST', headers: attempt.headers, body });
+        console.log(`[Chatbot] ${attempt.label} → HTTP ${res.status}`);
+
+        if (res.ok) {
+          const data = await res.json();
+          return data?.candidates?.[0]?.content?.parts?.[0]?.text
+            || 'I received a response but could not read it.';
+        }
+
+        const errBody = await res.json().catch(() => ({ error: { message: 'unknown' } }));
+        const msg = errBody?.error?.message || JSON.stringify(errBody);
+        console.warn(`[Chatbot] ${attempt.label} failed (${res.status}):`, msg);
+        errors.push(`${attempt.label}(${res.status}): ${msg}`);
+
+      } catch (e) {
+        console.warn(`[Chatbot] ${attempt.label} threw:`, e.message);
+        errors.push(`${attempt.label}: ${e.message}`);
+      }
+    }
+  }
+
+  throw new Error('[Debug] All attempts failed:\n' + errors.join('\n'));
+}
+
+function initChatbot() {
+  const fab             = document.getElementById('chatbot-fab');
+  const windowEl        = document.getElementById('chatbot-window');
+  const closeBtn        = document.getElementById('chatbot-close');
+  const messagesContainer = document.getElementById('chatbot-messages');
+  const inputEl         = document.getElementById('chatbot-input');
+  const sendBtn         = document.getElementById('chatbot-send');
+
+  if (!fab || !windowEl) return;
+
+  // ── History helpers (sessionStorage: survives page nav, clears on tab close / logout) ──
+  function loadHistory() {
+    try { return JSON.parse(sessionStorage.getItem(CHATBOT_HISTORY_KEY) || '[]'); }
+    catch { return []; }
+  }
+  function saveHistory(history) {
+    try { sessionStorage.setItem(CHATBOT_HISTORY_KEY, JSON.stringify(history)); } catch {}
+  }
+  function addToHistory(sender, text) {
+    const h = loadHistory();
+    h.push({ sender, text, time: Date.now() });
+    if (h.length > 100) h.splice(0, h.length - 100);
+    saveHistory(h);
+  }
+
+  // ── Render one bubble ──
+  function renderBubble(sender, text) {
+    const div = document.createElement('div');
+    div.className = 'chatbot-msg ' + (sender === 'user' ? 'chatbot-msg-user' : 'chatbot-msg-bot');
+    div.textContent = text;
+    messagesContainer.appendChild(div);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+  }
+
+  // ── Restore persisted conversation ──
+  const history = loadHistory();
+  if (history.length === 0) {
+    const welcome = 'Hello! I am Nova AI. How can I help you today?';
+    renderBubble('bot', welcome);
+    addToHistory('bot', welcome);
+  } else {
+    history.forEach(m => renderBubble(m.sender, m.text));
+  }
+
+  // Prefetch config so first message is instant
+  getChatbotConfig();
+
+  // ── Toggle open/close ──
+  fab.addEventListener('click', () => {
+    windowEl.classList.toggle('active');
+    if (windowEl.classList.contains('active')) {
+      inputEl.focus();
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+  });
+  closeBtn.addEventListener('click', () => windowEl.classList.remove('active'));
+
+  // ── Send message ──
+  const sendMessage = async () => {
+    const text = inputEl.value.trim();
+    if (!text || sendBtn.disabled) return;
+
+    inputEl.value = '';
+    sendBtn.disabled = true;
+
+    renderBubble('user', text);
+    addToHistory('user', text);
+
+    // Typing indicator
+    const typingDiv = document.createElement('div');
+    typingDiv.className = 'chatbot-msg chatbot-msg-bot chatbot-typing';
+    typingDiv.innerHTML = '<span></span><span></span><span></span>';
+    messagesContainer.appendChild(typingDiv);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+    try {
+      const reply = await callGeminiDirectly(text);
+      typingDiv.remove();
+      renderBubble('bot', reply);
+      addToHistory('bot', reply);
+    } catch (err) {
+      console.error('[Chatbot] Error:', err);
+      typingDiv.remove();
+      // Show real error in chat for debugging
+      const msg = err.message || 'Sorry, I am currently unavailable. Please try again later.';
+      renderBubble('bot', msg);
+      addToHistory('bot', msg);
+    } finally {
+      sendBtn.disabled = false;
+      inputEl.focus();
+    }
+  };
+
+  sendBtn.addEventListener('click', sendMessage);
+  inputEl.addEventListener('keypress', e => {
+    if (e.key === 'Enter') { e.preventDefault(); sendMessage(); }
+  });
+}
+
+// Clear chatbot history on logout (called by logoutUser which already does sessionStorage.clear())
+function clearChatbotHistory() {
+  sessionStorage.removeItem(CHATBOT_HISTORY_KEY);
+}
+
+// initChatbot() is called inline by each page after the chatbot widget HTML is rendered.

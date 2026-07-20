@@ -121,7 +121,7 @@ public class AdminUserController {
         }
         // Update enabled status if provided
         if (request.getEnabled() != null) {
-            user.setEnabled(request.getEnabled());
+            user.setEnabled(Boolean.TRUE.equals(request.getEnabled()));
         }
         // Update password only if provided
         if (request.getPassword() != null && !request.getPassword().isBlank()) {
