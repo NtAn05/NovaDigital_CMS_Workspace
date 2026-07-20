@@ -74,6 +74,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/members", "/api/members/**").permitAll()
                 .requestMatchers("/api/bookings/my").authenticated()
                 .requestMatchers("/api/bookings/**").permitAll()
+                .requestMatchers("/api/chatbot/**").permitAll()
 
                 // PayOS Payment Routes
                 .requestMatchers("/api/payments/payos-webhook").permitAll()
