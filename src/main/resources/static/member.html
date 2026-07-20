@@ -313,7 +313,7 @@
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                "Authorization": "Bearer " + (sessionStorage.getItem("token") || "")
+                "Authorization": "Bearer " + (sessionStorage.getItem("token") || localStorage.getItem("token") || "")
               },
               body: JSON.stringify({ message: msg })
             });
@@ -353,7 +353,7 @@
       try {
         const response = await fetch("/api/contacts", {
           headers: {
-            "Authorization": "Bearer " + (sessionStorage.getItem("token") || "")
+            "Authorization": "Bearer " + (sessionStorage.getItem("token") || localStorage.getItem("token") || "")
           }
         });
         if (!response.ok) throw new Error("Failed to fetch");
