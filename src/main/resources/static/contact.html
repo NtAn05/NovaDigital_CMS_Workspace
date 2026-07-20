@@ -82,27 +82,28 @@
         
         <div class="contact-form-wrapper scroll-animate">
           <form id="contactForm">
-            <div class="form-group">
+            <div class="floating-form-group">
+              <input type="text" id="name" placeholder=" " required>
               <label for="name">Your Name *</label>
-              <input type="text" id="name" placeholder="Enter your full name" required>
             </div>
-            <div class="form-group">
+            <div class="floating-form-group">
+              <input type="email" id="email" placeholder=" " required>
               <label for="email">Email Address *</label>
-              <input type="email" id="email" placeholder="name@domain.com" required>
             </div>
-            <div class="form-group">
-              <label for="serviceSelect">Service to Hire *</label>
-              <select id="serviceSelect" required style="width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-family: var(--font-body); font-size: 0.95rem; color: var(--text-dark); background-color: var(--bg-white); transition: var(--transition);">
-                <option value="" disabled selected>Loading services...</option>
+            <div class="floating-form-group">
+              <select id="serviceSelect" required>
+                <option value="" disabled selected hidden></option>
+                <option value="">Loading services...</option>
               </select>
+              <label for="serviceSelect">Service to Hire *</label>
             </div>
-            <div class="form-group">
+            <div class="floating-form-group">
+              <input type="text" id="title" placeholder=" " required>
               <label for="title">Subject Title *</label>
-              <input type="text" id="title" placeholder="How can we help you?" required>
             </div>
-            <div class="form-group">
+            <div class="floating-form-group">
+              <textarea id="content" rows="5" placeholder=" " required></textarea>
               <label for="content">Detailed Message *</label>
-              <textarea id="content" rows="5" placeholder="Write your message here..." required></textarea>
             </div>
             <button type="submit" class="submit-btn">Send Message</button>
             <div id="alertMessage" class="alert-message"></div>
@@ -123,24 +124,39 @@
           <span>NovaDigital</span>
         </a>
         <p>Bring your business closer to millions of customers through comprehensive UI/UX design and technology solutions.</p>
+        <!-- Social icons in brand column -->
+        <div class="social-icons-footer" style="margin-top: 1.5rem;">
+          <a href="#" aria-label="Facebook">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/></svg>
+          </a>
+          <a href="#" aria-label="Github">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          </a>
+          <a href="#" aria-label="LinkedIn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.779-1.75-1.75s.784-1.75 1.75-1.75 1.75.779 1.75 1.75-.784 1.75-1.75 1.75zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+          </a>
+        </div>
       </div>
       <div class="footer-col">
         <h3>Quick Links</h3>
         <ul class="footer-links">
+          <li><a href="index.html">Home</a></li>
           <li><a href="about.html">About Us</a></li>
-          <li><a href="services.html">Service</a></li>
-          <li><a href="portfolio.html">Product</a></li>
+          <li><a href="services.html">Services</a></li>
+          <li><a href="portfolio.html">Projects</a></li>
+          <li><a href="contact.html">Contact</a></li>
+          <li><a href="booking.html">Book Consultation</a></li>
         </ul>
       </div>
       <div class="footer-col">
-        <h3>Information</h3>
+        <h3>Contact Us</h3>
         <div class="footer-info">
           <div class="footer-info-item">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
               <circle cx="12" cy="10" r="3"></circle>
             </svg>
-            <span>Fv1</span>
+            <span>Ho Chi Minh City, Vietnam</span>
           </div>
           <div class="footer-info-item">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -149,22 +165,18 @@
             </svg>
             <a href="mailto:contact@novadigital.com">contact@novadigital.com</a>
           </div>
+          <div class="footer-info-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8 19.79 19.79 0 01.02 1.18 2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"></path>
+            </svg>
+            <span>+84 (0) 123 456 789</span>
+          </div>
         </div>
       </div>
     </div>
     <div class="footer-bottom">
-      <p>&copy; 2026 NovaDigital. All rights reserved.</p>
-      <div class="social-icons-footer">
-        <a href="#" aria-label="Facebook">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/></svg>
-        </a>
-        <a href="#" aria-label="Github">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-        </a>
-        <a href="#" aria-label="LinkedIn">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.779-1.75-1.75s.784-1.75 1.75-1.75 1.75.779 1.75 1.75-.784 1.75-1.75 1.75zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
-        </a>
-      </div>
+      <p>&copy; 2026 NovaDigital Creative Agency. All rights reserved.</p>
+      <p style="opacity: 0.5; font-size: 0.82rem;">Crafted with â™¥ in Vietnam</p>
     </div>
   </footer>
 
@@ -183,7 +195,7 @@
   <script src="/js/main.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // Yêu cầu đăng nhập mới được xem trang liên hệ
+      // YÃªu cáº§u Ä‘Äƒng nháº­p má»›i Ä‘Æ°á»£c xem trang liÃªn há»‡
       const token = localStorage.getItem('token') || sessionStorage.getItem('token');
       if (!token) {
         sessionStorage.setItem('redirectAttempt', 'contact.html');
@@ -218,41 +230,21 @@
     function showContactAuthBanner() {
       const banner = document.createElement('div');
       banner.id = 'contact-auth-banner';
-      banner.style.cssText = [
-        'position:fixed', 'inset:0', 'z-index:900',
-        'background:rgba(255,255,255,0.88)',
-        'backdrop-filter:blur(8px)',
-        '-webkit-backdrop-filter:blur(8px)',
-        'display:flex', 'flex-direction:column',
-        'align-items:center', 'justify-content:center',
-        'gap:18px', 'text-align:center', 'padding:24px'
-      ].join(';');
+      banner.className = 'auth-banner-overlay';
       banner.innerHTML = `
-        <div style="font-size:56px;line-height:1;">&#128274;</div>
-        <h2 style="margin:0;font-size:1.6rem;font-weight:800;color:#111;">
-          Login Required
-        </h2>
-        <p style="margin:0;color:#555;max-width:360px;font-size:0.95rem;line-height:1.6;">
-          You need to <strong>log in</strong> or <strong>register</strong>
-          to contact us.
-        </p>
-        <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:4px;">
-          <button
-            onclick="openAuthModal('login')"
-            style="padding:13px 32px;border:none;border-radius:10px;
-                   background:var(--accent2,#6c5ce7);color:#fff;
-                   font-weight:700;font-size:15px;cursor:pointer;
-                   box-shadow:0 4px 14px rgba(108,92,231,.35);">
-            Log In
-          </button>
-          <button
-            onclick="openAuthModal('register')"
-            style="padding:13px 32px;border:2px solid var(--accent2,#6c5ce7);
-                   border-radius:10px;background:#fff;
-                   color:var(--accent2,#6c5ce7);
-                   font-weight:700;font-size:15px;cursor:pointer;">
-            Register
-          </button>
+        <div class="auth-banner-card">
+          <div class="auth-banner-icon-wrapper">
+            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+          </div>
+          <h2>Login Required</h2>
+          <p>You need to <strong>log in</strong> or <strong>register</strong> to contact us.</p>
+          <div class="auth-banner-buttons">
+            <button class="auth-banner-btn-login" onclick="openAuthModal('login')">Log In</button>
+            <button class="auth-banner-btn-register" onclick="openAuthModal('register')">Register</button>
+          </div>
         </div>
       `;
       document.body.appendChild(banner);

@@ -1384,10 +1384,29 @@
   syncHeaderShape();
   window.addEventListener('scroll', syncHeaderShape, { passive: true });
 
-  themeToggle?.addEventListener('click', () => {
-    const nextDark = !document.documentElement.classList.contains('dark-theme');
-    localStorage.setItem('theme', nextDark ? 'dark' : 'light');
-    renderThemeControl(nextDark);
+  themeToggle?.addEventListener('click', (e) => {
+    const rect = e?.currentTarget ? e.currentTarget.getBoundingClientRect() : null;
+    const x = rect ? (rect.left + rect.width / 2) : (e ? e.clientX : window.innerWidth / 2);
+    const y = rect ? (rect.top + rect.height / 2) : (e ? e.clientY : window.innerHeight / 2);
+    document.documentElement.style.setProperty('--click-x', `${x}px`);
+    document.documentElement.style.setProperty('--click-y', `${y}px`);
+
+    const toggleFn = () => {
+      const nextDark = !document.documentElement.classList.contains('dark-theme');
+      localStorage.setItem('theme', nextDark ? 'dark' : 'light');
+      renderThemeControl(nextDark);
+    };
+
+    if (!document.startViewTransition) {
+      document.documentElement.classList.add('theme-transitioning');
+      toggleFn();
+      setTimeout(() => {
+        document.documentElement.classList.remove('theme-transitioning');
+      }, 350);
+      return;
+    }
+
+    document.startViewTransition(toggleFn);
   });
   const token = localStorage.getItem('authToken') || localStorage.getItem('token')
     || sessionStorage.getItem('authToken') || sessionStorage.getItem('token');

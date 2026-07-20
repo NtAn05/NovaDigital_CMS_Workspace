@@ -7,7 +7,7 @@
   <title>My Transactions | NovaDigital</title>
   <link rel="stylesheet" href="/css/style.css">
   <style>
-    /* ── Main Layout ── */
+
     .transaction-page-wrapper {
       min-height: 80vh;
       padding: 8rem 2rem 4rem 2rem;
@@ -35,7 +35,7 @@
       margin-top: 0.4rem;
     }
 
-    /* ── Projects Grid ── */
+    
     .projects-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
@@ -112,7 +112,7 @@
       gap: 4px;
     }
 
-    /* ── Slide Drawer Panel ── */
+    /* â”€â”€ Slide Drawer Panel â”€â”€ */
     .drawer-overlay {
       position: fixed; inset: 0; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); z-index: 9000;
       display: flex; align-items: center; justify-content: center; padding: 20px;
@@ -139,7 +139,7 @@
     .drawer-close:hover { color: var(--text-dark); }
     .drawer-body { padding: 24px; }
 
-    /* ── Phase Card / Item ── */
+    /* â”€â”€ Phase Card / Item â”€â”€ */
     .phase-item {
       background: #f8fafc;
       border: 1px solid var(--border-color, #e2e8f0);
@@ -239,8 +239,16 @@
       cursor: not-allowed;
       transform: none;
     }
+    #btnViewHistory {
+      transition: all 0.2s ease;
+    }
+    #btnViewHistory:hover {
+      background: #f8fafc !important;
+      color: #2563eb !important;
+      border-color: #3b82f6 !important;
+    }
 
-    /* ── History Panel ── */
+    /* â”€â”€ History Panel â”€â”€ */
     .history-item {
       display: flex;
       justify-content: space-between;
@@ -342,6 +350,11 @@
     html.dark-theme .history-item { border-color: #334155; }
     html.dark-theme .history-desc { color: #f1f5f9; }
     html.dark-theme .history-amount { color: #f1f5f9; }
+    html.dark-theme #btnViewHistory:hover {
+      background: #1e293b !important;
+      color: #3b82f6 !important;
+      border-color: #3b82f6 !important;
+    }
   </style>
 </head>
 <body class="dashboard-page">
@@ -370,7 +383,7 @@
         <h1>My Project Payments</h1>
         <p class="panel-subtitle">Select a project to pay for completed milestones/phases.</p>
       </div>
-      <button class="btn-pay" id="btnViewHistory" style="background: var(--bg-card, #fff); color: var(--text-dark, #0f172a); border: 1px solid var(--border-color, #e2e8f0); box-shadow: none;">
+      <button class="btn-pay" id="btnViewHistory" style="background: var(--bg-white, #fff); color: var(--text-dark, #0f172a); border: 1px solid var(--border-color, #e2e8f0); box-shadow: none;">
         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
         Transaction History
       </button>
@@ -384,12 +397,12 @@
     </div>
   </main>
 
-  <!-- ── Milestones Drawer Panel ── -->
+  <!-- â”€â”€ Milestones Drawer Panel â”€â”€ -->
   <div class="drawer-overlay" id="milestonesDrawer">
     <div class="drawer">
       <div class="drawer-head">
         <h2 id="drawerTitle">Project Phases</h2>
-        <button class="drawer-close" id="drawerClose">✕</button>
+        <button class="drawer-close" id="drawerClose">&times;</button>
       </div>
       <div class="drawer-body">
         <div id="loading-phases" class="spinner" style="display: none;"></div>
@@ -400,12 +413,12 @@
     </div>
   </div>
 
-  <!-- ── History Drawer Panel ── -->
+  <!-- —— History Drawer Panel —— -->
   <div class="drawer-overlay" id="historyDrawer">
     <div class="drawer" style="max-width: 900px;">
       <div class="drawer-head">
         <h2>Transaction History</h2>
-        <button class="drawer-close" id="historyDrawerClose">✕</button>
+        <button class="drawer-close" id="historyDrawerClose">&times;</button>
       </div>
       <div class="drawer-body">
         <div id="loading-history" class="spinner" style="display: none;"></div>
@@ -426,7 +439,59 @@
           <span>NovaDigital</span>
         </a>
         <p>Bring your business closer to millions of customers through comprehensive UI/UX design and technology solutions.</p>
+        <!-- Social icons in brand column -->
+        <div class="social-icons-footer" style="margin-top: 1.5rem;">
+          <a href="#" aria-label="Facebook">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/></svg>
+          </a>
+          <a href="#" aria-label="Github">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          </a>
+          <a href="#" aria-label="LinkedIn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.779-1.75-1.75s.784-1.75 1.75-1.75 1.75.779 1.75 1.75-.784 1.75-1.75 1.75zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+          </a>
+        </div>
       </div>
+      <div class="footer-col">
+        <h3>Quick Links</h3>
+        <ul class="footer-links">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="about.html">About Us</a></li>
+          <li><a href="services.html">Services</a></li>
+          <li><a href="portfolio.html">Projects</a></li>
+          <li><a href="contact.html">Contact</a></li>
+          <li><a href="booking.html">Book Consultation</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h3>Contact Us</h3>
+        <div class="footer-info">
+          <div class="footer-info-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            <span>Ho Chi Minh City, Vietnam</span>
+          </div>
+          <div class="footer-info-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+            <a href="mailto:contact@novadigital.com">contact@novadigital.com</a>
+          </div>
+          <div class="footer-info-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8 19.79 19.79 0 01.02 1.18 2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"></path>
+            </svg>
+            <span>+84 (0) 123 456 789</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 NovaDigital Creative Agency. All rights reserved.</p>
+      <p style="opacity: 0.5; font-size: 0.82rem;">Crafted with &#9829; in Vietnam</p>
     </div>
   </footer>
 
@@ -462,7 +527,7 @@
         if (!projects.length) {
           grid.innerHTML = `
             <div class="empty-state">
-              <span class="emoji">💼</span>
+              <span class="emoji">&#128188;</span>
               <p>You haven't hired any projects yet. Please contact us to start a project.</p>
               <a href="contact.html" class="btn-pay" style="text-decoration:none; margin-top:1rem;">Contact Us</a>
             </div>`;
@@ -557,7 +622,7 @@
         if (!phases.length) {
           container.innerHTML = `
             <div class="empty-state">
-              <span class="emoji">🏁</span>
+              <span class="emoji">&#127968;</span>
               <p>No phases set for this project yet.</p>
             </div>`;
           return;
@@ -574,7 +639,7 @@
 
           let actionContent = '';
           if (ph.paid) {
-            actionContent = `<span class="payment-status-badge payment-status-paid">Paid ✓</span>`;
+            actionContent = `<span class="payment-status-badge payment-status-paid">Paid \u2713</span>`;
           } else if (ph.status === 'COMPLETED') {
             actionContent = `
               <button class="btn-pay" onclick="payPhase(${ph.id}, this)">
@@ -638,7 +703,7 @@
         if (!history.length) {
           container.innerHTML = `
             <div class="empty-state">
-              <span class="emoji">📊</span>
+              <span class="emoji">&#128202;</span>
               <p>No transaction history found.</p>
             </div>`;
           return;
@@ -664,7 +729,7 @@
               <span class="history-desc">${escHtml(t.description)}</span>
               <div class="history-meta">
                 <span>Order Code: ${t.orderCode}</span>
-                <span>•</span>
+                <span>â€¢</span>
                 <span>Time: ${createdDate}</span>
               </div>
             </div>
@@ -699,16 +764,16 @@
 
         const data = await res.json();
         if (!res.ok) {
-          throw new Error(data.message || 'Thất bại khi tạo link thanh toán.');
+          throw new Error(data.message || 'Tháº¥t báº¡i khi táº¡o link thanh toÃ¡n.');
         }
 
         if (data.checkoutUrl) {
           window.location.href = data.checkoutUrl;
         } else {
-          throw new Error('Link thanh toán không tồn tại.');
+          throw new Error('Link thanh toÃ¡n khÃ´ng tá»“n táº¡i.');
         }
       } catch (err) {
-        alert(err.message || 'Đã có lỗi xảy ra. Vui lòng thử lại.');
+        alert(err.message || 'ÄÃ£ cÃ³ lá»—i xáº£y ra. Vui lÃ²ng thá»­ láº¡i.');
         button.disabled = false;
         button.innerHTML = originalText;
       }
@@ -720,3 +785,4 @@
   </script>
 </body>
 </html>
+

@@ -1185,7 +1185,7 @@
           </a>
         </li>
         <li>
-          <a href="admin-messages.html" id="nav-messages">
+          <a id="nav-messages" onclick="switchAdminPanel('messages', this); return false;">
             <svg viewBox="0 0 24 24"
               style="width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;">
               <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
@@ -1253,7 +1253,7 @@
             </div>
           </div>
           <!-- Messages -->
-          <div class="stat-card" style="cursor: pointer;" onclick="window.location.href='admin-messages.html'">
+          <div class="stat-card" style="cursor: pointer;" onclick="switchAdminPanel('messages', document.getElementById('nav-messages'));">
             <div class="stat-icon" style="background:#eff6ff;color:#3b82f6;">
               <svg viewBox="0 0 24 24">
                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
@@ -1627,6 +1627,53 @@
         </div>
       </div>
 
+      <!-- ========== MESSAGES PANEL ========== -->
+      <div class="admin-panel" id="panel-messages">
+        <div class="panel-header">
+          <div>
+            <h1>Client Contact Messages</h1>
+            <p class="panel-subtitle">View and reply to messages sent by registered users (Role: User)</p>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <div class="table-toolbar">
+            <h2>All Messages</h2>
+            <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+              <div class="table-search">
+                <svg viewBox="0 0 24 24">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" id="search-input" placeholder="Search messages..." oninput="handleSearch()">
+              </div>
+              <select class="filter-select" id="filter-status" onchange="handleFilter()" style="padding: 0.45rem 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-white); color: var(--text-dark); outline: none; font-size: 0.85rem; cursor: pointer;">
+                <option value="ALL">All Statuses</option>
+                <option value="UNREPLIED">Unreplied Only</option>
+                <option value="REPLIED">Replied Only</option>
+              </select>
+            </div>
+          </div>
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th style="width: 140px;">Sender</th>
+                <th style="width: 180px;">Contact Details</th>
+                <th style="width: 220px;">Title</th>
+                <th>Message Content</th>
+                <th style="width: 150px;">Status</th>
+                <th style="width: 120px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="messages-table-body">
+              <tr>
+                <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">Loading messages...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </main>
   </div>
 
@@ -1816,6 +1863,31 @@
         </div>
       </div>
 
+    </div>
+  </div>
+
+  <!-- ===== REPLY DIALOG OVERLAY ===== -->
+  <div id="reply-dialog-overlay" class="reply-dialog-overlay">
+    <div class="reply-dialog">
+      <div class="reply-dialog-header">
+        <h3 id="reply-dialog-title">Reply to message</h3>
+        <button class="reply-dialog-close" onclick="closeReplyDialog()">&times;</button>
+      </div>
+      <div class="reply-dialog-body">
+        <div style="font-size: 0.85rem; color: var(--text-muted);">
+          <strong>Sender:</strong> <span id="reply-dialog-sender">Loading...</span>
+        </div>
+        <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: -0.5rem;">
+          <strong>Title:</strong> <span id="reply-dialog-msg-title">Loading...</span>
+        </div>
+        <textarea id="reply-textarea" rows="5"
+          style="width: 100%; border: 1px solid var(--border-color); border-radius: 8px; padding: 0.75rem; font-family: inherit; font-size: 0.88rem; outline: none; resize: vertical; background: var(--bg-light); color: var(--text-dark);"
+          placeholder="Type your reply message here..."></textarea>
+      </div>
+      <div class="reply-dialog-footer">
+        <button class="btn-cancel" onclick="closeReplyDialog()" style="padding: 0.5rem 1rem; border-radius: 6px; font-size: 0.85rem; border: 1px solid var(--border-color); background: var(--bg-white); color: var(--text-dark); cursor: pointer; font-weight: 500;">Cancel</button>
+        <button class="btn-save" id="btn-send-reply" onclick="submitReply()" style="padding: 0.5rem 1.2rem; border-radius: 6px; font-size: 0.85rem; background: var(--primary, #2563eb); color: #fff; border: none; cursor: pointer; font-weight: 600;">Send Reply</button>
+      </div>
     </div>
   </div>
 

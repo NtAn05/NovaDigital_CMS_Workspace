@@ -31,6 +31,22 @@ public class DataSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
+        // Update existing services if they have null or empty iconUrl
+        for (Service s : serviceRepository.findAll()) {
+            if (s.getIconUrl() == null || s.getIconUrl().isBlank()) {
+                if (s.getTitle().toLowerCase().contains("website") || s.getTitle().toLowerCase().contains("e-commerce")) {
+                    s.setIconUrl("web");
+                } else if (s.getTitle().toLowerCase().contains("ui/ux") || s.getTitle().toLowerCase().contains("design")) {
+                    s.setIconUrl("design");
+                } else if (s.getTitle().toLowerCase().contains("cloud") || s.getTitle().toLowerCase().contains("devops")) {
+                    s.setIconUrl("cloud");
+                } else {
+                    s.setIconUrl("web");
+                }
+                serviceRepository.save(s);
+            }
+        }
+
         if (userRepository.count() > 0) {
             System.out.println(">>> [DataSeeder] Database already contains data. Skipping seed.");
             return;
@@ -72,16 +88,19 @@ public class DataSeeder implements CommandLineRunner {
         Service svc1 = new Service();
         svc1.setTitle("E-Commerce Website Development");
         svc1.setDescription("Build high-performance online stores with automated payment, order tracking, and clean admin controls tailored to your brand.");
+        svc1.setIconUrl("web");
         serviceRepository.save(svc1);
 
         Service svc2 = new Service();
         svc2.setTitle("Mobile UI/UX Design");
         svc2.setDescription("Create modern, premium interfaces for iOS and Android, fully customized to captivate and engage your audience.");
+        svc2.setIconUrl("design");
         serviceRepository.save(svc2);
 
         Service svc3 = new Service();
         svc3.setTitle("Cloud Infrastructure & DevOps");
         svc3.setDescription("Design and deploy scalable cloud architecture on AWS or GCP with CI/CD pipelines, container orchestration, and monitoring.");
+        svc3.setIconUrl("cloud");
         serviceRepository.save(svc3);
 
         // ── 4. Projects ─────────────────────────────────────────────────────

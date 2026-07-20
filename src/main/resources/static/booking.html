@@ -11,103 +11,108 @@
     .booking-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 28px; }
     @media (max-width: 860px) { .booking-grid { grid-template-columns: 1fr; } }
 
-    .card { background: var(--card-bg, #fff); border: 1px solid var(--border-color, #e6e6f0); border-radius: 16px; padding: 24px; }
+    .card { background: var(--bg-white, #fff); border: 1px solid var(--border-color, #e6e6f0); border-radius: 16px; padding: 24px; }
 
     .field { margin-bottom: 16px; }
     .field label { display:block; font-size:13px; font-weight:600; margin-bottom:6px; color: var(--text-muted, #666); }
-    .field input, .field select, .field textarea { width:100%; padding:10px 12px; border:1px solid #d9d9e6; border-radius:10px; font-size:14px; box-sizing:border-box; }
+    .field input, .field select, .field textarea { width:100%; padding:10px 12px; border:1px solid var(--border-color, #d9d9e6); border-radius:10px; font-size:14px; box-sizing:border-box; background: var(--input-bg, #fff); color: var(--input-text, #161616); }
     .field textarea { resize:vertical; min-height:90px; font-family:inherit; }
 
     /* User info badge */
     .user-info-badge {
       display:flex; align-items:center; gap:10px;
-      padding:10px 14px; background:rgba(108,92,231,0.06);
-      border:1px solid rgba(108,92,231,0.2); border-radius:10px;
+      padding:10px 14px; background: var(--primary-light, rgba(15, 98, 254, 0.06));
+      border:1px solid var(--border-color); border-radius:10px;
     }
     .user-info-badge .avatar {
       width:34px; height:34px; border-radius:50%;
-      background:var(--accent2,#6c5ce7); color:#fff;
+      background: var(--primary, #0F62FE); color:#fff;
       display:flex; align-items:center; justify-content:center;
       font-weight:700; font-size:14px; flex-shrink:0;
     }
     .user-info-badge .info { display:flex; flex-direction:column; gap:2px; }
-    .user-info-badge .info strong { font-size:14px; color:#111; }
-    .user-info-badge .info span { font-size:12px; color:#888; }
+    .user-info-badge .info strong { font-size:14px; color: var(--text-dark, #111); }
+    .user-info-badge .info span { font-size:12px; color: var(--text-muted, #888); }
 
     /* File upload area */
     .file-upload-area {
-      border:2px dashed #d9d9e6; border-radius:10px;
+      border:2px dashed var(--border-color, #d9d9e6); border-radius:10px;
       padding:14px 16px; cursor:pointer; transition:.2s;
-      text-align:center; color:#888; font-size:13px;
+      text-align:center; color: var(--text-muted, #888); font-size:13px;
       position:relative; margin-top:8px;
+      background: var(--bg-white);
     }
-    .file-upload-area:hover { border-color:var(--accent2,#6c5ce7); color:var(--accent2,#6c5ce7); }
+    .file-upload-area:hover { border-color: var(--primary, #0F62FE); color: var(--primary, #0F62FE); }
     .file-upload-area input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
     .file-upload-area .upload-icon { font-size:22px; margin-bottom:4px; display:block; }
-    #fileInfo { font-size:12px; margin-top:6px; color:#555; min-height:18px; }
-    #fileError { font-size:12px; color:#d63031; margin-top:4px; min-height:16px; }
+    #fileInfo { font-size:12px; margin-top:6px; color: var(--text-muted, #555); min-height:18px; }
+    #fileError { font-size:12px; color: var(--primary-red, #d63031); margin-top:4px; min-height:16px; }
 
     /* CAPTCHA wrapper */
     .captcha-wrapper { display:flex; justify-content:center; margin: 12px 0 4px; }
 
     .addon-list { display:flex; flex-direction:column; gap:10px; }
-    .addon-item { display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border:1px solid #e2e2ec; border-radius:10px; cursor:pointer; }
-    .addon-item.checked { border-color: var(--accent2, #6c5ce7); background: rgba(108,92,231,0.06); }
+    .addon-item { display:flex; align-items:center; justify-content:space-between; padding:10px 12px; border:1px solid var(--border-color, #e2e2ec); border-radius:10px; cursor:pointer; background: var(--bg-white); color: var(--text-dark); }
+    .addon-item.checked { border-color: var(--primary, #0F62FE); background: var(--primary-light, rgba(15, 98, 254, 0.06)); }
     .addon-item .left { display:flex; align-items:center; gap:10px; }
     .addon-item input { width:16px; height:16px; }
-    .addon-price { font-weight:700; color: var(--accent2, #6c5ce7); }
+    .addon-price { font-weight:700; color: var(--primary, #0F62FE); }
 
     .price-summary { position: sticky; top: 20px; }
-    .price-row { display:flex; justify-content:space-between; font-size:14px; padding:6px 0; color:#555; }
-    .price-row.total { border-top:1px dashed #ccc; margin-top:8px; padding-top:12px; font-size:18px; font-weight:800; color:#111; }
+    .price-row { display:flex; justify-content:space-between; font-size:14px; padding:6px 0; color: var(--text-muted, #555); }
+    .price-row.total { border-top:1px dashed var(--border-color, #ccc); margin-top:8px; padding-top:12px; font-size:18px; font-weight:800; color: var(--text-dark, #111); }
     #totalPriceValue { transition: transform .15s ease; display:inline-block; }
     #totalPriceValue.bump { transform: scale(1.12); }
 
-    .slot-trigger { display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border:1px solid #d9d9e6; border-radius:10px; cursor:pointer; }
+    .slot-trigger { display:flex; align-items:center; justify-content:space-between; padding:12px 14px; border:1px solid var(--border-color, #d9d9e6); border-radius:10px; cursor:pointer; background: var(--bg-white); color: var(--text-dark); }
     .slot-trigger span.value { font-weight:700; }
 
-    .btn-primary { width:100%; padding:14px; border:none; border-radius:12px; background: var(--accent2, #6c5ce7); color:#fff; font-weight:700; font-size:15px; cursor:pointer; margin-top: 10px; }
-    .btn-primary:disabled { opacity:.5; cursor:not-allowed; }
+    .btn-primary { width:100%; padding:14px; border:none; border-radius:12px; background: var(--primary, #0F62FE); color:#fff; font-weight:700; font-size:15px; cursor:pointer; margin-top: 10px; transition: all 0.2s ease; box-shadow: 0 4px 14px rgba(15, 98, 254, 0.3); }
+    .btn-primary:disabled { opacity:.5; cursor:not-allowed; box-shadow: none; }
+    .btn-primary:not(:disabled):hover { transform: translateY(-1.5px); background: var(--primary-hover); box-shadow: 0 6px 18px rgba(15, 98, 254, 0.45); }
 
-    /* ── UC-07: Calendar Modal ── */
-    .modal-overlay { position: fixed; inset:0; background: rgba(0,0,0,.45); display:none; align-items:center; justify-content:center; z-index:1000; }
+    /* —— UC-07: Calendar Modal —— */
+    .modal-overlay { position: fixed; inset:0; background: rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; z-index:1000; backdrop-filter: blur(4px); }
     .modal-overlay.open { display:flex; }
-    .modal-box { background:#fff; border-radius:16px; width: min(480px, 92vw); max-height: 85vh; overflow:auto; padding: 22px; }
-    .modal-box h3 { margin: 0 0 14px; }
+    .modal-box { background: var(--bg-white, #fff); color: var(--text-dark); border: 1px solid var(--border-color); border-radius:16px; width: min(480px, 92vw); max-height: 85vh; overflow:auto; padding: 22px; }
+    .modal-box h3 { margin: 0 0 14px; color: var(--text-dark); }
     .date-input-row { margin-bottom: 16px; }
     .slots-grid { display:grid; grid-template-columns: repeat(3, 1fr); gap:10px; }
-    .slot-btn { padding:10px 6px; border-radius:10px; border:1px solid #d9d9e6; background:#fff; font-size:13px; cursor:pointer; text-align:center; }
-    .slot-btn.locked { background:#f2f2f5; color:#b3b3bd; text-decoration: line-through; cursor:not-allowed; border-style:dashed; }
-    .slot-btn.selected { background: var(--accent2, #6c5ce7); border-color: var(--accent2, #6c5ce7); color:#fff; }
+    .slot-btn { padding:10px 6px; border-radius:10px; border:1px solid var(--border-color, #d9d9e6); background: var(--bg-white, #fff); color: var(--text-dark); font-size:13px; cursor:pointer; text-align:center; transition: all 0.2s ease; }
+    .slot-btn:hover:not(.locked) { background: var(--primary-light); }
+    .slot-btn.locked { background: var(--bg-light, #f2f2f5); color: var(--text-muted, #b3b3bd); text-decoration: line-through; cursor:not-allowed; border-style:dashed; }
+    .slot-btn.selected { background: var(--primary, #0F62FE); border-color: var(--primary, #0F62FE); color:#fff; font-weight: 700; }
     .modal-actions { display:flex; justify-content:flex-end; gap:10px; margin-top: 18px; }
-    .btn-ghost { padding:10px 16px; border-radius:10px; border:1px solid #d9d9e6; background:#fff; cursor:pointer; }
-    .legend { display:flex; gap:16px; font-size:12px; color:#777; margin-top:12px; }
+    .btn-ghost { padding:10px 16px; border-radius:10px; border:1px solid var(--border-color, #d9d9e6); background: var(--bg-white, #fff); color: var(--text-dark); cursor:pointer; transition: all 0.2s ease; }
+    .btn-ghost:hover { background: var(--bg-light); }
+    .legend { display:flex; gap:16px; font-size:12px; color: var(--text-muted, #777); margin-top:12px; }
     .legend span { display:flex; align-items:center; gap:6px; }
     .dot { width:10px; height:10px; border-radius:50%; display:inline-block; }
-    .dot.free { background:#fff; border:1px solid #d9d9e6; }
-    .dot.locked { background:#f2f2f5; border:1px dashed #b3b3bd; }
-    .dot.sel { background: var(--accent2, #6c5ce7); }
+    .dot.free { background: var(--bg-white); border:1px solid var(--border-color, #d9d9e6); }
+    .dot.locked { background: var(--bg-light, #f2f2f5); border:1px dashed var(--text-muted, #b3b3bd); }
+    .dot.sel { background: var(--primary, #0F62FE); }
 
     #formMsg { margin-top:10px; font-size:13px; }
-    #formMsg.error { color:#d63031; }
-    #formMsg.success { color:#00b894; }
+    #formMsg.error { color: var(--primary-red, #d63031); }
+    #formMsg.success { color: var(--primary-green, #00b894); }
 
     .captcha-box { display:flex; align-items:center; gap:10px; margin-bottom: 8px; }
     .captcha-code-display {
       flex: 1; user-select: none; text-align:center; padding: 10px 14px;
-      background: repeating-linear-gradient(45deg, #f2f2f7, #f2f2f7 6px, #eaeaf2 6px, #eaeaf2 12px);
-      border: 1px solid #d9d9e6; border-radius: 10px;
+      background: repeating-linear-gradient(45deg, var(--bg-light, #f2f2f7), var(--bg-light, #f2f2f7) 6px, var(--border-color, #eaeaf2) 6px, var(--border-color, #eaeaf2) 12px);
+      border: 1px solid var(--border-color, #d9d9e6); border-radius: 10px;
       font-family: 'Courier New', monospace; font-weight: 800; font-size: 22px; letter-spacing: 6px;
-      color: #333;
+      color: var(--text-dark, #333);
     }
     .captcha-code-display span { display:inline-block; }
     .captcha-code-display span:nth-child(odd) { transform: rotate(-6deg); }
-    .captcha-code-display span:nth-child(even) { transform: rotate(6deg); color:#6c5ce7; }
+    .captcha-code-display span:nth-child(even) { transform: rotate(6deg); color: var(--primary); }
     .captcha-refresh-btn {
-      padding: 10px 14px; border: 1px solid #d9d9e6; border-radius: 10px;
-      background: #fff; cursor: pointer; font-size: 16px; line-height: 1;
+      padding: 10px 14px; border: 1px solid var(--border-color, #d9d9e6); border-radius: 10px;
+      background: var(--bg-white, #fff); color: var(--text-dark); cursor: pointer; font-size: 16px; line-height: 1;
+      transition: all 0.2s ease;
     }
-    .captcha-refresh-btn:hover { background: #f5f5f8; }
+    .captcha-refresh-btn:hover { background: var(--primary-light, #f5f5f8); }
   </style>
 </head>
 <body>
@@ -163,11 +168,12 @@
               <input type="hidden" id="clientIdInput">
             </div>
 
-            <div class="field">
-              <label for="serviceSelect">Service *</label>
+            <div class="floating-form-group">
               <select id="serviceSelect" required>
+                <option value="" disabled selected hidden></option>
                 <option value="">Loading services...</option>
               </select>
+              <label for="serviceSelect">Service *</label>
             </div>
 
             <!-- UC-06: Dynamic Pricing Module -->
@@ -179,13 +185,17 @@
             </div>
 
             <!-- Message + File Attachment -->
-            <div class="field">
-              <label for="messageContent">Message <span style="font-weight:400;color:#aaa;">(optional)</span></label>
-              <textarea id="messageContent" placeholder="Tell us about your project..."></textarea>
+            <div class="floating-form-group">
+              <textarea id="messageContent" placeholder=" "></textarea>
+              <label for="messageContent">Message (optional)</label>
+            </div>
 
+            <div class="field">
               <div class="file-upload-area" id="fileUploadArea" title="Attach a file (max 10 MB)">
                 <input type="file" id="attachmentFile" accept="*/*" aria-label="Attach file">
-                <span class="upload-icon">📎</span>
+                <span class="upload-icon" style="color: var(--primary); display: flex; align-items: center; justify-content: center;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+                </span>
                 <span>Click or drag a file here <strong>(max 10 MB)</strong></span>
               </div>
               <div id="fileInfo"></div>
@@ -197,16 +207,20 @@
               <label>Consultation Time *</label>
               <div class="slot-trigger" id="slotTrigger">
                 <span class="value" id="slotTriggerValue">Choose date &amp; time slot</span>
-                <span>📅</span>
+                <span style="color: var(--primary); display: flex; align-items: center;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                </span>
               </div>
             </div>
 
-            <!-- CAPTCHA anti-spam - chuỗi ký tự tự sinh, không cần dịch vụ ngoài -->
+            <!-- CAPTCHA anti-spam - chuá»—i kÃ½ tá»± tá»± sinh, khÃ´ng cáº§n dá»‹ch vá»¥ ngoÃ i -->
             <div class="field">
               <label>Security Check *</label>
               <div class="captcha-box">
                 <div class="captcha-code-display" id="captchaCodeDisplay">Loading...</div>
-                <button type="button" class="captcha-refresh-btn" id="captchaRefreshBtn" title="Get a new code">⟳</button>
+                <button type="button" class="captcha-refresh-btn" id="captchaRefreshBtn" title="Get a new code" style="display: flex; align-items: center; justify-content: center; padding: 12px 14px;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-dark);"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path></svg>
+                </button>
               </div>
               <input type="text" id="captchaAnswerInput" placeholder="Type the code above" autocomplete="off">
             </div>
@@ -261,24 +275,39 @@
           <span>NovaDigital</span>
         </a>
         <p>Bring your business closer to millions of customers through comprehensive UI/UX design and technology solutions.</p>
+        <!-- Social icons in brand column -->
+        <div class="social-icons-footer" style="margin-top: 1.5rem;">
+          <a href="#" aria-label="Facebook">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/></svg>
+          </a>
+          <a href="#" aria-label="Github">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          </a>
+          <a href="#" aria-label="LinkedIn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.779-1.75-1.75s.784-1.75 1.75-1.75 1.75.779 1.75 1.75-.784 1.75-1.75 1.75zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+          </a>
+        </div>
       </div>
       <div class="footer-col">
         <h3>Quick Links</h3>
         <ul class="footer-links">
+          <li><a href="index.html">Home</a></li>
           <li><a href="about.html">About Us</a></li>
-          <li><a href="services.html">Service</a></li>
-          <li><a href="portfolio.html">Product</a></li>
+          <li><a href="services.html">Services</a></li>
+          <li><a href="portfolio.html">Projects</a></li>
+          <li><a href="contact.html">Contact</a></li>
+          <li><a href="booking.html">Book Consultation</a></li>
         </ul>
       </div>
       <div class="footer-col">
-        <h3>Information</h3>
+        <h3>Contact Us</h3>
         <div class="footer-info">
           <div class="footer-info-item">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
               <circle cx="12" cy="10" r="3"></circle>
             </svg>
-            <span>Fv1</span>
+            <span>Ho Chi Minh City, Vietnam</span>
           </div>
           <div class="footer-info-item">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -287,22 +316,18 @@
             </svg>
             <a href="mailto:contact@novadigital.com">contact@novadigital.com</a>
           </div>
+          <div class="footer-info-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8 19.79 19.79 0 01.02 1.18 2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"></path>
+            </svg>
+            <span>+84 (0) 123 456 789</span>
+          </div>
         </div>
       </div>
     </div>
     <div class="footer-bottom">
-      <p>&copy; 2026 NovaDigital. All rights reserved.</p>
-      <div class="social-icons-footer">
-        <a href="#" aria-label="Facebook">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/></svg>
-        </a>
-        <a href="#" aria-label="Github">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-        </a>
-        <a href="#" aria-label="LinkedIn">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.779-1.75-1.75s.784-1.75 1.75-1.75 1.75.779 1.75 1.75-.784 1.75-1.75 1.75zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
-        </a>
-      </div>
+      <p>&copy; 2026 NovaDigital Creative Agency. All rights reserved.</p>
+       <p style="opacity: 0.5; font-size: 0.82rem;">Crafted with &#9829; in Vietnam</p>
     </div>
   </footer>
 
@@ -310,7 +335,7 @@
   <script>
     const API = '';
 
-    // ── State ──────────────────────────────────────────────────────
+    // â”€â”€ State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     let pricingTable = { basePrice: 0, addons: [] }; // addons: [{id, addonName, priceModifier}]
     let selectedAddonIds = new Set();
     let chosenDate = null;
@@ -320,7 +345,7 @@
     let attachedFile = null;
     let defaultExpertId = null; // Loaded dynamically to satisfy the backend API requirements
 
-    // ── CAPTCHA: sinh chuỗi ký tự ngẫu nhiên, tự xác thực ở server ────
+    // â”€â”€ CAPTCHA: sinh chuá»—i kÃ½ tá»± ngáº«u nhiÃªn, tá»± xÃ¡c thá»±c á»Ÿ server â”€â”€â”€â”€
     async function loadCaptcha() {
       const displayEl = document.getElementById('captchaCodeDisplay');
       displayEl.textContent = 'Loading...';
@@ -329,7 +354,7 @@
         const res = await fetch(`${API}/api/bookings/captcha`);
         const data = await res.json();
         captchaToken = data.token;
-        // Tách từng ký tự ra <span> riêng để CSS xoay lệch, khó bot OCR đơn giản đọc theo hàng thẳng
+        // TÃ¡ch tá»«ng kÃ½ tá»± ra <span> riÃªng Ä‘á»ƒ CSS xoay lá»‡ch, khÃ³ bot OCR Ä‘Æ¡n giáº£n Ä‘á»c theo hÃ ng tháº³ng
         displayEl.innerHTML = data.code.split('').map(ch => `<span>${ch}</span>`).join('');
       } catch (e) {
         displayEl.textContent = 'Failed to load';
@@ -339,7 +364,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      // Yêu cầu đăng nhập mới được đặt lịch
+      // YÃªu cáº§u Ä‘Äƒng nháº­p má»›i Ä‘Æ°á»£c Ä‘áº·t lá»‹ch
       const token = localStorage.getItem('token') || sessionStorage.getItem('token');
       if (!token) {
         sessionStorage.setItem('redirectAttempt', 'booking.html');
@@ -417,9 +442,9 @@
       }
     }
 
-    // Consultant field removed — admin assigns consultant later
+    // Consultant field removed â€” admin assigns consultant later
 
-    // ── UC-06: Dynamic Pricing Module (Service.base_price + Service_Addon) ──
+    // â”€â”€ UC-06: Dynamic Pricing Module (Service.base_price + Service_Addon) â”€â”€
     async function loadPricingForService(serviceId) {
       const list = document.getElementById('addonList');
       if (!serviceId) {
@@ -497,7 +522,7 @@
       validateForm();
     }
 
-    // ── UC-07: Booking Calendar Controls ─────────────────────────────
+    // â”€â”€ UC-07: Booking Calendar Controls â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     function bindEvents() {
       document.getElementById('serviceSelect').addEventListener('change', (e) => {
         loadPricingForService(e.target.value);
@@ -518,7 +543,7 @@
       document.getElementById('attachmentFile').addEventListener('change', onFileChange);
     }
 
-    // ── File attachment ────────────────────────────────────────────
+    // â”€â”€ File attachment â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     function onFileChange(e) {
       const file = e.target.files[0];
       const infoEl  = document.getElementById('fileInfo');
@@ -532,12 +557,12 @@
       const MAX_MB = 10;
       const sizeMB = file.size / (1024 * 1024);
       if (sizeMB > MAX_MB) {
-        errEl.textContent = `❌ File is too large (${sizeMB.toFixed(1)} MB). Maximum allowed is ${MAX_MB} MB.`;
+        errEl.textContent = `\u274C File is too large (${sizeMB.toFixed(1)} MB). Maximum allowed is ${MAX_MB} MB.`;
         e.target.value = '';
         return;
       }
       attachedFile = file;
-      infoEl.textContent = `✅ ${file.name}  (${sizeMB.toFixed(2)} MB)`;
+      infoEl.textContent = `\u2705 ${file.name}  (${sizeMB.toFixed(2)} MB)`;
     }
 
     function openCalendarModal() {
@@ -591,12 +616,12 @@
       if (!chosenDate || !chosenStart) return;
       confirmedStart = chosenStart;
       const label = chosenStart.slice(0, 5);
-      document.getElementById('slotTriggerValue').textContent = `${chosenDate} — ${label}`;
+      document.getElementById('slotTriggerValue').textContent = `${chosenDate} - ${label}`;
       closeCalendarModal();
       validateForm();
     }
 
-    // ── Submit ─────────────────────────────────────────────────────
+    // â”€â”€ Submit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     function validateForm() {
       const ok = document.getElementById('serviceSelect').value &&
                  document.getElementById('clientIdInput').value &&
@@ -647,7 +672,7 @@
           const uploadResult = await uploadRes.json();
           if (uploadResult.url) {
             const fileLink = window.location.origin + uploadResult.url;
-            finalMessage += (finalMessage ? '\n\n' : '') + `📎 Attachment: ${fileLink}`;
+            finalMessage += (finalMessage ? '\n\n' : '') + `\uD83D\uDCCE Attachment: ${fileLink}`;
           }
         }
 
@@ -680,13 +705,13 @@
           if (res.status === 409) { confirmedStart = null; loadSlots(); }
           submitBtn.disabled = false;
           submitBtn.textContent = 'Confirm Booking';
-          loadCaptcha(); // token cũ đã bị server xoá sau khi verify -> luôn cần mã mới để thử lại
+          loadCaptcha(); // token cÅ© Ä‘Ã£ bá»‹ server xoÃ¡ sau khi verify -> luÃ´n cáº§n mÃ£ má»›i Ä‘á»ƒ thá»­ láº¡i
           return;
         }
 
         msg.textContent = `Booking confirmed! Total: $${data.totalPrice.toFixed(0)} on ${data.appointmentDate} at ${data.timeSlot.slice(0,5)}.`;
         msg.className = 'success';
-        submitBtn.textContent = 'Booked ✓';
+        submitBtn.textContent = 'Booked \u2713';
       } catch (err) {
         msg.textContent = 'Network error, please try again.';
         msg.className = 'error';
@@ -705,41 +730,21 @@
     function showBookingAuthBanner() {
       const banner = document.createElement('div');
       banner.id = 'booking-auth-banner';
-      banner.style.cssText = [
-        'position:fixed', 'inset:0', 'z-index:900',
-        'background:rgba(255,255,255,0.88)',
-        'backdrop-filter:blur(8px)',
-        '-webkit-backdrop-filter:blur(8px)',
-        'display:flex', 'flex-direction:column',
-        'align-items:center', 'justify-content:center',
-        'gap:18px', 'text-align:center', 'padding:24px'
-      ].join(';');
+      banner.className = 'auth-banner-overlay';
       banner.innerHTML = `
-        <div style="font-size:56px;line-height:1;">&#128274;</div>
-        <h2 style="margin:0;font-size:1.6rem;font-weight:800;color:#111;">
-          Login Required
-        </h2>
-        <p style="margin:0;color:#555;max-width:360px;font-size:0.95rem;line-height:1.6;">
-          You need to <strong>log in</strong> or <strong>register</strong>
-          to book a consultation with our team.
-        </p>
-        <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:4px;">
-          <button
-            onclick="openAuthModal('login')"
-            style="padding:13px 32px;border:none;border-radius:10px;
-                   background:var(--accent2,#6c5ce7);color:#fff;
-                   font-weight:700;font-size:15px;cursor:pointer;
-                   box-shadow:0 4px 14px rgba(108,92,231,.35);">
-            Log In
-          </button>
-          <button
-            onclick="openAuthModal('register')"
-            style="padding:13px 32px;border:2px solid var(--accent2,#6c5ce7);
-                   border-radius:10px;background:#fff;
-                   color:var(--accent2,#6c5ce7);
-                   font-weight:700;font-size:15px;cursor:pointer;">
-            Register
-          </button>
+        <div class="auth-banner-card">
+          <div class="auth-banner-icon-wrapper">
+            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+          </div>
+          <h2>Login Required</h2>
+          <p>You need to <strong>log in</strong> or <strong>register</strong> to book a consultation with our team.</p>
+          <div class="auth-banner-buttons">
+            <button class="auth-banner-btn-login" onclick="openAuthModal('login')">Log In</button>
+            <button class="auth-banner-btn-register" onclick="openAuthModal('register')">Register</button>
+          </div>
         </div>
       `;
       document.body.appendChild(banner);

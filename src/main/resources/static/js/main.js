@@ -971,6 +971,9 @@ function initAdminDashboard() {
     if (panelName === "bookings") {
       fetchAdminBookings();
     }
+    if (panelName === "messages") {
+      loadUserMessages();
+    }
   }
 
   // =============================================
@@ -1629,6 +1632,255 @@ function initAdminDashboard() {
     tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:#ef4444;">Could not load contacts list. Please reload the page.</td></tr>`;
   }
 }
+
+  let allMessages = [];
+  let filteredMessages = [];
+  let activeReplyId = null;
+
+  async function loadUserMessages() {
+    try {
+      const token = getAdminToken();
+      const response = await fetch("/api/contacts/admin/user-messages", {
+        headers: token ? { "Authorization": "Bearer " + token } : {}
+      });
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          alert("Session expired or unauthorized. Please login again.");
+          window.location.href = "login.html";
+          return;
+        }
+        throw new Error("Failed to fetch messages");
+      }
+      allMessages = await response.json();
+      
+      // Update Overview stats count dynamically if the element is present
+      const statsCount = document.getElementById("stat-messages-count");
+      if (statsCount) statsCount.textContent = allMessages.length;
+      
+      applyFilters();
+    } catch (err) {
+      console.error(err);
+      const tbody = document.getElementById("messages-table-body");
+      if (tbody) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" style="text-align: center; padding: 2rem; color: #ef4444; font-weight: 600;">
+              Error loading messages: ${err.message}
+            </td>
+          </tr>
+        `;
+      }
+    }
+  }
+
+  function applyFilters() {
+    const searchInput = document.getElementById("search-input");
+    const filterStatus = document.getElementById("filter-status");
+    if (!searchInput || !filterStatus) return;
+
+    const searchTerm = searchInput.value.trim().toLowerCase();
+    const statusFilter = filterStatus.value;
+
+    filteredMessages = allMessages.filter(msg => {
+      // Status filter
+      if (statusFilter === "REPLIED" && !msg.replied) return false;
+      if (statusFilter === "UNREPLIED" && msg.replied) return false;
+
+      // Search term filter
+      if (searchTerm) {
+        const matchUsername = (msg.username || "").toLowerCase().includes(searchTerm);
+        const matchFullName = (msg.fullName || "").toLowerCase().includes(searchTerm);
+        const matchEmail = (msg.email || "").toLowerCase().includes(searchTerm);
+        const matchContent = (msg.content || "").toLowerCase().includes(searchTerm);
+        const matchTitle = (msg.title || "").toLowerCase().includes(searchTerm);
+        return matchUsername || matchFullName || matchEmail || matchContent || matchTitle;
+      }
+
+      return true;
+    });
+
+    renderTable();
+  }
+
+  function renderTable() {
+    const tbody = document.getElementById("messages-table-body");
+    if (!tbody) return;
+
+    if (filteredMessages.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+            No matching client messages found.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = filteredMessages.map(msg => {
+      const dateStr = new Date(msg.createdAt).toLocaleString("en-US", {
+        hour: "2-digit", minute: "2-digit",
+        day: "2-digit", month: "2-digit", year: "numeric"
+      });
+
+      const statusBadge = msg.replied 
+        ? `<span class="status-badge badge-replied">Replied</span>`
+        : `<span class="status-badge badge-unreplied">Unreplied</span>`;
+
+      let replyContentHtml = "";
+      if (msg.replied) {
+        const repliedDateStr = new Date(msg.repliedAt).toLocaleString("en-US", {
+          hour: "2-digit", minute: "2-digit",
+          day: "2-digit", month: "2-digit", year: "numeric"
+        });
+        replyContentHtml = `
+          <div class="replied-box">
+            <div style="font-weight: 700; margin-bottom: 0.2rem;">Replied on ${repliedDateStr}:</div>
+            <p style="margin: 0; white-space: pre-wrap;">${escapeHtml(msg.reply)}</p>
+          </div>
+        `;
+      }
+
+      return `
+        <tr>
+          <td>
+            <div style="font-weight: 700; color: var(--text-dark);">${escapeHtml(msg.fullName)}</div>
+            <div style="font-size: 0.78rem; color: var(--text-muted);">@${escapeHtml(msg.username)}</div>
+          </td>
+          <td>
+            <div style="font-size: 0.85rem; font-weight: 600; color: var(--color-primary, #2563eb);">${escapeHtml(msg.email)}</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">${escapeHtml(msg.phone || "N/A")}</div>
+          </td>
+          <td style="font-weight: 600; color: var(--text-dark);">${escapeHtml(msg.title || "")}</td>
+          <td>
+            <p style="margin: 0; line-height: 1.4; white-space: pre-wrap;">${escapeHtml(msg.content || "")}</p>
+            ${replyContentHtml}
+          </td>
+          <td>
+            <div>${statusBadge}</div>
+            <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.25rem;">Sent: ${dateStr}</div>
+          </td>
+          <td>
+            <div class="action-btns">
+              ${!msg.replied ? `
+                <button class="btn-edit" style="background:var(--color-primary, #2563eb); color:#fff; border:none;" onclick="openReplyDialog(${msg.id}, '${escapeHtml(msg.fullName)}', '${escapeHtml(msg.title)}')">
+                  Reply
+                </button>
+              ` : ''}
+              <button class="btn-delete" onclick="deleteMessage(${msg.id})">
+                Delete
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function handleSearch() {
+    applyFilters();
+  }
+
+  function handleFilter() {
+    applyFilters();
+  }
+
+  function openReplyDialog(msgId, senderName, title) {
+    activeReplyId = msgId;
+    const senderSpan = document.getElementById("reply-dialog-sender");
+    const titleSpan = document.getElementById("reply-dialog-msg-title");
+    const textarea = document.getElementById("reply-textarea");
+    const overlay = document.getElementById("reply-dialog-overlay");
+
+    if (senderSpan) senderSpan.textContent = senderName;
+    if (titleSpan) titleSpan.textContent = title;
+    if (textarea) textarea.value = "";
+    if (overlay) overlay.style.display = "flex";
+    if (textarea) textarea.focus();
+  }
+
+  function closeReplyDialog() {
+    activeReplyId = null;
+    const overlay = document.getElementById("reply-dialog-overlay");
+    const textarea = document.getElementById("reply-textarea");
+    if (overlay) overlay.style.display = "none";
+    if (textarea) textarea.value = "";
+  }
+
+  async function submitReply() {
+    if (!activeReplyId) return;
+    const textarea = document.getElementById("reply-textarea");
+    if (!textarea) return;
+    const text = textarea.value.trim();
+    if (!text) {
+      alert("Please enter a reply message.");
+      return;
+    }
+
+    const btn = document.getElementById("btn-send-reply");
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "Sending...";
+    }
+
+    try {
+      const token = getAdminToken();
+      const response = await fetch(`/api/contacts/${activeReplyId}/reply`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": token ? "Bearer " + token : ""
+        },
+        body: JSON.stringify({ message: text })
+      });
+
+      if (!response.ok) throw new Error("Failed to send reply");
+
+      alert("Reply sent successfully!");
+      closeReplyDialog();
+      await loadUserMessages();
+    } catch (err) {
+      console.error(err);
+      alert("Error: " + err.message);
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "Send Reply";
+      }
+    }
+  }
+
+  async function deleteMessage(msgId) {
+    if (!confirm("Are you sure you want to delete this message? This action cannot be undone.")) return;
+
+    try {
+      const token = getAdminToken();
+      const response = await fetch(`/api/contacts/${msgId}`, {
+        method: "DELETE",
+        headers: token ? { "Authorization": "Bearer " + token } : {}
+      });
+
+      if (!response.ok) throw new Error("Failed to delete message");
+
+      alert("Message deleted successfully!");
+      await loadUserMessages();
+    } catch (err) {
+      console.error(err);
+      alert("Error deleting message: " + err.message);
+    }
+  }
+
+  // Expose functions globally to onclick handlers
+  window.switchAdminPanel = switchAdminPanel;
+  window.loadUserMessages = loadUserMessages;
+  window.applyFilters = applyFilters;
+  window.renderTable = renderTable;
+  window.handleSearch = handleSearch;
+  window.handleFilter = handleFilter;
+  window.openReplyDialog = openReplyDialog;
+  window.closeReplyDialog = closeReplyDialog;
+  window.submitReply = submitReply;
+  window.deleteMessage = deleteMessage;
 
 // =============================================
 //  In-App Notification Bell
@@ -2935,9 +3187,26 @@ function formatNotificationTime(iso) {
     animatedElements2.forEach(el => observer.observe(el));
   }
 
-  // =============================================
-  // Theme Switcher (Dark/Light Mode)
-  // =============================================
+  // Shared View Transition API helper for Circular Reveal Theme Toggle
+  window.toggleThemeWithTransition = function (event, toggleCallback) {
+    const rect = (event && event.currentTarget) ? event.currentTarget.getBoundingClientRect() : null;
+    const x = rect ? (rect.left + rect.width / 2) : (event ? event.clientX : window.innerWidth / 2);
+    const y = rect ? (rect.top + rect.height / 2) : (event ? event.clientY : window.innerHeight / 2);
+    document.documentElement.style.setProperty('--click-x', `${x}px`);
+    document.documentElement.style.setProperty('--click-y', `${y}px`);
+
+    if (!document.startViewTransition) {
+      document.documentElement.classList.add("theme-transitioning");
+      toggleCallback();
+      setTimeout(() => {
+        document.documentElement.classList.remove("theme-transitioning");
+      }, 350);
+      return;
+    }
+
+    document.startViewTransition(toggleCallback);
+  };
+
   function injectThemeToggle() {
     const navbar = document.querySelector(".navbar");
     if (!navbar) return;
@@ -2962,16 +3231,18 @@ function formatNotificationTime(iso) {
 
     toggleBtn.addEventListener("click", (e) => {
       e.preventDefault();
-      const isDark = document.documentElement.classList.contains("dark-theme");
-      if (isDark) {
-        document.documentElement.classList.remove("dark-theme");
-        localStorage.setItem("theme", "light");
-        toggleBtn.innerHTML = moonIcon;
-      } else {
-        document.documentElement.classList.add("dark-theme");
-        localStorage.setItem("theme", "dark");
-        toggleBtn.innerHTML = sunIcon;
-      }
+      window.toggleThemeWithTransition(e, () => {
+        const isDark = document.documentElement.classList.contains("dark-theme");
+        if (isDark) {
+          document.documentElement.classList.remove("dark-theme");
+          localStorage.setItem("theme", "light");
+          toggleBtn.innerHTML = moonIcon;
+        } else {
+          document.documentElement.classList.add("dark-theme");
+          localStorage.setItem("theme", "dark");
+          toggleBtn.innerHTML = sunIcon;
+        }
+      });
       if (typeof updateChartTheme === "function") {
         updateChartTheme();
       }
@@ -3037,26 +3308,28 @@ function formatNotificationTime(iso) {
     const sunIcon = qThemeBtn.querySelector(".sun-icon");
     const moonIcon = qThemeBtn.querySelector(".moon-icon");
 
-    qThemeBtn.addEventListener("click", () => {
-      const isDark = document.documentElement.classList.contains("dark-theme");
-      if (isDark) {
-        document.documentElement.classList.remove("dark-theme");
-        localStorage.setItem("theme", "light");
-        sunIcon.style.display = "none";
-        moonIcon.style.display = "block";
-      } else {
-        document.documentElement.classList.add("dark-theme");
-        localStorage.setItem("theme", "dark");
-        sunIcon.style.display = "block";
-        moonIcon.style.display = "none";
-      }
-      // Sync with header toggle
-      const headerToggle = document.getElementById("theme-toggle-btn");
-      if (headerToggle) {
-        const hSun = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;color:#eab308;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
-        const hMoon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;color:#6366f1;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
-        headerToggle.innerHTML = isDark ? hMoon : hSun;
-      }
+    qThemeBtn.addEventListener("click", (e) => {
+      window.toggleThemeWithTransition(e, () => {
+        const isDark = document.documentElement.classList.contains("dark-theme");
+        if (isDark) {
+          document.documentElement.classList.remove("dark-theme");
+          localStorage.setItem("theme", "light");
+          sunIcon.style.display = "none";
+          moonIcon.style.display = "block";
+        } else {
+          document.documentElement.classList.add("dark-theme");
+          localStorage.setItem("theme", "dark");
+          sunIcon.style.display = "block";
+          moonIcon.style.display = "none";
+        }
+        // Sync with header toggle
+        const headerToggle = document.getElementById("theme-toggle-btn");
+        if (headerToggle) {
+          const hSun = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;color:#eab308;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
+          const hMoon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;color:#6366f1;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
+          headerToggle.innerHTML = isDark ? hMoon : hSun;
+        }
+      });
       if (typeof updateChartTheme === "function") {
         updateChartTheme();
       }
@@ -4612,4 +4885,138 @@ function initFooterMove() {
     document.body.classList.toggle("sidebar-collapsed");
     const isCollapsed = document.body.classList.contains("sidebar-collapsed");
     localStorage.setItem("adminSidebarCollapsed", isCollapsed);
+  }
+
+  // =======================================================
+  // UI/UX GLOBAL SCRIPTING OVERHAUL (TOASTS & VALIDATIONS)
+  // =======================================================
+
+  // 1. Toast Notification system
+  window.showToast = function (title, message, type = "success") {
+    let container = document.getElementById("toast-notification-container");
+    if (!container) {
+      container = document.createElement("div");
+      container.id = "toast-notification-container";
+      container.className = "toast-notification-container";
+      document.body.appendChild(container);
+    }
+
+    const toast = document.createElement("div");
+    toast.className = `toast-msg-item ${type}`;
+
+    let iconSvg = "";
+    if (type === "success") {
+      iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#24A148" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+    } else if (type === "error") {
+      iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#DA1E28" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
+    } else {
+      iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0F62FE" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`;
+    }
+
+    toast.innerHTML = `
+      <div class="toast-icon">${iconSvg}</div>
+      <div class="toast-content">
+        <div class="toast-title" style="margin:0;font-weight:700;font-size:0.9rem;">${title}</div>
+        <div class="toast-message" style="margin:2px 0 0 0;font-size:0.8rem;color:var(--text-muted);">${message}</div>
+      </div>
+    `;
+
+    container.appendChild(toast);
+
+    // Auto-remove after 4 seconds
+    setTimeout(() => {
+      toast.classList.add("fade-out");
+      setTimeout(() => {
+        toast.remove();
+      }, 300);
+    }, 4000);
+  };
+
+  // 2. Form live validation
+  function getValidationMessage(input) {
+    if (input.validity.valueMissing) {
+      return "Trường này là bắt buộc.";
+    }
+    if (input.validity.typeMismatch) {
+      if (input.type === "email") return "Địa chỉ email không hợp lệ.";
+      if (input.type === "url") return "Đường dẫn URL không hợp lệ.";
+    }
+    if (input.validity.tooShort) {
+      return `Vui lòng nhập tối thiểu ${input.minLength} ký tự.`;
+    }
+    if (input.validity.patternMismatch) {
+      return "Định dạng nhập liệu không khớp với yêu cầu.";
+    }
+    return input.validationMessage || "Trường nhập liệu không hợp lệ.";
+  }
+
+  function validateField(input) {
+    const parent = input.closest(".floating-form-group") || input.parentElement;
+    let errorSpan = parent.querySelector(".error-helper-text");
+
+    if (input.type === "select-one") {
+      if (input.value !== "") {
+        input.classList.add("has-value");
+      } else {
+        input.classList.remove("has-value");
+      }
+    }
+
+    if (!input.checkValidity()) {
+      input.classList.add("input-error");
+      if (!errorSpan) {
+        errorSpan = document.createElement("span");
+        errorSpan.className = "error-helper-text";
+        parent.appendChild(errorSpan);
+      }
+      errorSpan.textContent = getValidationMessage(input);
+    } else {
+      input.classList.remove("input-error");
+      if (errorSpan) {
+        errorSpan.remove();
+      }
+    }
+  }
+
+  // Setup validation events on inputs
+  function setupLiveFormValidation() {
+    const forms = document.querySelectorAll("form");
+    forms.forEach(form => {
+      const inputs = form.querySelectorAll("input, textarea, select");
+      inputs.forEach(input => {
+        if (input.tagName === "SELECT") {
+          input.addEventListener("change", () => validateField(input));
+        }
+
+        input.addEventListener("blur", () => validateField(input));
+        input.addEventListener("input", () => {
+          if (input.classList.contains("input-error")) {
+            validateField(input);
+          }
+        });
+      });
+
+      // Validate all on submit
+      form.addEventListener("submit", (e) => {
+        let isFormValid = true;
+        inputs.forEach(input => {
+          validateField(input);
+          if (!input.checkValidity()) {
+            isFormValid = false;
+          }
+        });
+
+        if (!isFormValid) {
+          e.preventDefault();
+          window.showToast("Lỗi nhập liệu", "Vui lòng kiểm tra lại các thông tin màu đỏ.", "error");
+        }
+      });
+    });
+  }
+
+  // Run on DOM loaded
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", setupLiveFormValidation);
+  } else {
+    setupLiveFormValidation();
   }
