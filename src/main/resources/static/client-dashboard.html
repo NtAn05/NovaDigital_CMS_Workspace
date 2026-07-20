@@ -208,10 +208,10 @@
 
 <script>
   const API = '';
-  const token = localStorage.getItem('authToken');
+  const token = localStorage.getItem('authToken') || localStorage.getItem('token') || sessionStorage.getItem('token');
   if (!token) { window.location.href = '/login.html'; }
 
-  const savedUser = localStorage.getItem('user');
+  const savedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
   let currentUser = null;
   if (savedUser) {
     currentUser = JSON.parse(savedUser);

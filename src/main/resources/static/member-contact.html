@@ -528,10 +528,10 @@
     // ─────────────────────────────────────────────────────────────────────────
     //  Auth & sidebar bootstrap
     // ─────────────────────────────────────────────────────────────────────────
-    const pmToken = localStorage.getItem('authToken') || localStorage.getItem('token') || '';
+    const pmToken = localStorage.getItem('authToken') || localStorage.getItem('token') || sessionStorage.getItem('token') || '';
     if (!pmToken) { window.location.href = '/login.html'; }
 
-    const savedUser = localStorage.getItem('user');
+    const savedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
     let currentUser = null;
     let displayName = 'Member';
     let avatarChar = '?';
