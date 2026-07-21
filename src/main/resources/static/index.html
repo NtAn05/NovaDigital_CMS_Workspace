@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="NovaDigital - Creative Agency. We partner with businesses to build cutting-edge digital experiences, branding, and interfaces.">
   <title>NovaDigital | Creative Agency</title>
-  <link rel="stylesheet" href="/css/style.css?v=1.0.4">
+  <link rel="stylesheet" href="/css/style.css?v=resource-integrated-v9">
   <style>
     /* ─── PAGE LOADER ─────────────────────────────── */
     #page-loader {
@@ -336,7 +336,14 @@
       
       <div class="hero-content">
         <span class="hero-pill">Breakthrough Digital Solutions</span>
-        <h1>Build your <span>brand's future</span> with us.</h1>
+        <h1 class="stagger-words-container">
+          <span class="stagger-word-wrapper"><span class="stagger-word" style="transition-delay: 0s;">Build</span></span>
+          <span class="stagger-word-wrapper"><span class="stagger-word" style="transition-delay: 0.08s;">your</span></span>
+          <span class="stagger-word-wrapper"><span class="stagger-word highlight" style="transition-delay: 0.16s;">brain's</span></span>
+          <span class="stagger-word-wrapper"><span class="stagger-word highlight" style="transition-delay: 0.24s;">future</span></span>
+          <span class="stagger-word-wrapper"><span class="stagger-word" style="transition-delay: 0.32s;">with</span></span>
+          <span class="stagger-word-wrapper"><span class="stagger-word" style="transition-delay: 0.4s;">us.</span></span>
+        </h1>
         <p>We partner with businesses to create cutting-edge technology products, sophisticated website interfaces, and top-tier branding strategies.</p>
         <div class="hero-buttons">
           <a href="portfolio.html" class="btn-primary">
@@ -719,7 +726,7 @@
     </div>
   </footer>
 
-  <script src="/js/main.js?v=resource-integrated-v2"></script>
+  <script src="/js/main.js?v=resource-integrated-v9"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script>
     (function() {
@@ -743,6 +750,10 @@
         // 3. Trigger hero + navbar entrance animations
         requestAnimationFrame(() => {
           document.body.classList.add('page-loaded');
+          const staggerContainer = document.querySelector('.stagger-words-container');
+          if (staggerContainer) {
+            staggerContainer.classList.add('animate-reveal');
+          }
         });
       }
 

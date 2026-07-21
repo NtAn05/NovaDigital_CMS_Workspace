@@ -44,7 +44,11 @@ public class AdminDashboardController {
 
     @GetMapping
     public ResponseEntity<?> getDashboardStats() {
-        long messagesCount = contactRepository.count();
+        long messagesCount = contactRepository.findAll().stream()
+                .filter(c -> userRepository.findByEmail(c.getEmail())
+                        .map(u -> "ROLE_USER".equalsIgnoreCase(u.getRole()))
+                        .orElse(false))
+                .count();
         // Only count users with ROLE_USER
         long accountsCount = userRepository.findAll().stream()
                 .filter(u -> "ROLE_USER".equals(u.getRole()))

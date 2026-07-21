@@ -2270,42 +2270,8 @@ function formatNotificationTime(iso) {
   }
 
   async function fetchMembers() {
-    const teamGrid = document.getElementById("team-grid");
-    if (!teamGrid) return;
-
-    try {
-      const response = await fetch("/api/members");
-      if (!response.ok) throw new Error("Failed to fetch members");
-      const members = await response.json();
-
-      teamGrid.innerHTML = "";
-
-      const facebookIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/></svg>`;
-      const githubIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>`;
-      const linkedinIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.779-1.75-1.75s.784-1.75 1.75-1.75 1.75.779 1.75 1.75-.784 1.75-1.75 1.75zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>`;
-
-      members.forEach(member => {
-        const card = document.createElement("div");
-        card.className = "member-card";
-        const fbLink = member.facebookUrl ? `<a href="${member.facebookUrl}" target="_blank">${facebookIcon}</a>` : "";
-        const ghLink = member.githubUrl ? `<a href="${member.githubUrl}"   target="_blank">${githubIcon}</a>` : "";
-        const liLink = member.linkedinUrl ? `<a href="${member.linkedinUrl}" target="_blank">${linkedinIcon}</a>` : "";
-
-        card.innerHTML = `
-        <div class="member-avatar-wrapper">
-          <img class="member-avatar" src="${member.avatarUrl}" alt="${escapeHtml(member.name)}"
-            onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150'">
-        </div>
-        <h3>${escapeHtml(member.name)}</h3>
-        <p class="member-role">${escapeHtml(member.role)}</p>
-        <div class="member-socials">${fbLink}${ghLink}${liLink}</div>
-      `;
-        teamGrid.appendChild(card);
-      });
-    } catch (error) {
-      console.error("Error loading members:", error);
-      teamGrid.innerHTML = `<p class="error-msg">Could not load members. Please try again later.</p>`;
-    }
+    // Team members are hardcoded directly on about.html page, so this is a no-op
+    return;
   }
 
   function getTechClass(tech) {
@@ -2349,7 +2315,10 @@ function formatNotificationTime(iso) {
     }
 
     if (modalLinkWrapper && modalLink) {
-      modalLink.href = `https://demo.novadigital.com/${(project.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+      modalLink.onclick = (e) => {
+        e.preventDefault();
+        openDemoSliderModal(project);
+      };
       modalLinkWrapper.style.display = 'block';
     }
 
@@ -2358,7 +2327,14 @@ function formatNotificationTime(iso) {
 
     // Set active project tracker and fetch milestones in real-time
     activeProjectInModal = project.id;
-    fetchAndRenderProjectMilestones(project.id);
+    if (typeof project.id === 'number') {
+      fetchAndRenderProjectMilestones(project.id);
+    } else {
+      const milestonesList = document.getElementById('project-modal-milestones-list');
+      if (milestonesList) {
+        milestonesList.innerHTML = `<p style="color: var(--text-muted); font-size: 0.9rem; font-style: italic;">No active milestones for this demo project.</p>`;
+      }
+    }
   }
 
   function closeProjectModal() {
@@ -2369,6 +2345,112 @@ function formatNotificationTime(iso) {
 
     // Clear active project tracker
     activeProjectInModal = null;
+  }
+
+  let currentSliderIndex = 0;
+  let sliderImagesList = [];
+
+  function openDemoSliderModal(project) {
+    const sliderModal = document.getElementById('demo-slider-modal');
+    const sliderTitle = document.getElementById('demo-slider-title');
+    const sliderTrack = document.getElementById('demo-slider-track');
+    const sliderDots = document.getElementById('demo-slider-dots');
+
+    if (!sliderModal || !sliderTrack || !sliderDots) return;
+
+    sliderTitle.textContent = `${project.title || 'Project'} - Live Demo Gallery`;
+    
+    // Determine 5 relevant demo images based on project specific demoImages or category
+    let imgs = project.demoImages || [];
+    if (imgs.length === 0) {
+      const category = (project.category || '').toLowerCase();
+      if (category.includes('e-commerce') || category.includes('web')) {
+        imgs = [
+          'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1469037490029-44ab9539d5e1?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?auto=format&fit=crop&w=800&q=80'
+        ];
+      } else {
+        imgs = [
+          'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=80'
+        ];
+      }
+    }
+
+    sliderImagesList = imgs;
+    currentSliderIndex = 0;
+
+    // Render slider track images
+    sliderTrack.innerHTML = imgs.map(img => 
+      `<img src="${img}" class="demo-slide-img" alt="Demo Screen" onerror="this.src='https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&h=400'">`
+    ).join('');
+
+    // Render dots
+    sliderDots.innerHTML = imgs.map((_, i) => 
+      `<span class="demo-slider-dot ${i === 0 ? 'active' : ''}" data-index="${i}"></span>`
+    ).join('');
+
+    // Bind dots click
+    const dots = sliderDots.querySelectorAll('.demo-slider-dot');
+    dots.forEach(dot => {
+      dot.onclick = () => {
+        const targetIdx = parseInt(dot.getAttribute('data-index'));
+        goToSlide(targetIdx);
+      };
+    });
+
+    updateSliderState();
+    sliderModal.classList.add('is-open');
+
+    // Bind close and arrow actions
+    document.getElementById('demo-slider-close').onclick = closeDemoSliderModal;
+    document.getElementById('demo-slider-prev').onclick = () => goToSlide(currentSliderIndex - 1);
+    document.getElementById('demo-slider-next').onclick = () => goToSlide(currentSliderIndex + 1);
+
+    sliderModal.onclick = (e) => {
+      if (e.target === sliderModal) closeDemoSliderModal();
+    };
+  }
+
+  function goToSlide(index) {
+    if (index < 0 || index >= sliderImagesList.length) return;
+    currentSliderIndex = index;
+    updateSliderState();
+  }
+
+  function updateSliderState() {
+    const sliderTrack = document.getElementById('demo-slider-track');
+    const prevBtn = document.getElementById('demo-slider-prev');
+    const nextBtn = document.getElementById('demo-slider-next');
+    const dots = document.querySelectorAll('.demo-slider-dot');
+
+    if (!sliderTrack) return;
+
+    sliderTrack.style.transform = `translateX(-${currentSliderIndex * 100}%)`;
+
+    if (prevBtn) prevBtn.disabled = currentSliderIndex === 0;
+    if (nextBtn) nextBtn.disabled = currentSliderIndex === sliderImagesList.length - 1;
+
+    dots.forEach((dot, i) => {
+      if (i === currentSliderIndex) {
+        dot.classList.add('active');
+      } else {
+        dot.classList.remove('active');
+      }
+    });
+  }
+
+  function closeDemoSliderModal() {
+    const sliderModal = document.getElementById('demo-slider-modal');
+    if (sliderModal) {
+      sliderModal.classList.remove('is-open');
+    }
   }
 
   // Global tracking for currently open modal project
@@ -2541,72 +2623,173 @@ function formatNotificationTime(iso) {
     }, 5000);
   }
 
-  let allProjects = [];
-
-  function renderFilteredProjects(category) {
-    const projectsGrid = document.getElementById("projects-grid");
-    if (!projectsGrid) return;
-
-    const filtered = category === "all"
-      ? allProjects
-      : allProjects.filter(p => (p.category || "").toLowerCase().includes(category.toLowerCase()));
-
-    projectsGrid.innerHTML = "";
-
-    if (filtered.length === 0) {
-      projectsGrid.innerHTML = `<p style="text-align: center; grid-column: 1 / -1; color: var(--text-muted); padding: 3rem 0; font-weight: 500;">No projects found in this category.</p>`;
-      return;
+  const staticProjects = [
+    {
+      id: "static-1",
+      title: "Mart06 Fashion System",
+      description: "High-performance online shopping platform with seamless automated payment integration and full inventory management.",
+      category: "Website E-Commerce",
+      technologies: "Java, Spring Boot, MySQL, Thymeleaf, CSS3",
+      imageUrl: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=500&h=300",
+      demoImages: [
+        'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1469037490029-44ab9539d5e1?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?auto=format&fit=crop&w=800&q=80'
+      ]
+    },
+    {
+      id: "static-2",
+      title: "NovaDigital Mobile Portal",
+      description: "Premium mobile application for project coordination, client messaging, and real-time SSE milestone progress alerts.",
+      category: "Mobile Application",
+      technologies: "React Native, Node.js, SSE, MySQL",
+      imageUrl: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&w=500&h=300",
+      demoImages: [
+        'https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1551650975-87deedd944c3?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=800&q=80'
+      ]
+    },
+    {
+      id: "static-3",
+      title: "CloudPay Analytics Dashboard",
+      description: "SaaS analytics dashboard with real-time financial reporting, role-based access control, and Stripe billing integration.",
+      category: "Cloud SaaS",
+      technologies: "Vue.js, Spring Boot, PostgreSQL, Docker",
+      imageUrl: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=500&h=300",
+      demoImages: [
+        'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1563013544-824ae1d704d3?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=800&q=80'
+      ]
+    },
+    {
+      id: "static-4",
+      title: "Vespera Branding Identity",
+      description: "Luxury visual identity design, custom typography, brand guidelines, and assets.",
+      category: "Branding Design",
+      technologies: "Figma, Illustrator, Brand Strategy",
+      imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS-qBs7oaYxuHoIWnqe6f1qtKPyYP9kyNtMlbPXiAS2Hg&s=10",
+      demoImages: [
+        'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS-qBs7oaYxuHoIWnqe6f1qtKPyYP9kyNtMlbPXiAS2Hg&s=10',
+        'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1586717791821-3f44a563fa4c?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1541462608141-2ffb68df685e?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=80'
+      ]
+    },
+    {
+      id: "static-5",
+      title: "Apex SEO & Marketing Campaign",
+      description: "High-impact search engine optimization and digital marketing campaign driving 200% growth.",
+      category: "Marketing Campaign",
+      technologies: "Google Analytics, SEO, SEM, Content Marketing",
+      imageUrl: "https://images.unsplash.com/photo-1434626881859-194d67b2b86f?auto=format&fit=crop&w=500&h=300",
+      demoImages: [
+        'https://images.unsplash.com/photo-1434626881859-194d67b2b86f?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1551836022-b5b3bb1945ff?auto=format&fit=crop&w=800&q=80'
+      ]
+    },
+    {
+      id: "static-6",
+      title: "Aurora Smart Home App",
+      description: "Internet of Things (IoT) mobile dashboard controlling smart lighting, temperature, and security.",
+      category: "Mobile Application",
+      technologies: "Flutter, Firebase, IoT WebSockets",
+      imageUrl: "https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=500&h=300",
+      demoImages: [
+        'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1543512214-318c7553f230?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1558002038-028f2c2bbd39?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1508847154043-be12a62861c1?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80'
+      ]
+    },
+    {
+      id: "static-7",
+      title: "Omni Channel Retail System",
+      description: "Comprehensive point-of-sale and online catalog syncing automatically with inventory databases.",
+      category: "Website Development",
+      technologies: "React, Node.js, Express, PostgreSQL",
+      imageUrl: "https://images.unsplash.com/photo-1472851294608-062f824d29cc?auto=format&fit=crop&w=500&h=300",
+      demoImages: [
+        'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1556740758-90de374c12ad?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1472851294608-062f824d29cc?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1507925921958-8a62f3d1a50d?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1563013544-824ae1d704d3?auto=format&fit=crop&w=800&q=80'
+      ]
+    },
+    {
+      id: "static-8",
+      title: "Stellar UI Component Library",
+      description: "A collection of premium, interactive user interface components built with CSS3 and modern JS.",
+      category: "UI/UX Design",
+      technologies: "HTML5, TailwindCSS, Vue.js, Storybook",
+      imageUrl: "https://www.vuescript.com/wp-content/uploads/2024/03/Fully-Styled-And-Customizable-UI-Components-Library-Stellar-370x297.webp",
+      demoImages: [
+        'https://www.vuescript.com/wp-content/uploads/2024/03/Fully-Styled-And-Customizable-UI-Components-Library-Stellar-370x297.webp',
+        'https://images.unsplash.com/photo-1541462608141-2ffb68df685e?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?auto=format&fit=crop&w=800&q=80'
+      ]
+    },
+    {
+      id: "static-9",
+      title: "Krypton Edge Cloud Cluster",
+      description: "Automated infrastructure provisioning using Kubernetes with load balancing and auto-scaling.",
+      category: "Cloud Solutions",
+      technologies: "Kubernetes, Terraform, AWS, Docker",
+      imageUrl: "https://images.unsplash.com/photo-1544383835-bda2bc66a55d?auto=format&fit=crop&w=500&h=300",
+      demoImages: [
+        'https://images.unsplash.com/photo-1544383835-bda2bc66a55d?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1600132806370-bf17e65e942f?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1597852074816-d933c4d2b988?auto=format&fit=crop&w=800&q=80'
+      ]
     }
-
-    filtered.forEach((project, index) => {
-      const card = document.createElement("div");
-      card.className = "project-card project-card-anim";
-      card.style.animationDelay = `${index * 0.06}s`;
-
-      card.innerHTML = `
-            <div class="project-image-wrapper">
-                <img class="project-image" src="${project.imageUrl}" alt="${escapeHtml(project.title)}"
-                    onerror="this.src='https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=500&h=300'">
-            </div>
-            <div class="project-body">
-                <span class="project-category">${escapeHtml(project.category)}</span>
-                <h3 class="project-title-clickable">${escapeHtml(project.title)}</h3>
-                <p>${escapeHtml(project.description)}</p>
-                <div class="project-link">
-                    View Details
-                    <span class="arrow">➔</span>
-                </div>
-            </div>
-        `;
-
-      const elementsToClick = [
-        card.querySelector('.project-title-clickable'),
-        card.querySelector('.project-link'),
-        card.querySelector('.project-image-wrapper')
-      ];
-      elementsToClick.forEach(el => {
-        if (el) {
-          el.addEventListener('click', () => {
-            openProjectModal(project);
-          });
-        }
-      });
-
-      projectsGrid.appendChild(card);
-    });
-  }
+  ];
 
   async function fetchProjects() {
     const projectsGrid = document.getElementById("projects-grid");
     if (!projectsGrid) return;
 
     try {
-      const response = await fetch("/api/projects");
-      if (!response.ok) throw new Error("Failed to fetch projects");
-      allProjects = await response.json();
+      const cards = projectsGrid.querySelectorAll(".project-card");
+      
+      // Bind click listeners on static cards to open modal
+      cards.forEach((card, idx) => {
+        const project = staticProjects[idx];
+        if (!project) return;
+        
+        const elementsToClick = [
+          card.querySelector('.project-title-clickable'),
+          card.querySelector('.project-link'),
+          card.querySelector('.project-image-wrapper')
+        ];
+        
+        elementsToClick.forEach(el => {
+          if (el) {
+            el.addEventListener('click', (e) => {
+              e.preventDefault();
+              openProjectModal(project);
+            });
+          }
+        });
+      });
 
-      renderFilteredProjects("all");
-
+      // Bind filter buttons
       const filterContainer = document.getElementById("project-filters");
       if (filterContainer) {
         const buttons = filterContainer.querySelectorAll(".filter-btn");
@@ -2614,11 +2797,21 @@ function formatNotificationTime(iso) {
           btn.addEventListener("click", () => {
             buttons.forEach(b => b.classList.remove("active"));
             btn.classList.add("active");
-            renderFilteredProjects(btn.getAttribute("data-filter"));
+            
+            const filterValue = btn.getAttribute("data-filter").toLowerCase();
+            cards.forEach(card => {
+              const cardCat = (card.getAttribute("data-category") || "").toLowerCase();
+              if (filterValue === "all" || cardCat.includes(filterValue)) {
+                card.style.display = "flex";
+              } else {
+                card.style.display = "none";
+              }
+            });
           });
         });
       }
 
+      // Bind modal close events
       const projectModalClose = document.getElementById('project-modal-close');
       const projectModalOverlay = document.getElementById('project-modal-overlay');
 
@@ -2633,13 +2826,15 @@ function formatNotificationTime(iso) {
       }
 
       document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeProjectModal();
+        if (e.key === 'Escape') {
+          closeProjectModal();
+          closeDemoSliderModal();
+        }
       });
-    } catch (error) {
-      console.error("Error loading projects:", error);
-      projectsGrid.innerHTML = `<p class="error-msg">Could not load projects list. Please try again later.</p>`;
-    }
 
+    } catch (error) {
+      console.error("Error setting up projects page:", error);
+    }
   }
 
   // =============================================
@@ -5188,3 +5383,6 @@ function initChatbot() {
 function clearChatbotHistory() {
     sessionStorage.removeItem(CHATBOT_HISTORY_KEY);
 }
+
+window.initChatbot = initChatbot;
+window.clearChatbotHistory = clearChatbotHistory;
