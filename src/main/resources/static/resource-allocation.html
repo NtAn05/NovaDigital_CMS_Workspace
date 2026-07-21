@@ -17,36 +17,40 @@
       background: #f1f5f9;
     }
 
-    /* ===== Floating top navigation — visually aligned with the NovaDigital portal ===== */
+    /* ===== Standard top navigation — aligned with NovaDigital portal ===== */
     .resource-header {
       position: fixed;
-      top: 1.25rem;
-      left: 2rem;
-      right: 2rem;
-      width: auto;
+      top: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
       z-index: 1000;
-      border: 1px solid var(--border-color);
-      border-radius: 50px;
+      border-bottom: 1px solid var(--border-color);
       background: rgba(255, 255, 255, 0.92) !important;
-      box-shadow: 0 10px 32px -12px rgba(15, 23, 42, 0.2);
+      box-shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
     }
 
     .resource-navbar {
-      max-width: none;
+      max-width: 1400px;
+      margin: 0 auto;
       min-height: 72px;
-      padding: 0.7rem 2rem;
+      padding: 0.5rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
     }
 
     .resource-navbar .logo {
-      cursor: default;
+      cursor: pointer;
     }
 
     .resource-navbar-actions {
       display: flex;
       align-items: center;
       gap: 0.85rem;
+      margin-left: auto;
     }
 
     .resource-account {
@@ -124,15 +128,15 @@
     .resource-layout {
       display: flex;
       min-height: 100vh;
-      padding-top: 102px;
+      padding-top: 72px;
     }
 
     .resource-sidebar {
       width: 252px;
-      min-height: calc(100vh - 102px);
+      min-height: calc(100vh - 72px);
       padding: 1.75rem 0 2rem;
       position: fixed;
-      top: 102px;
+      top: 72px;
       left: 0;
       z-index: 100;
       display: flex;
@@ -141,6 +145,7 @@
       border-right: 1px solid rgba(255,255,255,0.06);
       background: linear-gradient(175deg, #0f172a 0%, #1e1b4b 55%, #0f172a 100%);
     }
+
 
     .resource-sidebar-brand {
       padding: 0 1.5rem 1.5rem;
@@ -247,7 +252,7 @@
     .resource-main {
       flex: 1;
       min-width: 0;
-      min-height: calc(100vh - 102px);
+      min-height: calc(100vh - 72px);
       margin-left: 252px;
       padding: 2.25rem 2.5rem 3rem;
     }
@@ -390,8 +395,11 @@
       display: grid;
       grid-template-columns: minmax(230px, 1.45fr) minmax(150px, 0.8fr) minmax(210px, 1.2fr) minmax(160px, 0.85fr) minmax(175px, 0.9fr);
       gap: 1rem;
-      padding: 1.25rem 1.4rem 1.35rem;
+      padding: 0.9rem 1.25rem;
       align-items: end;
+      border-top: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+      background: rgba(248, 250, 252, 0.75);
     }
 
     .field label {
@@ -504,6 +512,8 @@
     .person-name { margin-top: 0.02rem; color: var(--text-dark); font-weight: 750; }
     .person-sub { margin-top: 0.2rem; color: var(--text-muted); font-size: 0.68rem; line-height: 1.45; }
     .assigned-badge { display: inline-flex; margin-top: 0.38rem; padding: 0.2rem 0.48rem; border-radius: 999px; color: #047857; background: #d1fae5; font-size: 0.57rem; font-weight: 800; letter-spacing: 0.04em; }
+    .assigned-badge.pm-badge { color: #1d4ed8; background: #dbeafe; }
+    .not-assigned-badge { display: inline-flex; margin-top: 0.38rem; padding: 0.2rem 0.48rem; border-radius: 999px; color: #b91c1c; background: #fee2e2; font-size: 0.57rem; font-weight: 800; letter-spacing: 0.04em; }
 
     .chips { display: flex; flex-wrap: wrap; gap: 0.32rem; max-width: 240px; }
     .chip { padding: 0.24rem 0.48rem; border-radius: 999px; color: #1d4ed8; background: #eff6ff; font-size: 0.62rem; font-weight: 700; }
@@ -616,8 +626,95 @@
     html.dark-theme .progress-track { background: #2d3758; }
     html.dark-theme .chip { color: #93c5fd; background: rgba(37,99,235,0.16); }
     html.dark-theme .assigned-badge { color: #6ee7b7; background: rgba(16,185,129,0.16); }
+    html.dark-theme .assigned-badge.pm-badge { color: #93c5fd; background: rgba(37,99,235,0.22); }
+    html.dark-theme .not-assigned-badge { color: #fca5a5; background: rgba(239,68,68,0.16); }
     html.dark-theme .row-btn { color: #93c5fd; border-color: rgba(96,165,250,0.38); background: rgba(37,99,235,0.13); }
     html.dark-theme .row-btn:hover { color: #fff; background: #2563eb; }
+
+    html.dark-theme .resource-filters {
+      background: rgba(15, 23, 42, 0.55) !important;
+      border-color: var(--border-color) !important;
+    }
+    html.dark-theme .field label {
+      color: #cbd5e1 !important;
+    }
+    html.dark-theme .field input,
+    html.dark-theme .field select,
+    html.dark-theme .field textarea {
+      background: #0f172a !important;
+      border-color: #334155 !important;
+      color: #f1f5f9 !important;
+      color-scheme: dark;
+    }
+    html.dark-theme .field select option {
+      background: #0f172a;
+      color: #f1f5f9;
+    }
+    html.dark-theme .allocation {
+      background: rgba(30, 41, 59, 0.7) !important;
+      border-color: rgba(51, 65, 85, 0.8) !important;
+    }
+    html.dark-theme .allocation-title {
+      color: #f1f5f9 !important;
+    }
+
+    /* ===== Dark mode: Role Assign Panel ===== */
+    html.dark-theme #roleAssignPanel {
+      background: #1e2433 !important;
+      color: #e2e8f0;
+    }
+    html.dark-theme #roleAssignPanel label {
+      color: #cbd5e1;
+    }
+    html.dark-theme #roleAssignPanel select,
+    html.dark-theme #roleAssignPanel input[type="text"],
+    html.dark-theme #roleAssignPanel input[type="number"],
+    html.dark-theme #roleAssignPanel input[type="date"] {
+      background: #0f172a;
+      border-color: #334155;
+      color: #e2e8f0;
+    }
+    html.dark-theme #roleAssignPanel select option {
+      background: #1e2433;
+      color: #e2e8f0;
+    }
+    html.dark-theme #rolePMLabel,
+    html.dark-theme #roleSTAFFLabel {
+      color: #cbd5e1 !important;
+      border-color: #334155 !important;
+      background: #0f172a !important;
+    }
+    html.dark-theme #rolePMLabel[style*="border-color: rgb(37, 99, 235)"],
+    html.dark-theme #roleSTAFFLabel[style*="border-color: rgb(217, 119, 6)"] {
+      background: rgba(37,99,235,0.12) !important;
+    }
+    html.dark-theme #raFormError { color: #f87171; }
+
+    /* ===== Dark mode: Team Roles Section ===== */
+    html.dark-theme #teamRolesSection {
+      background: var(--bg-white);
+      border-color: var(--border-color);
+    }
+    html.dark-theme #teamRolesSection select {
+      background: #0f172a;
+      border-color: #334155;
+      color: #e2e8f0;
+    }
+    html.dark-theme #teamRolesSection select option {
+      background: #1e2433;
+    }
+    html.dark-theme #teamRolesSection .text-btn {
+      color: #93c5fd;
+    }
+    html.dark-theme #teamRolesSection .text-btn.danger {
+      color: #f87171;
+    }
+    html.dark-theme #rolesTable th {
+      background: var(--table-header-bg);
+    }
+    html.dark-theme #rolesTable tbody tr:hover {
+      background: var(--card-bg-hover);
+    }
 
     /* ===== Responsive ===== */
     @media (max-width: 1280px) {
@@ -1174,7 +1271,7 @@
 <body class="dashboard-page resource-dashboard-page">
   <header class="resource-header">
     <nav class="navbar resource-navbar">
-      <a href="resource-allocation.html" class="logo" id="header-logo" aria-label="NovaDigital Resource Allocation">
+      <a href="index.html" class="logo" id="header-logo" aria-label="NovaDigital Resource Allocation">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
           <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
         </svg>
@@ -1225,10 +1322,6 @@
           <h1>Staff Resource Allocation</h1>
           <p class="resource-panel-subtitle">Plan internal staff capacity by project and milestone, compare skills with workload, and keep planned or active allocations within the 100% capacity rule.</p>
         </div>
-        <button class="resource-primary-btn" id="newAllocationBtn" type="button">
-          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          New Allocation
-        </button>
       </div>
 
       <section class="resource-stats-grid" aria-label="Resource allocation statistics">
@@ -1250,61 +1343,117 @@
         </article>
       </section>
 
-      <section class="resource-filter-card">
-        <div class="resource-card-heading">
-          <div class="resource-card-heading-copy">
-            <h2>Allocation Filters</h2>
-            <p>Select a project and narrow the staff matrix by date, skill or remaining capacity.</p>
-          </div>
-        </div>
-        <div class="resource-filters">
-          <div class="field">
-            <label for="projectFilter">Project</label>
-            <select id="projectFilter"><option value="">Loading projects...</option></select>
-          </div>
-          <div class="field">
-            <label for="focusDate">Workload date</label>
-            <input type="date" id="focusDate" />
-          </div>
-          <div class="field">
-            <label for="searchInput">Search staff</label>
-            <input type="search" id="searchInput" placeholder="Name, username, email..." />
-          </div>
-          <div class="field">
-            <label for="skillFilter">Skill</label>
-            <select id="skillFilter"><option value="">All skills</option></select>
-          </div>
-          <div class="field">
-            <label for="availabilityFilter">Availability</label>
-            <select id="availabilityFilter">
-              <option value="">All capacity levels</option>
-              <option value="available">Available (&gt; 20%)</option>
-              <option value="limited">Limited (1–20%)</option>
-              <option value="full">Fully allocated (0%)</option>
-            </select>
-          </div>
-        </div>
-      </section>
-
-      <section class="resource-table-card">
-        <div class="resource-table-toolbar">
+      <!-- ===== RESOURCE ALLOCATION MATRIX SECTION (WITH EMBEDDED FILTERS & EXPAND) ===== -->
+      <section class="resource-table-card" id="matrixSection">
+        <div class="resource-table-toolbar" style="cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;" onclick="toggleMatrixSection()">
           <div class="resource-card-heading-copy">
             <h2 id="matrixTitle">Resource Matrix</h2>
             <p id="matrixMeta">Loading allocation data...</p>
           </div>
-          <div class="resource-legend" aria-label="Capacity legend">
-            <span><i class="legend-dot available"></i>Available</span>
-            <span><i class="legend-dot limited"></i>Limited</span>
-            <span><i class="legend-dot full"></i>Full</span>
+          <div style="display:flex;align-items:center;gap:0.75rem;">
+            <button class="resource-primary-btn" id="newAllocationBtn" type="button" style="font-size:0.8rem;padding:0.45rem 1rem;" onclick="event.stopPropagation();openModal()">
+              <svg viewBox="0 0 24 24" style="width:13px;height:13px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              New Allocation
+            </button>
+            <div id="matrixToggleBtn" style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 0.85rem;background:var(--primary);border:1px solid rgba(37,99,235,0.22);border-radius:20px;color:#ffffff;font-size:0.78rem;font-weight:700;transition:all 0.25s ease;">
+              <span id="matrixExpandText">Collapse</span>
+              <svg id="matrixChevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;transform:rotate(180deg);transition:transform 0.3s ease;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
           </div>
         </div>
-        <div class="table-wrap">
-          <div class="loading" id="loadingState">Loading resource allocation matrix...</div>
-          <table class="resource-table" id="matrixTable" hidden>
-            <thead><tr><th>Staff member</th><th>Skills / match</th><th>Total workload</th><th>Availability</th><th>Project &amp; task allocations</th><th>Action</th></tr></thead>
-            <tbody id="matrixBody"></tbody>
-          </table>
-          <div class="empty-state" id="emptyState" hidden><strong>No matching staff found</strong>Change the filters or add internal team members first.</div>
+
+        <div id="matrixCardBody">
+          <!-- Integrated Filter Bar inside Matrix Card -->
+          <div class="resource-filters">
+            <div class="field">
+              <label for="projectFilter">Project</label>
+              <select id="projectFilter"><option value="">Loading projects...</option></select>
+            </div>
+            <div class="field">
+              <label for="focusDate">Workload date</label>
+              <input type="date" id="focusDate" />
+            </div>
+            <div class="field">
+              <label for="searchInput">Search staff</label>
+              <input type="search" id="searchInput" placeholder="Name, username, email..." />
+            </div>
+            <div class="field">
+              <label for="skillFilter">Skill</label>
+              <select id="skillFilter"><option value="">All skills</option></select>
+            </div>
+            <div class="field">
+              <label for="availabilityFilter">Availability</label>
+              <select id="availabilityFilter">
+                <option value="">All capacity levels</option>
+                <option value="available">Available (&gt; 20%)</option>
+                <option value="limited">Limited (1–20%)</option>
+                <option value="full">Fully allocated (0%)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="table-wrap">
+            <div class="loading" id="loadingState">Loading resource allocation matrix...</div>
+            <table class="resource-table" id="matrixTable" hidden>
+              <thead><tr><th>Staff member</th><th>Skills / match</th><th>Total workload</th><th>Availability</th><th>Project &amp; task allocations</th><th>Action</th></tr></thead>
+              <tbody id="matrixBody"></tbody>
+            </table>
+            <div class="empty-state" id="emptyState" hidden><strong>No matching staff found</strong>Change the filters or add internal team members first.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== TEAM PROJECT ROLES SECTION ===== -->
+      <section class="resource-table-card" id="teamRolesSection" style="margin-top:1.5rem;">
+        <div class="resource-table-toolbar" style="cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;" onclick="toggleTeamRoles()">
+          <div class="resource-card-heading-copy">
+            <h2 style="display:flex;align-items:center;gap:0.55rem;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:19px;height:19px;flex-shrink:0;color:var(--primary);"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              Team Project Roles (PM / Staff)
+            </h2>
+            <p>Assign internal members as Project Manager or Staff on each project.</p>
+          </div>
+          <div style="display:flex;align-items:center;gap:0.75rem;">
+            <button class="resource-primary-btn" style="font-size:0.8rem;padding:0.45rem 1rem;" onclick="event.stopPropagation();openRoleAssignPanel()">
+              <svg viewBox="0 0 24 24" style="width:13px;height:13px;"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Assign Role
+            </button>
+            <div id="teamRolesToggleBtn" style="display:inline-flex;align-items:center;gap:0.4rem;padding:0.4rem 0.85rem;background:rgba(37,99,235,0.08);border:1px solid rgba(37,99,235,0.22);border-radius:20px;color:var(--primary);font-size:0.78rem;font-weight:700;transition:all 0.25s ease;">
+              <span id="teamRolesExpandText">Expand</span>
+              <svg id="teamRolesChevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;transition:transform 0.3s ease;"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+          </div>
+        </div>
+        <div id="teamRolesBody" style="display:none;padding:0 1.2rem 1.2rem;">
+          <!-- Filter bar -->
+          <div style="display:flex;gap:0.75rem;align-items:center;margin-bottom:1rem;flex-wrap:wrap;">
+            <div class="field" style="flex:1;min-width:180px;margin:0;">
+              <label for="rolesProjectFilter" style="font-size:0.78rem;margin-bottom:0.25rem;display:block;">Filter by Project</label>
+              <select id="rolesProjectFilter" style="width:100%;" onchange="renderRolesTable()"><option value="">All projects</option></select>
+            </div>
+            <div class="field" style="flex:1;min-width:180px;margin:0;">
+              <label for="rolesRoleFilter" style="font-size:0.78rem;margin-bottom:0.25rem;display:block;">Filter by Role</label>
+              <select id="rolesRoleFilter" style="width:100%;" onchange="renderRolesTable()">
+                <option value="">All roles</option>
+                <option value="PM">★ PM</option>
+                <option value="STAFF">⚙ Staff</option>
+              </select>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="resource-table" id="rolesTable">
+              <thead>
+                <tr>
+                  <th>Member</th>
+                  <th>Project</th>
+                  <th>Role</th>
+                  <th>Assigned At</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="rolesTableBody"><tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:1.5rem;">Loading...</td></tr></tbody>
+            </table>
+          </div>
         </div>
       </section>
     </main>
@@ -1334,6 +1483,57 @@
         </div>
         <div class="modal-foot"><button class="secondary-btn" id="modalCancel" type="button">Cancel</button><button class="resource-primary-btn" id="saveBtn" type="submit">Save Allocation</button></div>
       </form>
+    </div>
+  </div>
+
+  <!-- ===== CUSTOM CONFIRMATION DIALOG MODAL ===== -->
+  <div class="modal-backdrop" id="confirmModal" style="display:none;z-index:2350;">
+    <div class="modal" role="dialog" aria-modal="true" style="max-width:440px;padding:1.6rem;text-align:center;border-radius:18px;">
+      <div id="confirmModalIcon" style="width:52px;height:52px;border-radius:50%;margin:0 auto 1rem;display:grid;place-items:center;background:rgba(239,68,68,0.12);color:#ef4444;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="width:26px;height:26px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </div>
+      <h3 id="confirmModalTitle" style="font-size:1.15rem;font-weight:700;margin-bottom:0.4rem;color:var(--text-dark);">Confirm Action</h3>
+      <p id="confirmModalMessage" style="font-size:0.85rem;color:var(--text-muted);margin-bottom:1.5rem;line-height:1.5;"></p>
+      <div style="display:flex;gap:0.75rem;justify-content:center;">
+        <button id="confirmModalCancelBtn" class="secondary-btn" type="button" style="flex:1;max-width:140px;padding:0.6rem 1rem;">Cancel</button>
+        <button id="confirmModalActionBtn" class="resource-primary-btn" type="button" style="flex:1;max-width:160px;padding:0.6rem 1rem;background:#ef4444;border-color:#ef4444;">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ROLE ASSIGN SLIDE-IN PANEL ===== -->
+  <div id="roleAssignOverlay" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.45);backdrop-filter:blur(2px);">
+    <div id="roleAssignPanel" style="position:fixed;top:0;right:0;height:100%;width:min(420px,100vw);background:#fff;box-shadow:-8px 0 40px rgba(0,0,0,0.15);display:flex;flex-direction:column;transform:translateX(100%);transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);">
+      <div style="padding:1.25rem 1.5rem;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#2563eb,#4f46e5);color:#fff;">
+        <div>
+          <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.08em;opacity:0.8;margin-bottom:0.15rem;">RESOURCE WORKSPACE</div>
+          <h3 style="margin:0;font-size:1rem;">Assign Project Role (PM / Staff)</h3>
+        </div>
+        <button onclick="closeRoleAssignPanel()" style="background:rgba(255,255,255,0.2);border:none;border-radius:8px;color:#fff;width:32px;height:32px;cursor:pointer;font-size:1.3rem;display:grid;place-items:center;">×</button>
+      </div>
+      <div style="padding:1.25rem 1.5rem;flex:1;overflow-y:auto;">
+        <div class="field" style="margin-bottom:1rem;">
+          <label for="raProjSelect" style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:0.35rem;">Project *</label>
+          <select id="raProjSelect" style="width:100%;" onchange="loadUnassignedMembers()"><option value="">Select project...</option></select>
+        </div>
+        <div class="field" style="margin-bottom:1rem;">
+          <label for="raMemberSelect" style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:0.35rem;">Member *</label>
+          <select id="raMemberSelect" style="width:100%;"><option value="">Select project first...</option></select>
+        </div>
+        <div class="field" style="margin-bottom:1.25rem;">
+          <label style="font-size:0.82rem;font-weight:600;display:block;margin-bottom:0.5rem;">Role *</label>
+          <div style="display:flex;gap:0.75rem;">
+            <label style="flex:1;display:flex;align-items:center;gap:0.5rem;padding:0.6rem 0.9rem;border:2px solid #e2e8f0;border-radius:10px;cursor:pointer;transition:all 0.2s;" id="rolePMLabel">
+              <input type="radio" name="raRole" value="PM" id="raRolePM" onchange="highlightRoleLabel()" style="accent-color:#2563eb;"> <span>★ PM</span>
+            </label>
+            <label style="flex:1;display:flex;align-items:center;gap:0.5rem;padding:0.6rem 0.9rem;border:2px solid #e2e8f0;border-radius:10px;cursor:pointer;transition:all 0.2s;" id="roleSTAFFLabel">
+              <input type="radio" name="raRole" value="STAFF" id="raRoleSTAFF" checked onchange="highlightRoleLabel()" style="accent-color:#d97706;"> <span>⚙ Staff</span>
+            </label>
+          </div>
+        </div>
+        <div id="raFormError" style="color:#dc2626;font-size:0.82rem;margin-bottom:0.75rem;display:none;"></div>
+        <button onclick="submitRoleAssign()" style="width:100%;padding:0.75rem;background:linear-gradient(135deg,#2563eb,#4f46e5);color:#fff;border:none;border-radius:10px;font-size:0.9rem;font-weight:700;cursor:pointer;transition:opacity 0.2s;" id="raSubmitBtn">Assign Role</button>
+      </div>
     </div>
   </div>
 
@@ -1408,17 +1608,27 @@
 
     document.startViewTransition(toggleFn);
   });
-  const token = localStorage.getItem('authToken') || localStorage.getItem('token')
-    || sessionStorage.getItem('authToken') || sessionStorage.getItem('token');
-  const storedUser = safeJson(localStorage.getItem('user')) || safeJson(sessionStorage.getItem('user')) || {
-    username: localStorage.getItem('username') || sessionStorage.getItem('username'),
-    fullName: localStorage.getItem('fullName') || sessionStorage.getItem('fullName'),
-    role: localStorage.getItem('role') || sessionStorage.getItem('role')
-  };
-
-  if (!token || storedUser?.role !== 'ROLE_RESOURCE') {
-    window.location.replace('/index.html?error=unauthorized#login');
+  function getToken() {
+    return sessionStorage.getItem('authToken') || sessionStorage.getItem('token')
+      || localStorage.getItem('authToken') || localStorage.getItem('token');
   }
+
+  function getStoredUser() {
+    return safeJson(sessionStorage.getItem('user')) || safeJson(localStorage.getItem('user')) || {
+      username: sessionStorage.getItem('username') || localStorage.getItem('username'),
+      fullName: sessionStorage.getItem('fullName') || localStorage.getItem('fullName'),
+      role: sessionStorage.getItem('role') || localStorage.getItem('role')
+    };
+  }
+
+  const activeToken = getToken();
+  const storedUser = getStoredUser();
+
+  const allowedRoles = ['ROLE_RESOURCE', 'ROLE_ADMIN'];
+  if (!activeToken || !allowedRoles.includes(storedUser?.role)) {
+    logout();
+  }
+
 
   const els = {
     project: document.getElementById('projectFilter'), focusDate: document.getElementById('focusDate'),
@@ -1510,7 +1720,7 @@
     const availability = els.availability.value;
     const allocationsByUser = groupBy(m.allocations, a => a.userId);
 
-    const rows = m.staff.filter(s => {
+    const filtered = m.staff.filter(s => {
       const haystack = `${s.fullName} ${s.username} ${s.email} ${(s.skills || []).join(' ')}`.toLowerCase();
       if (query && !haystack.includes(query)) return false;
       if (skill && !(s.skills || []).some(v => v.toLowerCase() === skill)) return false;
@@ -1520,9 +1730,36 @@
       return true;
     });
 
-    els.body.innerHTML = rows.map(s => staffRowHtml(s, allocationsByUser[s.userId] || [])).join('');
-    els.table.hidden = rows.length === 0;
-    els.empty.hidden = rows.length !== 0;
+    // Priority Sort:
+    // 1. Staff allocated on selected project (highest priority, sorted by allocation count / project workload)
+    // 2. Staff assigned to project (projectAssigned = true)
+    // 3. Non-project staff at bottom
+    const sorted = [...filtered].sort((a, b) => {
+      const allocA = (allocationsByUser[a.userId] || []).length;
+      const allocB = (allocationsByUser[b.userId] || []).length;
+
+      // Tier 1: Has allocations on current project
+      if (allocA !== allocB) return allocB - allocA;
+      if (a.currentProjectWorkload !== b.currentProjectWorkload) {
+        return b.currentProjectWorkload - a.currentProjectWorkload;
+      }
+
+      // Tier 2: Role on project (PM > STAFF > None)
+      const roleWeight = r => r === 'PM' ? 2 : (r === 'STAFF' ? 1 : 0);
+      const weightA = roleWeight(a.projectRole || (a.projectAssigned ? 'STAFF' : null));
+      const weightB = roleWeight(b.projectRole || (b.projectAssigned ? 'STAFF' : null));
+      if (weightA !== weightB) return weightB - weightA;
+
+      // Tier 3: Secondary sort by total workload descending, then name
+      if (a.currentWorkload !== b.currentWorkload) {
+        return b.currentWorkload - a.currentWorkload;
+      }
+      return (a.fullName || a.username || '').localeCompare(b.fullName || b.username || '');
+    });
+
+    els.body.innerHTML = sorted.map(s => staffRowHtml(s, allocationsByUser[s.userId] || [])).join('');
+    els.table.hidden = sorted.length === 0;
+    els.empty.hidden = sorted.length !== 0;
   }
 
   function staffRowHtml(s, allocations) {
@@ -1534,8 +1771,17 @@
     const skills = s.skills?.length ? s.skills.map(v => `<span class="chip">${escapeHtml(v)}</span>`).join('') : '<span class="empty-chip">No skills recorded</span>';
     const assignmentHtml = allocations.length ? allocations.map(allocationHtml).join('') : '<span class="empty-chip">No allocation on this project</span>';
 
+    let memberBadge = '';
+    if (s.projectRole === 'PM') {
+      memberBadge = '<span class="assigned-badge pm-badge">★ PROJECT PM</span>';
+    } else if (s.projectRole === 'STAFF' || s.projectAssigned) {
+      memberBadge = '<span class="assigned-badge">⚙ PROJECT STAFF</span>';
+    } else {
+      memberBadge = '<span class="not-assigned-badge">NOT IN PROJECT</span>';
+    }
+
     return `<tr>
-      <td><div class="person">${avatar}<div><div class="person-name">${escapeHtml(s.fullName)}</div><div class="person-sub">${escapeHtml(s.username)} · ${escapeHtml(s.email)}</div>${s.projectAssigned ? '<span class="assigned-badge">PROJECT MEMBER</span>' : ''}</div></div></td>
+      <td><div class="person">${avatar}<div><div class="person-name">${escapeHtml(s.fullName)}</div><div class="person-sub">${escapeHtml(s.username)} · ${escapeHtml(s.email)}</div>${memberBadge}</div></div></td>
       <td><div class="chips">${skills}</div><div class="match">Project technology match: <strong>${s.skillMatchPercentage}%</strong></div></td>
       <td><div class="progress-row"><div class="progress-label"><span>All projects</span><strong>${s.currentWorkload}%</strong></div><div class="progress-track"><div class="progress-fill ${workloadClass}" style="width:${Math.min(100,s.currentWorkload)}%"></div></div><div class="person-sub">${s.currentProjectWorkload}% on selected project</div></div></td>
       <td><div class="capacity ${capacityClass}">${capacityText}</div>${s.overallocated ? '<div class="person-sub" style="color:#dc2626">Existing data is over 100%</div>' : ''}</td>
@@ -1558,17 +1804,40 @@
     if (!m) return;
     els.formUser.innerHTML = m.staff.map(s => `<option value="${s.userId}">${escapeHtml(s.fullName)} — ${s.availablePercentage}% available</option>`).join('');
     els.formProject.innerHTML = m.projects.map(p => `<option value="${p.id}" ${p.id === m.selectedProjectId ? 'selected' : ''}>${escapeHtml(p.title)}</option>`).join('');
-    els.formProject.disabled = true;
+    els.formProject.disabled = false;
     renderTaskOptions();
+  }
+
+  els.formProject.addEventListener('change', () => onFormProjectChange());
+
+  async function onFormProjectChange(selectedTaskId = '') {
+    const projId = els.formProject.value;
+    if (!projId) {
+      els.formTask.innerHTML = '<option value="">Project-level allocation</option>';
+      return;
+    }
+    if (state.matrix && String(projId) === String(state.matrix.selectedProjectId)) {
+      renderTaskOptions(selectedTaskId);
+      return;
+    }
+    els.formTask.innerHTML = '<option value="">Loading tasks...</option>';
+    try {
+      const res = await api(`/api/projects/${projId}/milestones`);
+      const tasks = Array.isArray(res) ? res : [];
+      els.formTask.innerHTML = '<option value="">Project-level allocation</option>' +
+        tasks.map(t => `<option value="${t.id}" ${String(t.id) === String(selectedTaskId) ? 'selected' : ''}>${escapeHtml(t.title || t.name || 'Task')} (${t.status || ''})</option>`).join('');
+    } catch (_) {
+      els.formTask.innerHTML = '<option value="">Project-level allocation</option>';
+    }
   }
 
   function renderTaskOptions(selectedId = '') {
     const tasks = state.matrix?.tasks || [];
-    els.formTask.innerHTML = '<option value="">Project-level allocation</option>' + tasks.map(t => `<option value="${t.id}" ${String(t.id) === String(selectedId) ? 'selected' : ''}>${escapeHtml(t.name)} (${t.status})</option>`).join('');
+    els.formTask.innerHTML = '<option value="">Project-level allocation</option>' + tasks.map(t => `<option value="${t.id}" ${String(t.id) === String(selectedId) ? 'selected' : ''}>${escapeHtml(t.name || t.title)} (${t.status})</option>`).join('');
   }
 
   window.openModal = function(allocationId = null, presetUserId = null) {
-    if (!state.matrix?.selectedProjectId) return;
+    if (!state.matrix?.projects?.length) return;
     if (!state.matrix.staff.length) { showToast('No enabled internal staff account is available.', 'error'); return; }
     state.editingId = allocationId;
     const allocation = allocationId ? state.matrix.allocations.find(a => a.id === allocationId) : null;
@@ -1578,9 +1847,10 @@
 
     const start = allocation?.startDate || todayString();
     const end = allocation?.endDate || addDaysString(14);
+    const targetProjId = allocation?.projectId || state.matrix.selectedProjectId;
     els.formUser.value = String(allocation?.userId || presetUserId || state.matrix.staff[0]?.userId || '');
-    els.formProject.value = String(state.matrix.selectedProjectId);
-    renderTaskOptions(allocation?.milestoneId || '');
+    els.formProject.value = String(targetProjId);
+    onFormProjectChange(allocation?.milestoneId || '');
     els.formPercentage.value = allocation?.allocationPercentage || 25;
     els.formStatus.value = allocation?.status || 'PLANNED';
     els.formStart.value = start;
@@ -1603,7 +1873,7 @@
     els.formError.textContent = '';
     const payload = {
       userId: Number(els.formUser.value),
-      projectId: Number(state.matrix.selectedProjectId),
+      projectId: Number(els.formProject.value),
       milestoneId: els.formTask.value ? Number(els.formTask.value) : null,
       allocationPercentage: Number(els.formPercentage.value),
       startDate: els.formStart.value,
@@ -1634,9 +1904,60 @@
     }
   }
 
+  function customConfirm({ title = 'Confirm Action', message = 'Are you sure?', confirmText = 'Confirm', isDanger = true }) {
+    return new Promise(resolve => {
+      const modal = document.getElementById('confirmModal');
+      const titleEl = document.getElementById('confirmModalTitle');
+      const msgEl = document.getElementById('confirmModalMessage');
+      const cancelBtn = document.getElementById('confirmModalCancelBtn');
+      const actionBtn = document.getElementById('confirmModalActionBtn');
+      const icon = document.getElementById('confirmModalIcon');
+
+      titleEl.textContent = title;
+      msgEl.textContent = message;
+      actionBtn.textContent = confirmText;
+
+      if (isDanger) {
+        actionBtn.style.background = '#ef4444';
+        actionBtn.style.borderColor = '#ef4444';
+        icon.style.background = 'rgba(239,68,68,0.12)';
+        icon.style.color = '#ef4444';
+      } else {
+        actionBtn.style.background = 'var(--primary)';
+        actionBtn.style.borderColor = 'var(--primary)';
+        icon.style.background = 'rgba(37,99,235,0.12)';
+        icon.style.color = 'var(--primary)';
+      }
+
+      modal.style.display = 'grid';
+      modal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+
+      function cleanup(result) {
+        modal.style.display = 'none';
+        modal.classList.remove('open');
+        document.body.style.overflow = '';
+        cancelBtn.onclick = null;
+        actionBtn.onclick = null;
+        resolve(result);
+      }
+
+      cancelBtn.onclick = () => cleanup(false);
+      actionBtn.onclick = () => cleanup(true);
+    });
+  }
+
   window.deleteAllocation = async function(id) {
     const allocation = state.matrix.allocations.find(a => a.id === id);
-    if (!allocation || !confirm(`Delete the ${allocation.allocationPercentage}% allocation for ${allocation.fullName}?`)) return;
+    if (!allocation) return;
+    const ok = await customConfirm({
+      title: 'Delete Staff Allocation',
+      message: `Are you sure you want to delete the ${allocation.allocationPercentage}% allocation for "${allocation.fullName}"?`,
+      confirmText: 'Delete Allocation',
+      isDanger: true
+    });
+    if (!ok) return;
+
     try {
       await api(`/api/resource-allocations/${id}`, { method: 'DELETE' });
       showToast('Allocation deleted successfully.', 'success');
@@ -1645,13 +1966,19 @@
   };
 
   async function api(url, options = {}) {
+    const currentToken = getToken();
+    if (!currentToken) {
+      logout();
+      throw new Error('No authentication token found.');
+    }
     const response = await fetch(url, {
       ...options,
-      headers: { 'Authorization': `Bearer ${token}`, ...(options.body ? {'Content-Type':'application/json'} : {}), ...(options.headers || {}) }
+      headers: { 'Authorization': `Bearer ${currentToken}`, ...(options.body ? {'Content-Type':'application/json'} : {}), ...(options.headers || {}) }
     });
     let data = null;
     try { data = await response.json(); } catch (_) { data = {}; }
-    if (response.status === 401 || response.status === 403) { logout(); throw new Error('Your Resource Allocation session is invalid or has expired.'); }
+    if (response.status === 401) { logout(); throw new Error('Your session is invalid or has expired.'); }
+    if (response.status === 403) { throw new Error(data.message || 'Access Denied: You do not have permission to perform this action.'); }
     if (!response.ok) throw new Error(data.message || `Request failed (${response.status}).`);
     return data;
   }
@@ -1683,6 +2010,284 @@
   function safeJson(v) { try { return v ? JSON.parse(v) : null; } catch (_) { return null; } }
   function escapeHtml(v) { return String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
   function escapeAttr(v) { return escapeHtml(v).replace(/`/g, '&#96;'); }
+
+  let _matrixOpen = true;
+  function toggleMatrixSection() {
+    _matrixOpen = !_matrixOpen;
+    const body = document.getElementById('matrixCardBody');
+    const chevron = document.getElementById('matrixChevron');
+    const text = document.getElementById('matrixExpandText');
+    const btn = document.getElementById('matrixToggleBtn');
+
+    if (body) body.style.display = _matrixOpen ? 'block' : 'none';
+    if (chevron) chevron.style.transform = _matrixOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+    if (text) text.textContent = _matrixOpen ? 'Collapse' : 'Expand';
+    if (btn) {
+      btn.style.background = _matrixOpen ? 'var(--primary)' : 'rgba(37,99,235,0.08)';
+      btn.style.color = _matrixOpen ? '#ffffff' : 'var(--primary)';
+    }
+  }
+
+  // ============================================================
+  // TEAM PROJECT ROLES — ProjectAssignment (PM / Staff)
+  // ============================================================
+  let _rolesData = [];       // flat list of all assignments across projects
+  let _allProjects = [];     // cached project list
+  let _allMembers = [];      // cached ROLE_MEMBER users
+  let _teamRolesOpen = false;
+
+  function toggleTeamRoles() {
+    _teamRolesOpen = !_teamRolesOpen;
+    const body = document.getElementById('teamRolesBody');
+    const chevron = document.getElementById('teamRolesChevron');
+    const text = document.getElementById('teamRolesExpandText');
+    const btn = document.getElementById('teamRolesToggleBtn');
+
+    body.style.display = _teamRolesOpen ? 'block' : 'none';
+    if (chevron) chevron.style.transform = _teamRolesOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+    if (text) text.textContent = _teamRolesOpen ? 'Collapse' : 'Expand';
+    if (btn) {
+      btn.style.background = _teamRolesOpen ? 'var(--primary)' : 'rgba(37,99,235,0.08)';
+      btn.style.color = _teamRolesOpen ? '#ffffff' : 'var(--primary)';
+    }
+    if (_teamRolesOpen && !_rolesData.length) loadTeamRolesTable();
+  }
+
+
+  async function loadTeamRolesTable() {
+    const tbody = document.getElementById('rolesTableBody');
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:1.5rem;color:var(--text-muted);">Loading...</td></tr>';
+    try {
+      const projFilter = document.getElementById('rolesProjectFilter');
+      const savedSelectedValue = projFilter ? projFilter.value : '';
+
+      // Projects from API; staff from already-loaded matrix
+      const projectsRes = await api('/api/projects');
+      _allProjects = Array.isArray(projectsRes) ? projectsRes : (projectsRes.content || []);
+
+      if (state.matrix?.staff?.length) {
+        _allMembers = state.matrix.staff;
+      }
+
+      // Populate project filter dropdown without losing selected option
+      projFilter.innerHTML = '<option value="">All projects</option>' +
+        _allProjects.map(p => `<option value="${p.id}" ${String(p.id) === String(savedSelectedValue) ? 'selected' : ''}>${escapeHtml(p.title)}</option>`).join('');
+
+      // Fetch assignments across all projects
+      const allAssignments = [];
+      await Promise.all(_allProjects.map(async p => {
+        try {
+          const res = await api(`/api/projects/${p.id}/assignments`);
+          (Array.isArray(res) ? res : []).forEach(a => {
+            allAssignments.push({ ...a, projectId: p.id, projectTitle: p.title });
+          });
+        } catch (_) { }
+      }));
+
+      _rolesData = allAssignments;
+      renderRolesTable();
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:#dc2626;padding:1.5rem;">Failed to load roles: ${escapeHtml(err.message)}</td></tr>`;
+    }
+  }
+
+  function renderRolesTable() {
+    const tbody = document.getElementById('rolesTableBody');
+    const roleFilter = document.getElementById('rolesRoleFilter').value;
+    const projFilter = document.getElementById('rolesProjectFilter').value;
+
+    const filtered = _rolesData.filter(a => {
+      if (roleFilter && a.projectRole !== roleFilter) return false;
+      if (projFilter && String(a.projectId) !== projFilter) return false;
+      return true;
+    });
+
+    if (!filtered.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:1.5rem;">No assignments found. Use "Assign Role" to add members.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(a => {
+      const roleBadge = a.projectRole === 'PM'
+        ? `<span style="padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;background:rgba(37,99,235,0.1);color:#2563eb;">★ PM</span>`
+        : `<span style="padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;background:rgba(245,158,11,0.12);color:#d97706;">⚙ Staff</span>`;
+      const assignedAt = a.assignedAt ? new Date(a.assignedAt).toLocaleDateString('en-GB') : '—';
+      return `<tr>
+        <td>
+          <div class="person">
+            <div class="avatar" style="width:32px;height:32px;font-size:0.7rem;">${escapeHtml((a.fullName||a.username||'?').split(/\s+/).map(x=>x[0]).slice(0,2).join('').toUpperCase())}</div>
+            <div><div class="person-name" style="font-size:0.85rem;">${escapeHtml(a.fullName||'')}</div><div class="person-sub">${escapeHtml(a.username||'')} · ${escapeHtml(a.email||'')}</div></div>
+          </div>
+        </td>
+        <td style="font-size:0.83rem;font-weight:600;">${escapeHtml(a.projectTitle||'')}</td>
+        <td>${roleBadge}</td>
+        <td style="font-size:0.8rem;color:var(--text-muted);">${assignedAt}</td>
+        <td>
+          <div style="display:flex;gap:0.5rem;">
+            <button class="text-btn" onclick="switchRole(${a.projectId},'${escapeAttr(a.projectTitle)}',${a.userId},'${a.projectRole}')">Switch Role</button>
+            <button class="text-btn danger" onclick="removeRole(${a.projectId},${a.userId},'${escapeAttr(a.fullName)}')">Remove</button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Switch role in-place (toggle PM ↔ STAFF)
+  window.switchRole = async function(projectId, projectTitle, userId, currentRole) {
+    const newRole = currentRole === 'PM' ? 'STAFF' : 'PM';
+    const roleLabel = newRole === 'PM' ? '★ Project Manager' : '⚙ Staff';
+    const ok = await customConfirm({
+      title: 'Switch Project Role',
+      message: `Switch role to ${roleLabel} on project "${projectTitle}"?`,
+      confirmText: 'Switch Role',
+      isDanger: false
+    });
+    if (!ok) return;
+
+    try {
+      await api(`/api/projects/${projectId}/assignments/${userId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ projectRole: newRole })
+      });
+      showToast(`Role updated to ${newRole} on ${projectTitle}.`, 'success');
+      await loadTeamRolesTable();
+    } catch (err) { showToast(err.message, 'error'); }
+  };
+
+  window.removeRole = async function(projectId, userId, fullName) {
+    const ok = await customConfirm({
+      title: 'Remove Team Member',
+      message: `Are you sure you want to remove "${fullName}" from this project?`,
+      confirmText: 'Remove Member',
+      isDanger: true
+    });
+    if (!ok) return;
+
+    try {
+      await api(`/api/projects/${projectId}/assignments/${userId}`, { method: 'DELETE' });
+      showToast(`${fullName} removed from project.`, 'success');
+      await loadTeamRolesTable();
+    } catch (err) { showToast(err.message, 'error'); }
+  };
+
+  // ---- Slide-in Panel logic ----
+  async function openRoleAssignPanel() {
+    const overlay = document.getElementById('roleAssignOverlay');
+    const panel = document.getElementById('roleAssignPanel');
+    overlay.style.display = 'block';
+    requestAnimationFrame(() => { panel.style.transform = 'translateX(0)'; });
+
+    const projSel = document.getElementById('raProjSelect');
+    const memberSel = document.getElementById('raMemberSelect');
+    document.getElementById('raFormError').style.display = 'none';
+    document.getElementById('raRoleSTAFF').checked = true;
+    highlightRoleLabel();
+
+    // If cache is empty (section never expanded), fetch projects
+    if (!_allProjects.length) {
+      projSel.innerHTML = '<option value="">Loading projects...</option>';
+      memberSel.innerHTML = '<option value="">Loading...</option>';
+      try {
+        const projectsRes = await api('/api/projects');
+        _allProjects = Array.isArray(projectsRes) ? projectsRes : (projectsRes.content || []);
+      } catch (err) {
+        projSel.innerHTML = '<option value="">Failed to load projects</option>';
+        return;
+      }
+    }
+
+    // Use staff from already-loaded matrix
+    if (!_allMembers.length && state.matrix?.staff?.length) {
+      _allMembers = state.matrix.staff;
+    }
+
+    // Populate project dropdown
+    projSel.innerHTML = '<option value="">Select project...</option>' +
+      (_allProjects.length
+        ? _allProjects.map(p => `<option value="${p.id}">${escapeHtml(p.title)}</option>`).join('')
+        : '<option disabled>No projects found</option>');
+    memberSel.innerHTML = '<option value="">Select project first...</option>';
+  }
+
+  function closeRoleAssignPanel() {
+    const panel = document.getElementById('roleAssignPanel');
+    panel.style.transform = 'translateX(100%)';
+    setTimeout(() => { document.getElementById('roleAssignOverlay').style.display = 'none'; }, 300);
+  }
+
+  document.getElementById('roleAssignOverlay').addEventListener('click', function(e) {
+    if (e.target === this) closeRoleAssignPanel();
+  });
+
+  async function loadUnassignedMembers() {
+    const projectId = document.getElementById('raProjSelect').value;
+    const memberSel = document.getElementById('raMemberSelect');
+    if (!projectId) {
+      memberSel.innerHTML = '<option value="">Select project first...</option>';
+      return;
+    }
+    memberSel.innerHTML = '<option value="">Loading members...</option>';
+    try {
+      const existing = await api(`/api/projects/${projectId}/assignments`);
+      const assignedIds = new Set((Array.isArray(existing) ? existing : []).map(a => a.userId));
+
+      // _allMembers are staff objects from ResourceMatrix (field: userId) or admin users (field: id)
+      const staffList = _allMembers.length ? _allMembers : (state.matrix?.staff || []);
+      const available = staffList.filter(m => {
+        const id = m.userId ?? m.id;
+        return id != null && !assignedIds.has(id);
+      });
+
+      memberSel.innerHTML = available.length
+        ? '<option value="">— Select member —</option>' +
+          available.map(m => {
+            const id = m.userId ?? m.id;
+            const label = escapeHtml(m.fullName || m.username || `User ${id}`);
+            return `<option value="${id}">${label}</option>`;
+          }).join('')
+        : '<option value="">All members already assigned to this project</option>';
+    } catch (err) {
+      memberSel.innerHTML = '<option value="">Error loading members</option>';
+    }
+  }
+
+  function highlightRoleLabel() {
+    const isPM = document.getElementById('raRolePM').checked;
+    document.getElementById('rolePMLabel').style.borderColor = isPM ? '#2563eb' : '#e2e8f0';
+    document.getElementById('rolePMLabel').style.background = isPM ? 'rgba(37,99,235,0.06)' : '';
+    document.getElementById('roleSTAFFLabel').style.borderColor = !isPM ? '#d97706' : '#e2e8f0';
+    document.getElementById('roleSTAFFLabel').style.background = !isPM ? 'rgba(245,158,11,0.06)' : '';
+  }
+
+  async function submitRoleAssign() {
+    const projectId = document.getElementById('raProjSelect').value;
+    const userId = document.getElementById('raMemberSelect').value;
+    const role = document.querySelector('input[name="raRole"]:checked')?.value;
+    const errEl = document.getElementById('raFormError');
+    errEl.style.display = 'none';
+
+    if (!projectId || !userId || !role) {
+      errEl.textContent = 'Please select a project, a member, and a role.';
+      errEl.style.display = 'block';
+      return;
+    }
+    const btn = document.getElementById('raSubmitBtn');
+    btn.disabled = true; btn.textContent = 'Assigning...';
+    try {
+      await api(`/api/projects/${projectId}/assignments`, {
+        method: 'POST',
+        body: JSON.stringify({ userId: Number(userId), projectRole: role })
+      });
+      showToast(`Member assigned as ${role} successfully.`, 'success');
+      closeRoleAssignPanel();
+      await loadTeamRolesTable();
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+    } finally {
+      btn.disabled = false; btn.textContent = 'Assign Role';
+    }
+  }
 </script>
 </body>
 </html>

@@ -60,7 +60,7 @@ public class SecurityConfig {
                 // Public pages (Frontend)
 
                 .requestMatchers("/", "/index.html", "/about.html", "/services.html", "/portfolio.html",
-                               "/contact.html", "/login.html", "/register.html", "/member.html", "/member-contact.html", "/admin.html", "/admin-messages.html", "/forgot-password.html", "/inbox.html", "/user-profile.html",
+                               "/contact.html", "/feedback.html", "/login.html", "/register.html", "/member.html", "/member-contact.html", "/admin.html", "/admin-messages.html", "/forgot-password.html", "/inbox.html", "/user-profile.html",
                                "/pm-dashboard.html", "/client-dashboard.html", "/booking.html","/rented-project.html", "/member-profile.html",
                                "/resource-allocation.html", "/transaction.html", "/payment-success.html", "/payment-cancel.html").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/uploads/**", "/favicon.ico").permitAll()
@@ -75,6 +75,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/bookings/my").authenticated()
                 .requestMatchers("/api/bookings/**").permitAll()
                 .requestMatchers("/api/chatbot/**").permitAll()
+                .requestMatchers("/api/feedback/**").permitAll()
 
                 // PayOS Payment Routes
                 .requestMatchers("/api/payments/payos-webhook").permitAll()
@@ -97,14 +98,12 @@ public class SecurityConfig {
                 // Milestone delete: Admin only
                 .requestMatchers(HttpMethod.DELETE, "/api/projects/*/milestones/**").hasRole("ADMIN")
 
-                // Assignment management: Admin only
-                .requestMatchers("/api/projects/*/assignments").hasRole("ADMIN")
-                .requestMatchers("/api/projects/*/assignments/**").hasRole("ADMIN")
-                .requestMatchers("/api/projects/*/clients").hasRole("ADMIN")
-                .requestMatchers("/api/projects/*/clients/**").hasRole("ADMIN")
+                // Assignment management: Admin or Resource Manager (HR)
+                .requestMatchers("/api/projects/*/assignments", "/api/projects/*/assignments/**").hasAnyRole("ADMIN", "RESOURCE")
+                .requestMatchers("/api/projects/*/clients", "/api/projects/*/clients/**").hasAnyRole("ADMIN", "RESOURCE")
 
-                // Dedicated Resource Allocation workspace: only the standalone resource account.
-                .requestMatchers("/api/resource-allocations/**").hasRole("RESOURCE")
+                // Dedicated Resource Allocation workspace: Resource Manager or Admin
+                .requestMatchers("/api/resource-allocations/**").hasAnyRole("RESOURCE", "ADMIN")
 
                 // My-projects endpoints: any authenticated user
                 .requestMatchers("/api/my/**").authenticated()

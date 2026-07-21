@@ -77,11 +77,14 @@ public class ResourceAllocationService {
                     .collect(Collectors.groupingBy(a -> a.getUser().getId(),
                             Collectors.summingInt(ResourceAllocation::getAllocationPercentage)));
 
-        Set<Long> assignedUserIds = selectedId == null
-                ? Set.of()
+        Map<Long, String> assignedUserRoleMap = selectedId == null
+                ? Map.of()
                 : assignmentRepository.findByProjectId(selectedId).stream()
-                    .map(a -> a.getUser().getId())
-                    .collect(Collectors.toSet());
+                    .collect(Collectors.toMap(
+                        a -> a.getUser().getId(),
+                        a -> a.getProjectRole() != null ? a.getProjectRole().name() : "STAFF",
+                        (existing, replacement) -> existing
+                    ));
 
         List<ResourceStaffRow> staffRows = staffUsers.stream().map(user -> {
             Member profile = memberProfiles.get(user.getId());
@@ -92,6 +95,9 @@ public class ResourceAllocationService {
             int availability = Math.max(0, 100 - workload);
             int skillMatch = selectedProject == null ? 0
                     : calculateSkillMatch(skills, parseCsv(selectedProject.getTechnologies()));
+
+            String projectRole = assignedUserRoleMap.get(user.getId());
+            boolean isAssigned = projectRole != null;
 
             return new ResourceStaffRow(
                     user.getId(),
@@ -105,7 +111,8 @@ public class ResourceAllocationService {
                     projectWorkload,
                     availability,
                     workload > 100,
-                    assignedUserIds.contains(user.getId())
+                    isAssigned,
+                    projectRole
             );
         }).toList();
 
@@ -342,7 +349,7 @@ public class ResourceAllocationService {
     }
 
     private boolean isResourceManager(User user) {
-        return "ROLE_RESOURCE".equalsIgnoreCase(user.getRole());
+        return user != null && ("ROLE_RESOURCE".equalsIgnoreCase(user.getRole()) || "ROLE_ADMIN".equalsIgnoreCase(user.getRole()));
     }
 
     private int calculateSkillMatch(List<String> staffSkills, List<String> requiredTechnologies) {

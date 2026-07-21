@@ -2,18 +2,30 @@ package com.example.demo.config;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
+import jakarta.annotation.PostConstruct;
+import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 
 @Component
 public class JwtTokenProvider {
 
-    private final Key jwtSecretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    @Value("${app.jwt.secret:NovaDigitalSecretKeyForJWTTokenGeneration2026WithMinimum256BitsLength}")
+    private String jwtSecretString;
+
     private final long jwtExpirationMs = 86400000; // 24 hours
+    private Key jwtSecretKey;
+
+    @PostConstruct
+    public void init() {
+        byte[] keyBytes = jwtSecretString.getBytes(StandardCharsets.UTF_8);
+        this.jwtSecretKey = Keys.hmacShaKeyFor(keyBytes);
+    }
 
     public String generateToken(Authentication authentication) {
         UserDetails userPrincipal = (UserDetails) authentication.getPrincipal();

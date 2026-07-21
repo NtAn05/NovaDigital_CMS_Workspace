@@ -5552,3 +5552,91 @@ html.dark-theme .demo-slider-dot {
   border-radius: 10px;
 }
 
+/* ===== Notification Dropdown Component (Light & Dark Mode) ===== */
+#notification-dropdown {
+  background: var(--bg-card, #ffffff) !important;
+  border: 1px solid var(--border-color, #e2e8f0) !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.15) !important;
+  color: var(--text-dark, #1e293b) !important;
+}
+
+html.dark-theme #notification-dropdown,
+body.dark-theme #notification-dropdown {
+  background: #0f172a !important;
+  border-color: #334155 !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6) !important;
+  color: #f1f5f9 !important;
+}
+
+#notification-dropdown strong,
+#notification-dropdown .notification-header strong {
+  color: var(--text-dark, #1e293b);
+}
+
+html.dark-theme #notification-dropdown strong,
+html.dark-theme #notification-dropdown .notification-header strong {
+  color: #f1f5f9 !important;
+}
+
+#notification-dropdown > div:first-child,
+#notification-dropdown .notification-header {
+  border-bottom: 1px solid var(--border-color, #e2e8f0) !important;
+}
+
+html.dark-theme #notification-dropdown > div:first-child,
+html.dark-theme #notification-dropdown .notification-header {
+  border-bottom-color: #334155 !important;
+}
+
+.notification-item {
+  color: var(--text-dark, #334155) !important;
+  transition: background 0.2s ease;
+}
+
+.notification-item .notif-item-title {
+  color: var(--text-dark, #0f172a) !important;
+}
+
+.notification-item .notif-item-msg,
+.notification-item .notif-item-time {
+  color: var(--text-muted, #64748b) !important;
+}
+
+.notification-item.unread {
+  background: rgba(37, 99, 235, 0.07) !important;
+  border-left: 3.5px solid #2563eb !important;
+}
+
+html.dark-theme .notification-item {
+  color: #cbd5e1 !important;
+}
+
+html.dark-theme .notification-item .notif-item-title {
+  color: #f8fafc !important;
+}
+
+html.dark-theme .notification-item .notif-item-msg {
+  color: #94a3b8 !important;
+}
+
+html.dark-theme .notification-item .notif-item-time {
+  color: #64748b !important;
+}
+
+html.dark-theme .notification-item.unread {
+  background: rgba(30, 58, 138, 0.45) !important;
+  border-left: 3.5px solid #3b82f6 !important;
+}
+
+html.dark-theme .notification-item.unread .notif-item-title {
+  color: #93c5fd !important;
+}
+
+html.dark-theme .notification-item.unread .notif-item-msg {
+  color: #cbd5e1 !important;
+}
+
+html.dark-theme .notification-item:hover {
+  background: rgba(255, 255, 255, 0.07) !important;
+}
+

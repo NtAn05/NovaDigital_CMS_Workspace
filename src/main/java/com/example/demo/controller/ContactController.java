@@ -19,6 +19,9 @@ public class ContactController {
     private ContactService contactService;
 
     @Autowired
+    private com.example.demo.service.EmailService emailService;
+
+    @Autowired
     private com.example.demo.repository.UserRepository userRepository;
 
     @PostMapping

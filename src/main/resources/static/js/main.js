@@ -1985,12 +1985,11 @@ async function loadNotificationList() {
     }
 
     listEl.innerHTML = list.map(n => `
-      <a href="${escapeHtml(n.link || '#')}" class="notification-item" data-id="${n.id}"
-         style="display:block;padding:10px 12px;border-radius:8px;text-decoration:none;color:inherit;margin-bottom:4px;
-                background:${n.read ? 'transparent' : 'rgba(37,99,235,0.06)'};border-left:3px solid ${n.read ? 'transparent' : '#2563eb'};">
-        <div style="font-weight:600;font-size:0.85rem;color:var(--text-dark,#111);">${escapeHtml(n.title)}</div>
-        <div style="font-size:0.8rem;color:var(--text-muted);margin-top:2px;line-height:1.4;">${escapeHtml(n.message)}</div>
-        <div style="font-size:0.72rem;color:var(--text-muted);margin-top:4px;">${formatNotificationTime(n.createdAt)}</div>
+      <a href="${escapeHtml(n.link || '#')}" class="notification-item ${n.read ? 'read' : 'unread'}" data-id="${n.id}"
+         style="display:block;padding:10px 12px;border-radius:8px;text-decoration:none;margin-bottom:4px;">
+        <div class="notif-item-title" style="font-weight:600;font-size:0.85rem;margin-bottom:2px;">${escapeHtml(n.title)}</div>
+        <div class="notif-item-msg" style="font-size:0.8rem;margin-top:2px;line-height:1.4;">${escapeHtml(n.message)}</div>
+        <div class="notif-item-time" style="font-size:0.72rem;margin-top:4px;">${formatNotificationTime(n.createdAt)}</div>
       </a>
     `).join("");
 
@@ -4538,164 +4537,6 @@ function formatNotificationTime(iso) {
     }
   }
 
-  // =============================================
-  //  ASSIGNMENT MODAL — Admin-only project assignments
-  // =============================================
-
-  let currentAssignmentProjectId = null;
-
-  async function openAssignmentModal(projectId, projectTitle) {
-    currentAssignmentProjectId = projectId;
-    document.getElementById("assignment-project-title").textContent = `👥 Assignments: ${projectTitle}`;
-
-    const overlay = document.getElementById("assignment-modal-overlay");
-    if (overlay) {
-      overlay.classList.add("is-open");
-    }
-    await loadAssignmentData(projectId);
-  }
-
-  function closeAssignmentModal() {
-    const overlay = document.getElementById("assignment-modal-overlay");
-    if (overlay) {
-      overlay.classList.remove("is-open");
-    }
-    currentAssignmentProjectId = null;
-  }
-
-  async function loadAssignmentData(projectId) {
-    const token = localStorage.getItem("token") || localStorage.getItem("authToken") || sessionStorage.getItem("token");
-    const headers = { "Authorization": `Bearer ${token}` };
-
-    // Load existing assignments and clients
-    const [assignRes, clientRes, allUsersRes] = await Promise.all([
-      fetch(`/api/projects/${projectId}/assignments`, { headers }),
-      fetch(`/api/projects/${projectId}/clients`, { headers }),
-      fetch(`/api/admin/users`, { headers }).catch(() => ({ ok: false }))
-    ]);
-
-    const assignments = assignRes.ok ? await assignRes.json() : [];
-    const clients = clientRes.ok ? await clientRes.json() : [];
-    const allUsers = allUsersRes.ok ? await allUsersRes.json() : [];
-
-    renderAssignmentList(assignments);
-    renderClientList(clients);
-    populateMemberDropdown(allUsers.filter(u => u.role === "ROLE_MEMBER"), assignments.map(a => a.userId));
-    populateClientDropdown(allUsers.filter(u => u.role === "ROLE_USER"), clients.map(c => c.userId));
-  }
-
-  function renderAssignmentList(assignments) {
-    const el = document.getElementById("assignment-member-list");
-    if (!assignments.length) {
-      el.innerHTML = '<p style="color:#64748b;font-size:0.85rem;">No members assigned yet.</p>';
-      return;
-    }
-    el.innerHTML = assignments.map(a => `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;">
-      <div>
-        <strong style="font-size:0.88rem;">${escapeHtml(a.fullName)}</strong>
-        <span style="font-size:0.75rem;color:#64748b;margin-left:6px;">(${escapeHtml(a.username)})</span><br/>
-        <span style="font-size:0.75rem;padding:2px 8px;border-radius:10px;font-weight:700;${a.projectRole === 'PM' ? 'background:rgba(37,99,235,.12);color:#2563eb' : 'background:rgba(245,158,11,.12);color:#d97706'}">
-          ${a.projectRole === 'PM' ? '★ PM' : '⚙ STAFF'}
-        </span>
-      </div>
-      <button onclick="removeAssignment(${a.userId})" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:0.75rem;text-decoration:underline;">Remove</button>
-    </div>`).join('');
-  }
-
-  function renderClientList(clients) {
-    const el = document.getElementById("assignment-client-list");
-    if (!clients.length) {
-      el.innerHTML = '<p style="color:#64748b;font-size:0.85rem;">No clients linked yet.</p>';
-      return;
-    }
-    el.innerHTML = clients.map(c => `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;">
-      <div>
-        <strong style="font-size:0.88rem;">${escapeHtml(c.fullName)}</strong>
-        <span style="font-size:0.75rem;color:#64748b;margin-left:6px;">${escapeHtml(c.email)}</span>
-      </div>
-      <button onclick="removeClient(${c.userId})" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:0.75rem;text-decoration:underline;">Unlink</button>
-    </div>`).join('');
-  }
-
-  function populateMemberDropdown(members, alreadyAssignedIds) {
-    const sel = document.getElementById("assign-user-select");
-    sel.innerHTML = '<option value="">— Select a member —</option>';
-    members.forEach(u => {
-      if (!alreadyAssignedIds.includes(u.id)) {
-        sel.innerHTML += `<option value="${u.id}">${escapeHtml(u.fullName)} (${escapeHtml(u.username)})</option>`;
-      }
-    });
-  }
-
-  function populateClientDropdown(users, alreadyLinkedIds) {
-    const sel = document.getElementById("assign-client-select");
-    sel.innerHTML = '<option value="">— Select a client —</option>';
-    users.forEach(u => {
-      if (!alreadyLinkedIds.includes(u.id)) {
-        sel.innerHTML += `<option value="${u.id}">${escapeHtml(u.fullName)} (${escapeHtml(u.email)})</option>`;
-      }
-    });
-  }
-
-  async function submitAssignMember() {
-    const userId = document.getElementById("assign-user-select").value;
-    const role = document.getElementById("assign-role-select").value;
-    if (!userId) { alert("Please select a member."); return; }
-
-    const token = localStorage.getItem("token") || localStorage.getItem("authToken") || sessionStorage.getItem("token");
-    const res = await fetch(`/api/projects/${currentAssignmentProjectId}/assignments`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-      body: JSON.stringify({ userId: parseInt(userId), projectRole: role })
-    });
-    const data = await res.json();
-    if (res.ok) {
-      await loadAssignmentData(currentAssignmentProjectId);
-    } else {
-      alert(data.message || "Failed to assign member.");
-    }
-  }
-
-  async function submitAssignClient() {
-    const userId = document.getElementById("assign-client-select").value;
-    if (!userId) { alert("Please select a client."); return; }
-
-    const token = localStorage.getItem("token") || localStorage.getItem("authToken") || sessionStorage.getItem("token");
-    const res = await fetch(`/api/projects/${currentAssignmentProjectId}/clients`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-      body: JSON.stringify({ userId: parseInt(userId) })
-    });
-    const data = await res.json();
-    if (res.ok) {
-      await loadAssignmentData(currentAssignmentProjectId);
-    } else {
-      alert(data.message || "Failed to link client.");
-    }
-  }
-
-  async function removeAssignment(userId) {
-    if (!confirm("Remove this member from the project?")) return;
-    const token = localStorage.getItem("token") || localStorage.getItem("authToken") || sessionStorage.getItem("token");
-    await fetch(`/api/projects/${currentAssignmentProjectId}/assignments/${userId}`, {
-      method: "DELETE",
-      headers: { "Authorization": `Bearer ${token}` }
-    });
-    await loadAssignmentData(currentAssignmentProjectId);
-  }
-
-  async function removeClient(userId) {
-    if (!confirm("Unlink this client from the project?")) return;
-    const token = localStorage.getItem("token") || localStorage.getItem("authToken") || sessionStorage.getItem("token");
-    await fetch(`/api/projects/${currentAssignmentProjectId}/clients/${userId}`, {
-      method: "DELETE",
-      headers: { "Authorization": `Bearer ${token}` }
-    });
-    await loadAssignmentData(currentAssignmentProjectId);
-  }
-
   // Hero H1 text click animation
   function initHeroTextClick() {
     const heroH1 = document.querySelector(".hero-content h1");
@@ -5132,19 +4973,19 @@ function initFooterMove() {
   // 2. Form live validation
   function getValidationMessage(input) {
     if (input.validity.valueMissing) {
-      return "Trường này là bắt buộc.";
+      return "This field is required.";
     }
     if (input.validity.typeMismatch) {
-      if (input.type === "email") return "Địa chỉ email không hợp lệ.";
-      if (input.type === "url") return "Đường dẫn URL không hợp lệ.";
+      if (input.type === "email") return "Please enter a valid email address.";
+      if (input.type === "url") return "Please enter a valid URL.";
     }
     if (input.validity.tooShort) {
-      return `Vui lòng nhập tối thiểu ${input.minLength} ký tự.`;
+      return `Please enter at least ${input.minLength} characters.`;
     }
     if (input.validity.patternMismatch) {
-      return "Định dạng nhập liệu không khớp với yêu cầu.";
+      return "Input format does not match requirements.";
     }
-    return input.validationMessage || "Trường nhập liệu không hợp lệ.";
+    return input.validationMessage || "Invalid input field value.";
   }
 
   function validateField(input) {
@@ -5205,7 +5046,7 @@ function initFooterMove() {
 
         if (!isFormValid) {
           e.preventDefault();
-          window.showToast("Lỗi nhập liệu", "Vui lòng kiểm tra lại các thông tin màu đỏ.", "error");
+          window.showToast("Validation Error", "Please check the highlighted fields above.", "error");
         }
       });
     });
