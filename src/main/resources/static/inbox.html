@@ -156,7 +156,7 @@
       const email = localStorage.getItem("email") || sessionStorage.getItem("email");
       
       if (!token || !email) {
-        alert("You must be logged in to view your inbox!");
+        showToast("You must be logged in to view your inbox!", "warning");
         window.location.href = "index.html";
         return;
       }

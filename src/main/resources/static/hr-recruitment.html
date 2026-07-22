@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="NovaDigital HR — Quản lý hồ sơ ứng tuyển">
+  <meta name="description" content="NovaDigital HR — Manage Job Applications">
   <title>HR Recruitment | NovaDigital</title>
   <link rel="stylesheet" href="/css/style.css">
   <script>
@@ -639,7 +639,7 @@
     syncHeaderShape();
     window.addEventListener('scroll', syncHeaderShape, { passive: true });
 
-    // ── Auth guard: chỉ ADMIN hoặc ROLE_RESOURCE (HR) ─────────
+    // ── Auth guard: only ADMIN or ROLE_RESOURCE (HR) ─────────
     const token = localStorage.getItem('authToken') || localStorage.getItem('token') || sessionStorage.getItem('authToken') || sessionStorage.getItem('token');
     
     function safeJson(str) {
@@ -658,7 +658,7 @@
       window.location.href = 'index.html?error=unauthorized#login';
     }
 
-    // Hiển thị tên người dùng
+    // Display user name
     const nameEl = document.getElementById('actorName');
     nameEl.textContent = userData.fullName || userData.username || 'HR Manager';
     const initials = document.getElementById('accountInitials');
@@ -676,13 +676,13 @@
     let currentPage = 1;
     const itemsPerPage = 8;
 
-    // ── Load tất cả hồ sơ ─────────────────────────────────────
+    // ── Load all applications ─────────────────────────────────────
     async function loadApplications() {
       try {
         const res  = await fetch('/api/vacancies/applications', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (res.status === 403) throw new Error('Không có quyền truy cập');
+        if (res.status === 403) throw new Error('Access denied');
         allApplications = await res.json();
         filteredApplications = [...allApplications];
         renderTable();
@@ -755,7 +755,7 @@
       window.location.href = 'index.html#login';
     };
 
-    // ── Render bảng ────────────────────────────────────────────
+    // ── Render table ────────────────────────────────────────────
     function renderTable() {
       const data = filteredApplications;
       window.currentApplications = data;
@@ -866,7 +866,7 @@
       setTimeout(() => document.getElementById('cv-iframe').src = '', 300);
     }
 
-    // ── Tính stats ─────────────────────────────────────────────
+    // ── Calculate stats ─────────────────────────────────────────────
     function buildStats(data) {
       document.getElementById('stat-total').textContent = data.length;
       const positions = new Set(data.map(a => a.vacancyId));
@@ -876,7 +876,7 @@
       document.getElementById('stat-today').textContent = todayCount;
     }
 
-    // ── Tạo filter dropdown từ danh sách vị trí thực tế ────────
+    // ── Generate filter dropdown from actual vacancy list ────────
     function buildFilterOptions(data) {
       const sel = document.getElementById('vacancy-filter');
       const map = {};

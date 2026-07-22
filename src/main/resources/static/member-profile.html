@@ -1109,13 +1109,12 @@
       let projectsList = [];
 
       function showAlert(msg, isSuccess = true) {
-        alertBox.textContent = msg;
-        alertBox.className = "profile-alert " + (isSuccess ? "success" : "error");
+        window.showFormAlert(alertBox, msg, isSuccess);
         alertBox.scrollIntoView({ behavior: "smooth", block: "center" });
       }
 
       function hideAlert() {
-        alertBox.style.display = "none";
+        window.clearFormAlert(alertBox);
       }
 
       function renderAvatar(url, name) {
@@ -1295,7 +1294,7 @@
           }
 
         } catch (err) {
-          showAlert("âŒ Could not load member profile. Please try again.", false);
+          showAlert("Could not load member profile. Please try again.", false);
         }
       }
 
@@ -1307,7 +1306,7 @@
         if (!url) { showAlert("Please paste a valid image URL.", false); return; }
         avatarHidden.value = url;
         renderAvatar(url, document.getElementById("profile-fullname").value);
-        showAlert("âœ… Avatar preview updated. Click Save Changes to apply.", true);
+        showAlert("Avatar preview updated. Click Save Changes to apply.", true);
       });
 
       /* â”€â”€â”€ File Upload â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
@@ -1316,7 +1315,7 @@
         if (!file) return;
 
         if (file.size > 5 * 1024 * 1024) {
-          showAlert("âŒ File is too large. Maximum size is 5MB.", false);
+          showAlert("File is too large. Maximum size is 5MB.", false);
           return;
         }
 
@@ -1324,7 +1323,7 @@
         formData.append("file", file);
 
         try {
-          showAlert("â³ Uploading avatar...", true);
+          showAlert("Uploading avatar...", true);
           const res = await fetch("/api/upload", {
             method: "POST",
             headers: { "Authorization": "Bearer " + token },
@@ -1335,12 +1334,12 @@
             avatarHidden.value = data.url;
             avatarUrlInput.value = data.url;
             renderAvatar(data.url, document.getElementById("profile-fullname").value);
-            showAlert("âœ… Avatar uploaded! Click Save Changes to apply.", true);
+            showAlert("Avatar uploaded! Click Save Changes to apply.", true);
           } else {
-            showAlert(data.message || "âŒ Upload failed. Please try again.", false);
+            showAlert(data.message || "Upload failed. Please try again.", false);
           }
         } catch (err) {
-          showAlert("âŒ Server error during upload.", false);
+          showAlert("Server error during upload.", false);
         }
       });
 
@@ -1360,12 +1359,12 @@
         const newPassword = document.getElementById("profile-new-password").value.trim();
 
         if (!fullName || !roleName) {
-          showAlert("âŒ Full Name and Position/Role are required.", false);
+          showAlert("Full Name and Position/Role are required.", false);
           return;
         }
 
         saveBtn.disabled = true;
-        saveBtn.textContent = "Savingâ€¦";
+        saveBtn.textContent = "Saving...";
 
         const skillsStr = skillsList.join(", ");
         const projectsStr = projectsList.join(", ");

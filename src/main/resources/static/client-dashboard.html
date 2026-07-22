@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -359,15 +359,13 @@
   }
 
   function showToast(title, body) {
-    const c = document.getElementById('toasts');
-    const t = document.createElement('div');
-    t.className = 'toast toast-info';
-    t.innerHTML = `<div class="toast-title">🔔 ${title}</div><div class="toast-body">${body}</div>`;
-    c.appendChild(t);
-    setTimeout(() => t.remove(), 6000);
+    if (window.showToast) {
+      window.showToast(title, body, "info");
+    }
   }
 
   loadProjects();
 </script>
+<script src="/js/main.js"></script>
 </body>
 </html>

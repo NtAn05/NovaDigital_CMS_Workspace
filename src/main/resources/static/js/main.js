@@ -688,7 +688,7 @@ function updateNavbarAuth() {
 
     navLinksContainer.appendChild(dropdownLi);
 
-    // Chuông thông báo - chỉ hiện khi đã đăng nhập, đặt ngay trước avatar dropdown
+    // Notification bell - visible only when logged in, placed right before avatar dropdown
     injectNotificationBell(navLinksContainer, dropdownLi);
 
     const trigger = dropdownLi.querySelector("#user-avatar-trigger");
@@ -1350,11 +1350,11 @@ function initAdminDashboard() {
         if (type === "project") fetchAdminProjectsTable();
         if (type === "service") fetchAdminServicesTable();
       } else {
-        alert("Delete failed. Please try again.");
+        showToast("Delete failed. Please try again.", "error");
       }
     } catch (err) {
       console.error("Delete error:", err);
-      alert("Could not connect to server.");
+      showToast("Could not connect to server.", "error");
     }
   }
 
@@ -1458,11 +1458,11 @@ function initAdminDashboard() {
         // Refresh table
         fetchAdminUsers();
       } else {
-        alert("Operation failed. Please try again.");
+        showToast("Operation failed. Please try again.", "error");
       }
     } catch (err) {
       console.error("Toggle status error:", err);
-      alert("Could not connect to server.");
+      showToast("Could not connect to server.", "error");
     }
   }
 
@@ -1680,7 +1680,7 @@ function initAdminDashboard() {
       });
       if (!response.ok) {
         if (response.status === 401 || response.status === 403) {
-          alert("Session expired or unauthorized. Please login again.");
+          showToast("Session expired or unauthorized. Please login again.", "error");
           window.location.href = "login.html";
           return;
         }
@@ -1851,7 +1851,7 @@ function initAdminDashboard() {
     if (!textarea) return;
     const text = textarea.value.trim();
     if (!text) {
-      alert("Please enter a reply message.");
+      showToast("Please enter a reply message.", "warning");
       return;
     }
 
@@ -1874,12 +1874,12 @@ function initAdminDashboard() {
 
       if (!response.ok) throw new Error("Failed to send reply");
 
-      alert("Reply sent successfully!");
+      showToast("Reply sent successfully!", "success");
       closeReplyDialog();
       await loadUserMessages();
     } catch (err) {
       console.error(err);
-      alert("Error: " + err.message);
+      showToast("Error: " + err.message, "error");
     } finally {
       if (btn) {
         btn.disabled = false;
@@ -1889,23 +1889,29 @@ function initAdminDashboard() {
   }
 
   async function deleteMessage(msgId) {
-    if (!confirm("Are you sure you want to delete this message? This action cannot be undone.")) return;
+    showConfirmModal({
+      title: "Delete Message",
+      message: "Are you sure you want to delete this message? This action cannot be undone.",
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      onConfirm: async () => {
+        try {
+          const token = getAdminToken();
+          const response = await fetch(`/api/contacts/${msgId}`, {
+            method: "DELETE",
+            headers: token ? { "Authorization": "Bearer " + token } : {}
+          });
 
-    try {
-      const token = getAdminToken();
-      const response = await fetch(`/api/contacts/${msgId}`, {
-        method: "DELETE",
-        headers: token ? { "Authorization": "Bearer " + token } : {}
-      });
+          if (!response.ok) throw new Error("Failed to delete message");
 
-      if (!response.ok) throw new Error("Failed to delete message");
-
-      alert("Message deleted successfully!");
-      await loadUserMessages();
-    } catch (err) {
-      console.error(err);
-      alert("Error deleting message: " + err.message);
-    }
+          showToast("Message deleted successfully!", "success");
+          await loadUserMessages();
+        } catch (err) {
+          console.error(err);
+          showToast("Error deleting message: " + err.message, "error");
+        }
+      }
+    });
   }
 
   // Expose functions globally to onclick handlers
@@ -1929,7 +1935,7 @@ function getAuthToken() {
 }
 
 function injectNotificationBell(navLinksContainer, beforeEl) {
-  // Tránh chèn trùng nếu hàm này bị gọi lại (updateNavbarAuth có thể chạy nhiều lần)
+  // Avoid duplicate injection if function is re-called (updateNavbarAuth may run multiple times)
   const old = navLinksContainer.querySelector(".notification-bell-container");
   if (old) old.remove();
 
@@ -1983,7 +1989,7 @@ function injectNotificationBell(navLinksContainer, beforeEl) {
     } catch (e) { console.error(e); }
   });
 
-  // Tải số thông báo chưa đọc ngay khi vào trang, rồi poll mỗi 30s để cập nhật gần-realtime
+  // Load unread notification count on page load, then poll every 30s for near-realtime updates
   loadNotificationUnreadCount();
   if (window._notificationPollInterval) clearInterval(window._notificationPollInterval);
   window._notificationPollInterval = setInterval(loadNotificationUnreadCount, 30000);
@@ -2004,7 +2010,7 @@ async function loadNotificationUnreadCount() {
     } else {
       badge.style.display = "none";
     }
-  } catch (e) { /* im lặng bỏ qua - không làm phiền người dùng vì lỗi phụ này */ }
+  } catch (e) { /* silently ignore secondary errors */ }
 }
 
 async function loadNotificationList() {
@@ -2040,7 +2046,7 @@ async function loadNotificationList() {
             headers: { "Authorization": "Bearer " + getAuthToken() }
           });
           loadNotificationUnreadCount();
-        } catch (err) { /* không chặn điều hướng nếu lỗi đánh dấu đã đọc */ }
+        } catch (err) { /* do not block navigation if marking read fails */ }
       });
     });
   } catch (e) {
@@ -2063,10 +2069,76 @@ function formatNotificationTime(iso) {
 }
 
   // =============================================
-  //  Toast Notification System
+  //  Unified Notification System (Toast, Alert, Confirm)
   // =============================================
 
-  function showToast(message, type = "success") {
+  function ensureToastStyles() {
+    if (document.getElementById("toast-system-styles")) return;
+    const style = document.createElement("style");
+    style.id = "toast-system-styles";
+    style.textContent = `
+      #toast-container, .toast-container, #toast-notification-container {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 999999;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        pointer-events: none;
+        max-width: 380px;
+        width: calc(100vw - 48px);
+      }
+      .toast-item, .toast-msg-item, .live-toast {
+        pointer-events: auto;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 18px;
+        border-radius: 12px;
+        background: #111827;
+        color: #f3f4f6;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.12);
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        font-family: inherit;
+        font-size: 0.9rem;
+      }
+      .toast-item.show, .toast-msg-item.show, .live-toast.show {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+      .toast-item.success, .toast-msg-item.success { border-left: 4px solid #10b981; }
+      .toast-item.error, .toast-msg-item.error, .toast-item.danger { border-left: 4px solid #ef4444; }
+      .toast-item.warning, .toast-msg-item.warning { border-left: 4px solid #f59e0b; }
+      .toast-item.info, .toast-msg-item.info { border-left: 4px solid #3b82f6; }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function showToast(arg1, arg2, arg3) {
+    ensureToastStyles();
+    let title = "";
+    let message = "";
+    let type = "success";
+
+    const validTypes = ["success", "error", "warning", "info", "danger"];
+    if (arg2 && validTypes.includes(String(arg2).toLowerCase())) {
+      message = arg1 || "";
+      type = String(arg2).toLowerCase();
+      if (type === "danger") type = "error";
+      title = arg3 || "";
+    } else if (arg1 && !arg2 && !arg3) {
+      message = arg1;
+      type = "success";
+    } else {
+      title = arg1 || "";
+      message = arg2 || "";
+      type = String(arg3 || "success").toLowerCase();
+      if (type === "danger") type = "error";
+    }
+
     let container = document.getElementById("toast-container");
     if (!container) {
       container = document.createElement("div");
@@ -2080,27 +2152,128 @@ function formatNotificationTime(iso) {
 
     let iconSvg = "";
     if (type === "success") {
-      iconSvg = `<svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#10b981;fill:none;stroke-width:2.5;"><polyline points="20 6 9 17 4 12"/></svg>`;
+      iconSvg = `<svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#10b981;fill:none;stroke-width:2.5;flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>`;
     } else if (type === "error") {
-      iconSvg = `<svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#ef4444;fill:none;stroke-width:2.5;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+      iconSvg = `<svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#ef4444;fill:none;stroke-width:2.5;flex-shrink:0;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+    } else if (type === "warning") {
+      iconSvg = `<svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#f59e0b;fill:none;stroke-width:2.5;flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
     } else {
-      iconSvg = `<svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#3b82f6;fill:none;stroke-width:2.5;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`;
+      iconSvg = `<svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#3b82f6;fill:none;stroke-width:2.5;flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`;
     }
 
+    const titleHtml = title ? `<div style="font-weight:700;font-size:0.9rem;margin-bottom:2px;">${escapeHtml(title)}</div>` : "";
     toast.innerHTML = `
-    ${iconSvg}
-    <div class="toast-message">${escapeHtml(message)}</div>
-  `;
+      ${iconSvg}
+      <div style="flex:1;min-width:0;">
+        ${titleHtml}
+        <div class="toast-message" style="line-height:1.4;">${escapeHtml(message)}</div>
+      </div>
+      <button onclick="this.parentElement.remove()" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:1.1rem;line-height:1;padding:0 0 0 8px;">&times;</button>
+    `;
 
     container.appendChild(toast);
-
     setTimeout(() => toast.classList.add("show"), 10);
-
     setTimeout(() => {
       toast.classList.remove("show");
       setTimeout(() => toast.remove(), 400);
     }, 4000);
   }
+
+  window.showToast = showToast;
+  window.showSuccessToast = (msg) => showToast(msg, "success");
+
+  window.showFormAlert = function (target, message, typeOrIsSuccess = "error") {
+    let el = typeof target === "string" ? document.getElementById(target) : target;
+    if (!el) return;
+
+    let type = "error";
+    if (typeof typeOrIsSuccess === "boolean") {
+      type = typeOrIsSuccess ? "success" : "error";
+    } else if (typeof typeOrIsSuccess === "string") {
+      type = typeOrIsSuccess.toLowerCase();
+    }
+
+    const isSuccess = type === "success";
+    el.textContent = message;
+    el.className = `alert-message ${isSuccess ? "alert-success" : "alert-danger"}`;
+    el.style.cssText = `
+      display: block;
+      padding: 0.75rem 1rem;
+      margin: 0.75rem 0;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      line-height: 1.4;
+      transition: all 0.3s ease;
+      ${isSuccess 
+        ? 'background: rgba(16, 185, 129, 0.12); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);' 
+        : 'background: rgba(239, 68, 68, 0.12); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);'}
+    `;
+  };
+
+  window.clearFormAlert = function (target) {
+    let el = typeof target === "string" ? document.getElementById(target) : target;
+    if (el) {
+      el.style.display = "none";
+      el.textContent = "";
+    }
+  };
+
+  window.showConfirmModal = function ({ title = "Confirm", message = "Are you sure you want to proceed?", confirmText = "Confirm", cancelText = "Cancel", onConfirm }) {
+    let overlay = document.getElementById("global-confirm-modal");
+    if (!overlay) {
+      overlay = document.createElement("div");
+      overlay.id = "global-confirm-modal";
+      overlay.style.cssText = `
+        position: fixed; inset: 0; z-index: 999999;
+        background: rgba(10, 15, 30, 0.75); backdrop-filter: blur(8px);
+        display: flex; align-items: center; justify-content: center;
+        opacity: 0; visibility: hidden; transition: all 0.25s ease;
+      `;
+      overlay.innerHTML = `
+        <div style="background: #111827; border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 24px; max-width: 420px; width: 90%; box-shadow: 0 20px 50px rgba(0,0,0,0.5); transform: translateY(20px); transition: all 0.25s ease;" id="confirm-modal-box">
+          <h3 id="confirm-modal-title" style="margin: 0 0 10px 0; font-size: 1.15rem; font-weight: 700; color: #fff;"></h3>
+          <p id="confirm-modal-msg" style="margin: 0 0 20px 0; font-size: 0.9rem; color: #9ca3af; line-height: 1.5;"></p>
+          <div style="display: flex; gap: 12px; justify-content: flex-end;">
+            <button id="confirm-modal-cancel" style="padding: 9px 18px; border-radius: 8px; background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #e5e7eb; font-weight: 600; cursor: pointer; transition: all 0.2s;"></button>
+            <button id="confirm-modal-ok" style="padding: 9px 18px; border-radius: 8px; background: #ef4444; border: none; color: #fff; font-weight: 600; cursor: pointer; transition: all 0.2s;"></button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+    }
+
+    const titleEl = document.getElementById("confirm-modal-title");
+    const msgEl = document.getElementById("confirm-modal-msg");
+    const cancelBtn = document.getElementById("confirm-modal-cancel");
+    const okBtn = document.getElementById("confirm-modal-ok");
+    const box = document.getElementById("confirm-modal-box");
+
+    titleEl.textContent = title;
+    msgEl.textContent = message;
+    cancelBtn.textContent = cancelText;
+    okBtn.textContent = confirmText;
+
+    function closeModal() {
+      overlay.style.opacity = "0";
+      overlay.style.visibility = "hidden";
+      box.style.transform = "translateY(20px)";
+    }
+
+    cancelBtn.onclick = closeModal;
+    overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
+
+    okBtn.onclick = async () => {
+      closeModal();
+      if (typeof onConfirm === "function") {
+        await onConfirm();
+      }
+    };
+
+    overlay.style.visibility = "visible";
+    overlay.style.opacity = "1";
+    box.style.transform = "translateY(0)";
+  };
 
   // =============================================
   //  Admin – Consultation Bookings
@@ -2126,7 +2299,7 @@ function formatNotificationTime(iso) {
       await fetchAdminUsers();
     }
 
-    // Expert (chuyên gia tư vấn) = User có role ROLE_MEMBER, KHÔNG phải bảng members cũ
+    // Expert (consultant) = User with role ROLE_MEMBER, NOT old members table
     const memberUsers = Object.values(_cache.users).filter(u => u.role === "ROLE_MEMBER");
 
       tbody.innerHTML = "";
@@ -2145,7 +2318,7 @@ function formatNotificationTime(iso) {
 
         tr.setAttribute("data-searchable", `${client.fullName} ${service.title} ${b.appointmentDate} ${b.status}`);
 
-      // Expert select options - lấy từ User role=ROLE_MEMBER (đúng người sẽ nhận thông báo/đăng nhập)
+      // Expert select options - retrieved from User role=ROLE_MEMBER (correct person receiving notifications/login)
       let expertOptions = `<option value="">-- Assign Expert --</option>`;
       memberUsers.forEach(u => {
         const selected = (b.expertId && String(b.expertId) === String(u.id)) ? "selected" : "";
@@ -2242,19 +2415,26 @@ function formatNotificationTime(iso) {
   }
 
   async function deleteBooking(bookingId) {
-    if (!confirm("Are you sure you want to delete this booking appointment? This action cannot be undone.")) return;
-    try {
-      const response = await fetch(`/api/bookings/${bookingId}`, {
-        method: "DELETE",
-        headers: adminHeaders()
-      });
-      if (!response.ok) throw new Error("Failed to delete booking");
-      showToast("Booking deleted successfully!", "success");
-      fetchAdminBookings();
-    } catch (err) {
-      console.error(err);
-      showToast("Failed to delete booking: " + err.message, "error");
-    }
+    showConfirmModal({
+      title: "Delete Booking",
+      message: "Are you sure you want to delete this booking appointment? This action cannot be undone.",
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`/api/bookings/${bookingId}`, {
+            method: "DELETE",
+            headers: adminHeaders()
+          });
+          if (!response.ok) throw new Error("Failed to delete booking");
+          showToast("Booking deleted successfully!", "success");
+          fetchAdminBookings();
+        } catch (err) {
+          console.error(err);
+          showToast("Failed to delete booking: " + err.message, "error");
+        }
+      }
+    });
   }
 
   // =============================================
@@ -3291,10 +3471,16 @@ function formatNotificationTime(iso) {
       const deleteBtn = e.target.closest(".delete-single-btn");
       if (deleteBtn) {
         const id = deleteBtn.getAttribute("data-id");
-        if (confirm("Are you sure you want to delete this message? This action cannot be undone.")) {
-          await executeDelete(`/api/contacts/${id}`, "DELETE");
-          fetchInbox(email);
-        }
+        showConfirmModal({
+          title: "Delete Message",
+          message: "Are you sure you want to delete this message? This action cannot be undone.",
+          confirmText: "Delete",
+          cancelText: "Cancel",
+          onConfirm: async () => {
+            await executeDelete(`/api/contacts/${id}`, "DELETE");
+            fetchInbox(email);
+          }
+        });
         return;
       }
 
@@ -3348,22 +3534,34 @@ function formatNotificationTime(iso) {
         const state = window.inboxState;
         if (state.selectedIds.size === 0) return;
 
-        if (confirm(`Are you sure you want to delete the ${state.selectedIds.size} selected message(s)? This action cannot be undone.`)) {
-          const idsArray = Array.from(state.selectedIds);
-          const idsParam = idsArray.join(",");
-          await executeDelete(`/api/contacts/my?ids=${idsParam}`, "DELETE");
-          fetchInbox(email);
-        }
+        showConfirmModal({
+          title: "Delete Selected Messages",
+          message: `Are you sure you want to delete the ${state.selectedIds.size} selected message(s)? This action cannot be undone.`,
+          confirmText: "Delete Selected",
+          cancelText: "Cancel",
+          onConfirm: async () => {
+            const idsArray = Array.from(state.selectedIds);
+            const idsParam = idsArray.join(",");
+            await executeDelete(`/api/contacts/my?ids=${idsParam}`, "DELETE");
+            fetchInbox(email);
+          }
+        });
       });
     }
 
     // Handle delete all button
     if (deleteAll) {
       deleteAll.addEventListener("click", async () => {
-        if (confirm("Are you sure you want to delete ALL messages in your inbox? This action cannot be undone.")) {
-          await executeDelete("/api/contacts/my", "DELETE");
-          fetchInbox(email);
-        }
+        showConfirmModal({
+          title: "Delete All Messages",
+          message: "Are you sure you want to delete ALL messages in your inbox? This action cannot be undone.",
+          confirmText: "Delete All",
+          cancelText: "Cancel",
+          onConfirm: async () => {
+            await executeDelete("/api/contacts/my", "DELETE");
+            fetchInbox(email);
+          }
+        });
       });
     }
   }
@@ -3379,13 +3577,13 @@ function formatNotificationTime(iso) {
       });
       const result = await response.json();
       if (response.ok && result.success !== false) {
-        alert(result.message || "Deletion successful!");
+        showToast(result.message || "Deletion successful!", "success");
       } else {
-        alert(result.message || "Failed to delete message(s).");
+        showToast(result.message || "Failed to delete message(s).", "error");
       }
     } catch (error) {
       console.error("Delete operation failed:", error);
-      alert("An error occurred during deletion. Please try again.");
+      showToast("An error occurred during deletion. Please try again.", "error");
     }
   }
 
@@ -4493,29 +4691,36 @@ function formatNotificationTime(iso) {
 
   async function deleteAdminMilestone(milestoneId, milestoneName) {
     if (!currentAdminProjectId) return;
-    if (!confirm(`Are you sure you want to delete milestone '${milestoneName}'?`)) return;
+    showConfirmModal({
+      title: "Delete Milestone",
+      message: `Are you sure you want to delete milestone '${milestoneName}'?`,
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      onConfirm: async () => {
+        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+        try {
+          const response = await fetch(`/api/projects/${currentAdminProjectId}/milestones/${milestoneId}`, {
+            method: "DELETE",
+            headers: {
+              "Authorization": `Bearer ${token}`
+            }
+          });
 
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-    try {
-      const response = await fetch(`/api/projects/${currentAdminProjectId}/milestones/${milestoneId}`, {
-        method: "DELETE",
-        headers: {
-          "Authorization": `Bearer ${token}`
+          if (!response.ok) {
+            const data = await response.json();
+            showToast(data.message || "Failed to delete milestone.", "error");
+            return;
+          }
+
+          showToast("Milestone deleted successfully!", "success");
+          fetchAndRenderAdminMilestones(currentAdminProjectId);
+          closeAuditTrail();
+        } catch (err) {
+          console.error("deleteAdminMilestone error:", err);
+          showToast("An error occurred while deleting milestone.", "error");
         }
-      });
-
-      if (!response.ok) {
-        const data = await response.json();
-        alert(data.message || "Failed to delete milestone.");
-        return;
       }
-
-      fetchAndRenderAdminMilestones(currentAdminProjectId);
-      closeAuditTrail();
-    } catch (err) {
-      console.error("deleteAdminMilestone error:", err);
-      alert("An error occurred while deleting milestone.");
-    }
+    });
   }
 
   async function openAuditTrail(milestoneId, milestoneName) {
@@ -4660,19 +4865,19 @@ function formatNotificationTime(iso) {
     const clientId = "675937212349-d7ihb1c7a0u53no9d71cdt0jcmjrbil9.apps.googleusercontent.com";
     const modalAlert = document.getElementById("modal-login-alert") || document.getElementById("alertMessage");
 
-    if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
-      if (modalAlert) {
-        modalAlert.textContent = "Google Sign-In SDK chưa được tải, vui lòng tải lại trang.";
-        modalAlert.classList.add("alert-error");
-        modalAlert.style.display = "block";
-      } else {
-        alert("Google Sign-In SDK chưa được tải.");
+      if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
+        if (modalAlert) {
+          modalAlert.textContent = "Google Sign-In SDK not loaded, please reload the page.";
+          modalAlert.classList.add("alert-error");
+          modalAlert.style.display = "block";
+        } else {
+          showToast("Google Sign-In SDK not loaded.", "error");
+        }
+        return;
       }
-      return;
-    }
 
     if (modalAlert) {
-      modalAlert.textContent = "Đang chờ bạn đăng nhập qua Google...";
+      modalAlert.textContent = "Waiting for Google login...";
       modalAlert.classList.remove("alert-error", "alert-success");
       modalAlert.style.display = "block";
     }
@@ -4686,7 +4891,7 @@ function formatNotificationTime(iso) {
             processGoogleToken(response.access_token, modalAlert);
           } else {
             if (modalAlert) {
-              modalAlert.textContent = "Đăng nhập Google bị hủy hoặc thất bại.";
+              modalAlert.textContent = "Google login cancelled or failed.";
               modalAlert.classList.add("alert-error");
             }
           }
@@ -4696,7 +4901,7 @@ function formatNotificationTime(iso) {
     } catch (error) {
       console.error("Google initTokenClient error:", error);
       if (modalAlert) {
-        modalAlert.textContent = "Không thể mở cửa sổ đăng nhập Google.";
+        modalAlert.textContent = "Could not open Google login window.";
         modalAlert.classList.add("alert-error");
       }
     }
@@ -4706,7 +4911,7 @@ function formatNotificationTime(iso) {
 
   async function processGoogleToken(accessToken, modalAlert) {
     try {
-      if (modalAlert) modalAlert.textContent = "Đang xác thực với server...";
+      if (modalAlert) modalAlert.textContent = "Authenticating with server...";
 
       const res = await fetch("/api/auth/google", {
         method: "POST",
@@ -4732,7 +4937,7 @@ function formatNotificationTime(iso) {
         }));
 
         if (modalAlert) {
-          modalAlert.textContent = "Đăng nhập thành công! Đang chuyển hướng...";
+          modalAlert.textContent = "Login successful! Redirecting...";
           modalAlert.classList.add("alert-success");
         }
 
@@ -4751,16 +4956,16 @@ function formatNotificationTime(iso) {
         }, 1000);
       } else {
         if (modalAlert) {
-          modalAlert.textContent = "Đăng nhập thất bại: " + (data.message || "");
+          modalAlert.textContent = "Login failed: " + (data.message || "");
           modalAlert.classList.add("alert-error");
         } else {
-          alert("Đăng nhập thất bại: " + (data.message || ""));
+          showToast("Login failed: " + (data.message || ""), "error");
         }
       }
     } catch (error) {
       console.error("Google login error:", error);
       if (modalAlert) {
-        modalAlert.textContent = "Không thể kết nối đến máy chủ.";
+        modalAlert.textContent = "Could not connect to server.";
         modalAlert.classList.add("alert-error");
       }
     }

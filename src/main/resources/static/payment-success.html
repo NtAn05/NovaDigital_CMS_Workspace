@@ -278,7 +278,7 @@
     </div>
     <div class="footer-bottom">
       <p>&copy; 2026 NovaDigital Creative Agency. All rights reserved.</p>
-      <p style="opacity: 0.5; font-size: 0.82rem;">Crafted with â™¥ in Vietnam</p>
+      <p style="opacity: 0.5; font-size: 0.82rem;">Crafted with ♥ in Vietnam</p>
     </div>
   </footer>
 
@@ -296,7 +296,7 @@
       if (!orderCode) {
         verifyingState.style.display = 'none';
         errorState.style.display = 'block';
-        errorDesc.textContent = 'MÃ£ giao dá»‹ch (orderCode) khÃ´ng tÃ¬m tháº¥y trong liÃªn káº¿t redirect.';
+        errorDesc.textContent = 'Transaction code (orderCode) was not found in the redirect link.';
         return;
       }
 
@@ -304,7 +304,7 @@
         // Query status endpoint (publicly available)
         const res = await fetch(`/api/payments/status/${orderCode}`);
         if (!res.ok) {
-          throw new Error('ÄÃ£ xáº£y ra lá»—i khi xÃ¡c minh giao dá»‹ch vá»›i server.');
+          throw new Error('An error occurred while verifying the transaction with the server.');
         }
 
         const data = await res.json();
@@ -322,13 +322,16 @@
           successState.style.display = 'block';
         } else {
           errorState.style.display = 'block';
-          errorDesc.textContent = `Giao dá»‹ch chÆ°a Ä‘Æ°á»£c hoÃ n thÃ nh. Tráº¡ng thÃ¡i hiá»‡n táº¡i: ${data.status}.`;
+          errorDesc.textContent = `Transaction has not been completed yet. Current status: ${data.status}.`;
         }
 
       } catch (err) {
         verifyingState.style.display = 'none';
         errorState.style.display = 'block';
-        errorDesc.textContent = err.message || 'Lá»—i máº¡ng, khÃ´ng thá»ƒ káº¿t ná»‘i tá»›i mÃ¡y chá»§.';
+        errorDesc.textContent = err.message || 'Network error, failed to connect to the server.';
+      }
+    });
+  </script>�ng, khÃ´ng thá»ƒ káº¿t ná»‘i tá»›i mÃ¡y chá»§.';
       }
     });
   </script>

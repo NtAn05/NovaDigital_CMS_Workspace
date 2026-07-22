@@ -62,12 +62,27 @@ public class DataSeeder implements CommandLineRunner {
             }
         }
 
-        if (userRepository.count() > 0) {
-            System.out.println(">>> [DataSeeder] Database already contains data. Skipping seed.");
-            return;
-        }
+        System.out.println(">>> [DataSeeder] Clearing old data & Seeding initial sample data in English for ALL system modules...");
 
-        System.out.println(">>> [DataSeeder] Seeding initial sample data for ALL system modules...");
+        // Wipe old sample data to ensure fresh 100% English sample dataset
+        notificationRepository.deleteAllInBatch();
+        feedbackRepository.deleteAllInBatch();
+        contactRepository.deleteAllInBatch();
+        candidateApplicationRepository.deleteAllInBatch();
+        jobVacancyRepository.deleteAllInBatch();
+        paymentTransactionRepository.deleteAllInBatch();
+        appointmentAddonRepository.deleteAllInBatch();
+        consultationAppointmentRepository.deleteAllInBatch();
+        resourceAllocationRepository.deleteAllInBatch();
+        projectMilestoneRepository.deleteAllInBatch();
+        projectClientRepository.deleteAllInBatch();
+        projectAssignmentRepository.deleteAllInBatch();
+        projectRepository.deleteAllInBatch();
+        serviceAddonRepository.deleteAllInBatch();
+        serviceRepository.deleteAllInBatch();
+        memberRepository.deleteAllInBatch();
+        userRepository.deleteAllInBatch();
+        userRepository.flush();
 
         // ── 1. Users ────────────────────────────────────────────────────────
         User admin = createUser("admin",    "admin123", "Administrator",  "admin@novadigital.com",     "0987654321", "ROLE_ADMIN");

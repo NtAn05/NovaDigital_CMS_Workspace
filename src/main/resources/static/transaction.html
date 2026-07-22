@@ -767,16 +767,16 @@
 
         const data = await res.json();
         if (!res.ok) {
-          throw new Error(data.message || 'Tháº¥t báº¡i khi táº¡o link thanh toÃ¡n.');
+          throw new Error(data.message || 'Failed to create payment link.');
         }
 
         if (data.checkoutUrl) {
           window.location.href = data.checkoutUrl;
         } else {
-          throw new Error('Link thanh toÃ¡n khÃ´ng tá»“n táº¡i.');
+          throw new Error('Payment link does not exist.');
         }
       } catch (err) {
-        alert(err.message || 'ÄÃ£ cÃ³ lá»—i xáº£y ra. Vui lÃ²ng thá»­ láº¡i.');
+        showToast(err.message || 'An error occurred. Please try again.', 'error');
         button.disabled = false;
         button.innerHTML = originalText;
       }

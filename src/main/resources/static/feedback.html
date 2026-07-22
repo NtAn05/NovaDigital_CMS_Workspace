@@ -392,10 +392,10 @@
             document.getElementById('feedbackSuccessWrap').style.display = 'block';
             loadFeedbacks(); // Refresh scrolling feed with new item
           } else {
-            alert(data.message || 'Submission failed.');
+            showToast(data.message || 'Submission failed.', 'error');
           }
         } catch (err) {
-          alert('Network error. Please try again.');
+          showToast('Network error. Please try again.', 'error');
         } finally {
           submitBtn.disabled = false;
           submitBtn.querySelector('span').textContent = 'Submit Feedback';

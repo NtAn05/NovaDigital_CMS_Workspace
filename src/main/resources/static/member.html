@@ -375,7 +375,7 @@
             const result = await response.json();
 
             if (response.ok && result.success) {
-              replyAlert.textContent = "âœ… " + (result.message || "Reply sent successfully!");
+              replyAlert.textContent = result.message || "Reply sent successfully!";
               replyAlert.className = "alert-message alert-success";
               replyAlert.style.cssText = "display:block;";
               

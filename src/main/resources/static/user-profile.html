@@ -831,7 +831,7 @@
     </div>
     <div class="footer-bottom">
       <p>&copy; 2026 NovaDigital Creative Agency. All rights reserved.</p>
-      <p style="opacity: 0.5; font-size: 0.82rem;">Crafted with â™¥ in Vietnam</p>
+      <p style="opacity: 0.5; font-size: 0.82rem;">Crafted with ♥ in Vietnam</p>
     </div>
   </footer>
 
@@ -856,14 +856,12 @@
 
       /* â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
       function showAlert(text, isSuccess) {
-        alertBox.textContent = text;
-        alertBox.className = "profile-alert " + (isSuccess ? "success" : "error");
-        alertBox.style.display = "flex";
+        window.showFormAlert(alertBox, text, isSuccess);
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
 
       function hideAlert() {
-        alertBox.style.display = "none";
+        window.clearFormAlert(alertBox);
       }
 
       function getInitials(name) {

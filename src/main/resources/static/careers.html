@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 
 <head>
   <meta charset="UTF-8">
@@ -1819,7 +1819,7 @@
       if (!vac) { showErr('err-vacancy'); ok = false; }
       if (!name) { showErr('err-name'); ok = false; }
       if (!phone) { showErr('err-phone'); ok = false; }
-      else if (!phoneRegex.test(phone)) { showErr('err-phone', 'Số điện thoại không hợp lệ'); ok = false; }
+      else if (!phoneRegex.test(phone)) { showErr('err-phone', 'Invalid phone number'); ok = false; }
       if (!file) { showErr('err-cv'); ok = false; }
       else if (file.type !== 'application/pdf') { showErr('err-cv', 'Only PDF files accepted'); ok = false; }
       else if (file.size > 10 * 1024 * 1024) { showErr('err-cv', 'File exceeds 10MB limit'); ok = false; }
@@ -1850,46 +1850,13 @@
         var aj = await ar.json();
         if (!aj.success) throw new Error(aj.message);
         closeApplyModal();
-        showSuccessToast('✅ Nộp đơn ứng tuyển thành công! Chúng tôi sẽ liên hệ bạn sớm.');
+      showToast('Application submitted successfully! We will contact you soon.', 'success');
       } catch (e) {
         var m = document.getElementById('cr-form-message');
         m.textContent = '❌ ' + e.message; m.className = 'error'; m.style.display = 'block';
         btn.disabled = false; btn.textContent = 'Submit Application →';
         document.getElementById('cr-upload-progress').style.display = 'none';
       }
-    }
-
-    /* --- CUSTOM TOAST ĐẢM BẢO KHÔNG BỊ LỖI CSS TỪ MAIN.JS --- */
-    function showSuccessToast(message) {
-      var t = document.createElement('div');
-      t.innerHTML = message;
-      t.style.position = 'fixed';
-      t.style.bottom = '30px';
-      t.style.right = '30px';
-      t.style.background = '#fff';
-      t.style.color = '#059669';
-      t.style.padding = '16px 24px';
-      t.style.borderRadius = '12px';
-      t.style.boxShadow = '0 10px 40px rgba(0,0,0,0.15)';
-      t.style.borderLeft = '6px solid #10b981';
-      t.style.fontWeight = 'bold';
-      t.style.zIndex = '999999';
-      t.style.transform = 'translateY(20px)';
-      t.style.opacity = '0';
-      t.style.transition = 'all 0.4s ease';
-      document.body.appendChild(t);
-
-      // trigger animation
-      setTimeout(function () {
-        t.style.transform = 'translateY(0)';
-        t.style.opacity = '1';
-      }, 50);
-
-      setTimeout(function () {
-        t.style.opacity = '0';
-        t.style.transform = 'translateY(20px)';
-        setTimeout(function () { t.remove(); }, 400);
-      }, 4000);
     }
 
     function showErr(id, msg) { var el = document.getElementById(id); if (msg) el.textContent = msg; el.style.display = 'block'; }
@@ -1906,7 +1873,7 @@
     }
 
     if (new URLSearchParams(window.location.search).get('applied') === '1') {
-      showSuccessToast('✅ Nộp đơn ứng tuyển thành công! Chúng tôi sẽ liên hệ bạn sớm.');
+      showSuccessToast('✅ Application submitted successfully! We will contact you soon.');
       window.history.replaceState({}, '', 'careers.html');
     }
     renderBoard();

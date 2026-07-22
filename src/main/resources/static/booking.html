@@ -394,7 +394,7 @@
               </div>
             </div>
 
-            <!-- CAPTCHA anti-spam - chuá»—i kÃ½ tá»± tá»± sinh, khÃ´ng cáº§n dá»‹ch vá»¥ ngoÃ i -->
+            <!-- CAPTCHA anti-spam - self-generated character string, no external service required -->
             <div class="field">
               <label>Security Check *</label>
               <div class="captcha-box">
@@ -625,7 +625,7 @@
     let attachedFile = null;
     let defaultExpertId = null; // Loaded dynamically to satisfy the backend API requirements
 
-    // â”€â”€ CAPTCHA: sinh chuá»—i kÃ½ tá»± ngáº«u nhiÃªn, tá»± xÃ¡c thá»±c á»Ÿ server â”€â”€â”€â”€
+    // ── CAPTCHA: generate random character string, self-verify on server ────
     async function loadCaptcha() {
       const displayEl = document.getElementById('captchaCodeDisplay');
       displayEl.textContent = 'Loading...';
@@ -634,7 +634,7 @@
         const res = await fetch(`${API}/api/bookings/captcha`);
         const data = await res.json();
         captchaToken = data.token;
-        // TÃ¡ch tá»«ng kÃ½ tá»± ra <span> riÃªng Ä‘á»ƒ CSS xoay lá»‡ch, khÃ³ bot OCR Ä‘Æ¡n giáº£n Ä‘á»c theo hÃ ng tháº³ng
+        // Split each character into a separate <span> for rotated CSS display, making simple OCR bots hard to read straight
         displayEl.innerHTML = data.code.split('').map(ch => `<span>${ch}</span>`).join('');
       } catch (e) {
         displayEl.textContent = 'Failed to load';
@@ -644,7 +644,7 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      // YÃªu cáº§u Ä‘Äƒng nháº­p má»›i Ä‘Æ°á»£c Ä‘áº·t lá»‹ch
+      // Login required to book appointment
       const token = localStorage.getItem('token') || sessionStorage.getItem('token');
       if (!token) {
         sessionStorage.setItem('redirectAttempt', 'booking.html');
@@ -985,7 +985,7 @@
           if (res.status === 409) { confirmedStart = null; loadSlots(); }
           submitBtn.disabled = false;
           submitBtn.textContent = 'Confirm Booking';
-          loadCaptcha(); // token cÅ© Ä‘Ã£ bá»‹ server xoÃ¡ sau khi verify -> luÃ´n cáº§n mÃ£ má»›i Ä‘á»ƒ thá»­ láº¡i
+          loadCaptcha(); // old token was deleted by server after verification -> always need a new code to retry
           return;
         }
 
@@ -1006,7 +1006,7 @@
       return div.innerHTML;
     }
 
-    // Overlay thông báo cần đăng nhập phủ lên toàn trang booking
+    // Overlay requiring login covering the entire booking page
     function showBookingAuthBanner() {
       const banner = document.createElement('div');
       banner.id = 'booking-auth-banner';

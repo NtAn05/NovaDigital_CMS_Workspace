@@ -178,7 +178,7 @@
     </div>
     <div class="footer-bottom">
       <p>&copy; 2026 NovaDigital Creative Agency. All rights reserved.</p>
-      <p style="opacity: 0.5; font-size: 0.82rem;">Crafted with â™¥ in Vietnam</p>
+      <p style="opacity: 0.5; font-size: 0.82rem;">Crafted with ♥ in Vietnam</p>
     </div>
   </footer>
 
@@ -197,7 +197,7 @@
   <script src="/js/main.js?v=resource-integrated-v9"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      // YÃªu cáº§u Ä‘Äƒng nháº­p má»›i Ä‘Æ°á»£c xem trang liÃªn há»‡
+      // Login required to view contact page
       const token = localStorage.getItem('token') || sessionStorage.getItem('token');
       if (!token) {
         sessionStorage.setItem('redirectAttempt', 'contact.html');
@@ -228,7 +228,7 @@
       });
     });
 
-    // Overlay thông báo cần đăng nhập phủ lên toàn trang contact
+    // Login requirement banner overlay covering contact page
     function showContactAuthBanner() {
       const banner = document.createElement('div');
       banner.id = 'contact-auth-banner';
