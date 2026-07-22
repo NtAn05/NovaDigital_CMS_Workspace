@@ -7,6 +7,7 @@ import com.example.demo.service.ContactService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -15,6 +16,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @SpringBootTest
+@Transactional
+
 public class AuditTrailIntegrationTest {
 
     @Autowired
@@ -35,11 +38,13 @@ public class AuditTrailIntegrationTest {
         contact.setTitle("Inquiry about Audit Flow");
         contact.setContent("Testing audit aspect functionality.");
 
-        // 2. Perform action annotated with @Auditable(action = "CREATE", table = "contacts")
+        // 2. Perform action annotated with @Auditable(action = "CREATE", table =
+        // "contacts")
         Contact saved = contactService.createContact(contact);
         assertNotNull(saved.getId());
 
-        // 3. Wait a brief moment for the asynchronous @Async listener to persist the log
+        // 3. Wait a brief moment for the asynchronous @Async listener to persist the
+        // log
         Thread.sleep(500);
 
         // 4. Verify that a DataAuditLog was successfully created

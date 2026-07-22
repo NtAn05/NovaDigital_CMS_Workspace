@@ -1,0 +1,1926 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="NovaDigital Careers - Join a leading innovative technology team. Apply now.">
+  <title>Careers | NovaDigital</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    body.careers-page {
+      background: #f8fafc;
+      color: #1e293b;
+    }
+
+    /* ── HERO SLIDESHOW ──────────────────────────────────────── */
+    .cr-hero {
+      position: relative;
+      width: 100%;
+      height: 520px;
+      overflow: hidden;
+    }
+
+    .cr-hero-slide {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity 0.9s cubic-bezier(0.45, 0, 0.55, 1), transform 5s ease-out;
+      transform: scale(1.06);
+      z-index: 1;
+      will-change: opacity, transform;
+    }
+
+    .cr-hero-slide.active {
+      opacity: 1;
+      transform: scale(1);
+      z-index: 2;
+    }
+
+    .cr-hero-slide.leaving {
+      opacity: 0;
+      z-index: 3;
+      transform: scale(1.0);
+      transition: opacity 0.9s cubic-bezier(0.45, 0, 0.55, 1);
+    }
+
+    /* Dark gradient overlay */
+    .cr-hero-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      background: linear-gradient(to bottom,
+          rgba(10, 15, 30, 0.55) 0%,
+          rgba(10, 15, 30, 0.45) 40%,
+          rgba(10, 15, 30, 0.72) 100%);
+    }
+
+    /* Top accent line */
+    .cr-hero-overlay::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #2563eb, #7c3aed, #06b6d4);
+      z-index: 5;
+    }
+
+    /* Progress bar */
+    .cr-hero-progress {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 3px;
+      width: 0%;
+      background: linear-gradient(90deg, #2563eb 0%, #7c3aed 60%, #06b6d4 100%);
+      z-index: 10;
+      border-radius: 0 2px 2px 0;
+    }
+
+    /* Dot indicators */
+    .cr-hero-dots {
+      position: absolute;
+      bottom: 1.25rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 0.45rem;
+      z-index: 10;
+      background: rgba(9, 17, 35, 0.5);
+      padding: 0.3rem 0.7rem;
+      border-radius: 99px;
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .cr-hero-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.35);
+      cursor: pointer;
+      transition: background 0.3s, transform 0.3s, width 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    .cr-hero-dot.active {
+      background: #2563eb;
+      width: 20px;
+      border-radius: 99px;
+      box-shadow: 0 0 8px rgba(37, 99, 235, 0.7);
+    }
+
+    /* Arrow navigation */
+    .cr-hero-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 10;
+      background: rgba(15, 23, 42, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(6px);
+      color: #fff;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.25s, background 0.2s;
+    }
+
+    .cr-hero-arrow:hover {
+      background: rgba(37, 99, 235, 0.7);
+    }
+
+    .cr-hero-arrow.prev {
+      left: 1rem;
+    }
+
+    .cr-hero-arrow.next {
+      right: 1rem;
+    }
+
+    .cr-hero:hover .cr-hero-arrow {
+      opacity: 1;
+    }
+
+    /* Hero text content */
+    .cr-hero-content {
+      position: absolute;
+      inset: 0;
+      z-index: 5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 5rem 2rem 3rem;
+    }
+
+    .cr-hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.35rem 1rem;
+      border-radius: 99px;
+      background: rgba(124, 58, 237, 0.25);
+      border: 1px solid rgba(124, 58, 237, 0.5);
+      color: #c4b5fd;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+
+    .cr-hero-badge::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #a78bfa;
+      animation: pulse-dot 1.6s ease-in-out infinite;
+    }
+
+    @keyframes pulse-dot {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1)
+      }
+
+      50% {
+        opacity: .5;
+        transform: scale(.75)
+      }
+    }
+
+    .cr-hero-content h1 {
+      font-family: var(--font-heading);
+      font-size: clamp(2.2rem, 5vw, 3.6rem);
+      font-weight: 900;
+      color: #fff;
+      line-height: 1.1;
+      margin-bottom: 1rem;
+    }
+
+    .cr-hero-content h1 em {
+      font-style: normal;
+      background: linear-gradient(90deg, #a78bfa, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .cr-hero-content p {
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 1.05rem;
+      line-height: 1.7;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    /* Stats bar at bottom of hero */
+    .cr-hero-stats {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 6;
+      display: flex;
+      justify-content: center;
+      gap: 0;
+      flex-wrap: wrap;
+      background: rgba(10, 15, 30, 0.75);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 1rem 2rem;
+    }
+
+    .cr-stat {
+      text-align: center;
+      padding: 0.5rem 2.5rem;
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .cr-stat:last-child {
+      border-right: none;
+    }
+
+    .cr-stat strong {
+      display: block;
+      font-size: 1.5rem;
+      font-weight: 900;
+      background: linear-gradient(90deg, #a78bfa, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .cr-stat span {
+      font-size: .78rem;
+      color: rgba(255, 255, 255, .55);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    /* ── APPLY BUTTON (shared, used in CTA) ─────────────────── */
+    .cr-btn-apply-main {
+      display: inline-flex;
+      align-items: center;
+      gap: .6rem;
+      padding: .9rem 2.25rem;
+      border-radius: 10px;
+      background: #fff;
+      color: #7c3aed;
+      font-size: 1rem;
+      font-weight: 800;
+      border: none;
+      cursor: pointer;
+      transition: all .25s ease;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, .2);
+      font-family: var(--font-body);
+      white-space: nowrap;
+    }
+
+    .cr-btn-apply-main:hover {
+      background: #f3f0ff;
+      color: #6d28d9;
+      transform: translateY(-3px);
+      box-shadow: 0 14px 40px rgba(0, 0, 0, .28);
+    }
+
+    .cr-btn-apply-main svg {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+    }
+
+    /* ── HERO APPLY BUTTON ─────────────────────────────────── */
+    .cr-btn-apply-hero {
+      display: inline-flex;
+      align-items: center;
+      gap: .65rem;
+      padding: .9rem 2.2rem;
+      border-radius: 50px;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1.5px solid rgba(255, 255, 255, 0.35);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: var(--font-body);
+      transition: all .28s ease;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, .25), inset 0 1px 0 rgba(255, 255, 255, .2);
+      white-space: nowrap;
+      letter-spacing: .01em;
+    }
+
+    .cr-btn-apply-hero:hover {
+      background: rgba(124, 58, 237, 0.85);
+      border-color: rgba(124, 58, 237, 0.9);
+      transform: translateY(-3px);
+      box-shadow: 0 10px 36px rgba(124, 58, 237, .55), inset 0 1px 0 rgba(255, 255, 255, .15);
+    }
+
+    .cr-btn-apply-hero svg {
+      width: 16px;
+      height: 16px;
+      flex-shrink: 0;
+    }
+
+    /* ── JOB BOARD ───────────────────────────────────────── */
+    .cr-board {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 3rem 2rem 5rem;
+    }
+
+    .cr-ws-group {
+      margin-bottom: 3rem;
+    }
+
+    .cr-ws-heading {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+      padding: 1rem 1.5rem;
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+      border-radius: 14px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cr-ws-heading::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: linear-gradient(180deg, #7c3aed, #2563eb, #06b6d4);
+    }
+
+    .cr-ws-heading::after {
+      content: '';
+      position: absolute;
+      right: -30px;
+      top: -30px;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: rgba(124, 58, 237, 0.08);
+      pointer-events: none;
+    }
+
+      .cr-ws-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+        background: rgba(255, 255, 255, 0.08);
+        color: #a78bfa;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(4px);
+      }
+      .cr-ws-icon svg {
+        width: 22px;
+        height: 22px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 2.2;
+      }
+
+    .cr-ws-title {
+      font-family: var(--font-heading);
+      font-size: 1.2rem;
+      font-weight: 900;
+      color: #fff;
+      margin: 0;
+      letter-spacing: -0.01em;
+    }
+
+    .cr-ws-desc {
+      font-size: 0.78rem;
+      color: rgba(255, 255, 255, 0.5);
+      margin: 0.15rem 0 0;
+    }
+
+    .cr-ws-badge {
+      margin-left: auto;
+      padding: .25rem .85rem;
+      border-radius: 99px;
+      font-size: .72rem;
+      font-weight: 700;
+      background: rgba(124, 58, 237, 0.4);
+      color: #e9d5ff;
+      border: 1px solid rgba(124, 58, 237, 0.5);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .cr-job-list {
+      display: flex;
+      flex-direction: column;
+      gap: .6rem;
+    }
+
+    .cr-job-row {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 1.1rem 1.5rem;
+      display: grid;
+      grid-template-columns: 200px 1fr auto auto;
+      gap: 1.25rem;
+      align-items: center;
+      transition: all .22s ease;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .cr-job-row::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: linear-gradient(180deg, #7c3aed, #2563eb);
+      opacity: 0;
+      transition: opacity .22s;
+    }
+
+    .cr-job-row:hover {
+      border-color: rgba(124, 58, 237, .35);
+      box-shadow: 0 6px 28px rgba(124, 58, 237, .1);
+      transform: translateX(4px);
+    }
+
+    .cr-job-row:hover::before {
+      opacity: 1;
+    }
+
+    .cr-row-main {
+      display: flex;
+      flex-direction: column;
+      gap: .35rem;
+      min-width: 0;
+    }
+
+    .cr-job-type {
+      display: inline-flex;
+      padding: .18rem .6rem;
+      border-radius: 99px;
+      font-size: .62rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      width: fit-content;
+    }
+
+    .jt-full {
+      background: rgba(16, 185, 129, .08);
+      color: #059669;
+      border: 1px solid rgba(16, 185, 129, .2);
+    }
+
+    .jt-part {
+      background: rgba(245, 158, 11, .08);
+      color: #d97706;
+      border: 1px solid rgba(245, 158, 11, .2);
+    }
+
+    .jt-remote {
+      background: rgba(37, 99, 235, .08);
+      color: #2563eb;
+      border: 1px solid rgba(37, 99, 235, .2);
+    }
+
+    .jt-contract {
+      background: rgba(124, 58, 237, .08);
+      color: #7c3aed;
+      border: 1px solid rgba(124, 58, 237, .2);
+    }
+
+    .cr-job-title {
+      font-family: var(--font-heading);
+      font-size: .95rem;
+      font-weight: 800;
+      color: #0f172a;
+      margin: 0;
+      line-height: 1.25;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .cr-job-salary {
+      font-size: .88rem;
+      font-weight: 800;
+      color: #059669;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: .3rem;
+    }
+
+    .cr-job-location {
+      display: flex;
+      align-items: center;
+      gap: .3rem;
+      font-size: .78rem;
+      color: #64748b;
+      white-space: nowrap;
+    }
+
+    .cr-job-location svg {
+      width: 13px;
+      height: 13px;
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 900px) {
+      .cr-job-row {
+        grid-template-columns: 170px 1fr auto;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .cr-hero {
+        height: 420px;
+      }
+
+      .cr-hero-stats {
+        display: none;
+      }
+
+      .cr-hero-content {
+        padding-bottom: 1rem;
+      }
+
+      .cr-job-row {
+        grid-template-columns: 1fr;
+        gap: .5rem;
+      }
+
+      .cr-job-salary {
+        display: none;
+      }
+
+      .cr-job-location {
+        display: none;
+      }
+
+      .cr-form-row {
+        grid-template-columns: 1fr;
+      }
+
+      .cr-modal-footer {
+        flex-direction: column;
+      }
+    }
+
+    /* ── MODAL ───────────────────────────────────────────── */
+    .cr-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 15, 30, .72);
+      backdrop-filter: blur(6px);
+      z-index: 9000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity .3s ease, visibility .3s ease;
+    }
+
+    .cr-modal-backdrop.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .cr-modal {
+      background: #fff;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 560px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 40px 100px rgba(0, 0, 0, .35);
+      transform: translateY(24px) scale(.97);
+      transition: transform .3s cubic-bezier(.34, 1.56, .64, 1);
+    }
+
+    .cr-modal-backdrop.open .cr-modal {
+      transform: translateY(0) scale(1);
+    }
+
+    .cr-modal-header {
+      padding: 1.75rem 2rem 1.25rem;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      position: sticky;
+      top: 0;
+      background: #fff;
+      border-radius: 20px 20px 0 0;
+      z-index: 1;
+    }
+
+    .cr-modal-title {
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #0f172a;
+      margin: 0 0 .3rem;
+    }
+
+    .cr-modal-sub {
+      font-size: .82rem;
+      color: #64748b;
+      margin: 0;
+    }
+
+    .cr-modal-close {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      background: transparent;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: all .2s;
+      flex-shrink: 0;
+      color: #64748b;
+    }
+
+    .cr-modal-close:hover {
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+
+    .cr-modal-close svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .cr-modal-body {
+      padding: 1.75rem 2rem;
+    }
+
+    .cr-form-section {
+      font-size: .72rem;
+      font-weight: 800;
+      color: #7c3aed;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+      margin-top: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+
+    .cr-form-section:first-child {
+      margin-top: 0;
+    }
+
+    .cr-form-section::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #f1f5f9;
+    }
+
+    .cr-form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .cr-form-group {
+      display: flex;
+      flex-direction: column;
+      gap: .4rem;
+      margin-bottom: 1rem;
+    }
+
+    .cr-form-group label {
+      font-size: .82rem;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .cr-form-group label .req {
+      color: #ef4444;
+    }
+
+    .cr-form-group input,
+    .cr-form-group select,
+    .cr-form-group textarea {
+      width: 100%;
+      padding: .65rem .9rem;
+      border-radius: 8px;
+      border: 1.5px solid #e2e8f0;
+      background: #f8fafc;
+      color: #0f172a;
+      font-size: .88rem;
+      font-family: var(--font-body);
+      transition: border-color .2s, box-shadow .2s;
+      box-sizing: border-box;
+    }
+
+    .cr-form-group input:focus,
+    .cr-form-group select:focus,
+    .cr-form-group textarea:focus {
+      outline: none;
+      border-color: #7c3aed;
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, .12);
+      background: #fff;
+    }
+
+    .cr-form-group textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .cr-form-group input[readonly] {
+      opacity: .6;
+      cursor: not-allowed;
+    }
+
+    .cr-upload-zone {
+      border: 2px dashed #cbd5e1;
+      border-radius: 12px;
+      padding: 2rem 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all .25s ease;
+      position: relative;
+      background: #f8fafc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cr-upload-zone:hover,
+    .cr-upload-zone.drag-over {
+      border-color: #7c3aed;
+      background: #f3f0ff;
+    }
+
+    .cr-upload-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .cr-upload-icon-wrapper {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+      color: #64748b;
+      transition: all .25s ease;
+    }
+
+    .cr-upload-zone:hover .cr-upload-icon-wrapper {
+      background: #ede9fe;
+      color: #7c3aed;
+    }
+
+    .cr-upload-icon-wrapper svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    .cr-upload-main-text {
+      color: #334155;
+      font-size: .95rem;
+      margin: 0 0 .25rem 0;
+    }
+
+    .cr-upload-main-text strong {
+      color: #7c3aed;
+    }
+
+    .cr-upload-sub-text {
+      color: #94a3b8;
+      font-size: .8rem;
+      margin: 0;
+    }
+
+    .cr-file-preview {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      padding: .85rem 1rem;
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+      border-radius: 8px;
+      margin-top: .75rem;
+    }
+
+    .cr-file-preview svg {
+      width: 20px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    #cr-file-name {
+      color: #065f46;
+      font-size: .85rem;
+      font-weight: 600;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .cr-btn-remove-file {
+      background: none;
+      border: none;
+      color: #059669;
+      cursor: pointer;
+      font-size: 1.1rem;
+      padding: 0 .25rem;
+      opacity: .6;
+      transition: opacity .2s;
+    }
+
+    .cr-btn-remove-file:hover {
+      opacity: 1;
+    }
+
+    #cr-upload-progress {
+      display: none;
+      color: #2563eb;
+      font-size: .82rem;
+      margin-top: .5rem;
+    }
+
+    .cr-form-error {
+      color: #ef4444;
+      font-size: .78rem;
+      margin-top: .2rem;
+      display: none;
+    }
+
+    .cr-modal-footer {
+      padding: 1.25rem 2rem 1.75rem;
+      display: flex;
+      gap: .75rem;
+    }
+
+    .cr-btn-cancel {
+      flex: 1;
+      padding: .75rem;
+      border-radius: 8px;
+      border: 1.5px solid #e2e8f0;
+      background: transparent;
+      color: #64748b;
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+      font-family: var(--font-body);
+    }
+
+    .cr-btn-cancel:hover {
+      border-color: #94a3b8;
+      color: #0f172a;
+    }
+
+    .cr-btn-submit {
+      flex: 2;
+      padding: .75rem;
+      border-radius: 8px;
+      border: none;
+      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      color: #fff;
+      font-size: .9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all .2s;
+      font-family: var(--font-body);
+      box-shadow: 0 4px 14px rgba(124, 58, 237, .35);
+    }
+
+    .cr-btn-submit:hover:not(:disabled) {
+      opacity: .9;
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(124, 58, 237, .45);
+    }
+
+    .cr-btn-submit:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    #cr-form-message {
+      padding: .85rem 1rem;
+      border-radius: 8px;
+      font-size: .85rem;
+      font-weight: 600;
+      margin: .75rem 2rem 0;
+      display: none;
+      text-align: center;
+    }
+
+    #cr-form-message.error {
+      background: rgba(239, 68, 68, .08);
+      border: 1px solid rgba(239, 68, 68, .25);
+      color: #dc2626;
+    }
+
+    /* ── LOGIN ALERT MODAL ───────────────────────────────── */
+    .cr-login-alert {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 15, 30, .72);
+      backdrop-filter: blur(6px);
+      z-index: 9100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity .3s, visibility .3s;
+    }
+
+    .cr-login-alert.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .cr-login-alert-box {
+      background: #fff;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 420px;
+      padding: 2.5rem 2rem;
+      text-align: center;
+      box-shadow: 0 40px 100px rgba(0, 0, 0, .3);
+      transform: translateY(20px) scale(.97);
+      transition: transform .3s cubic-bezier(.34, 1.56, .64, 1);
+    }
+
+    .cr-login-alert.open .cr-login-alert-box {
+      transform: translateY(0) scale(1);
+    }
+
+    .cr-login-alert-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    .cr-login-alert h3 {
+      font-family: var(--font-heading);
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: #0f172a;
+      margin: 0 0 .5rem;
+    }
+
+    .cr-login-alert p {
+      color: #64748b;
+      font-size: .9rem;
+      line-height: 1.6;
+      margin: 0 0 1.75rem;
+    }
+
+    .cr-login-alert-btns {
+      display: flex;
+      gap: .75rem;
+    }
+
+    .cr-login-alert-btn-cancel {
+      flex: 1;
+      padding: .7rem;
+      border-radius: 8px;
+      border: 1.5px solid #e2e8f0;
+      background: transparent;
+      color: #64748b;
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: var(--font-body);
+    }
+
+    .cr-login-alert-btn-login {
+      flex: 2;
+      padding: .7rem;
+      border-radius: 8px;
+      border: none;
+      background: linear-gradient(135deg, #7c3aed, #2563eb);
+      color: #fff;
+      font-size: .9rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: var(--font-body);
+      box-shadow: 0 4px 14px rgba(124, 58, 237, .35);
+    }
+
+    /* ── TOAST REMOVED (using global toast from main.js) ── */
+
+    /* ── CTA ─────────────────────────────────────────────── */
+    .cr-cta {
+      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+      padding: 6rem 2rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cr-cta::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #7c3aed, #2563eb, #06b6d4);
+    }
+
+    /* Glowing blobs */
+    .cr-cta-blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(90px);
+      opacity: 0.18;
+      pointer-events: none;
+    }
+
+    .cr-cta-blob.b1 {
+      width: 400px;
+      height: 400px;
+      background: #7c3aed;
+      top: -80px;
+      left: -80px;
+    }
+
+    .cr-cta-blob.b2 {
+      width: 350px;
+      height: 350px;
+      background: #2563eb;
+      bottom: -60px;
+      right: -60px;
+    }
+
+    .cr-cta-blob.b3 {
+      width: 250px;
+      height: 250px;
+      background: #06b6d4;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0.12;
+    }
+
+    .cr-cta-inner {
+      position: relative;
+      max-width: 680px;
+      margin: 0 auto;
+      z-index: 1;
+    }
+
+    /* Badge */
+    .cr-cta-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      padding: .35rem 1.1rem;
+      border-radius: 99px;
+      background: rgba(124, 58, 237, 0.25);
+      border: 1px solid rgba(124, 58, 237, 0.45);
+      color: #c4b5fd;
+      font-size: .75rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+
+    .cr-cta-badge::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #a78bfa;
+      animation: pulse-dot 1.6s ease-in-out infinite;
+    }
+
+    .cr-cta h2 {
+      font-family: var(--font-heading);
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 900;
+      color: #fff;
+      margin-bottom: .85rem;
+      line-height: 1.15;
+    }
+
+    .cr-cta h2 em {
+      font-style: normal;
+      background: linear-gradient(90deg, #a78bfa, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .cr-cta p {
+      color: rgba(255, 255, 255, .68);
+      font-size: 1.05rem;
+      line-height: 1.75;
+      margin-bottom: 2.5rem;
+      max-width: 520px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* Features row */
+    .cr-cta-features {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 2.75rem;
+    }
+
+    .cr-cta-feature {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      color: rgba(255, 255, 255, .75);
+      font-size: .88rem;
+      font-weight: 500;
+    }
+
+    .cr-cta-feature svg {
+      width: 16px;
+      height: 16px;
+      color: #10b981;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+
+<body class="careers-page">
+
+  <!-- NAVBAR -->
+  <header>
+    <nav class="navbar">
+      <a href="index.html" class="logo" id="header-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+        </svg>
+        <span>NovaDigital</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">Introduce</a></li>
+        <li><a href="services.html">Services</a></li>
+        <li><a href="portfolio.html">Project</a></li>
+        <li><a href="careers.html" class="active">Careers</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        <li><a href="booking.html" class="nav-btn-booking">Book a Consultation</a></li>
+        <li><a href="#" class="nav-btn" id="default-get-started">Get Started Now</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+
+    <!-- HERO SLIDESHOW -->
+    <section class="cr-hero" id="cr-hero-section">
+      <!-- Slides: recruitment/HR themed images -->
+      <img class="cr-hero-slide active"
+        src="https://images.unsplash.com/photo-1521737852567-6949f3f9f2b5?auto=format&fit=crop&w=1600&q=80"
+        alt="Team collaboration">
+      <img class="cr-hero-slide"
+        src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=1600&q=80"
+        alt="Modern office workspace">
+      <img class="cr-hero-slide"
+        src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=1600&q=80"
+        alt="Team synergy">
+      <img class="cr-hero-slide"
+        src="https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=1600&q=80"
+        alt="HR interview">
+      <img class="cr-hero-slide"
+        src="https://images.unsplash.com/photo-1553877522-43269d4ea984?auto=format&fit=crop&w=1600&q=80"
+        alt="Tech team working">
+
+      <!-- Overlay -->
+      <div class="cr-hero-overlay"></div>
+
+      <!-- Text content -->
+      <div class="cr-hero-content">
+        <div class="cr-hero-badge">We Are Hiring</div>
+        <h1>Build the future<br>with <em>NovaDigital</em></h1>
+        <p>We are looking for talented, passionate individuals who are not afraid of change. Join us in creating digital
+          products that transform how businesses operate.</p>
+        <!-- Apply button directly in hero for maximum visibility -->
+        <div style="margin-top:2rem;">
+          <button class="cr-btn-apply-hero" onclick="openApplyModal()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            Apply Now
+          </button>
+          <p style="color:rgba(255,255,255,0.5);font-size:.78rem;margin-top:.75rem;">Click a job below to apply for a
+            specific position</p>
+        </div>
+      </div>
+
+      <!-- Stats bar -->
+      <div class="cr-hero-stats">
+        <div class="cr-stat"><strong>14+</strong><span>Open Positions</span></div>
+        <div class="cr-stat"><strong>100%</strong><span>Remote-friendly</span></div>
+        <div class="cr-stat"><strong>5★</strong><span>Work Environment</span></div>
+        <div class="cr-stat"><strong>3–5 days</strong><span>Application Feedback</span></div>
+      </div>
+
+      <!-- Arrow navigation -->
+      <button class="cr-hero-arrow prev" id="cr-prev-btn" aria-label="Previous slide">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+          stroke-linejoin="round" viewBox="0 0 24 24">
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+      </button>
+      <button class="cr-hero-arrow next" id="cr-next-btn" aria-label="Next slide">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+          stroke-linejoin="round" viewBox="0 0 24 24">
+          <polyline points="9 18 15 12 9 6" />
+        </svg>
+      </button>
+
+      <!-- Progress bar -->
+      <div class="cr-hero-progress" id="cr-progress-bar"></div>
+
+      <!-- Dot indicators -->
+      <div class="cr-hero-dots" id="cr-hero-dots">
+        <span class="cr-hero-dot active" data-index="0"></span>
+        <span class="cr-hero-dot" data-index="1"></span>
+        <span class="cr-hero-dot" data-index="2"></span>
+        <span class="cr-hero-dot" data-index="3"></span>
+        <span class="cr-hero-dot" data-index="4"></span>
+      </div>
+    </section>
+    <!-- JOB BOARD -->
+    <div class="cr-board">
+      <div id="board-root"></div>
+    </div>
+
+    <!-- CTA BOTTOM with Apply button -->
+    <section class="cr-cta">
+      <!-- Glowing blobs -->
+      <div class="cr-cta-blob b1"></div>
+      <div class="cr-cta-blob b2"></div>
+      <div class="cr-cta-blob b3"></div>
+
+      <div class="cr-cta-inner">
+        <div class="cr-cta-badge">Open Application</div>
+        <h2>Didn't find a<br><em>suitable position?</em></h2>
+        <p>We are always open to exceptional talent. Send us your CV and let our team find the perfect opportunity that
+          matches your skills and passion.</p>
+
+        <div class="cr-cta-features">
+          <div class="cr-cta-feature">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+              stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            3–5 day feedback
+          </div>
+          <div class="cr-cta-feature">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+              stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            100% remote-friendly
+          </div>
+          <div class="cr-cta-feature">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+              stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            Competitive salary
+          </div>
+        </div>
+
+        <button class="cr-btn-apply-main" onclick="openApplyModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+          Send Open Application
+        </button>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- APPLY MODAL -->
+  <div class="cr-modal-backdrop" id="apply-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="cr-modal">
+      <div class="cr-modal-header">
+        <div>
+          <h2 class="cr-modal-title" id="modal-title">📋 Job Application</h2>
+          <p class="cr-modal-sub">We commit to responding within 3–5 working days</p>
+        </div>
+        <button class="cr-modal-close" onclick="closeApplyModal()" aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+      <div class="cr-modal-body">
+        <form id="cr-apply-form" novalidate>
+
+          <div class="cr-form-section">Position</div>
+          <div class="cr-form-group">
+            <label for="cr-vacancy">Select department / position <span class="req">*</span></label>
+            <select id="cr-vacancy" required>
+              <option value="">— Select a position —</option>
+            </select>
+            <span class="cr-form-error" id="err-vacancy">Please select a position</span>
+          </div>
+
+          <div class="cr-form-section">Personal Information</div>
+          <div class="cr-form-row">
+            <div class="cr-form-group">
+              <label for="cr-name">Full Name <span class="req">*</span></label>
+              <input type="text" id="cr-name" placeholder="John Doe" required>
+              <span class="cr-form-error" id="err-name">Please enter your full name</span>
+            </div>
+            <div class="cr-form-group">
+              <label for="cr-phone">Phone Number <span class="req">*</span></label>
+              <input type="tel" id="cr-phone" placeholder="+1 234 567 890" required>
+              <span class="cr-form-error" id="err-phone">Please enter your phone number</span>
+            </div>
+          </div>
+          <div class="cr-form-group">
+            <label for="cr-email">Email</label>
+            <input type="email" id="cr-email" placeholder="example@email.com" readonly>
+            <small style="font-size:.75rem;color:#94a3b8;">Automatically retrieved from your account</small>
+          </div>
+
+          <div class="cr-form-section">Cover Letter</div>
+          <div class="cr-form-group">
+            <label for="cr-cover">Introduce yourself &amp; reason for applying</label>
+            <textarea id="cr-cover"
+              placeholder="I have X years of experience... I want to apply for this position because..."></textarea>
+          </div>
+
+          <div class="cr-form-section">Upload CV</div>
+          <!-- UPLOAD ZONE REDESIGN -->
+          <div class="cr-upload-zone" id="cr-upload-zone">
+            <input type="file" id="cr-cv-file" accept=".pdf" aria-label="Upload CV PDF">
+            <div class="cr-upload-icon-wrapper">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+            </div>
+            <p class="cr-upload-main-text"><strong>Click to upload</strong> or drag and drop</p>
+            <p class="cr-upload-sub-text">PDF only (max. 10MB)</p>
+          </div>
+          <!-- FILE PREVIEW BOX (Shown when file selected) -->
+          <div id="cr-file-preview" class="cr-file-preview" style="display: none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round"
+              stroke-linejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            <span id="cr-file-name"></span>
+            <button type="button" class="cr-btn-remove-file" onclick="removeFile()" aria-label="Remove file">✕</button>
+          </div>
+
+          <div id="cr-upload-progress">⏳ Uploading CV...</div>
+          <span class="cr-form-error" id="err-cv">Please upload a PDF CV (max 10MB)</span>
+
+        </form>
+      </div>
+
+      <div id="cr-form-message"></div>
+
+      <div class="cr-modal-footer">
+        <button class="cr-btn-cancel" type="button" onclick="closeApplyModal()">Cancel</button>
+        <button class="cr-btn-submit" type="button" id="cr-submit-btn" onclick="handleSubmit()">Submit Application
+          →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOGIN REQUIRED → dùng auth modal từ main.js (cùng UX với Get Started) -->
+  <!-- giữ lại div này để JS tham chiếu không bị lỗi, nhưng ẩn hoàn toàn -->
+  <div class="cr-login-alert" id="cr-login-alert" style="display:none;"></div>
+
+  <!-- (Global toast from main.js will be used instead) -->
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-container">
+      <div class="footer-col">
+        <a href="index.html" class="footer-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+          </svg>
+          <span>NovaDigital</span>
+        </a>
+        <p>Bring your business closer to millions of customers through comprehensive UI/UX design and technology
+          solutions.</p>
+        <div class="social-icons-footer" style="margin-top: 1.5rem;">
+          <a href="#" aria-label="Facebook">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+              <path
+                d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z" />
+            </svg>
+          </a>
+          <a href="#" aria-label="Github">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+              <path
+                d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+            </svg>
+          </a>
+          <a href="#" aria-label="LinkedIn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+              <path
+                d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.779-1.75-1.75s.784-1.75 1.75-1.75 1.75.779 1.75 1.75-.784 1.75-1.75 1.75zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" />
+            </svg>
+          </a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h3>Quick Links</h3>
+        <ul class="footer-links">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="about.html">About Us</a></li>
+          <li><a href="services.html">Services</a></li>
+          <li><a href="portfolio.html">Projects</a></li>
+          <li><a href="careers.html">Careers</a></li>
+          <li><a href="contact.html">Contact</a></li>
+          <li><a href="booking.html">Book Consultation</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h3>Contact Us</h3>
+        <div class="footer-info">
+          <div class="footer-info-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            <span>Ho Chi Minh City, Vietnam</span>
+          </div>
+          <div class="footer-info-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+            <a href="mailto:contact@novadigital.com">contact@novadigital.com</a>
+          </div>
+          <div class="footer-info-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path
+                d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8 19.79 19.79 0 01.02 1.18 2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z">
+              </path>
+            </svg>
+            <span>+84 (0) 123 456 789</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 NovaDigital Creative Agency. All rights reserved.</p>
+      <p style="opacity: 0.5; font-size: 0.82rem;">Crafted with ♥ in Vietnam</p>
+    </div>
+  </footer>
+
+  <script>
+    /* ─── HERO SLIDESHOW ─────────────────────────────────────── */
+    (function () {
+      const section = document.getElementById('cr-hero-section');
+      const slides = section.querySelectorAll('.cr-hero-slide');
+      const dots = section.querySelectorAll('.cr-hero-dot');
+      const bar = document.getElementById('cr-progress-bar');
+      const btnPrev = document.getElementById('cr-prev-btn');
+      const btnNext = document.getElementById('cr-next-btn');
+      const SLIDE_MS = 5000;
+      const FADE_MS = 900;
+
+      let current = 0;
+      let transitioning = false;
+      let paused = false;
+      let rafHandle = null;
+      let startTime = null;
+      let pausedPct = 0;
+
+      function resetBar() {
+        if (bar) { bar.style.transition = 'none'; bar.style.width = '0%'; }
+      }
+
+      function goTo(n) {
+        if (transitioning) return;
+        n = ((n % slides.length) + slides.length) % slides.length;
+        if (n === current) { startBarCycle(); return; }
+        transitioning = true;
+        const prev = current;
+        current = n;
+
+        slides[prev].classList.remove('active');
+        slides[prev].classList.add('leaving');
+        slides[current].classList.add('active');
+        dots.forEach(d => d.classList.remove('active'));
+        dots[current].classList.add('active');
+
+        setTimeout(() => {
+          slides[prev].classList.remove('leaving');
+          transitioning = false;
+          resetBar();
+          startBarCycle();
+        }, FADE_MS);
+      }
+
+      function startBarCycle() {
+        cancelAnimationFrame(rafHandle);
+        if (!bar) return;
+        startTime = null;
+        const startPct = paused ? pausedPct : 0;
+
+        function tick(now) {
+          if (!startTime) startTime = now - (startPct / 100) * SLIDE_MS;
+          const elapsed = now - startTime;
+          const pct = Math.min((elapsed / SLIDE_MS) * 100, 100);
+          bar.style.width = pct + '%';
+          if (pct < 100) {
+            rafHandle = requestAnimationFrame(tick);
+          } else {
+            rafHandle = null;
+            goTo(current + 1);
+          }
+        }
+        rafHandle = requestAnimationFrame(tick);
+      }
+
+      function jumpTo(n) {
+        if (n === current || transitioning) return;
+        cancelAnimationFrame(rafHandle);
+        resetBar();
+        goTo(n);
+      }
+
+      dots.forEach(dot => dot.addEventListener('click', () => jumpTo(parseInt(dot.dataset.index, 10))));
+      if (btnPrev) btnPrev.addEventListener('click', () => jumpTo(current - 1));
+      if (btnNext) btnNext.addEventListener('click', () => jumpTo(current + 1));
+
+      section.addEventListener('mouseenter', () => {
+        if (paused) return;
+        paused = true;
+        pausedPct = bar ? parseFloat(bar.style.width || '0') : 0;
+        cancelAnimationFrame(rafHandle);
+      });
+      section.addEventListener('mouseleave', () => {
+        if (!paused) return;
+        paused = false;
+        startBarCycle();
+      });
+
+      let touchX = 0;
+      section.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, { passive: true });
+      section.addEventListener('touchend', e => {
+        const dx = e.changedTouches[0].clientX - touchX;
+        if (Math.abs(dx) > 40) jumpTo(dx < 0 ? current + 1 : current - 1);
+      }, { passive: true });
+
+      resetBar();
+      startBarCycle();
+    })();
+
+    /* ─── VACANCY DATA ───────────────────────────────────────── */
+    var VACANCY_DATA = [
+      { id: 1, ws: 'Engineering', jt: 'FULL_TIME', title: 'Senior Java Backend Developer', sal: '$2,500 – $4,500 / month', loc: 'Hanoi (Hybrid)', reqs: ['4+ yrs Java / Spring Boot', 'RESTful API, Docker, Kubernetes', 'MySQL, PostgreSQL, Redis, Kafka', 'CI/CD Pipeline (GitLab CI)'] },
+      { id: 2, ws: 'Engineering', jt: 'FULL_TIME', title: 'ReactJS / NextJS Frontend Developer', sal: '$1,800 – $3,500 / month', loc: 'Ho Chi Minh (Onsite)', reqs: ['3+ yrs React.js or Next.js', 'TypeScript, Tailwind CSS', 'REST API / GraphQL integration', 'Web Performance Optimization'] },
+      { id: 3, ws: 'Engineering', jt: 'REMOTE', title: 'DevOps / Cloud Infrastructure Engineer', sal: '$3,000 – $5,000 / month', loc: 'Remote', reqs: ['3+ yrs AWS / GCP / Azure', 'Terraform, Ansible, Helm', 'Kubernetes cluster production', 'Prometheus, Grafana, ELK Stack'] },
+      { id: 4, ws: 'Engineering', jt: 'FULL_TIME', title: 'Mobile Developer (Flutter)', sal: '$2,000 – $3,800 / month', loc: 'Da Nang (Hybrid)', reqs: ['2+ yrs Flutter / Dart', 'App Store & Play Store published', 'Firebase, REST API, Payment SDK', 'State management: Bloc / Riverpod'] },
+      { id: 5, ws: 'Design', jt: 'FULL_TIME', title: 'Senior UI/UX Designer', sal: '$2,000 – $3,500 / month', loc: 'Ho Chi Minh (Hybrid)', reqs: ['4+ yrs digital product design', 'Figma, Principle, Framer', 'Design system & component library', 'User research, usability testing'] },
+      { id: 6, ws: 'Design', jt: 'CONTRACT', title: 'Motion Designer / Video Creator', sal: '$1,500 – $2,800 / month', loc: 'Remote', reqs: ['2+ yrs After Effects, Premiere', 'Lottie, GSAP web animation', 'Social media motion graphics', 'Product video portfolio'] },
+      { id: 7, ws: 'Marketing', jt: 'FULL_TIME', title: 'Digital Marketing Manager', sal: '$1,800 – $3,200 / month', loc: 'Hanoi (Onsite)', reqs: ['4+ yrs B2B Digital Marketing', 'Google Ads, Meta Ads, LinkedIn', 'SEO technical & content strategy', 'GA4, Looker Studio, Hotjar'] },
+      { id: 8, ws: 'Marketing', jt: 'FULL_TIME', title: 'Content Marketing Specialist', sal: '$1,000 – $1,800 / month', loc: 'Ho Chi Minh (Hybrid)', reqs: ['Blog & case study writing', 'SEO On-page, keyword research', 'WordPress, HubSpot or equivalent', 'Multi-platform content'] },
+      { id: 9, ws: 'Marketing', jt: 'PART_TIME', title: 'Social Media & Community Intern', sal: '$200 – $350 / month', loc: 'HCM or Remote', reqs: ['Junior yr 3-4 Marketing major', 'LinkedIn, Facebook, TikTok B2B', 'Canva design proficiency', 'Commit 20+ hrs / week'] },
+      { id: 10, ws: 'Sales', jt: 'FULL_TIME', title: 'Business Development Manager', sal: 'Base $2,000 + Uncapped Commission', loc: 'Hanoi / Ho Chi Minh', reqs: ['3+ yrs B2B IT / SaaS / Agency', 'C-level executive negotiation', 'HubSpot / Salesforce CRM', 'Fluent English'] },
+      { id: 11, ws: 'Sales', jt: 'FULL_TIME', title: 'Account Manager (Client Success)', sal: '$1,500 – $2,500 / month', loc: 'Ho Chi Minh (Hybrid)', reqs: ['2+ yrs enterprise client management', 'Technical requirements understanding', 'NPS, renewal rate, upsell KPIs', 'Notion, Jira or equivalent'] },
+      { id: 12, ws: 'HR', jt: 'FULL_TIME', title: 'HR Business Partner / Talent Acquisition', sal: '$1,200 – $2,200 / month', loc: 'Hanoi (Onsite)', reqs: ['3+ yrs IT recruitment', 'LinkedIn, GitHub, TopDev sourcing', 'Employer branding & culture', 'BambooHR, Workable, Greenhouse'] },
+      { id: 13, ws: 'Product', jt: 'FULL_TIME', title: 'Product Manager (SaaS Platform)', sal: '$2,500 – $4,000 / month', loc: 'Hanoi (Hybrid)', reqs: ['4+ yrs SaaS Product Management', 'PRD, User Story, Acceptance Criteria', 'Agile / Scrum methodology', 'Mixpanel, Amplitude analytics'] },
+      { id: 14, ws: 'Product', jt: 'FULL_TIME', title: 'Business Analyst (BA)', sal: '$1,500 – $2,800 / month', loc: 'Da Nang / Remote', reqs: ['2+ yrs software BA', 'BRD, Use Case, BPMN diagram', 'Jira, Confluence, Miro', 'Strong English documentation'] }
+    ];
+    var WS_META = {
+      Engineering: { icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>', desc: 'Backend · Frontend · Mobile · DevOps' },
+      Design: { icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg>', desc: 'UI/UX · Motion · Branding' },
+      Marketing: { icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-5v12L3 14v-3z"></path><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"></path></svg>', desc: 'Digital · Content · Social Media' },
+      Sales: { icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>', desc: 'BDM · Account Management' },
+      HR: { icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>', desc: 'Talent Acquisition · Culture' },
+      Product: { icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path><path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"></path><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"></path></svg>', desc: 'Product Management · Business Analysis' }
+    };
+    var JT_MAP = {
+      FULL_TIME: { cls: 'jt-full', label: 'Full-time' },
+      PART_TIME: { cls: 'jt-part', label: 'Part-time' },
+      REMOTE: { cls: 'jt-remote', label: 'Remote' },
+      CONTRACT: { cls: 'jt-contract', label: 'Contract' }
+    };
+
+    /* ─── RENDER BOARD ───────────────────────────────────────── */
+    function renderBoard() {
+      var grouped = {};
+      VACANCY_DATA.forEach(function (v) { if (!grouped[v.ws]) grouped[v.ws] = []; grouped[v.ws].push(v); });
+      var root = document.getElementById('board-root'), html = '';
+      Object.keys(grouped).forEach(function (ws) {
+        var items = grouped[ws], m = WS_META[ws] || { icon: '💼', desc: '' };
+        html += '<div class="cr-ws-group">' +
+          '<div class="cr-ws-heading">' +
+          '<div class="cr-ws-icon">' + m.icon + '</div>' +
+          '<div><h3 class="cr-ws-title">' + ws + '</h3><p class="cr-ws-desc">' + (m.desc || '') + '</p></div>' +
+          '<span class="cr-ws-badge">' + items.length + ' open</span>' +
+          '</div>' +
+          '<div class="cr-job-list">' + items.map(buildCard).join('') + '</div>' +
+          '</div>';
+      });
+      root.innerHTML = html;
+      document.getElementById('total-count').textContent = VACANCY_DATA.length + ' positions';
+    }
+
+    function buildCard(v) {
+      var jt = JT_MAP[v.jt] || { cls: '', label: v.jt };
+      return '<article class="cr-job-row" onclick="openApplyModal(' + v.id + ')">' +
+        '<div class="cr-row-main">' +
+        '<span class="cr-job-type ' + jt.cls + '">' + jt.label + '</span>' +
+        '<h4 class="cr-job-title">' + v.title + '</h4>' +
+        '</div>' +
+        '<div class="cr-job-salary">' +
+        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M9 9h4.5a1.5 1.5 0 0 1 0 3H9m0 0h5a1.5 1.5 0 0 1 0 3H9"/></svg>' +
+        v.sal +
+        '</div>' +
+        '<div class="cr-job-location">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>' +
+        v.loc +
+        '</div>' +
+        '</article>';
+    }
+
+    /* ─── DROPDOWN ───────────────────────────────────────────── */
+    function populateDropdown(preId) {
+      var sel = document.getElementById('cr-vacancy');
+      sel.innerHTML = '<option value="">— Select a position —</option>';
+      var grouped = {};
+      VACANCY_DATA.forEach(function (v) { if (!grouped[v.ws]) grouped[v.ws] = []; grouped[v.ws].push(v); });
+      Object.keys(grouped).forEach(function (ws) {
+        var grp = document.createElement('optgroup'); grp.label = ws;
+        grouped[ws].forEach(function (v) {
+          var o = document.createElement('option'); o.value = v.id; o.textContent = v.title;
+          if (v.id === preId) o.selected = true;
+          grp.appendChild(o);
+        });
+        sel.appendChild(grp);
+      });
+    }
+
+    /* ─── HELPER: read token from both storages ─────────────── */
+    function getToken() {
+      return sessionStorage.getItem('token') || localStorage.getItem('token') || null;
+    }
+    function getUserData() {
+      var u = sessionStorage.getItem('user') || localStorage.getItem('user') || '{}';
+      try { return JSON.parse(u); } catch (e) { return {}; }
+    }
+
+    /* ─── LOGIN CHECK ────────────────────────────────────────── */
+    function openApplyModal(preId) {
+      var token = getToken();
+      if (!token) {
+        // Automatically open this apply modal if they log in/register successfully
+        sessionStorage.setItem('crAutoApply', 'true');
+        if (preId) sessionStorage.setItem('crAutoApplyId', preId);
+
+        // Dùng auth modal từ main.js (cùng UX với nút "Get Started Now")
+        if (typeof openAuthModal === 'function') {
+          openAuthModal('login');
+        } else {
+          // fallback nếu main.js chưa load
+          window.location.href = 'login.html?redirect=' + encodeURIComponent('careers.html');
+        }
+        return;
+      }
+      populateDropdown(preId || null);
+      var u = getUserData();
+      document.getElementById('cr-name').value = u.fullName || sessionStorage.getItem('fullName') || localStorage.getItem('fullName') || '';
+      document.getElementById('cr-email').value = u.email || u.username || sessionStorage.getItem('email') || '';
+      document.getElementById('apply-modal').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeApplyModal() {
+      document.getElementById('apply-modal').classList.remove('open');
+      document.body.style.overflow = '';
+      resetForm();
+    }
+    function closeLoginAlert() { /* no-op: kept for any remaining inline refs */ }
+    function goToLogin() {
+      window.location.href = 'login.html?redirect=' + encodeURIComponent('careers.html');
+    }
+
+    document.getElementById('apply-modal').addEventListener('click', function (e) { if (e.target === this) closeApplyModal(); });
+    document.getElementById('cr-login-alert').addEventListener('click', function (e) { if (e.target === this) closeLoginAlert(); });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') { closeApplyModal(); closeLoginAlert(); }
+    });
+
+    /* ─── FILE UPLOAD ────────────────────────────────────────── */
+    var fi = document.getElementById('cr-cv-file');
+    var fnd = document.getElementById('cr-file-name');
+    var uz = document.getElementById('cr-upload-zone');
+    var fp = document.getElementById('cr-file-preview');
+
+    fi.addEventListener('change', function () {
+      var f = fi.files[0];
+      if (f) {
+        fnd.textContent = f.name;
+        fp.style.display = 'flex';
+        uz.style.display = 'none';
+        document.getElementById('err-cv').style.display = 'none';
+      }
+    });
+
+    function removeFile() {
+      fi.value = ''; // clear input
+      fp.style.display = 'none';
+      uz.style.display = 'flex';
+      fnd.textContent = '';
+    }
+
+    uz.addEventListener('dragover', function (e) { e.preventDefault(); uz.classList.add('drag-over'); });
+    uz.addEventListener('dragleave', function () { uz.classList.remove('drag-over'); });
+    uz.addEventListener('drop', function (e) {
+      e.preventDefault(); uz.classList.remove('drag-over');
+      var fs = e.dataTransfer.files;
+      if (fs.length) { fi.files = fs; fi.dispatchEvent(new Event('change')); }
+    });
+
+    /* ─── SUBMIT ─────────────────────────────────────────────── */
+    async function handleSubmit() {
+      clearErrors();
+      var token = getToken();
+      if (!token) { openApplyModal(); return; } // re-trigger login alert if somehow reached here without token
+
+      var name = document.getElementById('cr-name').value.trim();
+      var phone = document.getElementById('cr-phone').value.trim();
+      var vacEl = document.getElementById('cr-vacancy');
+      var vac = vacEl.value;
+      var vacTitle = vac ? vacEl.options[vacEl.selectedIndex].text : '';
+      var file = fi.files[0];
+
+      var ok = true;
+      var phoneRegex = /(84|0[3|5|7|8|9])+([0-9]{8})\b/;
+
+      if (!vac) { showErr('err-vacancy'); ok = false; }
+      if (!name) { showErr('err-name'); ok = false; }
+      if (!phone) { showErr('err-phone'); ok = false; }
+      else if (!phoneRegex.test(phone)) { showErr('err-phone', 'Số điện thoại không hợp lệ'); ok = false; }
+      if (!file) { showErr('err-cv'); ok = false; }
+      else if (file.type !== 'application/pdf') { showErr('err-cv', 'Only PDF files accepted'); ok = false; }
+      else if (file.size > 10 * 1024 * 1024) { showErr('err-cv', 'File exceeds 10MB limit'); ok = false; }
+      if (!ok) return;
+
+      var btn = document.getElementById('cr-submit-btn');
+      btn.disabled = true; btn.textContent = '⏳ Processing...';
+      try {
+        document.getElementById('cr-upload-progress').style.display = 'block';
+        var fd = new FormData(); fd.append('file', file);
+        var ur = await fetch('/api/upload', { method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: fd });
+        var uj = await ur.json();
+        document.getElementById('cr-upload-progress').style.display = 'none';
+        if (!uj.success) throw new Error(uj.message || 'Upload failed');
+
+        var ar = await fetch('/api/vacancies/apply', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify({
+            vacancyId: Number(vac),
+            vacancyTitle: vacTitle,
+            applicantName: name,
+            applicantPhone: phone,
+            coverLetter: document.getElementById('cr-cover').value.trim(),
+            resumeUrl: uj.url
+          })
+        });
+        var aj = await ar.json();
+        if (!aj.success) throw new Error(aj.message);
+        closeApplyModal();
+        showSuccessToast('✅ Nộp đơn ứng tuyển thành công! Chúng tôi sẽ liên hệ bạn sớm.');
+      } catch (e) {
+        var m = document.getElementById('cr-form-message');
+        m.textContent = '❌ ' + e.message; m.className = 'error'; m.style.display = 'block';
+        btn.disabled = false; btn.textContent = 'Submit Application →';
+        document.getElementById('cr-upload-progress').style.display = 'none';
+      }
+    }
+
+    /* --- CUSTOM TOAST ĐẢM BẢO KHÔNG BỊ LỖI CSS TỪ MAIN.JS --- */
+    function showSuccessToast(message) {
+      var t = document.createElement('div');
+      t.innerHTML = message;
+      t.style.position = 'fixed';
+      t.style.bottom = '30px';
+      t.style.right = '30px';
+      t.style.background = '#fff';
+      t.style.color = '#059669';
+      t.style.padding = '16px 24px';
+      t.style.borderRadius = '12px';
+      t.style.boxShadow = '0 10px 40px rgba(0,0,0,0.15)';
+      t.style.borderLeft = '6px solid #10b981';
+      t.style.fontWeight = 'bold';
+      t.style.zIndex = '999999';
+      t.style.transform = 'translateY(20px)';
+      t.style.opacity = '0';
+      t.style.transition = 'all 0.4s ease';
+      document.body.appendChild(t);
+
+      // trigger animation
+      setTimeout(function () {
+        t.style.transform = 'translateY(0)';
+        t.style.opacity = '1';
+      }, 50);
+
+      setTimeout(function () {
+        t.style.opacity = '0';
+        t.style.transform = 'translateY(20px)';
+        setTimeout(function () { t.remove(); }, 400);
+      }, 4000);
+    }
+
+    function showErr(id, msg) { var el = document.getElementById(id); if (msg) el.textContent = msg; el.style.display = 'block'; }
+    function clearErrors() { document.querySelectorAll('.cr-form-error').forEach(function (e) { e.style.display = 'none'; }); var m = document.getElementById('cr-form-message'); if (m) m.style.display = 'none'; }
+    function resetForm() {
+      document.getElementById('cr-apply-form').reset();
+      // Use variables declared above
+      if (typeof fp !== 'undefined') fp.style.display = 'none';
+      if (typeof uz !== 'undefined') uz.style.display = 'flex';
+      if (typeof fnd !== 'undefined') fnd.textContent = '';
+      document.getElementById('cr-upload-progress').style.display = 'none';
+      var b = document.getElementById('cr-submit-btn'); b.disabled = false; b.textContent = 'Submit Application →';
+      clearErrors();
+    }
+
+    if (new URLSearchParams(window.location.search).get('applied') === '1') {
+      showSuccessToast('✅ Nộp đơn ứng tuyển thành công! Chúng tôi sẽ liên hệ bạn sớm.');
+      window.history.replaceState({}, '', 'careers.html');
+    }
+    renderBoard();
+
+    // Check if we need to auto-open apply modal (e.g. after successful login/register)
+    if (sessionStorage.getItem('crAutoApply') === 'true') {
+      sessionStorage.removeItem('crAutoApply');
+      var vacId = sessionStorage.getItem('crAutoApplyId');
+      if (vacId) sessionStorage.removeItem('crAutoApplyId');
+      // Timeout ensures main.js auth sync completes before opening
+      setTimeout(function () { openApplyModal(vacId || null); }, 400);
+    }
+  </script>
+  <!-- main.js provides auth modal, navbar session sync & "Get Started Now" button logic -->
+  <script src="/js/main.js"></script>
+</body>
+
+</html>

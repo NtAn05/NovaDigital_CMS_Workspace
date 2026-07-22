@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="NovaDigital — Nộp hồ sơ ứng tuyển. Điền thông tin và upload CV của bạn.">
+  <title>Nộp Hồ Sơ | NovaDigital</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .apply-wrapper {
+      min-height: 100vh;
+      padding: 9rem 1.5rem 5rem;
+      max-width: 760px;
+      margin: 0 auto;
+    }
+    .apply-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      text-decoration: none;
+      margin-bottom: 2rem;
+      transition: color 0.2s;
+    }
+    .apply-back:hover { color: #60a5fa; }
+    .apply-back svg { width: 15px; height: 15px; }
+    .apply-hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.3rem 0.85rem;
+      border-radius: 99px;
+      background: rgba(37,99,235,0.1);
+      border: 1px solid rgba(37,99,235,0.25);
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #60a5fa;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+    .apply-title {
+      font-family: var(--font-heading);
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      font-weight: 800;
+      color: var(--text-dark);
+      line-height: 1.2;
+      margin-bottom: 0.5rem;
+    }
+    .apply-title span {
+      background: linear-gradient(90deg, #2563eb, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .apply-subtitle {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-bottom: 2.5rem;
+      line-height: 1.6;
+    }
+    /* Form card */
+    .apply-card {
+      background: var(--card-bg, #141929);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg, 14px);
+      padding: 2.5rem 2rem;
+    }
+    .form-section-title {
+      font-family: var(--font-heading);
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: #60a5fa;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .form-section-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border-color);
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      margin-bottom: 1.1rem;
+    }
+    .form-group label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-dark);
+    }
+    .form-group label span { color: #ef4444; }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 0.7rem 0.9rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background: rgba(255,255,255,0.04);
+      color: var(--text-dark);
+      font-size: 0.9rem;
+      font-family: var(--font-body);
+      transition: border-color 0.2s ease;
+      box-sizing: border-box;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+    }
+    .form-group textarea { resize: vertical; min-height: 120px; }
+    /* File upload zone */
+    .upload-zone {
+      border: 2px dashed var(--border-color);
+      border-radius: 10px;
+      padding: 2rem 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+    .upload-zone:hover,
+    .upload-zone.drag-over {
+      border-color: #2563eb;
+      background: rgba(37,99,235,0.05);
+    }
+    .upload-zone input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer;
+    }
+    .upload-zone-icon { font-size: 2.2rem; margin-bottom: 0.65rem; display: block; }
+    .upload-zone p { color: var(--text-muted); font-size: 0.88rem; margin: 0; line-height: 1.5; }
+    .upload-zone strong { color: #60a5fa; }
+    .upload-zone .file-selected { color: #34d399; font-weight: 600; margin-top: 0.5rem; display: none; }
+    /* Submit button */
+    .btn-submit {
+      width: 100%;
+      padding: 0.9rem;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
+      font-family: var(--font-body);
+      margin-top: 1.5rem;
+    }
+    .btn-submit:hover:not(:disabled) { opacity: 0.9; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(37,99,235,0.4); }
+    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+    /* Error */
+    .form-error {
+      color: #f87171;
+      font-size: 0.8rem;
+      margin-top: 0.25rem;
+      display: none;
+    }
+    /* Uploading progress */
+    #upload-progress { display: none; margin-top: 0.5rem; color: #60a5fa; font-size: 0.82rem; }
+    @media (max-width: 600px) {
+      .form-row { grid-template-columns: 1fr; }
+      .apply-card { padding: 1.5rem 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ══ NAVBAR ═══════════════════════════════════════════════ -->
+  <header>
+    <nav class="navbar">
+      <a href="index.html" class="logo" id="header-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        <span>NovaDigital</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="careers.html" class="active">Careers</a></li>
+        <li><a href="#" class="nav-btn" id="default-get-started">Get Started Now</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="apply-wrapper">
+
+    <a href="careers.html" class="apply-back">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+      Quay lại danh sách vị trí
+    </a>
+
+    <div class="apply-hero-badge">📋 Nộp Hồ Sơ Ứng Tuyển</div>
+    <h1 class="apply-title">Ứng tuyển vào <span id="vacancy-name">NovaDigital</span></h1>
+    <p class="apply-subtitle">Điền đầy đủ thông tin bên dưới. Chúng tôi cam kết phản hồi trong vòng <strong>3–5 ngày làm việc</strong>.</p>
+
+    <div class="apply-card">
+      <form id="apply-form" novalidate>
+
+        <!-- Thông tin cá nhân -->
+        <div class="form-section-title">Thông tin cá nhân</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="fullName">Họ và tên <span>*</span></label>
+            <input type="text" id="fullName" placeholder="Nguyễn Văn A" required>
+            <span class="form-error" id="err-name">Vui lòng nhập họ tên</span>
+          </div>
+          <div class="form-group">
+            <label for="phone">Số điện thoại <span>*</span></label>
+            <input type="tel" id="phone" placeholder="0912 345 678" required>
+            <span class="form-error" id="err-phone">Vui lòng nhập số điện thoại</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="email">Email <span>*</span></label>
+          <input type="email" id="email" placeholder="example@email.com" readonly style="opacity:0.7;">
+          <span style="font-size:0.75rem;color:var(--text-muted);">Email tự động lấy từ tài khoản đăng nhập của bạn.</span>
+        </div>
+
+        <!-- Vị trí ứng tuyển -->
+        <div class="form-section-title" style="margin-top:1.5rem;">Vị trí ứng tuyển</div>
+        <div class="form-group">
+          <label for="vacancySelect">Chọn vị trí <span>*</span></label>
+          <select id="vacancySelect" required>
+            <option value="">— Đang tải danh sách vị trí... —</option>
+          </select>
+          <span class="form-error" id="err-vacancy">Vui lòng chọn vị trí ứng tuyển</span>
+        </div>
+
+        <!-- Thư xin việc -->
+        <div class="form-section-title" style="margin-top:1.5rem;">Thư xin việc</div>
+        <div class="form-group">
+          <label for="coverLetter">Giới thiệu bản thân & lý do ứng tuyển</label>
+          <textarea id="coverLetter" placeholder="Tôi có X năm kinh nghiệm trong lĩnh vực... Tôi muốn ứng tuyển vì..."></textarea>
+        </div>
+
+        <!-- Upload CV -->
+        <div class="form-section-title" style="margin-top:1.5rem;">Upload CV</div>
+        <div class="upload-zone" id="upload-zone">
+          <input type="file" id="cv-file" accept=".pdf" aria-label="Upload CV PDF">
+          <span class="upload-zone-icon">📄</span>
+          <p><strong>Kéo thả file vào đây</strong> hoặc click để chọn</p>
+          <p style="margin-top:0.4rem;">Chỉ nhận file <strong>PDF</strong>, tối đa <strong>10MB</strong></p>
+          <p class="file-selected" id="file-name-display"></p>
+        </div>
+        <div id="upload-progress">⏳ Đang upload CV...</div>
+        <span class="form-error" id="err-cv">Vui lòng upload CV định dạng PDF (tối đa 10MB)</span>
+
+        <button type="submit" class="btn-submit" id="submit-btn">
+          Nộp hồ sơ ngay
+        </button>
+
+        <div id="form-message" style="margin-top:1rem;text-align:center;font-weight:600;font-size:0.9rem;display:none;"></div>
+      </form>
+    </div>
+  </main>
+
+  <script>
+    // ── Auth guard: bắt buộc đăng nhập ────────────────────────
+    const token    = localStorage.getItem('token');
+    const userData = JSON.parse(localStorage.getItem('user') || '{}');
+
+    if (!token) {
+      const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+      window.location.href = `login.html?redirect=${returnUrl}`;
+    }
+
+    // ── Prefill thông tin từ JWT / localStorage ────────────────
+    document.getElementById('fullName').value = userData.fullName || '';
+    document.getElementById('email').value    = userData.email    || userData.username || '';
+
+    // ── Đọc vacancyId từ URL param ─────────────────────────────
+    const urlParams  = new URLSearchParams(window.location.search);
+    const vacancyId  = urlParams.get('vacancyId');
+
+    // ── Load danh sách vị trí cho dropdown ─────────────────────
+    async function loadVacancies() {
+      try {
+        const res  = await fetch('/api/vacancies/list');
+        const list = await res.json();
+        const sel  = document.getElementById('vacancySelect');
+        sel.innerHTML = '<option value="">— Chọn vị trí ứng tuyển —</option>';
+        list.forEach(v => {
+          const opt    = document.createElement('option');
+          opt.value    = v.id;
+          opt.textContent = v.title;
+          if (String(v.id) === vacancyId) opt.selected = true;
+          sel.appendChild(opt);
+        });
+        // Cập nhật tiêu đề trang theo vị trí được chọn
+        updateTitle();
+        sel.addEventListener('change', updateTitle);
+      } catch {
+        document.getElementById('vacancySelect').innerHTML =
+          '<option value="">— Không tải được danh sách —</option>';
+      }
+    }
+
+    function updateTitle() {
+      const sel     = document.getElementById('vacancySelect');
+      const chosen  = sel.options[sel.selectedIndex];
+      const nameEl  = document.getElementById('vacancy-name');
+      nameEl.textContent = chosen && chosen.value ? chosen.textContent : 'NovaDigital';
+    }
+
+    loadVacancies();
+
+    // ── File upload zone ───────────────────────────────────────
+    const fileInput = document.getElementById('cv-file');
+    const fileNameDisplay = document.getElementById('file-name-display');
+
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files[0];
+      if (file) {
+        fileNameDisplay.textContent = `✅ ${file.name}`;
+        fileNameDisplay.style.display = 'block';
+        document.getElementById('err-cv').style.display = 'none';
+      }
+    });
+
+    const zone = document.getElementById('upload-zone');
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', ()  => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault();
+      zone.classList.remove('drag-over');
+      const files = e.dataTransfer.files;
+      if (files.length) { fileInput.files = files; fileInput.dispatchEvent(new Event('change')); }
+    });
+
+    // ── Submit form ────────────────────────────────────────────
+    document.getElementById('apply-form').addEventListener('submit', async function (e) {
+      e.preventDefault();
+      clearErrors();
+
+      const fullName  = document.getElementById('fullName').value.trim();
+      const phone     = document.getElementById('phone').value.trim();
+      const vacSel    = document.getElementById('vacancySelect').value;
+      const file      = fileInput.files[0];
+      let valid = true;
+
+      if (!fullName) { showErr('err-name');    valid = false; }
+      if (!phone)    { showErr('err-phone');   valid = false; }
+      if (!vacSel)   { showErr('err-vacancy'); valid = false; }
+      if (!file) {
+        showErr('err-cv');
+        valid = false;
+      } else if (file.type !== 'application/pdf') {
+        showErr('err-cv', 'Chỉ chấp nhận file PDF');
+        valid = false;
+      } else if (file.size > 10 * 1024 * 1024) {
+        showErr('err-cv', 'File vượt quá 10MB');
+        valid = false;
+      }
+      if (!valid) return;
+
+      const submitBtn = document.getElementById('submit-btn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Đang xử lý...';
+
+      try {
+        // Bước 1: Upload CV (tái sử dụng /api/upload của teammate)
+        document.getElementById('upload-progress').style.display = 'block';
+        const formData = new FormData();
+        formData.append('file', file);
+        const uploadRes  = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+          body: formData
+        });
+        const uploadJson = await uploadRes.json();
+        document.getElementById('upload-progress').style.display = 'none';
+
+        if (!uploadJson.success) throw new Error(uploadJson.message || 'Upload thất bại');
+
+        // Bước 2: Gửi thông tin ứng tuyển
+        const applyRes = await fetch('/api/vacancies/apply', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            vacancyId:     Number(vacSel),
+            applicantName: fullName,
+            applicantPhone: phone,
+            coverLetter:   document.getElementById('coverLetter').value.trim(),
+            resumeUrl:     uploadJson.url
+          })
+        });
+        const applyJson = await applyRes.json();
+        if (!applyJson.success) throw new Error(applyJson.message);
+
+        // Thành công → redirect về careers.html với query param để hiện toast
+        window.location.href = 'careers.html?applied=1';
+
+      } catch (err) {
+        const msgEl = document.getElementById('form-message');
+        msgEl.textContent = `❌ ${err.message}`;
+        msgEl.style.color = '#f87171';
+        msgEl.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Nộp hồ sơ ngay';
+        document.getElementById('upload-progress').style.display = 'none';
+      }
+    });
+
+    function showErr(id, msg) {
+      const el = document.getElementById(id);
+      if (msg) el.textContent = msg;
+      el.style.display = 'block';
+    }
+    function clearErrors() {
+      document.querySelectorAll('.form-error').forEach(e => e.style.display = 'none');
+      const msg = document.getElementById('form-message');
+      msg.style.display = 'none';
+    }
+  </script>
+</body>
+</html>
