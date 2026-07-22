@@ -21,7 +21,7 @@ public class DataAuditLog {
     private String tableName;
 
     @Column(name = "detail", columnDefinition = "TEXT")
-    private String detail; // Chứa JSON Diff cho UPDATE hoặc JSON của entity cho CREATE/DELETE
+    private String detail; // Contains JSON Diff for UPDATE or JSON of entity for CREATE/DELETE
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

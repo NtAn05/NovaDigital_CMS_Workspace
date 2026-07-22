@@ -755,7 +755,7 @@ function logoutUser() {
   }
   
   // Perform a clean redirect & hard reset to login anchor
-  window.location.href = window.location.origin + "/index.html#login";
+  window.location.href = window.location.origin + "/index.html";
   
   // Force reload if already on index page so Navbar state resets instantly
   if (window.location.pathname.endsWith("index.html") || window.location.pathname === "/") {

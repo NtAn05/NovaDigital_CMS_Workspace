@@ -6,8 +6,8 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 /**
- * F_38 — Lưu thông tin ứng viên đã nộp hồ sơ cho một vị trí tuyển dụng.
- * Không tạo FK cứng vào bảng users vì ứng viên có thể không có tài khoản.
+ * F_38 — Stores applicant information submitted for a job vacancy.
+ * Does not create a hard FK to users table as applicants may not have an account.
  */
 @Entity
 @Table(name = "candidate_applications")
@@ -19,14 +19,14 @@ public class CandidateApplication {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // ── Thông tin vị trí ứng tuyển ──
+    // ── Job Vacancy Information ──
     @Column(name = "vacancy_id", nullable = false)
     private Long vacancyId;
 
     @Column(name = "vacancy_title", nullable = false, length = 255)
     private String vacancyTitle;
 
-    // ── Thông tin ứng viên ──
+    // ── Candidate Information ──
     @Column(name = "applicant_name", nullable = false, length = 100)
     private String applicantName;
 
@@ -36,7 +36,7 @@ public class CandidateApplication {
     @Column(name = "applicant_phone", length = 20)
     private String applicantPhone;
 
-    /** Đường dẫn file CV đã upload (lưu kết quả trả về từ /api/upload) */
+    /** Path to uploaded CV file (stores result returned from /api/upload) */
     @Column(name = "resume_url", nullable = false, length = 512)
     private String resumeUrl;
 

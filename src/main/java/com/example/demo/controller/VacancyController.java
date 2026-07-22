@@ -23,7 +23,7 @@ public class VacancyController {
 
     /**
      * GET /api/vacancies — Public.
-     * Trả Map<workstream, List<VacancyResponse>> để Careers Board render theo nhóm.
+     * Returns Map<workstream, List<VacancyResponse>> for Careers Board grouped rendering.
      */
     @GetMapping
     public ResponseEntity<Map<String, List<VacancyResponse>>> getVacancies() {
@@ -32,7 +32,7 @@ public class VacancyController {
 
     /**
      * GET /api/vacancies/list — Public.
-     * Trả List phẳng dùng cho dropdown "Chọn vị trí" trong form Apply.
+     * Returns flat List used for "Select position" dropdown in Apply form.
      */
     @GetMapping("/list")
     public ResponseEntity<List<VacancyResponse>> listVacancies() {
@@ -42,27 +42,27 @@ public class VacancyController {
     // ── F_38: Apply ────────────────────────────────────────────────────────────
 
     /**
-     * POST /api/vacancies/apply — Yêu cầu đăng nhập (JWT).
+     * POST /api/vacancies/apply — Requires authentication (JWT).
      * Body (JSON): { vacancyId, applicantName, applicantEmail, applicantPhone,
      *               resumeUrl, coverLetter }
-     * applicantEmail được overwrite bằng email từ JWT để tránh giả mạo.
+     * applicantEmail is overwritten with email from JWT to prevent spoofing.
      */
     @PostMapping("/apply")
     public ResponseEntity<?> applyForVacancy(@RequestBody CandidateApplication application,
                                               Authentication authentication) {
         Map<String, Object> response = new HashMap<>();
         try {
-            // Override email bằng thông tin từ JWT token (bảo mật)
+            // Override email with info from JWT token (security)
             if (authentication != null && authentication.getName() != null) {
                 application.setApplicantEmail(authentication.getName());
             }
             vacancyService.submitApplication(application);
             response.put("success", true);
-            response.put("message", "Nộp hồ sơ thành công! Chúng tôi sẽ liên hệ bạn sớm nhất.");
+            response.put("message", "Application submitted successfully! We will contact you as soon as possible.");
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             response.put("success", false);
-            response.put("message", "Có lỗi xảy ra: " + e.getMessage());
+            response.put("message", "An error occurred: " + e.getMessage());
             return ResponseEntity.internalServerError().body(response);
         }
     }
@@ -71,7 +71,7 @@ public class VacancyController {
 
     /**
      * GET /api/vacancies/applications — ADMIN/MEMBER only.
-     * Optional param: ?vacancyId=X để filter theo vị trí.
+     * Optional param: ?vacancyId=X to filter by position.
      */
     @GetMapping("/applications")
     public ResponseEntity<List<CandidateApplication>> getApplications(

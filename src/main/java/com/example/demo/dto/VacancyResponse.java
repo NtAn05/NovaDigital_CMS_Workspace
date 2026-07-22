@@ -5,8 +5,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * DTO trả về thông tin một tin tuyển dụng cho phía Frontend.
- * Chỉ phơi bày các trường cần thiết, không trả về toàn bộ Entity.
+ * DTO returning job vacancy information for the Frontend.
+ * Exposes only necessary fields, not the entire Entity.
  */
 @Data
 @NoArgsConstructor

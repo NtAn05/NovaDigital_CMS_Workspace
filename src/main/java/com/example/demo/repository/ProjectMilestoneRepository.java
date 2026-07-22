@@ -10,12 +10,12 @@ import java.util.Optional;
 @Repository
 public interface ProjectMilestoneRepository extends JpaRepository<ProjectMilestone, Long> {
 
-    /** Lấy tất cả milestones thuộc một dự án, sắp xếp theo ngày tạo tăng dần */
+    /** Get all milestones belonging to a project, ordered by creation date ascending */
     List<ProjectMilestone> findByProjectIdOrderByCreatedAtAsc(Long projectId);
 
-    /** Kiểm tra xem dự án đã có milestone trùng tên chưa (tránh duplicate) */
+    /** Check if project already has a milestone with duplicate name (prevent duplicate) */
     Optional<ProjectMilestone> findByProjectIdAndName(Long projectId, String name);
 
-    /** Xóa tất cả milestones của một dự án (dùng khi xóa Project) */
+    /** Delete all milestones of a project (used when deleting Project) */
     void deleteAllByProjectId(Long projectId);
 }

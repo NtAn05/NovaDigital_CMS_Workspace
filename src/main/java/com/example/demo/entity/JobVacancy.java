@@ -24,8 +24,8 @@ public class JobVacancy {
     private String description;
 
     /**
-     * Nhóm lĩnh vực (ví dụ: Engineering, Marketing, HR).
-     * Frontend dùng trường này để phân nhóm hiển thị trên Careers Board.
+     * Department / domain group (e.g., Engineering, Marketing, HR).
+     * Frontend uses this field for grouped rendering on the Careers Board.
      */
     @Column(nullable = false, length = 100)
     private String workstream;
@@ -38,8 +38,8 @@ public class JobVacancy {
     private String jobType;
 
     /**
-     * Trạng thái tin tuyển dụng.
-     * Chỉ các tin có status = ACTIVE mới được hiển thị cho Guest.
+     * Status of the job vacancy posting.
+     * Only postings with status = ACTIVE are displayed to Guests.
      */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

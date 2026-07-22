@@ -14,8 +14,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Thông báo trong app cho user hiện tại (vd: member được gán / booking được confirm).
- * Mọi endpoint đều scope theo đúng user đang đăng nhập, không cho xem thông báo người khác.
+ * In-app notifications for current user (e.g., assigned member / confirmed booking).
+ * All endpoints are scoped strictly to the currently logged-in user, preventing viewing of others' notifications.
  */
 @RestController
 @RequestMapping("/api/notifications")
@@ -53,7 +53,7 @@ public class NotificationController {
     public ResponseEntity<?> markAsRead(@PathVariable Long id, Authentication authentication) {
         User user = resolveUser(authentication);
         return notificationRepository.findById(id)
-                .filter(n -> n.getUserId().equals(user.getId())) // chỉ cho tự đánh dấu thông báo của chính mình
+                .filter(n -> n.getUserId().equals(user.getId())) // only allow marking own notifications as read
                 .<ResponseEntity<?>>map(n -> {
                     n.setRead(true);
                     notificationRepository.save(n);

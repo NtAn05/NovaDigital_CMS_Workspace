@@ -23,7 +23,7 @@ public class VacancyService {
 
     // ── F_37: Careers Board ────────────────────────────────────────────────────
 
-    /** Trả Map<workstream, List<VacancyResponse>> — dùng cho Careers Board */
+    /** Returns Map<workstream, List<VacancyResponse>> — used for Careers Board */
     @Cacheable(cacheNames = "vacancies")
     public Map<String, List<VacancyResponse>> getActiveVacanciesGroupedByWorkstream() {
         return jobVacancyRepository.findByStatus(JobVacancy.VacancyStatus.ACTIVE)
@@ -32,7 +32,7 @@ public class VacancyService {
                 .collect(Collectors.groupingBy(VacancyResponse::getWorkstream));
     }
 
-    /** Trả List phẳng — dùng cho dropdown trong form Apply */
+    /** Returns flat List — used for dropdown in Apply form */
     public List<VacancyResponse> getAllActiveVacancies() {
         return jobVacancyRepository.findByStatus(JobVacancy.VacancyStatus.ACTIVE)
                 .stream()
@@ -42,29 +42,29 @@ public class VacancyService {
 
     // ── F_38: Apply & HR Dashboard ────────────────────────────────────────────
 
-    /** Lưu hồ sơ ứng tuyển */
+    /** Save candidate application */
     public CandidateApplication submitApplication(CandidateApplication application) {
-        // Lấy title snapshot (tránh orphan khi vacancy bị xóa sau này)
+        // Retrieve title snapshot (prevents orphan if vacancy is deleted later)
         jobVacancyRepository.findById(application.getVacancyId())
                 .ifPresent(v -> application.setVacancyTitle(v.getTitle()));
         return applicationRepository.save(application);
     }
 
-    /** HR: Tất cả hồ sơ, mới nhất lên đầu */
+    /** HR: All applications, newest first */
     public List<CandidateApplication> getAllApplications() {
         return applicationRepository.findAllByOrderByAppliedAtDesc();
     }
 
-    /** HR: Lọc hồ sơ theo vị trí */
+    /** HR: Filter applications by vacancy */
     public List<CandidateApplication> getApplicationsByVacancy(Long vacancyId) {
         return applicationRepository.findByVacancyIdOrderByAppliedAtDesc(vacancyId);
     }
 
-    /** Xóa cache vacancies khi có thay đổi dữ liệu */
+    /** Evict vacancies cache when data changes */
     @CacheEvict(cacheNames = "vacancies", allEntries = true)
-    public void evictVacanciesCache() { /* Spring AOP xử lý */ }
+    public void evictVacanciesCache() { /* Handled by Spring AOP */ }
 
-    // ── Mapper private (tránh lặp code) ──────────────────────────────────────
+    // ── Private mapper (prevents code duplication) ──────────────────────────────────────
 
     private VacancyResponse toResponse(JobVacancy v) {
         return new VacancyResponse(v.getId(), v.getTitle(), v.getDescription(),

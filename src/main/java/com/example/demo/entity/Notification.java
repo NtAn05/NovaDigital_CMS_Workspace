@@ -19,7 +19,7 @@ public class Notification {
     private Long id;
 
     @Column(name = "user_id", nullable = false)
-    private Long userId; // FK -> User.id (người nhận thông báo)
+    private Long userId; // FK -> User.id (notification recipient)
 
     @Column(nullable = false, length = 255)
     private String title;
@@ -28,7 +28,7 @@ public class Notification {
     private String message;
 
     @Column(length = 255)
-    private String link; // Trang FE sẽ điều hướng tới khi bấm vào thông báo
+    private String link; // FE page route to navigate when clicking the notification
 
     @Column(name = "is_read", nullable = false)
     private boolean isRead;

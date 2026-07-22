@@ -9,8 +9,8 @@ import java.util.List;
 public interface JobVacancyRepository extends JpaRepository<JobVacancy, Long> {
 
     /**
-     * Truy vấn lấy danh sách các tin tuyển dụng đang mở.
-     * Được gọi bởi VacancyService để phục vụ API GET /api/vacancies.
+     * Query to retrieve the list of active job vacancies.
+     * Called by VacancyService to serve API GET /api/vacancies.
      */
     List<JobVacancy> findByStatus(JobVacancy.VacancyStatus status);
 }

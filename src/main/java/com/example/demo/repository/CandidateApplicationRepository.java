@@ -8,9 +8,9 @@ import java.util.List;
 @Repository
 public interface CandidateApplicationRepository extends JpaRepository<CandidateApplication, Long> {
 
-    /** HR xem tất cả hồ sơ — sắp xếp mới nhất lên đầu */
+    /** HR views all applications — sorted newest first */
     List<CandidateApplication> findAllByOrderByAppliedAtDesc();
 
-    /** HR filter theo vị trí cụ thể */
+    /** HR filter by specific vacancy */
     List<CandidateApplication> findByVacancyIdOrderByAppliedAtDesc(Long vacancyId);
 }

@@ -1,7 +1,7 @@
 package com.example.demo.entity.enums;
 
 /**
- * status của Consultation_Appointment.
+ * Status of Consultation_Appointment.
  */
 public enum AppointmentStatus {
     PENDING,

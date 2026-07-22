@@ -73,7 +73,7 @@ public class AuthController {
                 if (checkUser.getPassword() == null || checkUser.getPassword().isEmpty()) {
                     Map<String, Object> errorResponse = new HashMap<>();
                     errorResponse.put("success", false);
-                    errorResponse.put("message", "Bạn chưa thiết lập mật khẩu cho email này. Hãy chọn Đăng nhập bằng Google để tiếp tục, hoặc thiết lập mật khẩu trong trang Cá nhân.");
+                    errorResponse.put("message", "You have not set a password for this email. Please select Sign in with Google to continue, or set a password in your Profile page.");
                     return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
                 }
             } catch (Exception ignore) {
@@ -90,7 +90,7 @@ public class AuthController {
 
             User authenticatedUser = userService.getUserByUsernameOrEmail(request.getUsernameOrEmail());
 
-            // ── Audit Log: Ghi nhận đăng nhập thành công ──
+            // ── Audit Log: Log successful login ──
             auditService.logAuthAction("LOGIN", authenticatedUser.getUsername());
 
             AuthResponse response = new AuthResponse(
@@ -115,7 +115,7 @@ public class AuthController {
     @Autowired
     private com.example.demo.service.CustomUserDetailsService customUserDetailsService;
 
-    // ── Đăng nhập bằng Google OAuth2 (Access Token) ──
+    // ── Login with Google OAuth2 (Access Token) ──
     @PostMapping("/google")
     public ResponseEntity<?> googleLogin(@RequestBody Map<String, String> body) {
         try {
@@ -124,7 +124,7 @@ public class AuthController {
                 throw new RuntimeException("Google credential is required");
             }
 
-            // Xác thực Access Token
+            // Verify Access Token
             Map<String, Object> payload = googleTokenVerifierService.verifyToken(credential);
 
             String email = (String) payload.get("email");
@@ -132,7 +132,7 @@ public class AuthController {
             String avatarUrl = (String) payload.get("picture");
             String googleSubjectId = (String) payload.get("sub");
 
-            // Tìm user theo email (KHÔNG sửa UserService)
+            // Find user by email (without modifying UserService)
             java.util.Optional<User> optionalUser = userRepository.findByEmail(email);
             User googleUser;
             if (optionalUser.isPresent()) {
@@ -143,7 +143,7 @@ public class AuthController {
                     userRepository.save(googleUser);
                 }
             } else {
-                // Tạo user mới trực tiếp
+                // Create new user directly
                 googleUser = new User();
                 String safeEmail = (email != null && !email.isBlank()) ? email : (googleSubjectId + "@google.com");
                 googleUser.setEmail(safeEmail);
@@ -158,11 +158,11 @@ public class AuthController {
                 googleUser.setProviderId(googleSubjectId);
                 googleUser.setRole("ROLE_USER");
                 googleUser.setEnabled(true);
-                googleUser.setPassword(""); // Dùng chuỗi rỗng thay vì null để tránh lỗi CSDL
+                googleUser.setPassword(""); // Use empty string instead of null to prevent DB errors
                 googleUser = userRepository.save(googleUser);
             }
 
-            // Tạo JWT Token
+            // Generate JWT Token
             org.springframework.security.core.userdetails.UserDetails userDetails =
                     customUserDetailsService.loadUserByUsername(googleUser.getUsername());
             Authentication authentication = new UsernamePasswordAuthenticationToken(

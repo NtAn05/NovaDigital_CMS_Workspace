@@ -25,16 +25,16 @@ public class ConsultationAppointment {
     private Long serviceId; // FK -> Service.id
 
     @Column(name = "client_id", nullable = false)
-    private Long clientId; // FK -> User.id (thông tin khách hàng đã có sẵn ở User/user-profile)
+    private Long clientId; // FK -> User.id (client info available in User/user-profile)
 
     @Column(name = "expert_id", nullable = true)
-    private Long expertId; // FK -> User.id (user có role ROLE_MEMBER) - KHÔNG phải bảng members, bảng đó hầu như không tham gia phân quyền hệ thống
+    private Long expertId; // FK -> User.id (user with role ROLE_MEMBER) - NOT members table, which is not used for system authorization
 
     @Column(name = "appointment_date", nullable = false)
     private LocalDate appointmentDate;
 
     @Column(name = "time_slot", nullable = false)
-    private LocalTime timeSlot; // giờ bắt đầu slot
+    private LocalTime timeSlot; // slot start time
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)
@@ -46,8 +46,8 @@ public class ConsultationAppointment {
     @Column(name = "attachment_url", length = 500)
     private String attachmentUrl;
 
-    // Không có trong schema gốc nhưng cần lưu để hiển thị lại giá đã chốt
-    // (server luôn tính lại theo Service.base_price + Service_Addon đã chọn)
+    // Not in original schema but saved to display agreed total price
+    // (server always recalculates based on Service.base_price + selected Service_Addon)
     @Column(name = "total_price", nullable = false)
     private Double totalPrice;
 

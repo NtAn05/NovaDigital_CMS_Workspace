@@ -31,20 +31,20 @@ public class BookingService {
     private static final LocalTime WORK_START = LocalTime.of(9, 0);
     private static final LocalTime WORK_END = LocalTime.of(18, 0);
 
-    // ── UC-06: Dynamic Pricing Module (DB-driven, không hard-code) ──────
-    // Giá gốc lấy từ Service.base_price (đúng schema)
+    // ── UC-06: Dynamic Pricing Module (DB-driven, no hard-coding) ──────
+    // Base price retrieved from Service.base_price (correct schema)
     public double resolveBasePrice(Long serviceId) {
         Service service = serviceRepository.findById(serviceId)
                 .orElseThrow(() -> new IllegalArgumentException("Service not found with id = " + serviceId));
         return service.getBasePrice() != null ? service.getBasePrice() : 0.0;
     }
 
-    // Danh sách addon khả dụng của 1 service, lấy từ bảng Service_Addon
+    // List of available addons for a service, retrieved from Service_Addon table
     public List<ServiceAddon> getAddonsForService(Long serviceId) {
         return serviceAddonRepository.findByServiceId(serviceId);
     }
 
-    // Server tự tính lại tổng addon dựa trên addonIds do FE gửi lên, không tin price của FE
+    // Server recalculates total addons based on addonIds sent by FE, not trusting FE price
     public double calculateAddonsPrice(Long serviceId, List<Long> addonIds) {
         if (addonIds == null || addonIds.isEmpty()) return 0.0;
         List<ServiceAddon> validAddons = serviceAddonRepository.findByServiceId(serviceId);
@@ -55,7 +55,7 @@ public class BookingService {
         for (Long id : addonIds) {
             Double p = priceById.get(id);
             if (p == null) {
-                throw new IllegalArgumentException("Addon id " + id + " không thuộc service này");
+                throw new IllegalArgumentException("Addon id " + id + " does not belong to this service");
             }
             sum += p;
         }
@@ -95,7 +95,7 @@ public class BookingService {
         boolean clash = existing.stream()
                 .anyMatch(a -> overlaps(start, end, a.getTimeSlot(), a.getTimeSlot().plusMinutes(SLOT_DURATION_MINUTES)));
         if (clash) {
-            throw new IllegalStateException("Khung giờ này đã có người đặt, vui lòng chọn khung giờ khác.");
+            throw new IllegalStateException("This timeslot has already been booked, please select a different time.");
         }
     }
 

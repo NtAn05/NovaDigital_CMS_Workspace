@@ -6,6 +6,6 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
-    // Chỉ nên sử dụng save() để thêm mới theo tính bất biến của thiết kế.
-    // Việc cập nhật (save trên entity đã có ID) hoặc xóa (delete) không được gọi.
+    // Only save() should be used to insert new records based on immutability design.
+    // Updating (save on existing entity ID) or deleting (delete) is not allowed.
 }

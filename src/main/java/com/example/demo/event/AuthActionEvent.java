@@ -1,35 +1,34 @@
 package com.example.demo.event;
 
 /**
- * Event cho các hành động xác thực:
+ * Event for authentication actions:
  * LOGIN, LOGOUT, LOGIN_FAILED, CHANGE_PASSWORD.
  *
- * Thêm thuộc tính userAgent để Admin biết user đang dùng
- * thiết bị/trình duyệt nào → Hữu ích để phát hiện truy cập bất thường
- * (ví dụ: cùng account nhưng userAgent khác hoàn toàn).
+ * Adds userAgent property so Admin knows which device/browser the user is using
+ * → Useful for detecting anomalous access (e.g., same account but completely different userAgent).
  *
- * isSuccess = false dùng cho: LOGIN_FAILED (sai mật khẩu, tài khoản bị khóa...)
- * isSuccess = true  dùng cho: LOGIN thành công, LOGOUT, CHANGE_PASSWORD thành công.
+ * isSuccess = false used for: LOGIN_FAILED (wrong password, account locked...)
+ * isSuccess = true  used for: successful LOGIN, LOGOUT, successful CHANGE_PASSWORD.
  */
 public class AuthActionEvent extends BaseAuditEvent {
 
     /**
-     * Giá trị từ header "User-Agent".
-     * Ví dụ: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124..."
+     * Value from "User-Agent" header.
+     * Example: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124..."
      *
-     * Trích xuất TẠI HTTP THREAD trong Aspect trước publishEvent()
-     * để tránh Context Loss khi sang Async Thread.
+     * Extracted IN HTTP THREAD within Aspect before publishEvent()
+     * to prevent Context Loss when switching to Async Thread.
      */
     private final String userAgent;
 
     /**
-     * @param source       Đối tượng gọi publishEvent (thường là Aspect instance)
+     * @param source       Object publishing event (usually Aspect instance)
      * @param action       "LOGIN" | "LOGOUT" | "LOGIN_FAILED" | "CHANGE_PASSWORD"
-     * @param username     Tên tài khoản (lấy từ SecurityContextHolder)
-     * @param ipAddress    IP thực của client
-     * @param userAgent    Chuỗi User-Agent từ HTTP header
-     * @param isSuccess    true nếu hành động thành công
-     * @param errorMessage Mô tả lỗi nếu isSuccess = false, null nếu thành công
+     * @param username     Username (retrieved from SecurityContextHolder)
+     * @param ipAddress    Actual client IP
+     * @param userAgent    User-Agent string from HTTP header
+     * @param isSuccess    true if the action succeeded
+     * @param errorMessage Error description if isSuccess = false, null if successful
      */
     public AuthActionEvent(Object  source,
                            String  action,

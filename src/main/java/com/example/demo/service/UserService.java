@@ -68,13 +68,13 @@ public class UserService {
     }
 
     /**
-     * Tìm hoặc tạo user từ thông tin Google OAuth2.
-     * - Nếu đã có tài khoản Google (provider=GOOGLE, providerId khớp) → trả về user hiện có.
-     * - Nếu email đã tồn tại (đăng ký thường) → liên kết thêm provider Google vào tài khoản đó.
-     * - Nếu chưa có tài khoản → tự động tạo mới (auto-register), không cần mật khẩu.
+     * Find or create user from Google OAuth2 info.
+     * - If Google account already exists (provider=GOOGLE, providerId matches) → return existing user.
+     * - If email already exists (standard registration) → link Google provider to that account.
+     * - If no account exists → auto-create new user (auto-register), no password required.
      */
     public User findOrCreateGoogleUser(String email, String fullName, String avatarUrl, String googleSubjectId) {
-        // 1. Tìm theo Google provider + providerId
+        // 1. Find by Google provider + providerId
         java.util.Optional<User> existingByProvider = userRepository.findByProviderAndProviderId("GOOGLE", googleSubjectId);
         if (existingByProvider.isPresent()) {
             User user = existingByProvider.get();
@@ -82,11 +82,11 @@ public class UserService {
             return userRepository.save(user);
         }
 
-        // 2. Tìm theo email (có thể đã đăng ký bằng form thường)
+        // 2. Find by email (may have registered via standard form)
         java.util.Optional<User> existingByEmail = userRepository.findByEmail(email);
         if (existingByEmail.isPresent()) {
             User user = existingByEmail.get();
-            // Liên kết tài khoản hiện có với Google
+            // Link existing account with Google
             user.setProvider("GOOGLE");
             user.setProviderId(googleSubjectId);
             if (user.getAvatarUrl() == null && avatarUrl != null) {
@@ -96,18 +96,18 @@ public class UserService {
             return userRepository.save(user);
         }
 
-        // 3. Tạo user mới hoàn toàn (auto-register)
+        // 3. Create completely new user (auto-register)
         User newUser = new User();
         newUser.setEmail(email);
         newUser.setFullName(fullName != null ? fullName : email.split("@")[0]);
         newUser.setAvatarUrl(avatarUrl);
         newUser.setProvider("GOOGLE");
         newUser.setProviderId(googleSubjectId);
-        newUser.setPassword(""); // User Google không có mật khẩu, dùng chuỗi rỗng để tránh lỗi CSDL
+        newUser.setPassword(""); // Google users do not have password, use empty string to avoid DB error
         newUser.setRole("ROLE_USER");
         newUser.setEnabled(true);
 
-        // Tạo username từ phần trước @ của email, nếu trùng thì thêm số ngẫu nhiên
+        // Generate username from prefix before @ of email, append random numbers if duplicate
         String baseUsername = email.split("@")[0].replaceAll("[^a-zA-Z0-9]", "");
         if (baseUsername.isEmpty()) baseUsername = "user";
         String username = baseUsername;

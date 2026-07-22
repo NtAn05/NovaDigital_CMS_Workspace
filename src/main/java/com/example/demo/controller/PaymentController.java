@@ -87,7 +87,7 @@ public class PaymentController {
     public ResponseEntity<?> createPaymentLink(@RequestBody Map<String, Long> payload) {
         Long appointmentId = payload.get("appointmentId");
         if (appointmentId == null) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Thiếu appointmentId"));
+            return ResponseEntity.badRequest().body(Map.of("message", "Missing appointmentId"));
         }
 
         // 1. Get current authenticated user
@@ -95,27 +95,27 @@ public class PaymentController {
         User currentUser = userRepository.findByUsername(username)
                 .orElse(null);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Vui lòng đăng nhập"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Please log in"));
         }
 
         // 2. Find appointment
         ConsultationAppointment appointment = appointmentRepository.findById(appointmentId).orElse(null);
         if (appointment == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Không tìm thấy lịch hẹn"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Appointment not found"));
         }
 
         // 3. Verify ownership (client must match or user must be admin)
         if (!appointment.getClientId().equals(currentUser.getId()) && !currentUser.getRole().equals("ROLE_ADMIN")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Bạn không có quyền thanh toán cho lịch hẹn này"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "You are not authorized to pay for this appointment"));
         }
 
         // 4. Check if already paid / confirmed
         if (appointment.getStatus() == AppointmentStatus.CONFIRMED || appointment.getStatus() == AppointmentStatus.COMPLETED) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Lịch hẹn này đã được thanh toán hoặc xác nhận rồi"));
+            return ResponseEntity.badRequest().body(Map.of("message", "This appointment has already been paid or confirmed"));
         }
 
         if (appointment.getStatus() == AppointmentStatus.CANCELLED) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Lịch hẹn này đã bị hủy, không thể thanh toán"));
+            return ResponseEntity.badRequest().body(Map.of("message", "This appointment is cancelled and cannot be paid"));
         }
 
         // 5. Convert price: USD to VND (1 USD = 25000 VND)
@@ -137,7 +137,7 @@ public class PaymentController {
         transactionRepository.save(transaction);
 
         // 8. Call PayOS to create link
-        String description = "Thanh toan " + appointmentId;
+        String description = "Payment " + appointmentId;
         if (description.length() > 25) {
             description = description.substring(0, 25);
         }
@@ -158,7 +158,7 @@ public class PaymentController {
             return ResponseEntity.ok(result);
         } catch (PayOSException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("message", "Lỗi từ cổng thanh toán PayOS: " + e.getMessage()));
+                    .body(Map.of("message", "PayOS payment gateway error: " + e.getMessage()));
         }
     }
 
@@ -166,36 +166,36 @@ public class PaymentController {
     public ResponseEntity<?> createMilestonePaymentLink(@RequestBody Map<String, Long> payload) {
         Long milestoneId = payload.get("milestoneId");
         if (milestoneId == null) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Thiếu milestoneId"));
+            return ResponseEntity.badRequest().body(Map.of("message", "Missing milestoneId"));
         }
 
         // 1. Get current authenticated user
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepository.findByUsername(username).orElse(null);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Vui lòng đăng nhập"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Please log in"));
         }
 
         // 2. Find milestone
         com.example.demo.entity.ProjectMilestone milestone = milestoneRepository.findById(milestoneId).orElse(null);
         if (milestone == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Không tìm thấy phase (milestone)"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Phase (milestone) not found"));
         }
 
         // 3. Verify ownership: user must have hired the project (or be Admin)
         Long projectId = milestone.getProject().getId();
         boolean hasHired = projectClientRepository.findByProjectIdAndUserId(projectId, currentUser.getId()).isPresent();
         if (!hasHired && !currentUser.getRole().equals("ROLE_ADMIN")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Bạn không có quyền thanh toán cho dự án này"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "You are not authorized to pay for this project"));
         }
 
         // 4. Verify phase status is COMPLETED and unpaid
         if (milestone.getStatus() != com.example.demo.entity.enums.MilestoneStatus.COMPLETED) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Chỉ có thể thanh toán cho các phase đã COMPLETED"));
+            return ResponseEntity.badRequest().body(Map.of("message", "Can only pay for COMPLETED phases"));
         }
 
         if (Boolean.TRUE.equals(milestone.getPaid())) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Phase này đã được thanh toán rồi"));
+            return ResponseEntity.badRequest().body(Map.of("message", "This phase has already been paid"));
         }
 
         // 5. Convert price: USD to VND
@@ -217,7 +217,7 @@ public class PaymentController {
         transactionRepository.save(transaction);
 
         // 8. Call PayOS to create link
-        String description = "Thanh toan phase " + milestoneId;
+        String description = "Phase payment " + milestoneId;
         if (description.length() > 25) {
             description = description.substring(0, 25);
         }
@@ -238,7 +238,7 @@ public class PaymentController {
             return ResponseEntity.ok(result);
         } catch (PayOSException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("message", "Lỗi từ cổng thanh toán PayOS: " + e.getMessage()));
+                    .body(Map.of("message", "PayOS payment gateway error: " + e.getMessage()));
         }
     }
 
@@ -247,7 +247,7 @@ public class PaymentController {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepository.findByUsername(username).orElse(null);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Vui lòng đăng nhập"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Please log in"));
         }
 
         List<Long> appointmentIds = appointmentRepository.findByClientIdOrderByAppointmentDateDesc(currentUser.getId())
@@ -281,18 +281,18 @@ public class PaymentController {
                 m.put("referenceId", t.getAppointmentId());
                 ConsultationAppointment appointment = appointmentRepository.findById(t.getAppointmentId()).orElse(null);
                 if (appointment != null) {
-                    m.put("description", "Thanh toán tư vấn đặt chỗ dịch vụ #" + appointment.getServiceId());
+                    m.put("description", "Consultation booking payment for service #" + appointment.getServiceId());
                 } else {
-                    m.put("description", "Thanh toán tư vấn đặt chỗ");
+                    m.put("description", "Consultation booking payment");
                 }
             } else if (t.getMilestoneId() != null) {
                 m.put("type", "MILESTONE");
                 m.put("referenceId", t.getMilestoneId());
                 com.example.demo.entity.ProjectMilestone milestone = milestoneRepository.findById(t.getMilestoneId()).orElse(null);
                 if (milestone != null) {
-                    m.put("description", "Thanh toán phase \"" + milestone.getName() + "\" - Dự án " + milestone.getProject().getTitle());
+                    m.put("description", "Payment for phase \"" + milestone.getName() + "\" - Project " + milestone.getProject().getTitle());
                 } else {
-                    m.put("description", "Thanh toán Phase dự án");
+                    m.put("description", "Project Phase payment");
                 }
             }
             return m;
@@ -305,7 +305,7 @@ public class PaymentController {
     public ResponseEntity<?> getPaymentStatus(@PathVariable Long orderCode) {
         PaymentTransaction transaction = transactionRepository.findByOrderCode(orderCode).orElse(null);
         if (transaction == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Không tìm thấy giao dịch"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Transaction not found"));
         }
 
         if ("PAID".equals(transaction.getStatus())) {
@@ -331,7 +331,7 @@ public class PaymentController {
                 return ResponseEntity.ok(Map.of("status", status.name()));
             }
         } catch (PayOSException e) {
-            return ResponseEntity.ok(Map.of("status", transaction.getStatus(), "message", "Không thể cập nhật từ PayOS: " + e.getMessage()));
+            return ResponseEntity.ok(Map.of("status", transaction.getStatus(), "message", "Unable to update from PayOS: " + e.getMessage()));
         }
     }
 
@@ -347,7 +347,7 @@ public class PaymentController {
             }
             return ResponseEntity.ok(Map.of("success", true));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "Chữ ký không hợp lệ: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "Invalid signature: " + e.getMessage()));
         }
     }
 
@@ -436,11 +436,11 @@ public class PaymentController {
 
         String customerName = userRepository.findById(appointment.getClientId())
                 .map(User::getFullName)
-                .orElse("Khách hàng #" + appointment.getClientId());
+                .orElse("Customer #" + appointment.getClientId());
 
         String serviceTitle = serviceRepository.findById(appointment.getServiceId())
                 .map(Service::getTitle)
-                .orElse("dịch vụ #" + appointment.getServiceId());
+                .orElse("service #" + appointment.getServiceId());
 
         Notification noti = new Notification();
         noti.setUserId(expertUserId);
@@ -460,7 +460,7 @@ public class PaymentController {
 
         String serviceTitle = serviceRepository.findById(appointment.getServiceId())
                 .map(Service::getTitle)
-                .orElse("dịch vụ #" + appointment.getServiceId());
+                .orElse("service #" + appointment.getServiceId());
 
         String expertName = appointment.getExpertId() != null
                 ? userRepository.findById(appointment.getExpertId())

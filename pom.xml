@@ -131,11 +131,7 @@
             <scope>runtime</scope>
         </dependency> -->
 
-       <dependency>
-           <groupId>com.mysql</groupId>
-           <artifactId>mysql-connector-j</artifactId>
-           <scope>runtime</scope>
-       </dependency>
+
         <!-- PayOS Payment Gateway -->
         <dependency>
             <groupId>vn.payos</groupId>
