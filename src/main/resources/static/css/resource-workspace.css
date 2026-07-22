@@ -1,0 +1,525 @@
+/*
+ * Shared visual contract for the Resource Allocation / HR Recruitment workspace.
+ * This file is intentionally scoped to .resource-dashboard-page so it cannot
+ * change Admin, PM, public-site, or authentication screens.
+ */
+
+html {
+  scrollbar-gutter: stable;
+}
+
+body.resource-dashboard-page {
+  --resource-sidebar-width: 252px;
+  --resource-header-height: 76px;
+  --resource-page-gap: 0.9rem;
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at 78% 10%, rgba(14, 165, 233, 0.11), transparent 27rem),
+    radial-gradient(circle at 20% 12%, rgba(99, 102, 241, 0.10), transparent 25rem),
+    #f4f7fb !important;
+}
+
+/* Keep the workspace tab bar at one exact position on both pages.
+   The header may still animate independently when the page is scrolled. */
+body.resource-dashboard-page .resource-layout {
+  min-height: 100vh;
+  padding-top: var(--resource-header-height) !important;
+}
+
+body.resource-dashboard-page .resource-sidebar {
+  box-sizing: border-box;
+  width: var(--resource-sidebar-width) !important;
+  top: var(--resource-header-height) !important;
+  min-height: calc(100vh - var(--resource-header-height)) !important;
+  padding: 1.05rem 0 1rem !important;
+  transition:
+    transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    width 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Override the old 72px scrolled-sidebar rule only. The header animation remains untouched. */
+body.resource-dashboard-page .resource-header.is-scrolled ~ .resource-layout .resource-sidebar {
+  top: var(--resource-header-height) !important;
+  min-height: calc(100vh - var(--resource-header-height)) !important;
+}
+
+body.resource-dashboard-page .resource-sidebar-brand {
+  box-sizing: border-box;
+  min-height: 32px;
+  margin-bottom: 0.8rem !important;
+  padding: 0 1.15rem 0.95rem !important;
+}
+
+body.resource-dashboard-page .resource-sidebar-title {
+  box-sizing: border-box;
+  min-height: 14px;
+  margin: 0.85rem 0 0.45rem !important;
+  padding: 0 1.15rem !important;
+  line-height: 1.25;
+}
+
+body.resource-dashboard-page .resource-sidebar-nav {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0 0.65rem !important;
+}
+
+body.resource-dashboard-page .resource-sidebar-nav li {
+  box-sizing: border-box;
+  min-height: 40px;
+  margin-bottom: 2px !important;
+}
+
+body.resource-dashboard-page .resource-sidebar-nav a {
+  box-sizing: border-box;
+  min-height: 40px;
+  padding: 0.66rem 0.72rem !important;
+  border-radius: 11px !important;
+  font-size: 0.82rem !important;
+  line-height: 1.25;
+  transition:
+    color 0.18s ease,
+    background-color 0.18s ease,
+    box-shadow 0.18s ease !important;
+}
+
+body.resource-dashboard-page .resource-sidebar-nav svg {
+  width: 17px !important;
+  height: 17px !important;
+  flex: 0 0 17px;
+}
+
+body.resource-dashboard-page .resource-sidebar-footer {
+  padding: 0.9rem 1rem 0 !important;
+}
+
+body.resource-dashboard-page .resource-main {
+  margin-left: var(--resource-sidebar-width) !important;
+  min-height: calc(100vh - var(--resource-header-height));
+}
+
+body.resource-dashboard-page.sidebar-collapsed .resource-main {
+  margin-left: 0 !important;
+}
+
+body.resource-dashboard-page.sidebar-collapsed .resource-sidebar {
+  width: 0 !important;
+}
+
+/* Use one consistent theme-control treatment on both workspace pages. */
+body.resource-dashboard-page .resource-theme-btn {
+  right: 22px !important;
+  bottom: 22px !important;
+  width: 50px !important;
+  height: 50px !important;
+  border-radius: 16px !important;
+}
+
+body.resource-dashboard-page .resource-theme-btn:focus-visible {
+  outline: 3px solid rgba(59, 130, 246, 0.28);
+  outline-offset: 3px;
+}
+
+body.resource-dashboard-page .resource-theme-btn svg {
+  width: 23px;
+  height: 23px;
+}
+
+/* Shared, smooth theme transition without affecting header scroll geometry. */
+body.resource-dashboard-page,
+body.resource-dashboard-page .resource-main,
+body.resource-dashboard-page .resource-stat-card,
+body.resource-dashboard-page .resource-filter-card,
+body.resource-dashboard-page .resource-table-card,
+body.resource-dashboard-page .resource-panel-header,
+body.resource-dashboard-page .resource-card-heading,
+body.resource-dashboard-page .resource-table-toolbar,
+body.resource-dashboard-page .resource-table th,
+body.resource-dashboard-page .resource-table td,
+body.resource-dashboard-page .pagination-controls,
+body.resource-dashboard-page .modal-content,
+body.resource-dashboard-page .modal-header,
+body.resource-dashboard-page .modal-body,
+body.resource-dashboard-page .account-dropdown-menu,
+body.resource-dashboard-page select,
+body.resource-dashboard-page input,
+body.resource-dashboard-page textarea {
+  transition:
+    background-color 0.28s ease,
+    color 0.28s ease,
+    border-color 0.28s ease,
+    box-shadow 0.28s ease;
+}
+
+/* HR Recruitment adopts the same compact dashboard language as Resource Allocation. */
+body.hr-recruitment-page .resource-main {
+  padding: 1.05rem 1.35rem 2rem !important;
+  background: transparent !important;
+}
+
+body.hr-recruitment-page .resource-main > section,
+body.hr-recruitment-page .resource-main > div {
+  width: 100%;
+  max-width: none;
+  margin: 0 0 var(--resource-page-gap) !important;
+}
+
+body.hr-recruitment-page .resource-stats-grid {
+  grid-template-columns: repeat(3, minmax(165px, 1fr)) !important;
+  gap: 0.75rem !important;
+  margin-bottom: var(--resource-page-gap) !important;
+}
+
+body.hr-recruitment-page .resource-stat-card {
+  gap: 0.78rem;
+  min-height: 92px;
+  padding: 0.86rem 0.95rem;
+  border: 1px solid var(--border-color);
+  border-radius: 15px;
+  background: var(--bg-white) !important;
+  box-shadow: 0 8px 24px -22px rgba(15, 23, 42, 0.55);
+}
+
+body.hr-recruitment-page .resource-stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px -18px rgba(15, 23, 42, 0.6);
+}
+
+body.hr-recruitment-page .resource-stat-icon {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  border-radius: 11px;
+}
+
+body.hr-recruitment-page .resource-stat-icon svg {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+body.hr-recruitment-page .resource-stat-data h3 {
+  font-size: 1.42rem;
+}
+
+body.hr-recruitment-page .resource-stat-data p {
+  margin-top: 0.14rem;
+  font-size: 0.66rem;
+}
+
+body.hr-recruitment-page .resource-stat-data small {
+  display: block;
+  margin-top: 0.1rem;
+  color: var(--text-muted);
+  font-size: 0.61rem;
+  line-height: 1.35;
+}
+
+body.hr-recruitment-page .resource-table-card {
+  overflow: hidden;
+  margin-bottom: var(--resource-page-gap);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  background: var(--bg-white) !important;
+  box-shadow: 0 10px 30px -26px rgba(15, 23, 42, 0.55);
+}
+
+body.hr-recruitment-page .resource-table-toolbar {
+  min-height: 64px;
+  padding: 0.78rem 1rem !important;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-white);
+}
+
+body.hr-recruitment-page .resource-table-toolbar h2 {
+  font-family: var(--font-heading);
+  font-size: 0.94rem !important;
+  font-weight: 700;
+}
+
+body.hr-recruitment-page .resource-table-toolbar p {
+  margin-top: 0.12rem !important;
+  font-size: 0.69rem !important;
+}
+
+body.hr-recruitment-page .resource-filters-inline {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+body.hr-recruitment-page .resource-filters-inline label {
+  color: var(--text-dark) !important;
+  font-size: 0.69rem !important;
+  font-weight: 700 !important;
+}
+
+body.hr-recruitment-page #vacancy-filter {
+  min-width: 220px;
+  min-height: 39px;
+  padding: 0.56rem 0.68rem !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 9px !important;
+  color: var(--text-dark);
+  background: var(--bg-white);
+  font-size: 0.76rem !important;
+}
+
+body.hr-recruitment-page #vacancy-filter:focus {
+  border-color: #60a5fa !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+body.hr-recruitment-page .table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+body.hr-recruitment-page .resource-table {
+  width: 100%;
+  min-width: 980px;
+  border-collapse: collapse;
+  font-size: 0.76rem;
+}
+
+body.hr-recruitment-page .resource-table th {
+  padding: 0.7rem 0.9rem;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-dark);
+  background: var(--table-header-bg, #f8fafc) !important;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.055em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+body.hr-recruitment-page .resource-table td {
+  padding: 0.78rem 0.9rem;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--text-dark);
+  background: transparent;
+  vertical-align: middle;
+}
+
+body.hr-recruitment-page .resource-table tbody tr:hover {
+  background: var(--card-bg-hover, #fbfdff) !important;
+}
+
+body.hr-recruitment-page #loading-row td,
+body.hr-recruitment-page #empty-row td {
+  padding: 2.3rem 1rem !important;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+body.hr-recruitment-page .position-badge {
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+
+body.hr-recruitment-page .btn-cv {
+  border-color: #bfdbfe;
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+body.hr-recruitment-page .pagination-controls {
+  padding: 0.85rem 1rem !important;
+  border-top: 1px solid var(--border-color) !important;
+  background: var(--table-header-bg, #f8fafc) !important;
+}
+
+body.hr-recruitment-page #page-prev:disabled,
+body.hr-recruitment-page #page-next:disabled {
+  cursor: not-allowed !important;
+  opacity: 0.48;
+}
+
+body.hr-recruitment-page .modal-content {
+  border: 1px solid var(--border-color);
+  background: var(--bg-white) !important;
+}
+
+body.hr-recruitment-page .modal-header {
+  border-bottom-color: var(--border-color) !important;
+  background: var(--table-header-bg, #f8fafc) !important;
+}
+
+body.hr-recruitment-page .modal-body {
+  background: var(--bg-light) !important;
+}
+
+body.hr-recruitment-page #cover-letter-modal .modal-body {
+  background: var(--bg-white) !important;
+}
+
+body.hr-recruitment-page .account-dropdown-menu a:hover,
+body.hr-recruitment-page .account-dropdown-menu button:hover {
+  background: rgba(148, 163, 184, 0.12) !important;
+}
+
+html.dark-theme body.resource-dashboard-page {
+  background:
+    radial-gradient(circle at 78% 10%, rgba(14, 165, 233, 0.13), transparent 27rem),
+    radial-gradient(circle at 20% 12%, rgba(99, 102, 241, 0.13), transparent 25rem),
+    #0b1020 !important;
+}
+
+html.dark-theme body.hr-recruitment-page .resource-panel-header {
+  background: rgba(22, 27, 43, 0.76) !important;
+  border-color: rgba(148, 163, 184, 0.14) !important;
+}
+
+html.dark-theme body.hr-recruitment-page .resource-stat-card,
+html.dark-theme body.hr-recruitment-page .resource-table-card,
+html.dark-theme body.hr-recruitment-page .resource-table-toolbar,
+html.dark-theme body.hr-recruitment-page .account-dropdown-menu,
+html.dark-theme body.hr-recruitment-page .modal-content {
+  background: var(--bg-white) !important;
+  border-color: var(--border-color) !important;
+}
+
+html.dark-theme body.hr-recruitment-page .resource-table th,
+html.dark-theme body.hr-recruitment-page .pagination-controls,
+html.dark-theme body.hr-recruitment-page .modal-header {
+  background: var(--table-header-bg) !important;
+  border-color: var(--border-color) !important;
+}
+
+html.dark-theme body.hr-recruitment-page .resource-table tbody tr:hover {
+  background: var(--card-bg-hover) !important;
+}
+
+html.dark-theme body.hr-recruitment-page #page-numbers span:not([style*="background"]) {
+  color: var(--text-muted) !important;
+}
+
+html.dark-theme body.hr-recruitment-page #vacancy-filter {
+  color: var(--text-dark) !important;
+  background: var(--input-bg, #111827) !important;
+  border-color: var(--border-color) !important;
+}
+
+html.dark-theme body.hr-recruitment-page #vacancy-filter option {
+  color: var(--text-dark);
+  background: var(--bg-white);
+}
+
+html.dark-theme body.hr-recruitment-page .position-badge {
+  color: #93c5fd;
+  background: rgba(37, 99, 235, 0.16);
+}
+
+html.dark-theme body.hr-recruitment-page .btn-cv {
+  color: #93c5fd;
+  border-color: rgba(96, 165, 250, 0.38);
+  background: rgba(37, 99, 235, 0.13);
+}
+
+html.dark-theme body.hr-recruitment-page .btn-cv:hover {
+  color: #fff;
+  border-color: #2563eb;
+  background: #2563eb;
+}
+
+html.dark-theme body.hr-recruitment-page .modal-body,
+html.dark-theme body.hr-recruitment-page #cover-letter-modal .modal-body {
+  color: var(--text-dark);
+  background: var(--bg-white) !important;
+}
+
+html.dark-theme body.hr-recruitment-page .modal-overlay {
+  background: rgba(2, 6, 23, 0.82);
+}
+
+html.dark-theme body.hr-recruitment-page .modal-close {
+  color: var(--text-muted);
+}
+
+html.dark-theme body.hr-recruitment-page .resource-stat-icon.blue {
+  color: #60a5fa;
+  background: rgba(37, 99, 235, 0.16);
+}
+
+html.dark-theme body.hr-recruitment-page .resource-stat-icon.purple {
+  color: #c4b5fd;
+  background: rgba(139, 92, 246, 0.16);
+}
+
+html.dark-theme body.hr-recruitment-page .resource-stat-icon.green {
+  color: #6ee7b7;
+  background: rgba(16, 185, 129, 0.16);
+}
+
+@media (max-width: 900px) {
+  body.resource-dashboard-page {
+    --resource-sidebar-width: 220px;
+    --resource-header-height: 68px;
+  }
+
+  body.resource-dashboard-page .resource-sidebar {
+    width: var(--resource-sidebar-width) !important;
+    top: var(--resource-header-height) !important;
+    min-height: calc(100vh - var(--resource-header-height)) !important;
+  }
+
+  body.resource-dashboard-page .resource-main {
+    margin-left: var(--resource-sidebar-width) !important;
+  }
+
+  body.resource-dashboard-page.sidebar-collapsed .resource-main {
+    margin-left: 0 !important;
+  }
+
+  body.hr-recruitment-page .resource-main {
+    padding: 0.9rem 1rem 1.6rem !important;
+  }
+}
+
+@media (max-width: 720px) {
+  body.resource-dashboard-page {
+    --resource-header-height: 66px;
+  }
+
+  body.resource-dashboard-page .resource-sidebar {
+    display: none !important;
+  }
+
+  body.resource-dashboard-page .resource-main {
+    margin-left: 0 !important;
+  }
+
+  body.hr-recruitment-page .resource-main {
+    padding: 0.8rem 0.75rem 1.5rem !important;
+  }
+
+  body.hr-recruitment-page .resource-stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  body.hr-recruitment-page .resource-table-toolbar,
+  body.hr-recruitment-page .resource-filters-inline {
+    align-items: flex-start !important;
+    flex-direction: column;
+  }
+
+  body.hr-recruitment-page #vacancy-filter {
+    width: 100%;
+    min-width: 0;
+  }
+
+  body.resource-dashboard-page .resource-theme-btn {
+    right: 14px !important;
+    bottom: 14px !important;
+    width: 47px !important;
+    height: 47px !important;
+    border-radius: 15px !important;
+  }
+}

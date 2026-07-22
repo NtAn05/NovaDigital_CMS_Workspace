@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="NovaDigital HR — Manage Job Applications">
+  <meta name="description" content="NovaDigital HR — Quản lý hồ sơ ứng tuyển">
   <title>HR Recruitment | NovaDigital</title>
   <link rel="stylesheet" href="/css/style.css">
   <script>
@@ -453,8 +453,9 @@
     }
 
   </style>
+  <link rel="stylesheet" href="/css/resource-workspace.css">
 </head>
-<body class="dashboard-page resource-dashboard-page">
+<body class="dashboard-page resource-dashboard-page hr-recruitment-page">
 
   <header class="resource-header" id="mainHeader">
     <nav class="navbar resource-navbar">
@@ -464,11 +465,11 @@
       </a>
       <div class="resource-navbar-actions">
         <div class="resource-account-wrapper" style="position: relative;">
-          <div class="resource-account" aria-label="Signed-in HR Manager" onclick="toggleAccountMenu()" style="cursor: pointer;">
-            <div class="resource-account-avatar" id="accountInitials">HR</div>
+          <div class="resource-account" aria-label="Signed-in Resource Manager" onclick="toggleAccountMenu()" style="cursor: pointer;">
+            <div class="resource-account-avatar" id="accountInitials">RM</div>
             <div class="resource-account-copy">
               <span class="resource-account-name" id="actorName">Loading...</span>
-              <span class="resource-account-role">HR Manager</span>
+              <span class="resource-account-role">RESOURCE MANAGER</span>
             </div>
             <svg class="resource-account-chevron" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="6 9 12 15 18 9"></polyline>
@@ -538,16 +539,16 @@
       <!-- Stats -->
       <section class="resource-stats-grid">
         <article class="resource-stat-card">
-          <div class="resource-stat-icon blue">📥</div>
-          <div class="resource-stat-data"><h3 id="stat-total">—</h3><p>Total Applications</p></div>
+          <div class="resource-stat-icon blue"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
+          <div class="resource-stat-data"><h3 id="stat-total">—</h3><p>Total Applications</p><small>All submitted candidate profiles</small></div>
         </article>
         <article class="resource-stat-card">
-          <div class="resource-stat-icon purple">💼</div>
-          <div class="resource-stat-data"><h3 id="stat-positions">—</h3><p>Active Vacancies</p></div>
+          <div class="resource-stat-icon purple"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/></svg></div>
+          <div class="resource-stat-data"><h3 id="stat-positions">—</h3><p>Active Vacancies</p><small>Positions receiving applications</small></div>
         </article>
         <article class="resource-stat-card">
-          <div class="resource-stat-icon green">📅</div>
-          <div class="resource-stat-data"><h3 id="stat-today">—</h3><p>Today's Applications</p></div>
+          <div class="resource-stat-icon green"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><polyline points="9 16 11 18 15 14"/></svg></div>
+          <div class="resource-stat-data"><h3 id="stat-today">—</h3><p>Today's Applications</p><small>New profiles received today</small></div>
         </article>
       </section>
 
@@ -567,7 +568,7 @@
             </select>
           </div>
         </div>
-        <div style="overflow-x:auto;">
+        <div class="table-wrap">
           <table class="resource-table">
             <thead>
               <tr>
@@ -639,7 +640,7 @@
     syncHeaderShape();
     window.addEventListener('scroll', syncHeaderShape, { passive: true });
 
-    // ── Auth guard: only ADMIN or ROLE_RESOURCE (HR) ─────────
+    // ── Auth guard: chỉ ADMIN hoặc ROLE_RESOURCE (HR) ─────────
     const token = localStorage.getItem('authToken') || localStorage.getItem('token') || sessionStorage.getItem('authToken') || sessionStorage.getItem('token');
     
     function safeJson(str) {
@@ -658,9 +659,9 @@
       window.location.href = 'index.html?error=unauthorized#login';
     }
 
-    // Display user name
+    // Hiển thị tên người dùng
     const nameEl = document.getElementById('actorName');
-    nameEl.textContent = userData.fullName || userData.username || 'HR Manager';
+    nameEl.textContent = userData.fullName || userData.username || 'Resource Manager';
     const initials = document.getElementById('accountInitials');
     const name = nameEl.textContent;
     initials.textContent = name.split(' ').slice(-2).map(w => w[0]).join('').toUpperCase();
@@ -676,13 +677,13 @@
     let currentPage = 1;
     const itemsPerPage = 8;
 
-    // ── Load all applications ─────────────────────────────────────
+    // ── Load tất cả hồ sơ ─────────────────────────────────────
     async function loadApplications() {
       try {
         const res  = await fetch('/api/vacancies/applications', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (res.status === 403) throw new Error('Access denied');
+        if (res.status === 403) throw new Error('Không có quyền truy cập');
         allApplications = await res.json();
         filteredApplications = [...allApplications];
         renderTable();
@@ -755,7 +756,7 @@
       window.location.href = 'index.html#login';
     };
 
-    // ── Render table ────────────────────────────────────────────
+    // ── Render bảng ────────────────────────────────────────────
     function renderTable() {
       const data = filteredApplications;
       window.currentApplications = data;
@@ -866,7 +867,7 @@
       setTimeout(() => document.getElementById('cv-iframe').src = '', 300);
     }
 
-    // ── Calculate stats ─────────────────────────────────────────────
+    // ── Tính stats ─────────────────────────────────────────────
     function buildStats(data) {
       document.getElementById('stat-total').textContent = data.length;
       const positions = new Set(data.map(a => a.vacancyId));
@@ -876,7 +877,7 @@
       document.getElementById('stat-today').textContent = todayCount;
     }
 
-    // ── Generate filter dropdown from actual vacancy list ────────
+    // ── Tạo filter dropdown từ danh sách vị trí thực tế ────────
     function buildFilterOptions(data) {
       const sel = document.getElementById('vacancy-filter');
       const map = {};
