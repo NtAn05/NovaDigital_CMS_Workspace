@@ -739,6 +739,7 @@
         return;
       }
 
+      const role = localStorage.getItem("role") || sessionStorage.getItem("role");
       tbody.innerHTML = filteredMessages.map(msg => {
         const dateStr = new Date(msg.createdAt).toLocaleString("en-US", {
           hour: "2-digit", minute: "2-digit",
@@ -763,6 +764,8 @@
           `;
         }
 
+        const isRepliable = !msg.replied && role !== "ROLE_ADMIN";
+
         return `
           <tr>
             <td>
@@ -784,7 +787,7 @@
             </td>
             <td>
               <div class="action-btn-group">
-                ${!msg.replied ? `
+                ${isRepliable ? `
                   <button class="btn-action-reply" onclick="openReplyDialog(${msg.id}, '${escapeHtml(msg.fullName)}', '${escapeHtml(msg.title)}')">
                     Reply
                   </button>

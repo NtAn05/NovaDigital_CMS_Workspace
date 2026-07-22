@@ -634,6 +634,10 @@ function updateNavbarAuth() {
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
           Inbox
         </a>
+        <a href="my-bookings.html" class="dropdown-item">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          My Bookings
+        </a>
         <a href="transaction.html" class="dropdown-item">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           My Transaction
@@ -1717,6 +1721,7 @@ function initAdminDashboard() {
       return;
     }
 
+    const role = localStorage.getItem("role") || sessionStorage.getItem("role");
     tbody.innerHTML = filteredMessages.map(msg => {
       const dateStr = new Date(msg.createdAt).toLocaleString("en-US", {
         hour: "2-digit", minute: "2-digit",
@@ -1741,6 +1746,8 @@ function initAdminDashboard() {
         `;
       }
 
+      const isRepliable = !msg.replied && role !== "ROLE_ADMIN";
+
       return `
         <tr>
           <td>
@@ -1762,7 +1769,7 @@ function initAdminDashboard() {
           </td>
           <td>
             <div class="action-btns">
-              ${!msg.replied ? `
+              ${isRepliable ? `
                 <button class="btn-edit" style="background:var(--color-primary, #2563eb); color:#fff; border:none;" onclick="openReplyDialog(${msg.id}, '${escapeHtml(msg.fullName)}', '${escapeHtml(msg.title)}')">
                   Reply
                 </button>
@@ -3483,6 +3490,13 @@ function formatNotificationTime(iso) {
   `;
 
     document.body.appendChild(quickPanel);
+
+    // Append chatbot FAB button inside quick-panel for pixel-perfect vertical alignment and sizing
+    const fabEl = document.getElementById("chatbot-fab");
+    if (fabEl) {
+      fabEl.classList.add("quick-panel-btn");
+      quickPanel.appendChild(fabEl);
+    }
 
     // Scroll to top
     const scrollTopBtn = document.getElementById("quick-scroll-top");

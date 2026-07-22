@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="NovaDigital - View and manage your consultation bookings.">
+  <title>My Bookings | NovaDigital</title>
+  <link rel="stylesheet" href="/css/style.css?v=resource-integrated-v9">
+  <style>
+    .bookings-page {
+      min-height: 100vh;
+      padding: 7rem 1.5rem 5rem;
+    }
+    .bookings-container {
+      max-width: 980px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+    .bookings-header {
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    .bookings-header .hero-pill {
+      display: inline-block;
+      background: rgba(37, 99, 235, 0.08);
+      color: var(--primary);
+      border: 1px solid rgba(37, 99, 235, 0.18);
+      padding: 0.35rem 1.1rem;
+      border-radius: 50px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 0.9rem;
+    }
+    .bookings-header h1 {
+      font-family: var(--font-heading);
+      font-size: 2.6rem;
+      font-weight: 800;
+      color: var(--text-dark);
+      line-height: 1.2;
+      margin-bottom: 0.5rem;
+    }
+    .bookings-header p {
+      color: var(--text-muted);
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+    .bookings-card {
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 10px 40px rgba(37, 99, 235, 0.07), 0 2px 8px rgba(0,0,0,0.04);
+      overflow: hidden;
+      padding: 2rem;
+    }
+    html.dark-theme .bookings-card {
+      background: rgba(15, 23, 42, 0.6);
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+    
+    /* Table styles */
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+    th, td {
+      padding: 1rem;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+    html.dark-theme th, html.dark-theme td {
+      border-color: rgba(255,255,255,0.08);
+    }
+    th {
+      font-weight: 700;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: rgba(0,0,0,0.02);
+    }
+    html.dark-theme th {
+      background: rgba(255,255,255,0.02);
+    }
+    td {
+      font-size: 0.92rem;
+      color: var(--text-dark);
+    }
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.75rem;
+      border-radius: 50px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .status-pending {
+      background: #fef3c7;
+      color: #d97706;
+      border: 1px solid #fde68a;
+    }
+    .status-confirmed {
+      background: #d1fae5;
+      color: #059669;
+      border: 1px solid #a7f3d0;
+    }
+    .status-cancelled {
+      background: #fee2e2;
+      color: #dc2626;
+      border: 1px solid #fca5a5;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--text-muted);
+    }
+    .empty-state svg {
+      width: 64px;
+      height: 64px;
+      stroke: var(--text-muted);
+      opacity: 0.5;
+      margin-bottom: 1.5rem;
+    }
+    .btn-book {
+      display: inline-block;
+      margin-top: 1rem;
+      padding: 0.75rem 1.5rem;
+      background: var(--primary);
+      color: white;
+      text-decoration: none;
+      font-weight: 700;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+    .btn-book:hover {
+      transform: translateY(-1.5px);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+    .expert-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .expert-avatar-placeholder {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.7rem;
+    }
+  </style>
+</head>
+<body class="dashboard-page">
+  <!-- Header -->
+  <header>
+    <nav class="navbar">
+      <a href="index.html" class="logo" id="header-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+        <span>NovaDigital</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">Introduce</a></li>
+        <li><a href="services.html">Services</a></li>
+        <li><a href="portfolio.html">Project</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        <li><a href="#" class="nav-btn" id="default-get-started">Get Started Now</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- Main Content -->
+  <main class="bookings-page">
+    <div class="bookings-container">
+      <div class="bookings-header">
+        <span class="hero-pill">Consultations</span>
+        <h1>My Bookings</h1>
+        <p>Manage, track status, and view details of your scheduled consultation appointments.</p>
+      </div>
+
+      <div class="bookings-card">
+        <div class="table-responsive">
+          <table id="bookings-table">
+            <thead>
+              <tr>
+                <th>Service</th>
+                <th>Appointment Date &amp; Time</th>
+                <th>Consultant Expert</th>
+                <th>Attachment</th>
+                <th>Price</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="bookings-tbody">
+              <tr>
+                <td colspan="6" style="text-align:center; padding: 3rem; color: var(--text-muted);">
+                  Loading your bookings...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer Section -->
+  <footer>
+    <div class="footer-container">
+      <div class="footer-col">
+        <a href="index.html" class="footer-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+          <span>NovaDigital</span>
+        </a>
+        <p>Bring your business closer to millions of customers through comprehensive UI/UX design and technology solutions.</p>
+        <!-- Social icons in brand column -->
+        <div class="social-icons-footer" style="margin-top: 1.5rem;">
+          <a href="#" aria-label="Facebook">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/></svg>
+          </a>
+          <a href="#" aria-label="Github">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          </a>
+          <a href="#" aria-label="LinkedIn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.779-1.75-1.75s.784-1.75 1.75-1.75 1.75.779 1.75 1.75-.784 1.75-1.75 1.75zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+          </a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h3>Quick Links</h3>
+        <ul class="footer-links">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="about.html">About Us</a></li>
+          <li><a href="services.html">Services</a></li>
+          <li><a href="portfolio.html">Projects</a></li>
+          <li><a href="contact.html">Contact</a></li>
+          <li><a href="booking.html">Book Consultation</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h3>Contact Us</h3>
+        <div class="footer-info">
+          <div class="footer-info-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            <span>Ho Chi Minh City, Vietnam</span>
+          </div>
+          <div class="footer-info-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+            <a href="mailto:contact@novadigital.com">contact@novadigital.com</a>
+          </div>
+          <div class="footer-info-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8 19.79 19.79 0 01.02 1.18 2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"></path>
+            </svg>
+            <span>+84 (0) 123 456 789</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 NovaDigital Creative Agency. All rights reserved.</p>
+      <p style="opacity: 0.5; font-size: 0.82rem;">Crafted with ♥ in Vietnam</p>
+    </div>
+  </footer>
+
+  <script src="/js/main.js?v=resource-integrated-v9"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      if (!token) {
+        window.location.href = "index.html?error=unauthorized#login";
+        return;
+      }
+
+      loadBookings();
+
+      async function loadBookings() {
+        const tbody = document.getElementById("bookings-tbody");
+        try {
+          const res = await fetch("/api/bookings/my", {
+            headers: {
+              "Authorization": "Bearer " + token
+            }
+          });
+          if (!res.ok) {
+            throw new Error("Failed to fetch bookings");
+          }
+          const bookings = await res.json();
+          if (bookings.length === 0) {
+            tbody.innerHTML = `
+              <tr>
+                <td colspan="6">
+                  <div class="empty-state">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                      <line x1="16" y1="2" x2="16" y2="6"></line>
+                      <line x1="8" y1="2" x2="8" y2="6"></line>
+                      <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                    <p style="margin: 0; font-size: 1.1rem; font-weight:600; color: var(--text-dark);">No bookings found</p>
+                    <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem; color: var(--text-muted);">You haven't booked any consultations yet.</p>
+                    <a href="booking.html" class="btn-book">Book a Consultation Now</a>
+                  </div>
+                </td>
+              </tr>
+            `;
+            return;
+          }
+
+          tbody.innerHTML = bookings.map(b => {
+            const statusClass = b.status === "CONFIRMED" ? "status-confirmed" : (b.status === "PENDING" ? "status-pending" : "status-cancelled");
+            
+            // Format expert name
+            const expertName = b.expertName || "Pending Assignment";
+            const expertHtml = b.expertName ? `
+              <div class="expert-info">
+                <div class="expert-avatar-placeholder">${expertName.charAt(0).toUpperCase()}</div>
+                <span>${escapeHtml(expertName)}</span>
+              </div>
+            ` : `<span style="color: var(--text-muted); font-style: italic;">Pending Assignment</span>`;
+
+            // Format attachment
+            const attachmentHtml = b.attachmentUrl ? `
+              <a href="${escapeHtml(b.attachmentUrl)}" target="_blank" style="color: var(--primary); font-weight: 600; text-decoration: underline; display: flex; align-items: center; gap: 4px;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                View File
+              </a>
+            ` : `<span style="color: var(--text-muted);">No File</span>`;
+
+            // Time slot substring to show HH:MM
+            const formattedTime = (b.timeSlot || "").slice(0, 5);
+
+            return `
+              <tr>
+                <td style="font-weight: 700; color: var(--text-dark);">${escapeHtml(b.serviceName || "Consultation")}</td>
+                <td>
+                  <div style="font-weight:600; color: var(--text-dark);">${escapeHtml(b.appointmentDate)}</div>
+                  <div style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">at ${escapeHtml(formattedTime)}</div>
+                </td>
+                <td>${expertHtml}</td>
+                <td>${attachmentHtml}</td>
+                <td style="font-weight: 700; color: var(--primary);">$${b.totalPrice.toFixed(0)}</td>
+                <td><span class="status-badge ${statusClass}">${escapeHtml(b.status)}</span></td>
+              </tr>
+            `;
+          }).join('');
+        } catch (err) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="6" style="text-align:center; padding: 3rem; color: #ef4444; font-weight:600;">
+                Failed to load bookings: ${err.message}
+              </td>
+            </tr>
+          `;
+        }
+      }
+
+      function escapeHtml(str) {
+        if (!str) return "";
+        return str
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+    });
+  </script>
+</body>
+</html>

@@ -4251,34 +4251,42 @@ html.dark-theme .toast-message {
    CHATBOT WIDGET STYLING
    ============================================= */
 #chatbot-fab {
-  position: fixed;
-  bottom: 2rem;
-  right: 2rem;
-  width: 60px;
-  height: 60px;
+  position: relative;
+  bottom: auto;
+  right: auto;
+  width: 48px;
+  height: 48px;
   background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 24px;
   cursor: pointer;
   box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
   z-index: 9999;
-  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   animation: pulse-glow 2s infinite;
 }
 
 #chatbot-fab:hover {
-  transform: scale(1.1);
+  background: linear-gradient(135deg, var(--primary-hover, #1d4ed8) 0%, #4338ca 100%);
+  transform: scale(1.1) translateY(-2px);
   box-shadow: 0 6px 20px rgba(37, 99, 235, 0.6);
+  color: white;
+}
+
+#chatbot-fab svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  fill: none;
 }
 
 .chatbot-window {
   position: fixed;
   bottom: 5.5rem;
-  right: 2rem;
+  right: 6.5rem;
   width: 350px;
   height: 500px;
   background: rgba(255, 255, 255, 0.85);
@@ -4295,6 +4303,15 @@ html.dark-theme .toast-message {
   opacity: 0;
   pointer-events: none;
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@media (max-width: 480px) {
+  .chatbot-window {
+    right: 1rem;
+    left: 1rem;
+    width: auto;
+    bottom: 6rem;
+  }
 }
 
 .chatbot-window.active {

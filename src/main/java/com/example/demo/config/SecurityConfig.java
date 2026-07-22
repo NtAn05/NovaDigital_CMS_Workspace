@@ -62,7 +62,7 @@ public class SecurityConfig {
                 .requestMatchers("/", "/index.html", "/about.html", "/services.html", "/portfolio.html",
                                "/contact.html", "/feedback.html", "/login.html", "/register.html", "/member.html", "/member-contact.html", "/admin.html", "/admin-messages.html", "/forgot-password.html", "/inbox.html", "/user-profile.html",
                                "/pm-dashboard.html", "/client-dashboard.html", "/booking.html","/rented-project.html", "/member-profile.html",
-                               "/resource-allocation.html", "/transaction.html", "/payment-success.html", "/payment-cancel.html").permitAll()
+                               "/resource-allocation.html", "/transaction.html", "/payment-success.html", "/payment-cancel.html", "/my-bookings.html").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/uploads/**", "/favicon.ico").permitAll()
                 
                 // Auth APIs

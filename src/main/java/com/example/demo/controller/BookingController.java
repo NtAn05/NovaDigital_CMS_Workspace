@@ -373,6 +373,24 @@ public class BookingController {
         r.setStatus(a.getStatus().name());
         r.setMessageContent(a.getMessageContent());
         r.setAttachmentUrl(a.getAttachmentUrl());
+
+        if (a.getClientId() != null) {
+            userRepository.findById(a.getClientId()).ifPresent(u -> {
+                r.setClientName(u.getFullName());
+                r.setClientEmail(u.getEmail());
+            });
+        }
+        if (a.getServiceId() != null) {
+            serviceRepository.findById(a.getServiceId()).ifPresent(s -> {
+                r.setServiceName(s.getTitle());
+            });
+        }
+        if (a.getExpertId() != null) {
+            userRepository.findById(a.getExpertId()).ifPresent(e -> {
+                r.setExpertName(e.getFullName());
+            });
+        }
+
         return r;
     }
 }

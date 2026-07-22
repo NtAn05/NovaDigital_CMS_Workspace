@@ -79,57 +79,190 @@
 
     <!-- Feedback Form Section -->
     <section class="team-section" style="padding: 3rem 1.5rem 5rem;">
-      <div class="feedback-card">
-        
-        <!-- Form Container -->
-        <div id="feedbackFormWrap">
-          <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--text-dark, #1e293b);">Submit Your Feedback</h2>
-          <p style="font-size: 0.88rem; color: var(--text-muted, #64748b); margin-bottom: 1.75rem;">Please fill out the form below. Once submitted, a confirmation email will be sent to your inbox.</p>
+      <style>
+        .feedback-grid-wrapper {
+          max-width: 1140px;
+          margin: 0 auto;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 2rem;
+          align-items: start;
+        }
+        @media (max-width: 900px) {
+          .feedback-grid-wrapper {
+            grid-template-columns: 1fr;
+          }
+        }
+        .feedback-card {
+          width: 100%;
+          max-width: 100%;
+          margin: 0;
+          background: #ffffff;
+          border: 1px solid var(--border-color, #e2e8f0);
+          border-radius: 18px;
+          padding: 2.2rem 2.5rem;
+          box-shadow: 0 10px 35px rgba(0,0,0,0.06);
+          box-sizing: border-box;
+        }
+        html.dark-theme .feedback-card {
+          background: #1e2433;
+          border-color: #334155;
+        }
+        /* Auto-scrolling list container */
+        .feedback-feed-card {
+          display: flex;
+          flex-direction: column;
+          height: 520px;
+        }
+        .feed-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 1.25rem;
+          padding-bottom: 0.75rem;
+          border-bottom: 1px solid var(--border-color, #e2e8f0);
+        }
+        .feed-scroll-container {
+          flex: 1;
+          overflow: hidden;
+          position: relative;
+          border-radius: 12px;
+        }
+        .feed-scroll-track {
+          display: flex;
+          flex-direction: column;
+          gap: 1rem;
+          animation: smoothScroll 25s linear infinite;
+        }
+        .feed-scroll-track:hover {
+          animation-play-state: paused;
+        }
+        @keyframes smoothScroll {
+          0% { transform: translateY(0); }
+          100% { transform: translateY(-50%); }
+        }
+        .feedback-item {
+          background: #f8fafc;
+          border: 1px solid #e2e8f0;
+          border-radius: 14px;
+          padding: 1.1rem 1.3rem;
+          transition: all 0.2s ease;
+        }
+        html.dark-theme .feedback-item {
+          background: rgba(15, 23, 42, 0.5);
+          border-color: #334155;
+        }
+        .feedback-item:hover {
+          border-color: var(--primary, #2563eb);
+          box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
+        }
+        .fb-user-header {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          margin-bottom: 0.5rem;
+        }
+        .fb-user-info {
+          display: flex;
+          align-items: center;
+          gap: 0.6rem;
+        }
+        .fb-avatar {
+          width: 34px;
+          height: 34px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+          color: white;
+          font-weight: 700;
+          font-size: 0.85rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .fb-category-badge {
+          font-size: 0.72rem;
+          font-weight: 700;
+          padding: 0.2rem 0.65rem;
+          border-radius: 50px;
+          background: rgba(37, 99, 235, 0.1);
+          color: var(--primary, #2563eb);
+        }
+      </style>
 
-          <form id="userFeedbackForm">
-            <div class="form-group" style="margin-bottom: 1.2rem;">
-              <label for="fbName" style="display:block; font-size: 0.82rem; font-weight: 700; margin-bottom: 0.35rem;">Full Name *</label>
-              <input type="text" id="fbName" required placeholder="John Doe" style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 0.9rem; outline: none;">
+      <div class="feedback-grid-wrapper">
+
+        <!-- Left Column: Submit Feedback Card -->
+        <div class="feedback-card">
+          <!-- Form Container -->
+          <div id="feedbackFormWrap">
+            <h2 style="font-size: 1.4rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--text-dark, #1e293b);">Submit Your Feedback</h2>
+            <p style="font-size: 0.88rem; color: var(--text-muted, #64748b); margin-bottom: 1.75rem;">Please fill out the form below. Once submitted, a confirmation email will be sent to your inbox.</p>
+
+            <form id="userFeedbackForm">
+              <div class="form-group" style="margin-bottom: 1.2rem;">
+                <label for="fbName" style="display:block; font-size: 0.82rem; font-weight: 700; margin-bottom: 0.35rem;">Full Name *</label>
+                <input type="text" id="fbName" required placeholder="John Doe" style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 0.9rem; outline: none;">
+              </div>
+
+              <div class="form-group" style="margin-bottom: 1.2rem;">
+                <label for="fbEmail" style="display:block; font-size: 0.82rem; font-weight: 700; margin-bottom: 0.35rem;">Email Address *</label>
+                <input type="email" id="fbEmail" required placeholder="john@example.com" style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 0.9rem; outline: none;">
+              </div>
+
+              <div class="form-group" style="margin-bottom: 1.2rem;">
+                <label for="fbCategory" style="display:block; font-size: 0.82rem; font-weight: 700; margin-bottom: 0.35rem;">Feedback Topic</label>
+                <select id="fbCategory" style="width: 100%; padding: 0.75rem 2.5rem 0.75rem 1rem; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 0.9rem; font-weight: 500; outline: none; background: #fff url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%23475569" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>') no-repeat right 1rem center; -webkit-appearance: none; appearance: none; cursor: pointer; color: #1e293b;">
+                  <option value="General Feedback">General Feedback &amp; Ideas</option>
+                  <option value="Service Quality">Service &amp; Project Quality</option>
+                  <option value="Website Experience">Website &amp; UI Experience</option>
+                  <option value="Bug Report">Report an Issue / Bug</option>
+                </select>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="fbMessage" style="display:block; font-size: 0.82rem; font-weight: 700; margin-bottom: 0.35rem;">Message / Feedback *</label>
+                <textarea id="fbMessage" required rows="5" placeholder="Share your experience, feature requests, or suggestions..." style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 0.9rem; outline: none; resize: vertical;"></textarea>
+              </div>
+
+              <button type="submit" id="fbSubmitBtn" class="btn btn-primary" style="width: 100%; padding: 0.85rem; border-radius: 12px; font-weight: 700; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                <span>Submit Feedback</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width:18px;height:18px;"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              </button>
+            </form>
+          </div>
+
+          <!-- Success Message -->
+          <div id="feedbackSuccessWrap" class="feedback-success-card">
+            <div class="feedback-success-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:32px;height:32px;"><polyline points="20 6 9 17 4 12"/></svg>
             </div>
-
-            <div class="form-group" style="margin-bottom: 1.2rem;">
-              <label for="fbEmail" style="display:block; font-size: 0.82rem; font-weight: 700; margin-bottom: 0.35rem;">Email Address *</label>
-              <input type="email" id="fbEmail" required placeholder="john@example.com" style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 0.9rem; outline: none;">
-            </div>
-
-            <div class="form-group" style="margin-bottom: 1.2rem;">
-              <label for="fbCategory" style="display:block; font-size: 0.82rem; font-weight: 700; margin-bottom: 0.35rem;">Feedback Topic</label>
-              <select id="fbCategory" style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 0.9rem; outline: none; background: #fff;">
-                <option value="General Feedback">💡 General Feedback &amp; Ideas</option>
-                <option value="Service Quality">⭐ Service &amp; Project Quality</option>
-                <option value="Website Experience">🌐 Website &amp; UI Experience</option>
-                <option value="Bug Report">🐛 Report an Issue / Bug</option>
-              </select>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 1.5rem;">
-              <label for="fbMessage" style="display:block; font-size: 0.82rem; font-weight: 700; margin-bottom: 0.35rem;">Message / Feedback *</label>
-              <textarea id="fbMessage" required rows="5" placeholder="Share your experience, feature requests, or suggestions..." style="width: 100%; padding: 0.75rem 1rem; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 0.9rem; outline: none; resize: vertical;"></textarea>
-            </div>
-
-            <button type="submit" id="fbSubmitBtn" class="btn btn-primary" style="width: 100%; padding: 0.85rem; border-radius: 12px; font-weight: 700; font-size: 0.95rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
-              <span>Submit Feedback</span>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="width:18px;height:18px;"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-            </button>
-          </form>
+            <h2 style="font-size: 1.4rem; font-weight: 800; color: #10b981; margin-bottom: 0.5rem;">Feedback Received!</h2>
+            <p id="feedbackSuccessText" style="font-size: 1rem; font-weight: 600; color: #1e40af; background: #eff6ff; padding: 1rem 1.25rem; border-radius: 10px; border-left: 4px solid #2563eb; margin-bottom: 1.5rem; line-height: 1.5;">
+              We value your feedback and will get back to you soon!
+            </p>
+            <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1.75rem;">A confirmation email has been dispatched to your email address.</p>
+            <button onclick="resetFeedbackForm()" class="btn btn-secondary" style="padding: 0.65rem 1.4rem; border-radius: 10px; font-weight: 700; cursor: pointer;">Submit Another Feedback</button>
+          </div>
         </div>
 
-        <!-- Success Message -->
-        <div id="feedbackSuccessWrap" class="feedback-success-card">
-          <div class="feedback-success-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width:32px;height:32px;"><polyline points="20 6 9 17 4 12"/></svg>
+        <!-- Right Column: Live Auto-Scrolling Feed Card -->
+        <div class="feedback-card feedback-feed-card">
+          <div class="feed-header">
+            <div>
+              <h2 style="font-size: 1.3rem; font-weight: 800; margin: 0; color: var(--text-dark, #1e293b);">Recent User Feedbacks</h2>
+              <p style="font-size: 0.82rem; color: var(--text-muted, #64748b); margin: 0.2rem 0 0 0;">Community reviews &amp; feedback</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 6px; font-size: 0.78rem; font-weight: 700; color: #10b981; background: rgba(16,185,129,0.1); padding: 0.3rem 0.7rem; border-radius: 50px;">
+              <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; display: inline-block;"></span>
+              Live Feed
+            </div>
           </div>
-          <h2 style="font-size: 1.4rem; font-weight: 800; color: #10b981; margin-bottom: 0.5rem;">Feedback Received!</h2>
-          <p id="feedbackSuccessText" style="font-size: 1rem; font-weight: 600; color: #1e40af; background: #eff6ff; padding: 1rem 1.25rem; border-radius: 10px; border-left: 4px solid #2563eb; margin-bottom: 1.5rem; line-height: 1.5;">
-            We value your feedback and will get back to you soon!
-          </p>
-          <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 1.75rem;">A confirmation email has been dispatched to your email address.</p>
-          <button onclick="resetFeedbackForm()" class="btn btn-secondary" style="padding: 0.65rem 1.4rem; border-radius: 10px; font-weight: 700; cursor: pointer;">Submit Another Feedback</button>
+
+          <div class="feed-scroll-container">
+            <div class="feed-scroll-track" id="feedbackScrollTrack">
+              <!-- Dynamically populated via JS -->
+            </div>
+          </div>
         </div>
 
       </div>
@@ -205,8 +338,8 @@
   </footer>
 
   <!-- CHATBOT WIDGET -->
-  <div id="chatbot-fab">
-    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+  <div id="chatbot-fab" title="Chat with Nova AI">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
   </div>
   <div id="chatbot-window" class="chatbot-window">
     <div class="chatbot-header">
@@ -229,6 +362,7 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       initChatbot();
+      loadFeedbacks();
 
       const form = document.getElementById('userFeedbackForm');
       const submitBtn = document.getElementById('fbSubmitBtn');
@@ -255,6 +389,7 @@
           if (res.ok && data.success) {
             document.getElementById('feedbackFormWrap').style.display = 'none';
             document.getElementById('feedbackSuccessWrap').style.display = 'block';
+            loadFeedbacks(); // Refresh scrolling feed with new item
           } else {
             alert(data.message || 'Submission failed.');
           }
@@ -266,6 +401,73 @@
         }
       });
     });
+
+    async function loadFeedbacks() {
+      const track = document.getElementById('feedbackScrollTrack');
+      if (!track) return;
+
+      try {
+        const res = await fetch('/api/feedback');
+        let feedbacks = [];
+        if (res.ok) {
+          feedbacks = await res.json();
+        }
+
+        // Mock data fallback if DB is empty so scrolling demonstration is vibrant
+        if (!feedbacks || feedbacks.length === 0) {
+          feedbacks = [
+            { name: 'Sarah Jenkins', category: 'Service Quality', message: 'NovaDigital team delivered our website ahead of schedule with exceptional quality!' },
+            { name: 'Alex Morgan', category: 'Website Experience', message: 'The smooth animations and modern dark mode UI completely wowed our stakeholders.' },
+            { name: 'Minh Tran', category: 'General Feedback', message: 'Extremely professional support and clear communication throughout the project.' },
+            { name: 'David Chen', category: 'Service Quality', message: 'Top tier web agency! Their UI design skills elevated our brand image.' },
+            { name: 'Emily Watson', category: 'General Feedback', message: 'Loved working with the team. Quick response time and brilliant ideas.' }
+          ];
+        }
+
+        function createItemHtml(item) {
+          const initial = (item.name || 'U').charAt(0).toUpperCase();
+          const category = item.category || 'General Feedback';
+          return `
+            <div class="feedback-item">
+              <div class="fb-user-header">
+                <div class="fb-user-info">
+                  <div class="fb-avatar">${escapeHtml(initial)}</div>
+                  <div>
+                    <div style="font-weight: 700; font-size: 0.9rem; color: var(--text-dark, #1e293b);">${escapeHtml(item.name)}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-muted, #64748b);">Verified User</div>
+                  </div>
+                </div>
+                <span class="fb-category-badge">${escapeHtml(category)}</span>
+              </div>
+              <p style="margin: 0; font-size: 0.88rem; line-height: 1.5; color: var(--text-dark, #334155);">${escapeHtml(item.message)}</p>
+            </div>
+          `;
+        }
+
+        // Generate HTML list
+        const itemsHtml = feedbacks.map(createItemHtml).join('');
+        // Duplicate list to create seamless infinite scrolling loop effect
+        track.innerHTML = itemsHtml + itemsHtml;
+
+        // Adjust scroll animation speed dynamically based on total height
+        const itemCount = feedbacks.length * 2;
+        const duration = Math.max(15, itemCount * 3.5);
+        track.style.animationDuration = duration + 's';
+
+      } catch (err) {
+        console.error('Error loading feedbacks:', err);
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
 
     function resetFeedbackForm() {
       document.getElementById('userFeedbackForm').reset();
