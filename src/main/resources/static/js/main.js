@@ -745,9 +745,22 @@ function updateNavbarAuth() {
 
 // User Logout Logic
 function logoutUser() {
+  // Purge storage
   localStorage.clear();
   sessionStorage.clear();
-  window.location.href = "index.html#login";
+  
+  // Clear chatbot history explicitly if function exists
+  if (typeof clearChatbotHistory === "function") {
+    clearChatbotHistory();
+  }
+  
+  // Perform a clean redirect & hard reset to login anchor
+  window.location.href = window.location.origin + "/index.html#login";
+  
+  // Force reload if already on index page so Navbar state resets instantly
+  if (window.location.pathname.endsWith("index.html") || window.location.pathname === "/") {
+    window.location.reload();
+  }
 }
 
 // =============================================

@@ -84,6 +84,9 @@ public class SecurityConfig {
                 .requestMatchers("/api/chatbot/**").permitAll()
                 .requestMatchers("/api/feedback/**").permitAll()
 
+                // In-app notifications: any authenticated user (scoped to current user in controller)
+                .requestMatchers("/api/notifications/**").authenticated()
+
                 // PayOS Payment Routes
                 .requestMatchers("/api/payments/payos-webhook").permitAll()
                 .requestMatchers("/api/payments/status/*").permitAll()
@@ -115,9 +118,6 @@ public class SecurityConfig {
                 // My-projects endpoints: any authenticated user
                 .requestMatchers("/api/my/**").authenticated()
 
-                // In-app notifications: any authenticated user (scoped tới user hiện tại trong controller)
-                .requestMatchers("/api/notifications/**").authenticated()
-                
                 // Contact submission: anyone can POST to /api/contacts (send message)
                 .requestMatchers(HttpMethod.POST, "/api/contacts").permitAll()
                 // Reply to a contact: only ADMIN or MEMBER
