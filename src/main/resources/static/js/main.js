@@ -479,7 +479,8 @@ function checkRouteGuard() {
 
   // Dedicated Resource Manager only uses the standalone Resource Allocation workspace.
   if (token && role === "ROLE_RESOURCE") {
-    if (page !== "resource-allocation.html") {
+    const resourceAllowedPages = ["resource-allocation.html", "hr-recruitment.html", "member-profile.html", "user-profile.html"];
+    if (!resourceAllowedPages.includes(page)) {
       window.location.href = "resource-allocation.html";
       return;
     }
@@ -550,9 +551,9 @@ function updateNavbarAuth() {
   const role = localStorage.getItem("role") || sessionStorage.getItem("role");
   const fullName = localStorage.getItem("fullName") || sessionStorage.getItem("fullName");
 
-  const isPortalUser = token && (role === "ROLE_ADMIN" || role === "ROLE_MEMBER" || role === "Team_Member");
+  const isPortalUser = token && (role === "ROLE_ADMIN" || role === "ROLE_MEMBER" || role === "Team_Member" || role === "ROLE_RESOURCE");
 
-  // If Admin or Member, hide all standard navigation links (Home, Services, etc.)
+  // If Admin, Member, or Resource Manager (HR), hide all standard navigation links (Home, Services, etc.)
   if (isPortalUser) {
     navLinksContainer.querySelectorAll("li").forEach(li => {
       // Hide standard links. Dynamic auth-items (Dashboard, Logout) will be added back later.
@@ -563,7 +564,9 @@ function updateNavbarAuth() {
     // Also hide the logo link to homepage or change it
     const logo = document.getElementById("header-logo");
     if (logo) {
-      const targetPage = role === "ROLE_ADMIN" ? "admin.html" : "member-contact.html";
+      let targetPage = "member-contact.html";
+      if (role === "ROLE_ADMIN") targetPage = "admin.html";
+      if (role === "ROLE_RESOURCE") targetPage = "resource-allocation.html";
       logo.setAttribute("href", targetPage);
       logo.onclick = (e) => { e.preventDefault(); }; // Disable clicking logo to go anywhere
       logo.style.cursor = "default";
@@ -611,6 +614,21 @@ function updateNavbarAuth() {
         <a href="admin.html" class="dropdown-item">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
           Dashboard
+        </a>
+        <a href="member-profile.html" class="dropdown-item">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Profile
+        </a>
+      `;
+    } else if (role === "ROLE_RESOURCE") {
+      menuItemsHtml = `
+        <a href="resource-allocation.html" class="dropdown-item">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+          Resource Workspace
+        </a>
+        <a href="member-profile.html" class="dropdown-item">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Profile
         </a>
       `;
     } else if (role === "Team_Member" || role === "ROLE_MEMBER") {
@@ -729,7 +747,7 @@ function updateNavbarAuth() {
 function logoutUser() {
   localStorage.clear();
   sessionStorage.clear();
-  window.location.href = "index.html";
+  window.location.href = "index.html#login";
 }
 
 // =============================================
@@ -4854,10 +4872,10 @@ function initFooterMove() {
       data: {
         labels: months.map(m => {
           const parts = m.split("-");
-          return parts.length === 2 ? `Tháng ${parts[1]}/${parts[0]}` : m;
+          return parts.length === 2 ? `Month ${parts[1]}/${parts[0]}` : m;
         }),
         datasets: [{
-          label: "Doanh thu (USD)",
+          label: "Revenue (USD)",
           data: amounts,
           borderColor: colors.borderColor,
           borderWidth: 3,
@@ -4889,7 +4907,7 @@ function initFooterMove() {
             callbacks: {
               label: function (context) {
                 let value = context.raw || 0;
-                return " Doanh thu: $" + value.toLocaleString();
+                return " Revenue: $" + value.toLocaleString();
               }
             }
           }
