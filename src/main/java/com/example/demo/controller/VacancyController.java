@@ -18,40 +18,17 @@ public class VacancyController {
 
     private final VacancyService vacancyService;
 
-<<<<<<< Updated upstream
-    // ── F_37: Careers Board ────────────────────────────────────────────────────
-
-    /**
-     * GET /api/vacancies — Public.
-     * Returns Map<workstream, List<VacancyResponse>> for Careers Board grouped rendering.
-     */
-    @GetMapping
-    public ResponseEntity<Map<String, List<VacancyResponse>>> getVacancies() {
-        return ResponseEntity.ok(vacancyService.getActiveVacanciesGroupedByWorkstream());
-    }
-
-    /**
-     * GET /api/vacancies/list — Public.
-     * Returns flat List used for "Select position" dropdown in Apply form.
-     */
-    @GetMapping("/list")
-    public ResponseEntity<List<VacancyResponse>> listVacancies() {
-        return ResponseEntity.ok(vacancyService.getAllActiveVacancies());
-    }
-
-=======
->>>>>>> Stashed changes
     // ── F_38: Apply ────────────────────────────────────────────────────────────
 
     /**
      * POST /api/vacancies/apply — Requires authentication (JWT).
      * Body (JSON): { vacancyId, applicantName, applicantEmail, applicantPhone,
-     *               resumeUrl, coverLetter }
+     * resumeUrl, coverLetter }
      * applicantEmail is overwritten with email from JWT to prevent spoofing.
      */
     @PostMapping("/apply")
     public ResponseEntity<?> applyForVacancy(@RequestBody CandidateApplication application,
-                                              Authentication authentication) {
+            Authentication authentication) {
         Map<String, Object> response = new HashMap<>();
         try {
             // Override email with info from JWT token (security)
