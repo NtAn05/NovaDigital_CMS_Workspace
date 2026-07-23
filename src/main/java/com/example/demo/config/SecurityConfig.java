@@ -64,7 +64,7 @@ public class SecurityConfig {
                                "/contact.html", "/feedback.html", "/login.html", "/register.html", "/member.html", "/member-contact.html", "/admin.html", "/admin-messages.html", "/forgot-password.html", "/inbox.html", "/user-profile.html",
                                "/pm-dashboard.html", "/client-dashboard.html", "/booking.html","/rented-project.html", "/member-profile.html",
                                "/resource-allocation.html", "/transaction.html", "/payment-success.html", "/payment-cancel.html",
-                               "/careers.html", "/apply.html", "/hr-recruitment.html", "/my-bookings.html").permitAll()
+                               "/careers.html", "/hr-recruitment.html", "/my-bookings.html").permitAll()
                 .requestMatchers("/css/**", "/js/**", "/images/**", "/uploads/**", "/favicon.ico").permitAll()
                 
                 // Auth APIs
@@ -74,9 +74,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/projects", "/api/projects/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/services", "/api/services/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/members", "/api/members/**").permitAll()
-                // F_37/F_38 — Vacancy APIs
-                .requestMatchers(HttpMethod.GET, "/api/vacancies").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/vacancies/list").permitAll()
+                // F_38 — Vacancy APIs
                 .requestMatchers(HttpMethod.POST, "/api/vacancies/apply").authenticated()
                 .requestMatchers(HttpMethod.GET, "/api/vacancies/applications").hasAnyRole("ADMIN", "MEMBER", "RESOURCE")
                 .requestMatchers("/api/bookings/my").authenticated()

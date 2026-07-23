@@ -1,6 +1,5 @@
 package com.example.demo.controller;
 
-import com.example.demo.dto.VacancyResponse;
 import com.example.demo.entity.CandidateApplication;
 import com.example.demo.service.VacancyService;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +18,7 @@ public class VacancyController {
 
     private final VacancyService vacancyService;
 
+<<<<<<< Updated upstream
     // ── F_37: Careers Board ────────────────────────────────────────────────────
 
     /**
@@ -39,6 +39,8 @@ public class VacancyController {
         return ResponseEntity.ok(vacancyService.getAllActiveVacancies());
     }
 
+=======
+>>>>>>> Stashed changes
     // ── F_38: Apply ────────────────────────────────────────────────────────────
 
     /**
