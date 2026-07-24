@@ -586,7 +586,7 @@ function updateNavbarAuth() {
   // Remove any previously-injected auth items
   navLinksContainer.querySelectorAll(".auth-item").forEach(item => item.remove());
 
-  // Get the static "Get Started Now" button (if present in HTML)
+  // Get the static "Start Project" button (if present in HTML)
   const defaultBtnEl = navLinksContainer.querySelector("#default-get-started");
   const defaultBtnLi = defaultBtnEl ? defaultBtnEl.closest("li") : null;
 
@@ -715,7 +715,7 @@ function updateNavbarAuth() {
       logoutUser();
     });
   } else {
-    // — Guest: bind the static "Get Started Now" button → opens auth modal —
+    // — Guest: bind the static "Start Project" button → opens auth modal —
     if (defaultBtnLi) {
       // Make sure the static button is visible
       defaultBtnLi.style.display = "";
@@ -730,7 +730,7 @@ function updateNavbarAuth() {
       // Fallback: create button dynamically if static one is missing
       const li = document.createElement("li");
       li.className = "auth-item";
-      li.innerHTML = `<a href="#" id="get-started-btn" class="nav-btn">Get Started Now</a>`;
+      li.innerHTML = `<a href="#" id="get-started-btn" class="nav-btn">Start Project</a>`;
       navLinksContainer.appendChild(li);
       document.getElementById("get-started-btn").addEventListener("click", (e) => {
         e.preventDefault();
