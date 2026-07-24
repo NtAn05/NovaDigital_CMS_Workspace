@@ -198,6 +198,73 @@
       padding: 0;
       line-height: 1;
     }
+
+    /* Tech Video Hero Styling */
+    .portfolio-video-hero {
+      position: relative;
+      min-height: 60vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 120px 2rem 60px;
+      overflow: hidden;
+      color: #ffffff;
+      background: #090d16;
+    }
+    .video-background-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      z-index: 0;
+    }
+    .video-background-container canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .video-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, rgba(9, 13, 22, 0.1) 0%, rgba(9, 13, 22, 0.3) 70%, rgba(9, 13, 22, 0.95) 100%);
+      pointer-events: none;
+    }
+    .portfolio-hero-text {
+      position: relative;
+      z-index: 1;
+    }
+    .portfolio-hero-text h1 {
+      color: #ffffff;
+      font-size: 3.2rem;
+      font-weight: 800;
+      margin-top: 1rem;
+      letter-spacing: -0.5px;
+    }
+    .portfolio-hero-text p {
+      color: rgba(255, 255, 255, 0.85);
+      max-width: 680px;
+      margin: 1.2rem auto 0;
+      font-size: 1.15rem;
+      line-height: 1.6;
+    }
+    .tech-pill {
+      background: rgba(37, 99, 235, 0.25) !important;
+      color: #60a5fa !important;
+      border: 1px solid rgba(96, 165, 250, 0.3) !important;
+      backdrop-filter: blur(8px);
+    }
+    .gradient-tech-text {
+      background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
   </style>
 </head>
 <body>
@@ -224,19 +291,98 @@
   </header>
 
   <main>
-    <!-- Hero Section -->
-    <section class="about-hero">
-      <div class="about-hero-bg">
-        <div class="about-shape about-shape-1"></div>
-        <div class="about-shape about-shape-2"></div>
-        <div class="about-shape about-shape-3"></div>
-      </div>
-      <div class="about-hero-content">
-        <span class="hero-pill">Portfolio</span>
-        <h1>Featured <span>Projects</span></h1>
-        <p>Discover the innovative and groundbreaking products we've dedicated ourselves to creating for our global customers.</p>
+    <!-- Tech Animated Canvas Hero Section -->
+    <section class="portfolio-video-hero">
+      <div class="video-background-container">
+        <canvas id="tech-canvas-bg"></canvas>
+        <div class="video-overlay"></div>
       </div>
     </section>
+    <script>
+      (function() {
+        var canvas = document.getElementById('tech-canvas-bg');
+        if (!canvas) return;
+        var ctx = canvas.getContext('2d');
+        var width, height;
+        var particles = [];
+        var numParticles = 65;
+
+        function resize() {
+          width = canvas.width = canvas.parentElement.offsetWidth || window.innerWidth;
+          height = canvas.height = canvas.parentElement.offsetHeight || 400;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        for (var i = 0; i < numParticles; i++) {
+          particles.push({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            vx: (Math.random() - 0.5) * 1.2,
+            vy: (Math.random() - 0.5) * 1.2,
+            radius: Math.random() * 2 + 1,
+            color: Math.random() > 0.5 ? '#38bdf8' : '#818cf8'
+          });
+        }
+
+        function animate() {
+          ctx.clearRect(0, 0, width, height);
+
+          // Draw cyber grid background lines
+          ctx.strokeStyle = 'rgba(56, 189, 248, 0.05)';
+          ctx.lineWidth = 1;
+          var gridSize = 40;
+          for (var x = 0; x < width; x += gridSize) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, height);
+            ctx.stroke();
+          }
+          for (var y = 0; y < height; y += gridSize) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(width, y);
+            ctx.stroke();
+          }
+
+          // Update & draw particles & connections
+          for (var i = 0; i < particles.length; i++) {
+            var p = particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+
+            if (p.x < 0 || p.x > width) p.vx *= -1;
+            if (p.y < 0 || p.y > height) p.vy *= -1;
+
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+            ctx.fillStyle = p.color;
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = p.color;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+
+            // Connect nearby nodes
+            for (var j = i + 1; j < particles.length; j++) {
+              var p2 = particles[j];
+              var dx = p.x - p2.x;
+              var dy = p.y - p2.y;
+              var dist = Math.sqrt(dx * dx + dy * dy);
+              if (dist < 130) {
+                ctx.beginPath();
+                ctx.moveTo(p.x, p.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.strokeStyle = 'rgba(56, 189, 248, ' + (1 - dist / 130) * 0.35 + ')';
+                ctx.lineWidth = 0.8;
+                ctx.stroke();
+              }
+            }
+          }
+          requestAnimationFrame(animate);
+        }
+        animate();
+      })();
+    </script>
 
     <!-- Projects Grid -->
     <section class="team-section">

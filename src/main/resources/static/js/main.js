@@ -831,7 +831,7 @@ function initLoginForm() {
             window.location.href = "member-contact.html";
           } else if (data.role === "ROLE_USER") {
             // External client — goes to Client Portal
-            window.location.href = "client-dashboard.html";
+            window.location.href = "index.html";
           } else {
             const redirect = sessionStorage.getItem("redirectAttempt");
             if (redirect) {

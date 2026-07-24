@@ -46,43 +46,13 @@ public class DataSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
-        // Update existing services if they have null or empty iconUrl
-        for (Service s : serviceRepository.findAll()) {
-            if (s.getIconUrl() == null || s.getIconUrl().isBlank()) {
-                if (s.getTitle().toLowerCase().contains("website") || s.getTitle().toLowerCase().contains("e-commerce")) {
-                    s.setIconUrl("web");
-                } else if (s.getTitle().toLowerCase().contains("ui/ux") || s.getTitle().toLowerCase().contains("design")) {
-                    s.setIconUrl("design");
-                } else if (s.getTitle().toLowerCase().contains("cloud") || s.getTitle().toLowerCase().contains("devops")) {
-                    s.setIconUrl("cloud");
-                } else {
-                    s.setIconUrl("web");
-                }
-                serviceRepository.save(s);
-            }
+        // Only run data seeding if database contains no users yet
+        if (userRepository.count() > 0) {
+            System.out.println(">>> [DataSeeder] Data already exists in database. Skipping data seeding.");
+            return;
         }
 
-        System.out.println(">>> [DataSeeder] Clearing old data & Seeding initial sample data in English for ALL system modules...");
-
-        // Wipe old sample data to ensure fresh 100% English sample dataset
-        notificationRepository.deleteAllInBatch();
-        feedbackRepository.deleteAllInBatch();
-        contactRepository.deleteAllInBatch();
-        candidateApplicationRepository.deleteAllInBatch();
-        jobVacancyRepository.deleteAllInBatch();
-        paymentTransactionRepository.deleteAllInBatch();
-        appointmentAddonRepository.deleteAllInBatch();
-        consultationAppointmentRepository.deleteAllInBatch();
-        resourceAllocationRepository.deleteAllInBatch();
-        projectMilestoneRepository.deleteAllInBatch();
-        projectClientRepository.deleteAllInBatch();
-        projectAssignmentRepository.deleteAllInBatch();
-        projectRepository.deleteAllInBatch();
-        serviceAddonRepository.deleteAllInBatch();
-        serviceRepository.deleteAllInBatch();
-        memberRepository.deleteAllInBatch();
-        userRepository.deleteAllInBatch();
-        userRepository.flush();
+        System.out.println(">>> [DataSeeder] Seeding initial sample data in English for ALL system modules...");
 
         // ── 1. Users ────────────────────────────────────────────────────────
         User admin = createUser("admin",    "admin123", "Administrator",  "admin@novadigital.com",     "0987654321", "ROLE_ADMIN");
