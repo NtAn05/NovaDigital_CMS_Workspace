@@ -15,9 +15,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-@SpringBootTest
-@Transactional
+import org.junit.jupiter.api.AfterEach;
 
+@SpringBootTest
 public class AuditTrailIntegrationTest {
 
     @Autowired
@@ -25,6 +25,11 @@ public class AuditTrailIntegrationTest {
 
     @Autowired
     private DataAuditLogRepository dataAuditLogRepository;
+
+    @AfterEach
+    public void tearDown() {
+        contactService.deleteContactsByEmail("test_audit@example.com");
+    }
 
     @Test
     public void testContactCreationTriggersAuditLog() throws InterruptedException {
