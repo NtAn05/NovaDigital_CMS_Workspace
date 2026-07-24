@@ -158,6 +158,9 @@ public class BookingController {
         appointment.setMessageContent(request.getMessageContent());
         appointment.setAttachmentUrl(request.getAttachmentUrl());
         appointment.setTotalPrice(totalPrice);
+        // Snapshot the service base price on this appointment so admins can later adjust it
+        // per-booking (e.g. custom quote) without affecting the global Service.base_price.
+        appointment.setBasePrice(basePrice);
 
         ConsultationAppointment saved = appointmentRepository.save(appointment);
 
@@ -189,11 +192,8 @@ public class BookingController {
         List<BookingResponse> responses = appointments.stream().map(a -> {
             List<Long> addonIds = appointmentAddonRepository.findByAppointmentId(a.getId())
                     .stream().map(AppointmentAddon::getAddonId).collect(Collectors.toList());
-            double basePrice = 0;
-            try {
-                basePrice = bookingService.resolveBasePrice(a.getServiceId());
-            } catch (Exception e) {}
-            double addonsPrice = a.getTotalPrice() - basePrice;
+            double basePrice = resolveAppointmentBasePrice(a);
+            double addonsPrice = bookingService.calculateAddonsPriceForAppointment(a.getId());
             return toResponse(a, basePrice, addonsPrice, addonIds);
         }).collect(Collectors.toList());
         return ResponseEntity.ok(responses);
@@ -205,11 +205,8 @@ public class BookingController {
         List<BookingResponse> responses = appointments.stream().map(a -> {
             List<Long> addonIds = appointmentAddonRepository.findByAppointmentId(a.getId())
                     .stream().map(AppointmentAddon::getAddonId).collect(Collectors.toList());
-            double basePrice = 0;
-            try {
-                basePrice = bookingService.resolveBasePrice(a.getServiceId());
-            } catch (Exception e) {}
-            double addonsPrice = a.getTotalPrice() - basePrice;
+            double basePrice = resolveAppointmentBasePrice(a);
+            double addonsPrice = bookingService.calculateAddonsPriceForAppointment(a.getId());
             return toResponse(a, basePrice, addonsPrice, addonIds);
         }).collect(Collectors.toList());
         return ResponseEntity.ok(responses);
@@ -232,6 +229,29 @@ public class BookingController {
                     if (body.containsKey("status")) {
                         a.setStatus(AppointmentStatus.valueOf(body.get("status").toString()));
                     }
+
+                    // Admin edits the price of the service for THIS booking (Bookings panel,
+                    // "Price" column). The final total = new service price + the add-on(s) the
+                    // client had already picked for this appointment.
+                    if (body.containsKey("basePrice")) {
+                        Object rawPrice = body.get("basePrice");
+                        if (rawPrice == null || rawPrice.toString().isBlank()) {
+                            return ResponseEntity.badRequest().body(Map.of("message", "Price cannot be empty"));
+                        }
+                        double newBasePrice;
+                        try {
+                            newBasePrice = Double.parseDouble(rawPrice.toString());
+                        } catch (NumberFormatException e) {
+                            return ResponseEntity.badRequest().body(Map.of("message", "Price must be a valid number"));
+                        }
+                        if (newBasePrice < 0) {
+                            return ResponseEntity.badRequest().body(Map.of("message", "Price cannot be negative"));
+                        }
+                        a.setBasePrice(newBasePrice);
+                        double addonsPrice = bookingService.calculateAddonsPriceForAppointment(a.getId());
+                        a.setTotalPrice(newBasePrice + addonsPrice);
+                    }
+
                     ConsultationAppointment saved = appointmentRepository.save(a);
 
                     // Just transitioned to CONFIRMED (not confirmed before) and expert assigned
@@ -247,11 +267,8 @@ public class BookingController {
 
                     List<Long> addonIds = appointmentAddonRepository.findByAppointmentId(saved.getId())
                             .stream().map(AppointmentAddon::getAddonId).collect(Collectors.toList());
-                    double basePrice = 0;
-                    try {
-                        basePrice = bookingService.resolveBasePrice(saved.getServiceId());
-                    } catch (Exception e) {}
-                    double addonsPrice = saved.getTotalPrice() - basePrice;
+                    double basePrice = resolveAppointmentBasePrice(saved);
+                    double addonsPrice = bookingService.calculateAddonsPriceForAppointment(saved.getId());
                     return ResponseEntity.ok(toResponse(saved, basePrice, addonsPrice, addonIds));
                 })
                 .orElseGet(() -> {
@@ -267,8 +284,8 @@ public class BookingController {
                 .<ResponseEntity<?>>map(a -> {
                     List<Long> addonIds = appointmentAddonRepository.findByAppointmentId(a.getId())
                             .stream().map(AppointmentAddon::getAddonId).collect(Collectors.toList());
-                    double basePrice = bookingService.resolveBasePrice(a.getServiceId());
-                    double addonsPrice = a.getTotalPrice() - basePrice;
+                    double basePrice = resolveAppointmentBasePrice(a);
+                    double addonsPrice = bookingService.calculateAddonsPriceForAppointment(a.getId());
                     return ResponseEntity.ok(toResponse(a, basePrice, addonsPrice, addonIds));
                 })
                 .orElseGet(() -> {
@@ -356,6 +373,17 @@ public class BookingController {
                 expertName != null ? " — your expert will be " + expertName : ""
         ));
         notificationRepository.save(noti);
+    }
+
+    // Per-booking price if the admin has set/edited one; otherwise falls back to the service's
+    // global base price (covers bookings created before this field existed).
+    private double resolveAppointmentBasePrice(ConsultationAppointment a) {
+        if (a.getBasePrice() != null) return a.getBasePrice();
+        try {
+            return bookingService.resolveBasePrice(a.getServiceId());
+        } catch (Exception e) {
+            return 0.0;
+        }
     }
 
     private BookingResponse toResponse(ConsultationAppointment a, double basePrice, double addonsPrice, List<Long> addonIds) {

@@ -1,9 +1,11 @@
 package com.example.demo.service;
 
+import com.example.demo.entity.AppointmentAddon;
 import com.example.demo.entity.ConsultationAppointment;
 import com.example.demo.entity.Service;
 import com.example.demo.entity.ServiceAddon;
 import com.example.demo.entity.enums.AppointmentStatus;
+import com.example.demo.repository.AppointmentAddonRepository;
 import com.example.demo.repository.ConsultationAppointmentRepository;
 import com.example.demo.repository.ServiceAddonRepository;
 import com.example.demo.repository.ServiceRepository;
@@ -23,6 +25,9 @@ public class BookingService {
 
     @Autowired
     private ServiceAddonRepository serviceAddonRepository;
+
+    @Autowired
+    private AppointmentAddonRepository appointmentAddonRepository;
 
     @Autowired
     private ServiceRepository serviceRepository;
@@ -58,6 +63,23 @@ public class BookingService {
                 throw new IllegalArgumentException("Addon id " + id + " does not belong to this service");
             }
             sum += p;
+        }
+        return sum;
+    }
+
+    // Recalculates the add-ons total for an EXISTING appointment from the addons the client
+    // actually selected (appointment_addon -> service_addon), instead of deriving it by
+    // subtraction from total_price. This stays correct even after an admin edits the
+    // per-booking base_price from the admin Bookings panel.
+    public double calculateAddonsPriceForAppointment(Long appointmentId) {
+        List<AppointmentAddon> links = appointmentAddonRepository.findByAppointmentId(appointmentId);
+        if (links.isEmpty()) return 0.0;
+        double sum = 0.0;
+        for (AppointmentAddon link : links) {
+            ServiceAddon addon = serviceAddonRepository.findById(link.getAddonId()).orElse(null);
+            if (addon != null && addon.getPriceModifier() != null) {
+                sum += addon.getPriceModifier();
+            }
         }
         return sum;
     }

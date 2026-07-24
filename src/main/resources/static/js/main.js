@@ -1066,6 +1066,11 @@ function initAdminDashboard() {
     title.textContent = item ? `Edit ${labels[type]}` : `Add New ${labels[type]}`;
     body.innerHTML = buildCrudForm(type, item);
 
+    // Load add-on list for an existing service being edited
+    if (type === "service" && item) {
+      loadServiceAddonsForModal(item.id);
+    }
+
     // Bind file upload trigger for projects or members
     if (type === "project" || type === "member") {
       const fileInputId = type === "project" ? "cf-imageFile" : "cf-avatarFile";
@@ -1218,6 +1223,23 @@ function initAdminDashboard() {
       ["mobile", "📱 Mobile App"], ["branding", "🎯 Branding"], ["cloud", "☁️ Cloud Solutions"]],
       v.iconUrl || "web")}
     ${txt("cf-description", "Description *", v.description, 'placeholder="Service description..." required')}
+    <div class="form-group" style="width:100%;">
+      <label style="margin-bottom:0.5rem;display:block;">Add-on Packages</label>
+      ${item ? `
+        <div id="cf-addons-list" style="border:1px solid var(--border-color);border-radius:var(--radius-sm);padding:0.25rem 0.75rem;max-height:220px;overflow-y:auto;">
+          <div style="padding:0.75rem;color:var(--text-muted);font-size:0.85rem;">Loading add-ons...</div>
+        </div>
+        <div style="display:flex;gap:0.5rem;margin-top:0.6rem;align-items:center;">
+          <input type="text" id="cf-addon-new-name" placeholder="New add-on name" style="flex:1;padding:0.5rem 0.6rem;border:1px solid var(--border-color);border-radius:var(--radius-sm);font-size:0.85rem;">
+          <input type="number" id="cf-addon-new-price" placeholder="Price" min="0" step="0.01" style="width:100px;padding:0.5rem 0.6rem;border:1px solid var(--border-color);border-radius:var(--radius-sm);font-size:0.85rem;">
+          <button type="button" class="btn-save" style="padding:0.5rem 0.8rem;font-size:0.8rem;white-space:nowrap;" onclick="addServiceAddon(${item.id})">+ Add</button>
+        </div>
+      ` : `
+        <div style="padding:0.75rem;border:1px dashed var(--border-color);border-radius:var(--radius-sm);color:var(--text-muted);font-size:0.85rem;">
+          Save this service first, then reopen it to manage its add-on packages.
+        </div>
+      `}
+    </div>
   `;
 
     return "<p>Unknown type.</p>";
@@ -1616,6 +1638,136 @@ function initAdminDashboard() {
     } catch (err) {
       console.error("fetchAdminServicesTable error:", err);
       tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:2rem;color:#ef4444;">Could not load service list.</td></tr>`;
+    }
+  }
+
+  // =============================================
+  //  Admin – Service Add-on CRUD (per service, inside the Service edit modal)
+  // =============================================
+
+  const _serviceAddonsCache = {};
+
+  async function loadServiceAddonsForModal(serviceId) {
+    const listEl = document.getElementById("cf-addons-list");
+    if (!listEl) return;
+    listEl.innerHTML = `<div style="padding:0.75rem;color:var(--text-muted);font-size:0.85rem;">Loading add-ons...</div>`;
+    try {
+      const response = await fetch(`/api/services/${serviceId}/addons`);
+      if (!response.ok) throw new Error("Failed to load add-ons");
+      const addons = await response.json();
+      addons.forEach(a => { _serviceAddonsCache[a.id] = a; });
+      renderServiceAddonsList(serviceId, addons);
+    } catch (err) {
+      console.error("loadServiceAddonsForModal error:", err);
+      listEl.innerHTML = `<div style="padding:0.75rem;color:#ef4444;font-size:0.85rem;">Could not load add-ons.</div>`;
+    }
+  }
+
+  function renderServiceAddonsList(serviceId, addons) {
+    const listEl = document.getElementById("cf-addons-list");
+    if (!listEl) return;
+    if (!addons.length) {
+      listEl.innerHTML = `<div style="padding:0.75rem;color:var(--text-muted);font-size:0.85rem;">No add-ons yet for this service.</div>`;
+      return;
+    }
+    listEl.innerHTML = addons.map(a => `
+      <div class="cf-addon-row" data-addon-id="${a.id}" style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0;border-bottom:1px solid var(--border-color);">
+        <div style="flex:1;min-width:0;">
+          <div class="text-dark-inline" style="font-size:0.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(a.addonName)}</div>
+        </div>
+        <div style="width:80px;font-weight:600;color:var(--primary,#2563eb);font-size:0.9rem;text-align:right;">$${Number(a.priceModifier).toFixed(2)}</div>
+        <div style="display:flex;gap:4px;flex-shrink:0;">
+          <button type="button" class="btn-edit" style="padding:0.3rem 0.55rem;font-size:0.75rem;" onclick="startEditServiceAddon(${serviceId}, ${a.id})">Edit</button>
+          <button type="button" class="btn-delete" style="padding:0.3rem 0.55rem;font-size:0.75rem;" onclick="deleteServiceAddonInline(${serviceId}, ${a.id}, '${escapeHtml(a.addonName).replace(/'/g, "\\'")}')">Delete</button>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  function startEditServiceAddon(serviceId, addonId) {
+    const a = _serviceAddonsCache[addonId];
+    const row = document.querySelector(`.cf-addon-row[data-addon-id="${addonId}"]`);
+    if (!a || !row) return;
+    row.innerHTML = `
+      <input type="text" id="cf-addon-edit-name-${addonId}" value="${escapeHtml(a.addonName)}" style="flex:1;min-width:0;padding:0.4rem;border:1px solid var(--border-color);border-radius:6px;font-size:0.85rem;">
+      <input type="number" id="cf-addon-edit-price-${addonId}" value="${a.priceModifier}" min="0" step="0.01" style="width:80px;padding:0.4rem;border:1px solid var(--border-color);border-radius:6px;font-size:0.85rem;">
+      <div style="display:flex;gap:4px;flex-shrink:0;">
+        <button type="button" class="btn-save" style="padding:0.3rem 0.55rem;font-size:0.75rem;" onclick="saveServiceAddonEdit(${serviceId}, ${addonId})">Save</button>
+        <button type="button" class="btn-cancel" style="padding:0.3rem 0.55rem;font-size:0.75rem;" onclick="loadServiceAddonsForModal(${serviceId})">Cancel</button>
+      </div>
+    `;
+  }
+
+  async function saveServiceAddonEdit(serviceId, addonId) {
+    const name = (document.getElementById(`cf-addon-edit-name-${addonId}`)?.value || "").trim();
+    const price = parseFloat(document.getElementById(`cf-addon-edit-price-${addonId}`)?.value);
+    if (!name || isNaN(price) || price < 0) {
+      showToast("Please enter a valid add-on name and non-negative price.", "warning");
+      return;
+    }
+    try {
+      const response = await fetch(`/api/services/${serviceId}/addons/${addonId}`, {
+        method: "PUT",
+        headers: adminHeaders(),
+        body: JSON.stringify({ addonName: name, priceModifier: price })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || "Failed to update add-on");
+      showToast("Add-on updated successfully!", "success");
+      loadServiceAddonsForModal(serviceId);
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to update add-on: " + err.message, "error");
+    }
+  }
+
+  function deleteServiceAddonInline(serviceId, addonId, name) {
+    showConfirmModal({
+      title: "Delete Add-on",
+      message: `Are you sure you want to delete "${name}"? This action cannot be undone.`,
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`/api/services/${serviceId}/addons/${addonId}`, {
+            method: "DELETE",
+            headers: adminHeaders()
+          });
+          if (!response.ok) throw new Error("Failed to delete add-on");
+          showToast("Add-on deleted successfully!", "success");
+          loadServiceAddonsForModal(serviceId);
+        } catch (err) {
+          console.error(err);
+          showToast("Failed to delete add-on: " + err.message, "error");
+        }
+      }
+    });
+  }
+
+  async function addServiceAddon(serviceId) {
+    const nameInput = document.getElementById("cf-addon-new-name");
+    const priceInput = document.getElementById("cf-addon-new-price");
+    const name = (nameInput?.value || "").trim();
+    const price = parseFloat(priceInput?.value);
+    if (!name || isNaN(price) || price < 0) {
+      showToast("Please enter a valid add-on name and non-negative price.", "warning");
+      return;
+    }
+    try {
+      const response = await fetch(`/api/services/${serviceId}/addons`, {
+        method: "POST",
+        headers: adminHeaders(),
+        body: JSON.stringify({ addonName: name, priceModifier: price })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || "Failed to add add-on");
+      if (nameInput) nameInput.value = "";
+      if (priceInput) priceInput.value = "";
+      showToast("Add-on added successfully!", "success");
+      loadServiceAddonsForModal(serviceId);
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to add add-on: " + err.message, "error");
     }
   }
 
@@ -2350,7 +2502,16 @@ function formatNotificationTime(iso) {
           <div class="text-dark-inline">${escapeHtml(b.appointmentDate)}</div>
           <div style="font-size:0.85rem;color:var(--text-muted);">${escapeHtml(b.timeSlot.substring(0, 5))}</div>
         </td>
-        <td class="text-dark-inline">$${b.totalPrice.toFixed(2)}</td>
+        <td style="min-width:150px;">
+          <div style="display:flex;align-items:center;gap:4px;">
+            <span style="font-size:0.75rem;color:var(--text-muted);">$</span>
+            <input type="number" id="cf-booking-price-${b.id}" value="${Number(b.basePrice || 0)}" min="0" step="0.01"
+              style="width:72px;padding:0.3rem 0.4rem;border:1px solid var(--border-color);border-radius:6px;font-size:0.85rem;background:var(--bg-card);color:var(--text-dark);">
+            <button type="button" class="btn-save" title="Save service price" onclick="updateBookingPrice(${b.id})" style="padding:0.3rem 0.55rem;font-size:0.75rem;">Save</button>
+          </div>
+          ${(b.addonsPrice && b.addonsPrice > 0) ? `<div style="font-size:0.75rem;color:var(--text-muted);margin-top:3px;">+ $${Number(b.addonsPrice).toFixed(2)} add-on(s)</div>` : ""}
+          <div style="font-size:0.85rem;font-weight:700;margin-top:3px;" class="text-dark-inline">Total: $${b.totalPrice.toFixed(2)}</div>
+        </td>
         <td style="max-width:250px;">
           <div style="font-size:0.85rem;white-space:pre-wrap;margin-bottom:4px;">${escapeHtml(b.messageContent || "")}</div>
           <div>${attachmentHtml}</div>
@@ -2411,6 +2572,31 @@ function formatNotificationTime(iso) {
     } catch (err) {
       console.error(err);
       showToast("Failed to update status: " + err.message, "error");
+    }
+  }
+
+  // Admin edits the service price of a specific booking; server adds the client's already
+  // selected add-on(s) on top of it and returns the recalculated final total.
+  async function updateBookingPrice(bookingId) {
+    const input = document.getElementById(`cf-booking-price-${bookingId}`);
+    const price = parseFloat(input?.value);
+    if (isNaN(price) || price < 0) {
+      showToast("Please enter a valid, non-negative price.", "warning");
+      return;
+    }
+    try {
+      const response = await fetch(`/api/bookings/${bookingId}`, {
+        method: "PUT",
+        headers: adminHeaders(),
+        body: JSON.stringify({ basePrice: price })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || "Failed to update price");
+      showToast("Price updated — total recalculated with add-on(s)!", "success");
+      fetchAdminBookings();
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to update price: " + err.message, "error");
     }
   }
 
