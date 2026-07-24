@@ -1322,7 +1322,7 @@
           </div>
           <div class="account-dropdown-menu" id="accountMenu" style="display: none; position: absolute; right: 0; top: calc(100% + 8px); background: var(--bg-white, #fff); border: 1px solid var(--border-color, #e2e8f0); border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); min-width: 160px; z-index: 2000; overflow: hidden; padding: 0.35rem;">
             <a href="member-profile.html" style="width: 100%; display: flex; align-items: center; gap: 0.5rem; padding: 0.65rem 0.85rem; border: none; background: transparent; color: var(--text-dark, #1e293b); text-decoration: none; font-size: 0.85rem; font-weight: 600; border-radius: 8px; transition: background 0.2s;">
-              <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <svg viewBox="0 0 24 24" style="width: 16px; height: 16px; fill: none; stroke: #3b82f6; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
               Profile
             </a>
             <hr style="border: none; border-top: 1px solid var(--border-color, #e2e8f0); margin: 0.25rem 0;">
@@ -1801,7 +1801,7 @@
     const workloadClass = s.currentWorkload >= 100 ? 'high' : s.currentWorkload >= 80 ? 'medium' : '';
     const capacityClass = s.availablePercentage <= 0 ? 'full' : s.availablePercentage <= 20 ? 'warn' : 'ok';
     const capacityText = s.availablePercentage <= 0 ? 'Fully allocated' : `${s.availablePercentage}% available`;
-    const initials = (s.fullName || s.username || '?').split(/\s+/).map(x => x[0]).slice(0,2).join('').toUpperCase();
+    const initials = (s.fullName || s.username || '?').split(' ').slice(-2).map(w => w[0]).join('').toUpperCase();
     const avatar = `<div class="avatar">${escapeHtml(initials)}${s.avatarUrl ? `<img src="${escapeAttr(s.avatarUrl)}" alt="" onerror="this.remove()">` : ''}</div>`;
     const skills = s.skills?.length ? s.skills.map(v => `<span class="chip">${escapeHtml(v)}</span>`).join('') : '<span class="empty-chip">No skills recorded</span>';
     const assignmentHtml = allocations.length ? allocations.map(allocationHtml).join('') : '<span class="empty-chip">No allocation on this project</span>';

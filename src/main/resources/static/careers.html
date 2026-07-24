@@ -1212,10 +1212,10 @@
         <li><a href="services.html">Services</a></li>
         <li><a href="portfolio.html">Project</a></li>
         <li><a href="careers.html">Careers</a></li>
-        <li><a href="contact.html">Contact</a></li>
         <li><a href="feedback.html">Feedback</a></li>
+        <li><a href="contact.html">Contact</a></li>
         <li><a href="booking.html" class="nav-btn-booking">Book a Consultation</a></li>
-        <li><a href="#" class="nav-btn" id="default-get-started">Get Started Now</a></li>
+        <li><a href="#" class="nav-btn" id="default-get-started">Start Project</a></li>
       </ul>
     </nav>
   </header>
@@ -1693,7 +1693,7 @@
         '<h4 class="cr-job-title">' + v.title + '</h4>' +
         '</div>' +
         '<div class="cr-job-salary">' +
-        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M9 9h4.5a1.5 1.5 0 0 1 0 3H9m0 0h5a1.5 1.5 0 0 1 0 3H9"/></svg>' +
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg>' +
         v.sal +
         '</div>' +
         '<div class="cr-job-location">' +
@@ -1737,7 +1737,7 @@
         sessionStorage.setItem('crAutoApply', 'true');
         if (preId) sessionStorage.setItem('crAutoApplyId', preId);
 
-        // Dùng auth modal từ main.js (cùng UX với nút "Get Started Now")
+        // Dùng auth modal từ main.js (cùng UX với nút "Start Project")
         if (typeof openAuthModal === 'function') {
           openAuthModal('login');
         } else {
@@ -1888,7 +1888,7 @@
       setTimeout(function () { openApplyModal(vacId || null); }, 400);
     }
   </script>
-  <!-- main.js provides auth modal, navbar session sync & "Get Started Now" button logic -->
+  <!-- main.js provides auth modal, navbar session sync & "Start Project" button logic -->
   <script src="/js/main.js"></script>
 </body>
 
