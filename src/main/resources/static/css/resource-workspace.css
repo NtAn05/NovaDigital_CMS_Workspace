@@ -38,7 +38,11 @@ body.resource-dashboard-page .resource-sidebar {
     width 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
-/* Override the old 72px scrolled-sidebar rule only. The header animation remains untouched. */
+/* Ensure scrolled header height matches sidebar top position exactly without gaps. */
+body.resource-dashboard-page .resource-header.is-scrolled {
+  height: var(--resource-header-height) !important;
+}
+
 body.resource-dashboard-page .resource-header.is-scrolled ~ .resource-layout .resource-sidebar {
   top: var(--resource-header-height) !important;
   min-height: calc(100vh - var(--resource-header-height)) !important;

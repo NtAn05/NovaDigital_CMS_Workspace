@@ -282,8 +282,8 @@
         display: none !important;
       }
       body.resource-dashboard-page .resource-header.is-scrolled ~ .resource-layout .resource-sidebar {
-        top: 72px !important;
-        min-height: calc(100vh - 72px) !important;
+        top: var(--resource-header-height) !important;
+        min-height: calc(100vh - var(--resource-header-height)) !important;
       }
     }
 
@@ -1096,7 +1096,7 @@
         top: 0 !important;
         left: 0 !important;
         width: var(--resource-sidebar-width) !important; /* Sync width dynamically with sidebar */
-        height: 72px !important;
+        height: var(--resource-header-height) !important;
         border-radius: 0 !important;
         border: none !important;
         border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
@@ -1141,8 +1141,8 @@
 
       /* Adjust sidebar's top position and height to sit flush under scrolled header */
       body.resource-dashboard-page .resource-header.is-scrolled ~ .resource-layout .resource-sidebar {
-        top: 72px !important;
-        min-height: calc(100vh - 72px) !important;
+        top: var(--resource-header-height) !important;
+        min-height: calc(100vh - var(--resource-header-height)) !important;
       }
     }
 
