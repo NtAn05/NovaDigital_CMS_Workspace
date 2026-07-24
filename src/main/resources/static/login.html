@@ -8,6 +8,80 @@
   <title>Log In | NovaDigital</title>
   <link rel="stylesheet" href="/css/style.css">
   <style>
+    /* ── Captcha anti-spam ── */
+    .login-captcha-section {
+      display: none;
+      margin-bottom: 1.2rem;
+      padding: 1rem;
+      background: linear-gradient(135deg, #fff7ed 0%, #fef3c7 100%);
+      border: 1.5px solid #f59e0b;
+      border-radius: 14px;
+      animation: captchaSlideIn 0.35s ease;
+    }
+    .login-captcha-section.active { display: block; }
+    @keyframes captchaSlideIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .login-captcha-label {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #92400e;
+      margin-bottom: 0.7rem;
+    }
+    .login-captcha-label svg { flex-shrink: 0; }
+    .login-captcha-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 0.65rem;
+    }
+    .login-captcha-code {
+      flex: 1;
+      background: #1e293b;
+      border-radius: 10px;
+      padding: 0.65rem 1rem;
+      text-align: center;
+      font-family: 'Courier New', monospace;
+      font-size: 1.45rem;
+      font-weight: 700;
+      letter-spacing: 0.3em;
+      color: #38bdf8;
+      text-shadow: 0 0 10px rgba(56,189,248,0.6);
+      user-select: none;
+      border: 1px solid rgba(56,189,248,0.25);
+    }
+    .login-captcha-refresh {
+      background: none;
+      border: 1.5px solid #d97706;
+      border-radius: 8px;
+      padding: 0.5rem;
+      cursor: pointer;
+      color: #d97706;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.18s, color 0.18s;
+      flex-shrink: 0;
+    }
+    .login-captcha-refresh:hover { background: #fef3c7; }
+    .login-captcha-input {
+      width: 100%;
+      padding: 0.65rem 1rem;
+      border: 1.5px solid #d97706;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      background: #fff;
+      outline: none;
+      transition: border-color 0.2s;
+      box-sizing: border-box;
+    }
+    .login-captcha-input:focus { border-color: #f59e0b; box-shadow: 0 0 0 3px rgba(245,158,11,0.15); }
+    .login-captcha-input::placeholder { color: #9ca3af; }
+  </style>
     .auth-wrapper {
       min-height: 80vh;
       display: flex;
@@ -98,13 +172,13 @@
       <h2>Welcome Back</h2>
       <p class="subtitle">Enter your credentials to access your account</p>
 
-      <form id="loginForm">
+      <form id="loginForm" autocomplete="off">
         <div class="floating-form-group">
-          <input type="text" id="usernameOrEmail" placeholder=" " required>
+          <input type="text" id="usernameOrEmail" placeholder=" " required autocomplete="off">
           <label for="usernameOrEmail">Username or Email *</label>
         </div>
         <div class="floating-form-group">
-          <input type="password" id="password" placeholder=" " required>
+          <input type="password" id="password" placeholder=" " required autocomplete="new-password">
           <label for="password">Password *</label>
         </div>
         <div style="text-align: right; margin-top: -0.5rem; margin-bottom: 1rem;">
@@ -112,9 +186,34 @@
             style="font-size: 0.85rem; color: var(--primary); text-decoration: none; font-weight: 500;">Forgot
             password?</a>
         </div>
+
+        <!-- Captcha anti-spam: shown after 5 failed login attempts -->
+        <div id="loginCaptchaSection" class="login-captcha-section">
+          <div class="login-captcha-label">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+            </svg>
+            Security Verification Required — too many failed attempts
+          </div>
+          <div class="login-captcha-box">
+            <div class="login-captcha-code" id="loginCaptchaCode">------</div>
+            <button type="button" class="login-captcha-refresh" id="loginCaptchaRefresh" title="New code">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+              </svg>
+            </button>
+          </div>
+          <input type="text" id="loginCaptchaAnswer" class="login-captcha-input"
+            placeholder="Type the code above" autocomplete="off" maxlength="8">
+        </div>
+
         <button type="submit" class="submit-btn">Log In</button>
         <div id="alertMessage" class="alert-message"></div>
       </form>
+
 
       <!-- Divider -->
       <div style="display: flex; align-items: center; gap: 1rem; margin: 1.5rem 0;">

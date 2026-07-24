@@ -536,6 +536,35 @@
     </div>
   </div>
 
+  <!-- ── Member Booking Detail Modal ── -->
+  <div id="member-booking-detail-modal-overlay" class="crud-modal-overlay">
+    <div class="crud-modal" style="max-width: 620px; width: 95%; padding: 1.75rem 2rem;">
+      <div class="crud-modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color, #e2e8f0); padding-bottom: 0.85rem; margin-bottom: 1.25rem;">
+        <div style="display: flex; align-items: center; gap: 0.65rem;">
+          <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(37,99,235,0.1); color: #2563eb; display: grid; place-items: center;">
+            <svg viewBox="0 0 24 24" style="width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div>
+            <h3 style="margin: 0; font-size: 1.2rem; font-weight: 700;">Assigned Booking Details</h3>
+            <span id="mbd-booking-id" style="font-size: 0.78rem; color: var(--text-muted, #64748b);">Booking #---</span>
+          </div>
+        </div>
+        <button class="crud-modal-close" onclick="closeMemberBookingDetailModal()">&times;</button>
+      </div>
+
+      <style>
+        #mbd-modal-body::-webkit-scrollbar { display: none; width: 0; height: 0; }
+      </style>
+      <div id="mbd-modal-body" style="display: flex; flex-direction: column; gap: 1.15rem; max-height: 75vh; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none;">
+        <!-- Dynamically populated detail content -->
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.25rem; border-top: 1px solid var(--border-color, #e2e8f0); padding-top: 1rem;">
+        <button class="btn-cancel" onclick="closeMemberBookingDetailModal()" style="padding: 0.5rem 1.25rem; font-weight: 600; border-radius: 8px; border: 1px solid var(--border-color, #e2e8f0); background: var(--bg-card, #ffffff); color: var(--text-dark, #1e293b); cursor: pointer;">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast container -->
   <div id="toast-container"></div>
 
@@ -666,7 +695,10 @@
       }
     }
 
+    let _cacheMemberBookings = [];
+
     function renderMyBookings(bookings) {
+      _cacheMemberBookings = bookings || [];
       const container = document.getElementById('myBookingsGrid');
       if (!bookings.length) {
         container.innerHTML = `<div class="empty-state"><span class="emoji">📅</span>No consultation bookings assigned to you yet.</div>`;
@@ -679,21 +711,110 @@
             <h3>${escHtml(b.customerName)}</h3>
             <p>
               <strong>${escHtml(b.serviceTitle)}</strong><br>
-              📅 ${escHtml(b.appointmentDate)} — 🕒 ${escHtml(String(b.timeSlot).substring(0, 5))}<br>
-              ${b.customerEmail ? `✉️ ${escHtml(b.customerEmail)}<br>` : ''}
-              ${b.customerPhone ? `📞 ${escHtml(b.customerPhone)}<br>` : ''}
-              ${b.messageContent ? `💬 ${escHtml(b.messageContent)}` : ''}
+              📅 ${escHtml(b.appointmentDate)} — 🕒 ${escHtml(String(b.timeSlot).substring(0, 5))}
             </p>
           </div>
-          <div class="project-card-footer">
-            <span class="category">$${Number(b.totalPrice).toFixed(2)}</span>
-            ${b.attachmentUrl
-              ? `<a href="${escHtml(b.attachmentUrl)}" target="_blank" class="btn-manage btn-manage-staff">View Attachment</a>`
-              : ''}
+          <div class="project-card-footer" style="display:flex;justify-content:space-between;align-items:center;">
+            <span class="category" style="font-weight:700;">$${Number(b.totalPrice).toFixed(2)}</span>
+            <button type="button" class="btn-manage btn-manage-staff" onclick="openMemberBookingDetailModal(${b.id})" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;font-weight:600;padding:0.4rem 0.8rem;border-radius:6px;">
+              <svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>View Detail
+            </button>
           </div>
         </div>
       `).join('');
     }
+
+    async function openMemberBookingDetailModal(bookingId) {
+      const modal = document.getElementById("member-booking-detail-modal-overlay");
+      const container = document.getElementById("mbd-modal-body");
+      const idLabel = document.getElementById("mbd-booking-id");
+      if (!modal || !container) return;
+
+      let b = _cacheMemberBookings.find(item => item.id === bookingId);
+      if (!b) {
+        try {
+          const res = await fetch(`/api/bookings/${bookingId}`, { headers: { 'Authorization': `Bearer ${pmToken}` } });
+          if (res.ok) b = await res.json();
+        } catch (e) {
+          console.error("Fetch booking error:", e);
+        }
+      }
+
+      if (!b) {
+        alert("Booking details not found.");
+        return;
+      }
+
+      if (idLabel) idLabel.textContent = `Booking #${b.id}`;
+
+      let attachmentHtml = "<span style='color:var(--text-muted, #64748b); font-size:0.85rem;'>None</span>";
+      if (b.attachmentUrl) {
+        const fileName = b.attachmentUrl.split("/").pop();
+        attachmentHtml = `<a href="${escHtml(b.attachmentUrl)}" target="_blank" class="attachment-link" style="display:inline-flex;align-items:center;gap:4px;color:#2563eb;font-weight:600;font-size:0.85rem;text-decoration:none;"><svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>${escHtml(fileName)}</a>`;
+      }
+
+      const statusClass = b.status === "CONFIRMED" ? "status-confirmed" : (b.status === "COMPLETED" ? "status-completed" : (b.status === "CANCELLED" ? "status-cancelled" : "status-pending"));
+
+      container.innerHTML = `
+        <!-- Status & Schedule Grid -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; background: var(--bg-light, #f8fafc); padding: 1rem 1.25rem; border-radius: 12px; border: 1px solid var(--border-color, #e2e8f0);">
+          <div>
+            <span style="display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted, #64748b); font-weight: 700; margin-bottom: 0.25rem;">Booking Status</span>
+            <span class="status-badge ${statusClass}" style="font-weight: 700;">${escHtml(b.status)}</span>
+          </div>
+          <div>
+            <span style="display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted, #64748b); font-weight: 700; margin-bottom: 0.25rem;">Schedule Time</span>
+            <div style="font-weight: 700; font-size: 0.9rem;" class="text-dark-inline">${escHtml(b.appointmentDate || "—")} at ${escHtml(b.timeSlot ? String(b.timeSlot).substring(0, 5) : "—")}</div>
+          </div>
+        </div>
+
+        <!-- Customer & Service Details -->
+        <div style="padding: 1.15rem 1.25rem; border: 1px solid var(--border-color, #e2e8f0); border-radius: 12px; background: var(--bg-card, #ffffff);">
+          <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted, #64748b); font-weight: 700; margin-bottom: 0.65rem; display: flex; align-items: center; gap: 0.4rem;">
+            <svg viewBox="0 0 24 24" style="width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Client & Service Info
+          </div>
+          <div style="font-weight: 700; font-size: 1rem; margin-bottom: 0.3rem;" class="text-dark-inline">${escHtml(b.customerName || "—")}</div>
+          <div style="font-size: 0.85rem; color: var(--text-muted, #64748b); margin-bottom: 0.2rem;">Email: ${escHtml(b.customerEmail || "—")}</div>
+          <div style="font-size: 0.85rem; color: var(--text-muted, #64748b); margin-bottom: 0.6rem;">Phone: ${escHtml(b.customerPhone || "—")}</div>
+          
+          <div style="border-top: 1px dashed var(--border-color, #e2e8f0); padding-top: 0.6rem; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.9rem; font-weight: 700;" class="text-dark-inline">${escHtml(b.serviceTitle || "—")}</span>
+            <span style="font-weight: 800; font-size: 1.1rem; color: #2563eb;">$${Number(b.totalPrice || 0).toFixed(2)}</span>
+          </div>
+        </div>
+
+        <!-- Client Message & Attachment -->
+        <div style="padding: 1.15rem 1.25rem; border: 1px solid var(--border-color, #e2e8f0); border-radius: 12px; background: var(--bg-card, #ffffff);">
+          <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted, #64748b); font-weight: 700; margin-bottom: 0.65rem; display: flex; align-items: center; gap: 0.4rem;">
+            <svg viewBox="0 0 24 24" style="width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Client Request & Message
+          </div>
+          <div style="font-size: 0.88rem; line-height: 1.5; color: var(--text-dark, #1e293b); white-space: pre-wrap; background: var(--bg-light, #f8fafc); padding: 0.8rem 1rem; border-radius: 8px; border: 1px solid var(--border-color, #e2e8f0); margin-bottom: 0.75rem;">${escHtml(b.messageContent || "No specific request/message provided.")}</div>
+          
+          <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem;">
+            <span style="font-weight: 600; color: var(--text-muted, #64748b);">Attachment:</span>
+            ${attachmentHtml}
+          </div>
+        </div>
+      `;
+
+      modal.onclick = (e) => {
+        if (e.target === modal) closeMemberBookingDetailModal();
+      };
+
+      modal.classList.add("is-open");
+      document.body.style.overflow = "hidden";
+    }
+
+    function closeMemberBookingDetailModal() {
+      const modal = document.getElementById("member-booking-detail-modal-overlay");
+      if (modal) modal.classList.remove("is-open");
+      document.body.style.overflow = "";
+    }
+
+    window.openMemberBookingDetailModal = openMemberBookingDetailModal;
+    window.closeMemberBookingDetailModal = closeMemberBookingDetailModal;
 
     function renderProjectGrid(containerId, projects, isPm) {
       const container = document.getElementById(containerId);
