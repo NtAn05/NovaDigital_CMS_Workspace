@@ -176,6 +176,21 @@ function injectAuthModal() {
             <div style="text-align: right; margin-top: -0.5rem; margin-bottom: 1rem;">
               <a href="forgot-password.html" style="font-size: 0.85rem; color: var(--primary); text-decoration: none; font-weight: 500;">Forgot password?</a>
             </div>
+            <!-- Captcha anti-spam: shown after 5 failed login attempts -->
+            <div id="modal-captcha-section" style="display:none; margin-bottom:1rem; padding:0.85rem; background:linear-gradient(135deg,#fff7ed,#fef3c7); border:1.5px solid #f59e0b; border-radius:12px;">
+              <div style="display:flex; align-items:center; gap:0.4rem; font-size:0.8rem; font-weight:600; color:#92400e; margin-bottom:0.6rem;">
+                <svg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'></path></svg>
+                Security Verification Required
+              </div>
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:0.55rem;">
+                <div id="modal-captcha-code" style="flex:1; background:#1e293b; border-radius:8px; padding:0.55rem 0.75rem; text-align:center; font-family:'Courier New',monospace; font-size:1.25rem; font-weight:700; letter-spacing:0.25em; color:#38bdf8; text-shadow:0 0 8px rgba(56,189,248,0.5); user-select:none; border:1px solid rgba(56,189,248,0.2);">------</div>
+                <button type="button" id="modal-captcha-refresh" title="New code" style="background:none; border:1.5px solid #d97706; border-radius:7px; padding:0.45rem; cursor:pointer; color:#d97706; display:flex; align-items:center;">
+                  <svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='23 4 23 10 17 10'></polyline><path d='M20.49 15a9 9 0 1 1-2.12-9.36L23 10'></path></svg>
+                </button>
+              </div>
+              <input type="text" id="modal-captcha-answer" placeholder="Type the code above" autocomplete="off" maxlength="8"
+                style="width:100%; padding:0.55rem 0.85rem; border:1.5px solid #d97706; border-radius:8px; font-size:0.9rem; background:#fff; box-sizing:border-box; outline:none;">
+            </div>
             <button type="submit" class="submit-btn" style="margin-top:0.5rem;">Login</button>
             <div id="modal-login-alert" class="alert-message"></div>
           </form>
@@ -282,6 +297,14 @@ function injectAuthModal() {
 function openAuthModal(tab = "login") {
   const overlay = document.getElementById("auth-modal-overlay");
   if (!overlay) return;
+  
+  const mForm = document.getElementById("modal-loginForm");
+  if (mForm) mForm.reset();
+  const muInput = document.getElementById("modal-usernameOrEmail");
+  const mpInput = document.getElementById("modal-password");
+  if (muInput) muInput.value = "";
+  if (mpInput) mpInput.value = "";
+
   overlay.classList.add("is-open");
   document.body.style.overflow = "hidden";
   switchAuthTab(tab);
@@ -290,6 +313,14 @@ function openAuthModal(tab = "login") {
 function closeAuthModal() {
   const overlay = document.getElementById("auth-modal-overlay");
   if (!overlay) return;
+
+  const mForm = document.getElementById("modal-loginForm");
+  if (mForm) mForm.reset();
+  const muInput = document.getElementById("modal-usernameOrEmail");
+  const mpInput = document.getElementById("modal-password");
+  if (muInput) muInput.value = "";
+  if (mpInput) mpInput.value = "";
+
   overlay.classList.remove("is-open");
   document.body.style.overflow = "";
   // Clear all modal alerts on close
@@ -347,6 +378,42 @@ function initModalLoginForm() {
   const form = document.getElementById("modal-loginForm");
   if (!form) return;
 
+  // ── Captcha state ──
+  let modalCaptchaToken = null;
+  let modalCaptchaRequired = false;
+
+  const captchaSection = document.getElementById("modal-captcha-section");
+  const captchaCodeEl  = document.getElementById("modal-captcha-code");
+  const captchaInput   = document.getElementById("modal-captcha-answer");
+  const captchaRefresh = document.getElementById("modal-captcha-refresh");
+
+  async function loadModalCaptcha() {
+    if (!captchaCodeEl) return;
+    captchaCodeEl.textContent = "...";
+    if (captchaInput) captchaInput.value = "";
+    try {
+      const res = await fetch("/api/auth/captcha");
+      const data = await res.json();
+      modalCaptchaToken = data.token;
+      captchaCodeEl.textContent = data.code.split("").join(" ");
+    } catch (_) {
+      captchaCodeEl.textContent = "ERROR";
+      modalCaptchaToken = null;
+    }
+  }
+
+  function showModalCaptchaUI() {
+    if (!captchaSection || modalCaptchaRequired) return;
+    modalCaptchaRequired = true;
+    captchaSection.style.display = "block";
+    captchaSection.style.animation = "captchaSlideIn 0.35s ease";
+    loadModalCaptcha();
+  }
+
+  if (captchaRefresh) {
+    captchaRefresh.addEventListener("click", loadModalCaptcha);
+  }
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -358,13 +425,32 @@ function initModalLoginForm() {
       return;
     }
 
+    // Validate captcha if required
+    if (modalCaptchaRequired) {
+      if (!captchaInput || !captchaInput.value.trim()) {
+        showModalAlert("Please enter the captcha code.", false, "modal-login-alert");
+        return;
+      }
+      if (!modalCaptchaToken) {
+        showModalAlert("Captcha not loaded. Please refresh and try again.", false, "modal-login-alert");
+        await loadModalCaptcha();
+        return;
+      }
+    }
+
     try {
       showModalAlert("Logging in...", null, "modal-login-alert");
+
+      const body = { usernameOrEmail, password };
+      if (modalCaptchaRequired && modalCaptchaToken) {
+        body.captchaToken = modalCaptchaToken;
+        body.captchaAnswer = captchaInput ? captchaInput.value.trim() : "";
+      }
 
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ usernameOrEmail, password })
+        body: JSON.stringify(body)
       });
 
       const data = await response.json();
@@ -406,6 +492,11 @@ function initModalLoginForm() {
           }
         }, 1000);
       } else {
+        // Handle captcha-required from server
+        if (data.captchaRequired) {
+          showModalCaptchaUI();
+          if (modalCaptchaRequired) loadModalCaptcha();
+        }
         showModalAlert(data.message || "Login failed. Please check your credentials.", false, "modal-login-alert");
       }
     } catch (error) {
@@ -772,6 +863,57 @@ function initLoginForm() {
   const alertMsg = document.getElementById("alertMessage");
   if (!form || !alertMsg) return;
 
+  const uInput = document.getElementById("usernameOrEmail");
+  const pInput = document.getElementById("password");
+
+  const clearLoginForm = () => {
+    form.reset();
+    if (uInput) uInput.value = "";
+    if (pInput) pInput.value = "";
+  };
+
+  // Force clear inputs on load and delay clear to override browser autofill
+  clearLoginForm();
+  setTimeout(clearLoginForm, 50);
+  setTimeout(clearLoginForm, 200);
+  window.addEventListener("pageshow", clearLoginForm);
+
+  // ── Captcha state ──
+  let loginCaptchaToken = null;
+  let captchaRequired = false;
+
+  const captchaSection = document.getElementById("loginCaptchaSection");
+  const captchaCodeEl  = document.getElementById("loginCaptchaCode");
+  const captchaInput   = document.getElementById("loginCaptchaAnswer");
+  const captchaRefresh = document.getElementById("loginCaptchaRefresh");
+
+  async function loadLoginCaptcha() {
+    if (!captchaCodeEl) return;
+    captchaCodeEl.textContent = "...";
+    if (captchaInput) captchaInput.value = "";
+    try {
+      const res = await fetch("/api/auth/captcha");
+      const data = await res.json();
+      loginCaptchaToken = data.token;
+      // Render code as spaced individual characters for stylized look
+      captchaCodeEl.textContent = data.code.split("").join(" ");
+    } catch (_) {
+      captchaCodeEl.textContent = "ERROR";
+      loginCaptchaToken = null;
+    }
+  }
+
+  function showCaptcha() {
+    if (!captchaSection || captchaRequired) return;
+    captchaRequired = true;
+    captchaSection.classList.add("active");
+    loadLoginCaptcha();
+  }
+
+  if (captchaRefresh) {
+    captchaRefresh.addEventListener("click", loadLoginCaptcha);
+  }
+
   // Show query-param message
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get("error") === "unauthorized") {
@@ -791,13 +933,32 @@ function initLoginForm() {
       return;
     }
 
+    // Validate captcha fields if required
+    if (captchaRequired) {
+      if (!captchaInput || !captchaInput.value.trim()) {
+        showAlert("Please enter the captcha code.", false);
+        return;
+      }
+      if (!loginCaptchaToken) {
+        showAlert("Captcha not loaded. Please refresh the code and try again.", false);
+        await loadLoginCaptcha();
+        return;
+      }
+    }
+
     try {
       showAlert("Logging in...", null);
+
+      const body = { usernameOrEmail, password };
+      if (captchaRequired && loginCaptchaToken) {
+        body.captchaToken = loginCaptchaToken;
+        body.captchaAnswer = captchaInput ? captchaInput.value.trim() : "";
+      }
 
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ usernameOrEmail, password })
+        body: JSON.stringify(body)
       });
 
       const data = await response.json();
@@ -843,6 +1004,12 @@ function initLoginForm() {
           }
         }, 1000);
       } else {
+        // Handle captcha-required response from server
+        if (data.captchaRequired) {
+          showCaptcha();
+          // If wrong captcha, reload a fresh one
+          if (captchaRequired) loadLoginCaptcha();
+        }
         showAlert(data.message || "Login failed. Please check your credentials.", false);
       }
     } catch (error) {
@@ -866,6 +1033,7 @@ function initLoginForm() {
     }
   }
 }
+
 
 function initRegisterForm() {
   const form = document.getElementById("registerForm");
@@ -1391,8 +1559,8 @@ function initAdminDashboard() {
 
     try {
       const response = await fetch("/api/admin/users", { headers: adminHeaders() });
-      if (!response.ok) throw new Error("Failed");
-      const users = await response.json();
+      const rawUsers = await response.json();
+      const users = (rawUsers || []).filter(u => u.role !== "ROLE_ADMIN" && u.role !== "ADMIN");
 
       if (statCount) statCount.textContent = users.length;
       tbody.innerHTML = "";
@@ -2443,21 +2611,21 @@ function formatNotificationTime(iso) {
       if (!response.ok) throw new Error("Failed to fetch bookings");
       const bookings = await response.json();
 
-    // Ensure dependent caches are loaded
-    if (Object.keys(_cache.services).length === 0) {
-      await fetchAdminServicesTable();
-    }
-    if (Object.keys(_cache.users).length === 0) {
-      await fetchAdminUsers();
-    }
+      // Ensure dependent caches are loaded
+      if (Object.keys(_cache.services).length === 0) {
+        await fetchAdminServicesTable();
+      }
+      if (Object.keys(_cache.users).length === 0) {
+        await fetchAdminUsers();
+      }
 
-    // Expert (consultant) = User with role ROLE_MEMBER, NOT old members table
-    const memberUsers = Object.values(_cache.users).filter(u => u.role === "ROLE_MEMBER");
+      // Expert (consultant) = User with role ROLE_MEMBER
+      const memberUsers = Object.values(_cache.users).filter(u => u.role === "ROLE_MEMBER");
 
       tbody.innerHTML = "";
 
       if (!bookings.length) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text-muted);">No bookings found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);">No bookings found.</td></tr>`;
         return;
       }
 
@@ -2470,12 +2638,12 @@ function formatNotificationTime(iso) {
 
         tr.setAttribute("data-searchable", `${client.fullName} ${service.title} ${b.appointmentDate} ${b.status}`);
 
-      // Expert select options - retrieved from User role=ROLE_MEMBER (correct person receiving notifications/login)
-      let expertOptions = `<option value="">-- Assign Expert --</option>`;
-      memberUsers.forEach(u => {
-        const selected = (b.expertId && String(b.expertId) === String(u.id)) ? "selected" : "";
-        expertOptions += `<option value="${u.id}" ${selected}>${escapeHtml(u.fullName)}</option>`;
-      });
+        // Expert select options
+        let expertOptions = `<option value="">-- Assign Expert --</option>`;
+        memberUsers.forEach(u => {
+          const selected = (b.expertId && String(b.expertId) === String(u.id)) ? "selected" : "";
+          expertOptions += `<option value="${u.id}" ${selected}>${escapeHtml(u.fullName)}</option>`;
+        });
 
         // Status options
         const statuses = ["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"];
@@ -2485,13 +2653,6 @@ function formatNotificationTime(iso) {
           statusOptions += `<option value="${s}" ${selected}>${s}</option>`;
         });
 
-        // Display files beautifully
-        let attachmentHtml = "—";
-        if (b.attachmentUrl) {
-          const fileName = b.attachmentUrl.split("/").pop();
-          attachmentHtml = `<a href="${escapeHtml(b.attachmentUrl)}" target="_blank" class="attachment-link" style="display:inline-flex;align-items:center;gap:4px;color:#2563eb;font-size:0.85rem;"><svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>${escapeHtml(fileName)}</a>`;
-        }
-
         tr.innerHTML = `
         <td>
           <div class="text-dark-inline">${escapeHtml(client.fullName)}</div>
@@ -2500,21 +2661,7 @@ function formatNotificationTime(iso) {
         <td class="text-dark-inline">${escapeHtml(service.title)}</td>
         <td>
           <div class="text-dark-inline">${escapeHtml(b.appointmentDate)}</div>
-          <div style="font-size:0.85rem;color:var(--text-muted);">${escapeHtml(b.timeSlot.substring(0, 5))}</div>
-        </td>
-        <td style="min-width:150px;">
-          <div style="display:flex;align-items:center;gap:4px;">
-            <span style="font-size:0.75rem;color:var(--text-muted);">$</span>
-            <input type="number" id="cf-booking-price-${b.id}" value="${Number(b.basePrice || 0)}" min="0" step="0.01"
-              style="width:72px;padding:0.3rem 0.4rem;border:1px solid var(--border-color);border-radius:6px;font-size:0.85rem;background:var(--bg-card);color:var(--text-dark);">
-            <button type="button" class="btn-save" title="Save service price" onclick="updateBookingPrice(${b.id})" style="padding:0.3rem 0.55rem;font-size:0.75rem;">Save</button>
-          </div>
-          ${(b.addonsPrice && b.addonsPrice > 0) ? `<div style="font-size:0.75rem;color:var(--text-muted);margin-top:3px;">+ $${Number(b.addonsPrice).toFixed(2)} add-on(s)</div>` : ""}
-          <div style="font-size:0.85rem;font-weight:700;margin-top:3px;" class="text-dark-inline">Total: $${b.totalPrice.toFixed(2)}</div>
-        </td>
-        <td style="max-width:250px;">
-          <div style="font-size:0.85rem;white-space:pre-wrap;margin-bottom:4px;">${escapeHtml(b.messageContent || "")}</div>
-          <div>${attachmentHtml}</div>
+          <div style="font-size:0.85rem;color:var(--text-muted);">${escapeHtml(b.timeSlot ? b.timeSlot.substring(0, 5) : "")}</div>
         </td>
         <td>
           <select class="admin-select" onchange="updateBookingExpert(${b.id}, this.value)" style="padding:0.35rem;border-radius:6px;border:1px solid var(--border-color);font-size:0.85rem;width:100%;max-width:160px;background:var(--bg-card);color:var(--text-dark);">
@@ -2527,8 +2674,11 @@ function formatNotificationTime(iso) {
           </select>
         </td>
         <td>
-          <div style="display:flex;gap:4px;">
-            <button class="btn-delete" onclick="deleteBooking(${b.id})" style="padding:0.35rem 0.6rem;font-size:0.8rem;gap:4px;border-radius:6px;background-color:#ef4444;color:#fff;border:none;cursor:pointer;">
+          <div style="display:flex;gap:6px;align-items:center;">
+            <button type="button" class="btn-detail" onclick="openBookingDetailModal(${b.id})" style="padding:0.35rem 0.65rem;font-size:0.8rem;gap:4px;border-radius:6px;background:rgba(37,99,235,0.1);color:#2563eb;border:1px solid rgba(37,99,235,0.22);cursor:pointer;font-weight:600;display:inline-flex;align-items:center;transition:all 0.2s ease;">
+              <svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>View Detail
+            </button>
+            <button type="button" class="btn-delete" onclick="deleteBooking(${b.id})" style="padding:0.35rem 0.6rem;font-size:0.8rem;gap:4px;border-radius:6px;background-color:#ef4444;color:#fff;border:none;cursor:pointer;">
               <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>Delete
             </button>
           </div>
@@ -2539,9 +2689,170 @@ function formatNotificationTime(iso) {
 
     } catch (err) {
       console.error("fetchAdminBookings error:", err);
-      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:2rem;color:#ef4444;">Could not load bookings.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:#ef4444;">Could not load bookings.</td></tr>`;
     }
   }
+
+  // =============================================
+  //  Admin – Consultation Booking Detail Modal
+  // =============================================
+
+  async function openBookingDetailModal(bookingId) {
+    const modal = document.getElementById("booking-detail-modal-overlay");
+    const container = document.getElementById("bd-modal-body");
+    const idLabel = document.getElementById("bd-booking-id");
+    if (!modal || !container) return;
+
+    let b = _cache.bookings[bookingId];
+    if (!b) {
+      try {
+        const res = await fetch(`/api/bookings/${bookingId}`, { headers: adminHeaders() });
+        if (res.ok) {
+          b = await res.json();
+          _cache.bookings[bookingId] = b;
+        }
+      } catch (e) {
+        console.error("Fetch single booking error:", e);
+      }
+    }
+
+    if (!b) {
+      showToast("Booking information not found.", "error");
+      return;
+    }
+
+    if (idLabel) idLabel.textContent = `Booking #${b.id}`;
+
+    const client = _cache.users[b.clientId] || { fullName: `User #${b.clientId}`, email: "—", phone: "—" };
+    const service = _cache.services[b.serviceId] || { title: `Service #${b.serviceId}` };
+    const expert = b.expertId ? (_cache.users[b.expertId] || { fullName: `Expert #${b.expertId}`, email: "" }) : null;
+
+    let attachmentHtml = "<span style='color:var(--text-muted); font-size:0.85rem;'>None</span>";
+    if (b.attachmentUrl) {
+      const fileName = b.attachmentUrl.split("/").pop();
+      attachmentHtml = `<a href="${escapeHtml(b.attachmentUrl)}" target="_blank" class="attachment-link" style="display:inline-flex;align-items:center;gap:4px;color:#2563eb;font-weight:600;font-size:0.85rem;text-decoration:none;"><svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>${escapeHtml(fileName)}</a>`;
+    }
+
+    container.innerHTML = `
+      <!-- Service & Pricing Summary -->
+      <div style="padding: 1.15rem 1.25rem; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-white);">
+        <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 700; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem;">
+          <svg viewBox="0 0 24 24" style="width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+          Service & Pricing Summary
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; padding-bottom: 0.65rem; border-bottom: 1px dashed var(--border-color);">
+          <span style="font-size: 0.95rem; font-weight: 700;" class="text-dark-inline">${escapeHtml(service.title)}</span>
+          <span style="font-size: 0.83rem; color: var(--text-muted); font-weight: 600;">Client: ${escapeHtml(client.fullName)}</span>
+        </div>
+
+        <!-- Editable Base Price -->
+        <div style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-light, #f8fafc); padding: 0.65rem 0.85rem; border-radius: 8px; margin-bottom: 0.65rem; border: 1px solid var(--border-color);">
+          <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-dark);">Service Base Price ($):</span>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <input type="number" id="bd-price-input-${b.id}" value="${Number(b.basePrice || 0)}" min="0" step="0.01" style="width: 95px; padding: 0.35rem 0.55rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; background: var(--bg-card); color: var(--text-dark);">
+            <button type="button" onclick="updateBookingPriceFromModal(${b.id})" style="padding: 0.35rem 0.7rem; font-size: 0.78rem; font-weight: 600; border-radius: 6px; background: #2563eb; color: #fff; border: none; cursor: pointer;">Save</button>
+          </div>
+        </div>
+
+        <div id="bd-addons-section-${b.id}" style="font-size: 0.83rem; color: var(--text-muted); margin-bottom: 0.65rem;">
+          Loading add-ons...
+        </div>
+
+        <div style="border-top: 1px solid var(--border-color); padding-top: 0.65rem; margin-top: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-weight: 800; font-size: 0.95rem;" class="text-dark-inline">Total Amount</span>
+          <span style="font-weight: 800; font-size: 1.2rem; color: #2563eb;" id="bd-total-price-val-${b.id}">$${Number(b.totalPrice || 0).toFixed(2)}</span>
+        </div>
+      </div>
+
+      <!-- Client Request & Attachment -->
+      <div style="padding: 1.15rem 1.25rem; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-white);">
+        <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 700; margin-bottom: 0.65rem; display: flex; align-items: center; gap: 0.4rem;">
+          <svg viewBox="0 0 24 24" style="width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Client Request & Message
+        </div>
+        <div style="font-size: 0.88rem; line-height: 1.5; color: var(--text-dark); white-space: pre-wrap; background: var(--bg-light, #f8fafc); padding: 0.8rem 1rem; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 0.75rem;">${escapeHtml(b.messageContent || "No specific request/message provided.")}</div>
+        
+        <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem;">
+          <span style="font-weight: 600; color: var(--text-muted);">Attachment:</span>
+          ${attachmentHtml}
+        </div>
+      </div>
+    `;
+
+    modal.onclick = (e) => {
+      if (e.target === modal) closeBookingDetailModal();
+    };
+
+    modal.classList.add("is-open");
+    document.body.style.overflow = "hidden";
+
+    // Load add-ons detail async
+    try {
+      const res = await fetch(`/api/bookings/pricing?serviceId=${b.serviceId}`);
+      if (res.ok) {
+        const data = await res.json();
+        const addonsSection = document.getElementById(`bd-addons-section-${b.id}`);
+        if (addonsSection) {
+          const selectedAddons = (data.addons || []).filter(a => b.addonIds && b.addonIds.includes(a.id));
+          if (selectedAddons.length > 0) {
+            let addonsListHtml = `<div style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.3rem;">Selected Add-ons:</div><ul style="margin: 0; padding-left: 1.2rem; font-size: 0.83rem; color: var(--text-dark);">`;
+            selectedAddons.forEach(a => {
+              addonsListHtml += `<li><strong>${escapeHtml(a.addonName)}</strong> (+$${Number(a.priceModifier).toFixed(2)})</li>`;
+            });
+            addonsListHtml += `</ul>`;
+            addonsSection.innerHTML = addonsListHtml;
+          } else {
+            addonsSection.innerHTML = `<span style="font-size:0.83rem; color:var(--text-muted);">Selected Add-ons: None</span>`;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Could not load pricing addons:", e);
+    }
+  }
+
+  function closeBookingDetailModal() {
+    const modal = document.getElementById("booking-detail-modal-overlay");
+    if (modal) modal.classList.remove("is-open");
+    document.body.style.overflow = "";
+  }
+
+  async function updateBookingPriceFromModal(bookingId) {
+    const input = document.getElementById(`bd-price-input-${bookingId}`);
+    if (!input) return;
+    const newPrice = parseFloat(input.value);
+    if (isNaN(newPrice) || newPrice < 0) {
+      showToast("Please enter a valid price.", "error");
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/bookings/${bookingId}`, {
+        method: "PUT",
+        headers: adminHeaders(),
+        body: JSON.stringify({ basePrice: newPrice })
+      });
+      if (response.ok) {
+        const updated = await response.json();
+        _cache.bookings[bookingId] = updated;
+        const totalValEl = document.getElementById(`bd-total-price-val-${bookingId}`);
+        if (totalValEl) totalValEl.textContent = `$${Number(updated.totalPrice || 0).toFixed(2)}`;
+        showToast("Booking price updated successfully!", "success");
+        fetchAdminBookings();
+      } else {
+        const errData = await response.json().catch(() => ({}));
+        showToast(errData.message || "Failed to update price.", "error");
+      }
+    } catch (err) {
+      console.error("updateBookingPriceFromModal error:", err);
+      showToast("Could not connect to server.", "error");
+    }
+  }
+
+  window.openBookingDetailModal = openBookingDetailModal;
+  window.closeBookingDetailModal = closeBookingDetailModal;
+  window.updateBookingPriceFromModal = updateBookingPriceFromModal;
 
   async function updateBookingExpert(bookingId, expertId) {
     try {
@@ -3958,12 +4269,15 @@ function formatNotificationTime(iso) {
       }
     });
 
-    // Inbox shortcut (show only if logged in)
-
+    // Inbox shortcut (hide on admin & hr & member pages or for ROLE_ADMIN)
     const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    const role = localStorage.getItem("role") || sessionStorage.getItem("role");
+    const currentPath = window.location.pathname.toLowerCase();
 
-    if (token) {
-      const quickInbox = document.getElementById("quick-inbox");
+    const isAdminOrHrPage = currentPath.includes("admin") || currentPath.includes("hr") || currentPath.includes("resource") || currentPath.includes("member") || role === "ROLE_ADMIN";
+
+    const quickInbox = document.getElementById("quick-inbox");
+    if (token && !isAdminOrHrPage) {
       if (quickInbox) {
         quickInbox.style.display = "flex";
         quickInbox.addEventListener("click", (e) => {
@@ -3978,6 +4292,8 @@ function formatNotificationTime(iso) {
           }
         });
       }
+    } else if (quickInbox) {
+      quickInbox.style.display = "none";
     }
   }
 

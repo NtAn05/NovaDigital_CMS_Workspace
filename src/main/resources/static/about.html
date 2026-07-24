@@ -34,19 +34,113 @@
 
   <!-- Main Content -->
   <main>
-    <!-- Hero Section -->
-    <section class="about-hero">
-      <div class="about-hero-bg">
-        <div class="about-shape about-shape-1"></div>
-        <div class="about-shape about-shape-2"></div>
-        <div class="about-shape about-shape-3"></div>
+    <!-- Tech Animated Canvas Hero Section -->
+    <section class="portfolio-video-hero">
+      <div class="video-background-container">
+        <canvas id="tech-canvas-bg"></canvas>
+        <div class="video-overlay"></div>
       </div>
-      <div class="about-hero-content">
-        <span class="hero-pill">About Us</span>
-        <h1>Building Digital <span>Excellence</span> Since 2018</h1>
-        <p>We are a team of passionate innovators dedicated to transforming ideas into powerful digital experiences that drive growth and success for our clients.</p>
+      
+      <!-- Organization Brand Overlay -->
+      <div class="portfolio-hero-text">
+        <div style="display: inline-flex; align-items: center; justify-content: center; width: 68px; height: 68px; border-radius: 20px; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(16px); border: 1px solid rgba(56, 189, 248, 0.35); box-shadow: 0 0 25px rgba(56, 189, 248, 0.25); margin-bottom: 1.25rem;">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width: 38px; height: 38px; fill: none; stroke: #38bdf8; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+          </svg>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 0.75rem;">
+          <span class="badge tech-pill" style="font-size: 0.9rem; padding: 0.45rem 1.2rem; border-radius: 50px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;">
+            NovaDigital Creative Agency
+          </span>
+        </div>
+        <h1 class="gradient-tech-text" style="font-size: 3.2rem; font-weight: 800; margin: 0.4rem 0 0.8rem;">Building Digital Excellence Since 2018</h1>
+        <p style="color: rgba(226, 232, 240, 0.9); font-size: 1.15rem; max-width: 700px; margin: 0 auto; line-height: 1.6;">
+          We are a team of passionate innovators dedicated to transforming ideas into powerful digital experiences that drive growth and success for our clients.
+        </p>
       </div>
     </section>
+    <script>
+      (function() {
+        var canvas = document.getElementById('tech-canvas-bg');
+        if (!canvas) return;
+        var ctx = canvas.getContext('2d');
+        var width, height;
+        var particles = [];
+        var numParticles = 65;
+
+        function resize() {
+          width = canvas.width = canvas.parentElement.offsetWidth || window.innerWidth;
+          height = canvas.height = canvas.parentElement.offsetHeight || 400;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        for (var i = 0; i < numParticles; i++) {
+          particles.push({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            vx: (Math.random() - 0.5) * 1.2,
+            vy: (Math.random() - 0.5) * 1.2,
+            radius: Math.random() * 2 + 1,
+            color: Math.random() > 0.5 ? '#38bdf8' : '#818cf8'
+          });
+        }
+
+        function animate() {
+          ctx.clearRect(0, 0, width, height);
+
+          ctx.strokeStyle = 'rgba(56, 189, 248, 0.05)';
+          ctx.lineWidth = 1;
+          var gridSize = 40;
+          for (var x = 0; x < width; x += gridSize) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, height);
+            ctx.stroke();
+          }
+          for (var y = 0; y < height; y += gridSize) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(width, y);
+            ctx.stroke();
+          }
+
+          for (var i = 0; i < particles.length; i++) {
+            var p = particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+
+            if (p.x < 0 || p.x > width) p.vx *= -1;
+            if (p.y < 0 || p.y > height) p.vy *= -1;
+
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+            ctx.fillStyle = p.color;
+            ctx.fill();
+
+            for (var j = i + 1; j < particles.length; j++) {
+              var p2 = particles[j];
+              var dx = p.x - p2.x;
+              var dy = p.y - p2.y;
+              var dist = Math.sqrt(dx * dx + dy * dy);
+
+              if (dist < 120) {
+                ctx.beginPath();
+                ctx.moveTo(p.x, p.y);
+                ctx.lineTo(p2.x, p2.y);
+                ctx.strokeStyle = 'rgba(56, 189, 248, ' + (1 - dist / 120) * 0.25 + ')';
+                ctx.lineWidth = 0.8;
+                ctx.stroke();
+              }
+            }
+          }
+
+          requestAnimationFrame(animate);
+        }
+
+        animate();
+      })();
+    </script>
 
     <!-- Stats Section -->
     <section class="stats-section">
