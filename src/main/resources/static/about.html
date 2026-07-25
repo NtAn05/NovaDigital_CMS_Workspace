@@ -283,7 +283,7 @@
         </div>
         <div class="member-card">
           <div class="member-avatar-wrapper">
-            <img class="member-avatar" src="/images/troll.jpg" alt="Duc Dai"
+            <img class="member-avatar" src="/images/member-ducdai.jpg" alt="Duc Dai"
                  onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150'">
           </div>
           <h3>Duc Dai</h3>
@@ -295,7 +295,7 @@
         </div>
         <div class="member-card">
           <div class="member-avatar-wrapper">
-            <img class="member-avatar" src="/images/member-ducdai.png" alt="Danh Doan"
+            <img class="member-avatar" src="/images/member-danhdoan.png" alt="Danh Doan"
                  onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150'">
           </div>
           <h3>Danh Doan</h3>
@@ -389,6 +389,16 @@
   </footer>
 
   <script src="/js/main.js?v=resource-integrated-v9"></script>
+  <script>
+  // about.html dùng member card hardcode (6 thành viên thật của team)
+  // Tắt fetchMembers để tránh bị override bởi data test trong DB
+  window.fetchMembers = function() {};
+</script>
+<script>
+  // about.html dùng member card hardcode (6 thành viên thật của team)
+  // Tắt fetchMembers để tránh bị override bởi data test trong DB
+  window.fetchMembers = function() {};
+</script>
   <script>
     // Scroll animations
     document.addEventListener('DOMContentLoaded', () => {
