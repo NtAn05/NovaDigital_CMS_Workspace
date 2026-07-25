@@ -9,14 +9,14 @@ import java.util.List;
 
 public interface ConsultationAppointmentRepository extends JpaRepository<ConsultationAppointment, Long> {
 
-    // Lấy các lịch hẹn còn hiệu lực (chưa hủy) của 1 expert trong 1 ngày
-    // -> dùng để khóa timeslot đã đặt trên calendar (UC-07)
+    // Get active (non-cancelled) appointments for an expert on a specific date
+    // -> used to lock booked timeslots on calendar (UC-07)
     List<ConsultationAppointment> findByExpertIdAndAppointmentDateAndStatusNot(
             Long expertId, LocalDate appointmentDate, AppointmentStatus status);
 
 
-    // Lấy toàn bộ booking của khách hàng (client)
+    // Get all bookings for a client
     List<ConsultationAppointment> findByClientIdOrderByAppointmentDateDesc(Long clientId);
-    // Lấy toàn bộ booking được gán cho 1 expert -> dùng cho "My Consultation Bookings" của member
+    // Get all bookings assigned to an expert -> used for "My Consultation Bookings" of member
     List<ConsultationAppointment> findByExpertIdOrderByAppointmentDateDesc(Long expertId);
 }

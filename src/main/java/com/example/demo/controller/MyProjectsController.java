@@ -52,12 +52,12 @@ public class MyProjectsController {
     private ServiceRepository serviceRepository;
 
     /**
-     * Trả về các consultation booking đang được gán cho member đang đăng nhập
-     * (expertId = User.id của user hiện tại, user này có role ROLE_MEMBER), kèm tên khách hàng thật.
-     * Dùng cho phần "My Consultation Bookings" bên PM/member dashboard.
+     * Returns consultation bookings assigned to the logged-in member
+     * (expertId = User.id of current user, this user has role ROLE_MEMBER), including real customer name.
+     * Used for the "My Consultation Bookings" section on PM/member dashboard.
      *
-     * Lưu ý: expert_id trỏ thẳng về User.id (role ROLE_MEMBER), KHÔNG phải bảng members -
-     * bảng members hầu như không tham gia phân quyền/đăng nhập của hệ thống.
+     * Note: expert_id points directly to User.id (role ROLE_MEMBER), NOT members table -
+     * members table does not participate in system authorization/login.
      */
     @GetMapping("/bookings")
     public ResponseEntity<?> getMyBookings(Authentication authentication) {
@@ -76,13 +76,13 @@ public class MyProjectsController {
             m.put("attachmentUrl", a.getAttachmentUrl());
             m.put("totalPrice", a.getTotalPrice());
 
-            // Tên + email khách hàng thật, lấy từ User qua clientId
+            // Real customer name + email, fetched from User via clientId
             User client = userRepository.findById(a.getClientId()).orElse(null);
             m.put("customerName", client != null ? client.getFullName() : "Unknown");
             m.put("customerEmail", client != null ? client.getEmail() : "");
             m.put("customerPhone", client != null ? client.getPhone() : "");
 
-            // Tên dịch vụ
+            // Service name
             Service service = serviceRepository.findById(a.getServiceId()).orElse(null);
             m.put("serviceTitle", service != null ? service.getTitle() : "Service #" + a.getServiceId());
 

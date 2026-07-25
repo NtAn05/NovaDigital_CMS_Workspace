@@ -11,8 +11,8 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 /**
- * AuditService: Service trung tâm để ghi log.
- * Gọi trực tiếp từ Controller để tránh mọi vấn đề AOP Proxy.
+ * AuditService: Central service for log recording.
+ * Called directly from Controllers to avoid AOP Proxy issues.
  */
 @Service
 public class AuditService {
@@ -24,11 +24,11 @@ public class AuditService {
     }
 
     /**
-     * Ghi log hành động Auth (Login / Logout).
-     * Gọi method này trong Controller ngay sau khi login/logout thành công.
+     * Records Auth action logs (Login / Logout).
+     * Call this method in Controller immediately after successful login/logout.
      *
-     * @param action   Ví dụ: "LOGIN", "LOGOUT"
-     * @param username Tên người dùng thực hiện hành động
+     * @param action   Example: "LOGIN", "LOGOUT"
+     * @param username Username of user performing the action
      */
     public void logAuthAction(String action, String username) {
         try {
@@ -39,14 +39,14 @@ public class AuditService {
             AuthActionEvent event = new AuthActionEvent(this, action, username, ipAddress, userAgent, true, null);
             eventPublisher.publishEvent(event);
         } catch (Exception e) {
-            // Lỗi ghi log không được phép ảnh hưởng luồng chính
+            // Logging error must not affect the main execution flow
             e.printStackTrace();
         }
     }
 
     /**
-     * Tiện ích: Lấy username hiện tại từ SecurityContext.
-     * Dùng khi không có sẵn username (ví dụ: khi logout).
+     * Utility: Get current username from SecurityContext.
+     * Used when username is not readily available (e.g., during logout).
      */
     public String getCurrentUsername() {
         try {
@@ -76,12 +76,12 @@ public class AuditService {
 
     private String resolveClientIp(HttpServletRequest request) {
         if (request == null) return "Unknown";
-        // Ưu tiên header X-Forwarded-For (khi đứng sau Nginx/Proxy)
+        // Prioritize X-Forwarded-For header (when behind Nginx/Proxy)
         String ip = request.getHeader("X-Forwarded-For");
         if (ip == null || ip.isBlank() || "unknown".equalsIgnoreCase(ip)) {
             ip = request.getRemoteAddr();
         }
-        // X-Forwarded-For có thể chứa nhiều IP, lấy IP đầu tiên
+        // X-Forwarded-For may contain multiple IPs, take the first IP
         if (ip != null && ip.contains(",")) {
             ip = ip.split(",")[0].trim();
         }

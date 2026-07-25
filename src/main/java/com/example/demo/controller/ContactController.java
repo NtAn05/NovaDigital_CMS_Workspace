@@ -53,6 +53,13 @@ public class ContactController {
         java.util.Map<String, Object> response = new HashMap<>();
         
         try {
+            com.example.demo.entity.User currentUser = getCurrentUser();
+            if ("ROLE_ADMIN".equalsIgnoreCase(currentUser.getRole())) {
+                response.put("success", false);
+                response.put("message", "Admins are only allowed to view messages, not reply to them.");
+                return ResponseEntity.status(403).body(response);
+            }
+
             Contact contact = contactService.getContactById(id);
             contact.setStatus("DONE");
             contact.setReply(replyMessage);

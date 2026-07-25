@@ -27,30 +27,30 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         String role = user.getRole();
 
-        // Chuẩn hóa role cho Spring Security
+        // Normalize role for Spring Security
         if (role != null) {
 
-            // TEAM_MEMBER, Team_Member hoặc ROLE_MEMBER -> ROLE_MEMBER
+            // TEAM_MEMBER, Team_Member or ROLE_MEMBER -> ROLE_MEMBER
             if ("TEAM_MEMBER".equalsIgnoreCase(role)
                     || "Team_Member".equalsIgnoreCase(role)
                     || "ROLE_MEMBER".equalsIgnoreCase(role)) {
 
                 role = "ROLE_MEMBER";
             }
-            // Các role khác chưa có tiền tố ROLE_
+            // Other roles without ROLE_ prefix
             else if (!role.startsWith("ROLE_")) {
 
                 role = "ROLE_" + role.toUpperCase();
             }
 
         } else {
-            // Trường hợp role bị null
+            // Case when role is null
             role = "ROLE_MEMBER";
         }
 
         return new org.springframework.security.core.userdetails.User(
                 user.getUsername(),
-                (user.getPassword() != null && !user.getPassword().isEmpty()) ? user.getPassword() : "", // Google OAuth2 users không có password
+                (user.getPassword() != null && !user.getPassword().isEmpty()) ? user.getPassword() : "", // Google OAuth2 users do not have password
                 user.isEnabled(),
                 true,
                 true,

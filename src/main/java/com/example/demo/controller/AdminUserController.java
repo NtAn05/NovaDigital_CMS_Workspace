@@ -30,7 +30,7 @@ public class AdminUserController {
     public ResponseEntity<List<UserResponse>> getAllUsers() {
         List<UserResponse> users = userRepository.findAll(Sort.by(Sort.Direction.DESC, "updatedAt"))
                 .stream()
-                .filter(u -> !isResourceAccount(u))
+                .filter(u -> isMemberOrUserRole(u) && !isResourceAccount(u))
                 .map(this::toResponse)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(users);
@@ -40,7 +40,7 @@ public class AdminUserController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getUserById(@PathVariable Long id) {
         return userRepository.findById(id)
-                .filter(u -> !isResourceAccount(u))
+                .filter(u -> isMemberOrUserRole(u) && !isResourceAccount(u))
                 .map(u -> ResponseEntity.ok(toResponse(u)))
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -160,6 +160,13 @@ public class AdminUserController {
     // ── HELPER ───────────────────────────────────────────
     private boolean isResourceAccount(User user) {
         return user != null && "ROLE_RESOURCE".equalsIgnoreCase(user.getRole());
+    }
+
+    private boolean isMemberOrUserRole(User user) {
+        if (user == null || user.getRole() == null) return false;
+        String r = user.getRole().trim().toUpperCase();
+        return r.equals("ROLE_MEMBER") || r.equals("MEMBER") || r.equals("TEAM_MEMBER") || r.equals("TEAM MEMBER")
+                || r.equals("ROLE_USER") || r.equals("USER");
     }
 
     private String standardizeRole(String role) {

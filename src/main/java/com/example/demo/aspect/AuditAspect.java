@@ -23,25 +23,25 @@ import java.util.Set;
 
 /**
  * ============================================================
- * AuditAspect — Lớp Chặn & Thu Thập (Interceptor Layer)
+ * AuditAspect — Interceptor Layer
  * ============================================================
  *
- * TRÁCH NHIỆM DUY NHẤT:
- *   1. Chặn method được đánh dấu @Auditable.
- *   2. Trích xuất Username, IP từ ThreadLocal TRƯỚC publishEvent().
- *   3. Serialize đối số đầu tiên của method thành JSON payload.
- *   4. Bắn Event (Fire-and-Forget) — KHÔNG lưu DB trực tiếp.
+ * SOLE RESPONSIBILITY:
+ *   1. Intercept methods annotated with @Auditable.
+ *   2. Extract Username, IP from ThreadLocal BEFORE publishEvent().
+ *   3. Serialize the first argument of the method into a JSON payload.
+ *   4. Publish Event (Fire-and-Forget) — DO NOT save directly to DB.
  *
- * GIẢI QUYẾT CONTEXT LOSS:
- *   SecurityContextHolder & RequestContextHolder dùng ThreadLocal.
- *   Chúng chỉ tồn tại trong HTTP Thread hiện tại.
- *   → PHẢI trích xuất trước khi publishEvent() bắn sang Async Thread.
- *   → Sau khi Event được tạo, Async Thread chỉ đọc từ Event object
- *     (không cần ThreadLocal nữa → an toàn 100%).
+ * CONTEXT LOSS RESOLUTION:
+ *   SecurityContextHolder & RequestContextHolder use ThreadLocal.
+ *   They only exist in the current HTTP Thread.
+ *   → MUST extract before publishEvent() sends to Async Thread.
+ *   → After Event creation, Async Thread only reads from Event object
+ *     (no longer needs ThreadLocal → 100% safe).
  *
- * CHIẾN LƯỢC GHI LOG:
- *   Lưu REQUEST PAYLOAD (JSON của argument đầu tiên) thay vì Object Diff.
- *   Payload được lọc bỏ các field nhạy cảm trước khi serialize.
+ * LOGGING STRATEGY:
+ *   Save REQUEST PAYLOAD (JSON of first argument) instead of Object Diff.
+ *   Payload has sensitive fields filtered out before serialization.
  * ============================================================
  */
 @Aspect
@@ -51,7 +51,7 @@ public class AuditAspect {
     private final ApplicationEventPublisher eventPublisher;
     private final ObjectMapper              objectMapper;
 
-    /** Danh sách field nhạy cảm sẽ bị che (masking) trong payload */
+    /** List of sensitive fields that will be masked in payload */
     private static final Set<String> SENSITIVE_FIELDS = new HashSet<>(
             Arrays.asList("password", "token", "secret", "accessToken", "refreshToken", "otp")
     );
@@ -66,26 +66,26 @@ public class AuditAspect {
     }
 
     /**
-     * Pointcut: Chặn TẤT CẢ method được gắn @Auditable.
-     * @Around = chạy code VỪA TRƯỚC vừa SAU method gốc.
+     * Pointcut: Intercept ALL methods annotated with @Auditable.
+     * @Around = run code BOTH BEFORE and AFTER the original method.
      */
     @Around("@annotation(auditable)")
     public Object audit(ProceedingJoinPoint joinPoint,
                         Auditable auditable) throws Throwable {
 
         // ═══════════════════════════════════════════════════
-        // BƯỚC 1: TRÍCH XUẤT CONTEXT (BẮT BUỘC TRƯỚC PROCEED)
-        // Lý do: Sau proceed(), transaction có thể commit, Spring
-        // có thể clear SecurityContext trong một số cấu hình.
+        // STEP 1: EXTRACT CONTEXT (REQUIRED BEFORE PROCEED)
+        // Reason: After proceed(), transaction may commit and Spring
+        // may clear SecurityContext in some configurations.
         // ═══════════════════════════════════════════════════
 
-        String username  = extractUsername();   // Từ SecurityContextHolder (ThreadLocal)
-        String ipAddress = extractIpAddress();  // Từ RequestContextHolder  (ThreadLocal)
+        String username  = extractUsername();   // From SecurityContextHolder (ThreadLocal)
+        String ipAddress = extractIpAddress();  // From RequestContextHolder  (ThreadLocal)
         String action    = auditable.action();
         String tableName = auditable.table();
 
         // ═══════════════════════════════════════════════════
-        // BƯỚC 2: SERIALIZE PAYLOAD TRƯỚC KHI PROCEED VÀ CHỤP TRẠNG THÁI CŨ
+        // STEP 2: SERIALIZE PAYLOAD BEFORE PROCEED AND CAPTURE OLD STATE
         // ═══════════════════════════════════════════════════
         String requestPayload = serializePayload(joinPoint.getArgs());
         Object oldState = null;
@@ -100,7 +100,7 @@ public class AuditAspect {
         }
 
         // ═══════════════════════════════════════════════════
-        // BƯỚC 3: GỌI METHOD THỰC TẾ
+        // STEP 3: CALL ACTUAL METHOD
         // ═══════════════════════════════════════════════════
 
         boolean isSuccess    = true;
@@ -112,10 +112,10 @@ public class AuditAspect {
         } catch (Throwable ex) {
             isSuccess    = false;
             errorMessage = ex.getClass().getSimpleName() + ": " + ex.getMessage();
-            throw ex; // Ném lại để caller xử lý bình thường
+            throw ex; // Re-throw for caller to handle as normal
         } finally {
             // ═══════════════════════════════════════════════
-            // BƯỚC 4: BẮN EVENT (LUÔN CHẠY, DÙ SUCCESS/FAIL)
+            // STEP 4: PUBLISH EVENT (ALWAYS RUNS, WHETHER SUCCESS OR FAIL)
             // ═══════════════════════════════════════════════
             if (auditable.isAuth()) {
                 publishAuthEvent(action, username, ipAddress, isSuccess, errorMessage);
@@ -147,7 +147,7 @@ public class AuditAspect {
 
     private void publishAuthEvent(String action, String username, String ipAddress,
                                   boolean isSuccess, String errorMessage) {
-        // User-Agent vẫn còn trong HTTP Thread lúc này (trong finally)
+        // User-Agent is still in HTTP Thread at this time (in finally)
         String userAgent = extractUserAgent();
 
         AuthActionEvent event = new AuthActionEvent(
@@ -171,10 +171,10 @@ public class AuditAspect {
     // ─────────────────────────────────────────────────────
 
     /**
-     * Serialize argument đầu tiên của method thành chuỗi JSON.
-     * Tự động lọc bỏ các field nhạy cảm (password, token...).
+     * Serialize the first argument of the method to a JSON string.
+     * Automatically filters out sensitive fields (password, token...).
      *
-     * @return Chuỗi JSON, hoặc mô tả đơn giản nếu không serialize được
+     * @return JSON string, or simple description if cannot be serialized
      */
     private String serializePayload(Object[] args) {
         if (args == null || args.length == 0 || args[0] == null) {
@@ -182,30 +182,30 @@ public class AuditAspect {
         }
 
         try {
-            // Serialize object thành JSON tree để có thể xóa field nhạy cảm
+            // Serialize object to JSON tree to allow sensitive field removal
             ObjectNode node = objectMapper.valueToTree(args[0]);
 
-            // Xóa bỏ các field nhạy cảm trước khi lưu
+            // Remove sensitive fields before saving
             SENSITIVE_FIELDS.forEach(node::remove);
 
             String json = objectMapper.writeValueAsString(node);
 
-            // Giới hạn độ dài payload để tiết kiệm bộ nhớ DB
+            // Truncate payload length to save DB memory
             return json.length() > 1000 ? json.substring(0, 997) + "..." : json;
 
         } catch (Exception e) {
-            // Fallback an toàn nếu object không serialize được (ví dụ: primitive, Long ID)
+            // Safe fallback if object cannot be serialized (e.g. primitive, Long ID)
             return "arg[0]=" + args[0].toString();
         }
     }
 
     // ─────────────────────────────────────────────────────
-    // PRIVATE: TRÍCH XUẤT CONTEXT TỪ THREADLOCAL
+    // PRIVATE: EXTRACT CONTEXT FROM THREADLOCAL
     // ─────────────────────────────────────────────────────
 
     /**
-     * Trích xuất tên người dùng từ Spring Security.
-     * PHẢI gọi từ HTTP Thread — SecurityContextHolder dùng ThreadLocal.
+     * Extract username from Spring Security.
+     * MUST be called from HTTP Thread — SecurityContextHolder uses ThreadLocal.
      */
     private String extractUsername() {
         try {
@@ -215,14 +215,14 @@ public class AuditAspect {
                     && !"anonymousUser".equals(String.valueOf(auth.getPrincipal()))) {
                 return auth.getName();
             }
-        } catch (Exception ignored) { /* Fallback an toàn */ }
+        } catch (Exception ignored) { /* Safe fallback */ }
         return "SYSTEM";
     }
 
     /**
-     * Trích xuất IP thực của client.
-     * Hỗ trợ hệ thống đứng sau Reverse Proxy qua X-Forwarded-For.
-     * PHẢI gọi từ HTTP Thread — RequestContextHolder dùng ThreadLocal.
+     * Extract actual client IP.
+     * Supports systems behind Reverse Proxy via X-Forwarded-For.
+     * MUST be called from HTTP Thread — RequestContextHolder uses ThreadLocal.
      */
     private String extractIpAddress() {
         try {
@@ -232,7 +232,7 @@ public class AuditAspect {
 
             HttpServletRequest request = attrs.getRequest();
 
-            // X-Forwarded-For: "clientIP, proxy1, proxy2" → lấy IP đầu tiên
+            // X-Forwarded-For: "clientIP, proxy1, proxy2" → take first IP
             String forwarded = request.getHeader("X-Forwarded-For");
             if (forwarded != null && !forwarded.isBlank()) {
                 return forwarded.split(",")[0].trim();
@@ -244,8 +244,8 @@ public class AuditAspect {
     }
 
     /**
-     * Trích xuất User-Agent header.
-     * PHẢI gọi từ HTTP Thread — dùng riêng cho Auth Event.
+     * Extract User-Agent header.
+     * MUST be called from HTTP Thread — used specifically for Auth Event.
      */
     private String extractUserAgent() {
         try {

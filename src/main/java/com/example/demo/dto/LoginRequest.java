@@ -10,4 +10,8 @@ public class LoginRequest {
 
     @NotBlank(message = "Password cannot be empty")
     private String password;
+
+    // Optional captcha fields — required only when the server enforces captcha (after 5 failed attempts)
+    private String captchaToken;
+    private String captchaAnswer;
 }

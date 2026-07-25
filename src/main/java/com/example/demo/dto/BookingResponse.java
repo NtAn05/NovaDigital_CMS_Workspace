@@ -22,4 +22,5 @@ public class BookingResponse {
     private String clientName;
     private String clientEmail;
     private String serviceName;
+    private String expertName;
 }

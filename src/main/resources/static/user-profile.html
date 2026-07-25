@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -588,8 +588,11 @@
         <li><a href="about.html">Introduce</a></li>
         <li><a href="services.html">Services</a></li>
         <li><a href="portfolio.html">Project</a></li>
+        <li><a href="careers.html">Careers</a></li>
+        <li><a href="feedback.html">Feedback</a></li>
         <li><a href="contact.html">Contact</a></li>
-        <li><a href="#" class="nav-btn" id="default-get-started">Get Started Now</a></li>
+        <li><a href="booking.html" class="nav-btn-booking">Book a Consultation</a></li>
+        <li><a href="#" class="nav-btn" id="default-get-started">Start Project</a></li>
       </ul>
     </nav>
   </header>
@@ -828,7 +831,7 @@
     </div>
     <div class="footer-bottom">
       <p>&copy; 2026 NovaDigital Creative Agency. All rights reserved.</p>
-      <p style="opacity: 0.5; font-size: 0.82rem;">Crafted with â™¥ in Vietnam</p>
+      <p style="opacity: 0.5; font-size: 0.82rem;">Crafted with ♥ in Vietnam</p>
     </div>
   </footer>
 
@@ -853,14 +856,12 @@
 
       /* â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
       function showAlert(text, isSuccess) {
-        alertBox.textContent = text;
-        alertBox.className = "profile-alert " + (isSuccess ? "success" : "error");
-        alertBox.style.display = "flex";
+        window.showFormAlert(alertBox, text, isSuccess);
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
 
       function hideAlert() {
-        alertBox.style.display = "none";
+        window.clearFormAlert(alertBox);
       }
 
       function getInitials(name) {

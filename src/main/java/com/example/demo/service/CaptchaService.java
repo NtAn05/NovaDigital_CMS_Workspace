@@ -9,17 +9,17 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Captcha dạng chuỗi ký tự ngẫu nhiên (chữ + số) - khách phải gõ lại đúng chuỗi hiển thị.
- * Không dùng dịch vụ ngoài (không cần site key/secret key như Google reCAPTCHA),
- * tự sinh và tự xác thực ở server, mỗi token dùng được đúng 1 lần.
+ * Captcha as a random character string (letters + numbers) - user must retype the displayed string.
+ * No external service used (no site key/secret key like Google reCAPTCHA),
+ * auto-generated and validated on the server, each token can only be used once.
  */
 @Service
 public class CaptchaService {
 
-    // Bỏ các ký tự dễ gây nhầm lẫn khi đọc: 0/O, 1/I/L, ...
+    // Exclude easily confused characters: 0/O, 1/I/L, ...
     private static final String CHAR_POOL = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
     private static final int CODE_LENGTH = 6;
-    private static final long CAPTCHA_EXPIRY_MS = 5 * 60 * 1000; // 5 phút
+    private static final long CAPTCHA_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
 
     private final SecureRandom random = new SecureRandom();
 
@@ -33,10 +33,10 @@ public class CaptchaService {
         }
     }
 
-    // Lưu token -> mã captcha thật + thời điểm hết hạn
+    // Store token -> real captcha code + expiration time
     private final Map<String, CaptchaData> captchaStore = new ConcurrentHashMap<>();
 
-    /** Sinh 1 chuỗi captcha mới, trả về token (giữ bí mật đáp án) + code (hiển thị cho người dùng đọc). */
+    /** Generate 1 new captcha, return token (keeps answer secret) + code (displayed for user to read). */
     public Map<String, Object> generateCaptcha() {
         cleanupExpired();
 
@@ -52,21 +52,21 @@ public class CaptchaService {
 
         Map<String, Object> result = new HashMap<>();
         result.put("token", token);
-        result.put("code", code); // FE hiển thị dạng ảnh/text cách điệu cho khách đọc và gõ lại
+        result.put("code", code); // FE displays as image/styled text for user to read and retype
         return result;
     }
 
     /**
-     * Xác thực captcha. Token chỉ dùng được đúng 1 lần (dù đúng hay sai đều bị xoá
-     * sau khi verify) để tránh brute-force đoán nhiều lần trên cùng 1 token.
-     * So sánh không phân biệt hoa/thường để đỡ khó chịu cho người dùng khi gõ lại.
+     * Validate captcha. Token can only be used once (deleted after verify whether correct or wrong)
+     * to prevent brute-force attempts on the same token.
+     * Case-insensitive comparison to improve user experience when retyping.
      */
     public boolean validateCaptcha(String token, String userInput) {
         if (token == null || userInput == null) return false;
 
-        CaptchaData data = captchaStore.remove(token); // dùng 1 lần rồi xoá
-        if (data == null) return false; // token không tồn tại / đã dùng / đã bị dọn do hết hạn
-        if (System.currentTimeMillis() > data.expiryTime) return false; // hết hạn
+        CaptchaData data = captchaStore.remove(token); // use once then remove
+        if (data == null) return false; // token does not exist / already used / cleaned up due to expiration
+        if (System.currentTimeMillis() > data.expiryTime) return false; // expired
 
         return data.code.equalsIgnoreCase(userInput.trim());
     }

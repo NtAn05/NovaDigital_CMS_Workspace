@@ -7,6 +7,9 @@ import com.example.demo.dto.RegisterRequest;
 import com.example.demo.entity.User;
 import com.example.demo.service.UserService;
 import com.example.demo.service.AuditService;
+import com.example.demo.service.CaptchaService;
+import com.example.demo.service.LoginAttemptService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -15,6 +18,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -48,6 +52,27 @@ public class AuthController {
     @Autowired
     private com.example.demo.service.EmailService emailService;
 
+    @Autowired
+    private CaptchaService captchaService;
+
+    @Autowired
+    private LoginAttemptService loginAttemptService;
+
+    // ── Security: Get client IP (handles reverse-proxy X-Forwarded-For) ──
+    private String getClientIp(HttpServletRequest request) {
+        String forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded != null && !forwarded.isEmpty()) {
+            return forwarded.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
+    }
+
+    // ── Generate a captcha token for login anti-spam ──
+    @GetMapping("/captcha")
+    public ResponseEntity<?> getLoginCaptcha() {
+        return ResponseEntity.ok(captchaService.generateCaptcha());
+    }
+
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest request) {
         try {
@@ -66,14 +91,36 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> loginUser(@Valid @RequestBody LoginRequest request) {
+    public ResponseEntity<?> loginUser(@Valid @RequestBody LoginRequest request, HttpServletRequest httpRequest) {
+        String clientIp = getClientIp(httpRequest);
+
+        // ── Security: require captcha if this IP has failed 5+ times ──
+        if (loginAttemptService.isCaptchaRequired(clientIp)) {
+            if (request.getCaptchaToken() == null || request.getCaptchaAnswer() == null
+                    || request.getCaptchaAnswer().isBlank()) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("success", false);
+                errorResponse.put("message", "Too many failed attempts. Please complete the captcha to continue.");
+                errorResponse.put("captchaRequired", true);
+                return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(errorResponse);
+            }
+            if (!captchaService.validateCaptcha(request.getCaptchaToken(), request.getCaptchaAnswer())) {
+                // Wrong captcha — generate a new one for them
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("success", false);
+                errorResponse.put("message", "Incorrect captcha. Please try again.");
+                errorResponse.put("captchaRequired", true);
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
+            }
+        }
+
         try {
             try {
                 User checkUser = userService.getUserByUsernameOrEmail(request.getUsernameOrEmail());
                 if (checkUser.getPassword() == null || checkUser.getPassword().isEmpty()) {
                     Map<String, Object> errorResponse = new HashMap<>();
                     errorResponse.put("success", false);
-                    errorResponse.put("message", "Bạn chưa thiết lập mật khẩu cho email này. Hãy chọn Đăng nhập bằng Google để tiếp tục, hoặc thiết lập mật khẩu trong trang Cá nhân.");
+                    errorResponse.put("message", "You have not set a password for this email. Please select Sign in with Google to continue, or set a password in your Profile page.");
                     return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
                 }
             } catch (Exception ignore) {
@@ -90,7 +137,10 @@ public class AuthController {
 
             User authenticatedUser = userService.getUserByUsernameOrEmail(request.getUsernameOrEmail());
 
-            // ── Audit Log: Ghi nhận đăng nhập thành công ──
+            // ── Reset failed attempt counter on success ──
+            loginAttemptService.resetAttempts(clientIp);
+
+            // ── Audit Log: Log successful login ──
             auditService.logAuthAction("LOGIN", authenticatedUser.getUsername());
 
             AuthResponse response = new AuthResponse(
@@ -102,9 +152,23 @@ public class AuthController {
                     authenticatedUser.getAvatarUrl());
             return ResponseEntity.ok(response);
         } catch (Exception e) {
+            // ── Record failed attempt, compute remaining tries ──
+            int failCount = loginAttemptService.recordFailure(clientIp);
+            int remaining = Math.max(0, LoginAttemptService.MAX_ATTEMPTS - failCount);
+
             Map<String, Object> errorResponse = new HashMap<>();
             errorResponse.put("success", false);
-            errorResponse.put("message", "Incorrect username/email or password");
+            errorResponse.put("failCount", failCount);
+
+            if (failCount >= LoginAttemptService.MAX_ATTEMPTS) {
+                errorResponse.put("message", "Too many failed attempts. Please complete the captcha to continue.");
+                errorResponse.put("captchaRequired", true);
+            } else {
+                errorResponse.put("message", "Incorrect username/email or password. " + remaining + " attempt(s) remaining before captcha is required.");
+                errorResponse.put("captchaRequired", false);
+                errorResponse.put("remainingAttempts", remaining);
+            }
+
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
         }
     }
@@ -115,7 +179,7 @@ public class AuthController {
     @Autowired
     private com.example.demo.service.CustomUserDetailsService customUserDetailsService;
 
-    // ── Đăng nhập bằng Google OAuth2 (Access Token) ──
+    // ── Login with Google OAuth2 (Access Token) ──
     @PostMapping("/google")
     public ResponseEntity<?> googleLogin(@RequestBody Map<String, String> body) {
         try {
@@ -124,7 +188,7 @@ public class AuthController {
                 throw new RuntimeException("Google credential is required");
             }
 
-            // Xác thực Access Token
+            // Verify Access Token
             Map<String, Object> payload = googleTokenVerifierService.verifyToken(credential);
 
             String email = (String) payload.get("email");
@@ -132,7 +196,7 @@ public class AuthController {
             String avatarUrl = (String) payload.get("picture");
             String googleSubjectId = (String) payload.get("sub");
 
-            // Tìm user theo email (KHÔNG sửa UserService)
+            // Find user by email (without modifying UserService)
             java.util.Optional<User> optionalUser = userRepository.findByEmail(email);
             User googleUser;
             if (optionalUser.isPresent()) {
@@ -143,7 +207,7 @@ public class AuthController {
                     userRepository.save(googleUser);
                 }
             } else {
-                // Tạo user mới trực tiếp
+                // Create new user directly
                 googleUser = new User();
                 String safeEmail = (email != null && !email.isBlank()) ? email : (googleSubjectId + "@google.com");
                 googleUser.setEmail(safeEmail);
@@ -158,11 +222,11 @@ public class AuthController {
                 googleUser.setProviderId(googleSubjectId);
                 googleUser.setRole("ROLE_USER");
                 googleUser.setEnabled(true);
-                googleUser.setPassword(""); // Dùng chuỗi rỗng thay vì null để tránh lỗi CSDL
+                googleUser.setPassword(""); // Use empty string instead of null to prevent DB errors
                 googleUser = userRepository.save(googleUser);
             }
 
-            // Tạo JWT Token
+            // Generate JWT Token
             org.springframework.security.core.userdetails.UserDetails userDetails =
                     customUserDetailsService.loadUserByUsername(googleUser.getUsername());
             Authentication authentication = new UsernamePasswordAuthenticationToken(

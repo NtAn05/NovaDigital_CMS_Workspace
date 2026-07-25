@@ -371,8 +371,11 @@
         <li><a href="about.html">Introduce</a></li>
         <li><a href="services.html">Services</a></li>
         <li><a href="portfolio.html">Project</a></li>
+        <li><a href="careers.html">Careers</a></li>
+        <li><a href="feedback.html">Feedback</a></li>
         <li><a href="contact.html">Contact</a></li>
-        <li><a href="#" class="nav-btn" id="default-get-started">Get Started Now</a></li>
+        <li><a href="booking.html" class="nav-btn-booking">Book a Consultation</a></li>
+        <li><a href="#" class="nav-btn" id="default-get-started">Start Project</a></li>
       </ul>
     </nav>
   </header>
@@ -764,16 +767,16 @@
 
         const data = await res.json();
         if (!res.ok) {
-          throw new Error(data.message || 'Tháº¥t báº¡i khi táº¡o link thanh toÃ¡n.');
+          throw new Error(data.message || 'Failed to create payment link.');
         }
 
         if (data.checkoutUrl) {
           window.location.href = data.checkoutUrl;
         } else {
-          throw new Error('Link thanh toÃ¡n khÃ´ng tá»“n táº¡i.');
+          throw new Error('Payment link does not exist.');
         }
       } catch (err) {
-        alert(err.message || 'ÄÃ£ cÃ³ lá»—i xáº£y ra. Vui lÃ²ng thá»­ láº¡i.');
+        showToast(err.message || 'An error occurred. Please try again.', 'error');
         button.disabled = false;
         button.innerHTML = originalText;
       }

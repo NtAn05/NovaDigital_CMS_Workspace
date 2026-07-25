@@ -17,13 +17,13 @@ public class AsyncConfig {
     @Bean(name = "auditExecutor")
     public Executor auditExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        // Cấu hình các tham số lõi cho ThreadPool
+        // Configure core parameters for ThreadPool
         executor.setCorePoolSize(5);
         executor.setMaxPoolSize(20);
-        // Thiết lập hàng đợi (Bounded Queue) để tránh tràn bộ nhớ RAM (OutOfMemory)
+        // Set up bounded queue to prevent RAM overflow (OutOfMemory)
         executor.setQueueCapacity(5000);
         executor.setThreadNamePrefix("auditExecutor-");
-        // Khi hàng đợi đầy (5000), chính Thread gọi (Caller Thread - Thread tạo sự kiện) sẽ xử lý việc lưu log, tránh mất mát log
+        // When queue is full (5000), the Caller Thread (event creator) handles log persistence to prevent log loss
         executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
         executor.initialize();
         return executor;

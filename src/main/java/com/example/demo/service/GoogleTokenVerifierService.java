@@ -9,7 +9,7 @@ import org.springframework.http.ResponseEntity;
 import java.util.Map;
 
 /**
- * Service chuyên trách xác thực Google Access Token.
+ * Service dedicated to verifying Google Access Tokens.
  */
 @Service
 public class GoogleTokenVerifierService {
@@ -26,7 +26,7 @@ public class GoogleTokenVerifierService {
             ResponseEntity<Map> response = restTemplate.exchange(userInfoUrl, HttpMethod.GET, entity, Map.class);
             return response.getBody();
         } catch (Exception e) {
-            throw new RuntimeException("Google Access Token không hợp lệ hoặc đã hết hạn.");
+            throw new RuntimeException("Google Access Token is invalid or expired.");
         }
     }
 }

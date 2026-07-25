@@ -5,8 +5,8 @@ package com.example.demo.entity.enums;
  * Used in MilestoneMutationLog for Audit Trail categorization.
  */
 public enum MutationActionType {
-    CREATE,         // Cột mốc mới được tạo
-    SYNC_UPDATE,    // Cập nhật qua Sync Endpoint (do PM kéo thanh tiến độ)
-    MANUAL_UPDATE,  // Chỉnh sửa thủ công trên Admin UI
-    DELETE          // Cột mốc bị xóa
+    CREATE,         // New milestone created
+    SYNC_UPDATE,    // Updated via Sync Endpoint (dragged progress bar by PM)
+    MANUAL_UPDATE,  // Manual edit on Admin UI
+    DELETE          // Milestone deleted
 }

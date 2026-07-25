@@ -5,75 +5,75 @@ import java.time.Instant;
 
 /**
  * ============================================================
- * Lớp cha trừu tượng cho toàn bộ hệ thống Audit Event.
+ * Abstract superclass for the entire Audit Event system.
  * ============================================================
  *
- * THIẾT KẾ: Tất cả Event đều kế thừa lớp này để đảm bảo
- * mọi bản ghi audit đều có đầy đủ các trường chung.
+ * DESIGN: All Events inherit from this class to ensure
+ * all audit records contain a complete set of common fields.
  *
- * VỀ TRƯỜNG isSuccess & errorMessage:
+ * ABOUT isSuccess & errorMessage FIELDS:
  * -----------------------------------------
- * Mục đích: Phục vụ việc TRACK LỖI (Error Tracking).
+ * Purpose: Serve Error Tracking.
  *
- * VÍ DỤ THỰC TẾ:
- *   - Khi user nhập sai mật khẩu 5 lần → action = "LOGIN",
+ * REAL-WORLD EXAMPLES:
+ *   - When a user enters the wrong password 5 times → action = "LOGIN",
  *     isSuccess = false, errorMessage = "Bad credentials (5th attempt)"
- *   - Khi ghi dữ liệu bị lỗi DB (deadlock...) → action = "CREATE_CONTACT",
+ *   - When database write fails (deadlock...) → action = "CREATE_CONTACT",
  *     isSuccess = false, errorMessage = "DataAccessException: Deadlock found"
  *
- * VÌ SAO QUAN TRỌNG?
- *   1. SECURITY: Phát hiện tấn công Brute Force qua thống kê
- *      các event isSuccess=false của cùng một username/IP.
- *   2. DEBUGGING: Admin thấy ngay sự kiện nào thất bại để điều tra.
- *   3. COMPLIANCE: Các tiêu chuẩn bảo mật (ISO 27001, PCI-DSS)
- *      yêu cầu ghi nhận cả các hành động THẤT BẠI, không chỉ thành công.
- *   4. ALERTING: Hệ thống monitoring dễ dàng lọc isSuccess=false
- *      để gửi cảnh báo tự động qua email/Slack.
+ * WHY IS THIS IMPORTANT?
+ *   1. SECURITY: Detect Brute Force attacks via statistics on
+ *      isSuccess=false events from the same username/IP.
+ *   2. DEBUGGING: Admins immediately see which events failed to investigate.
+ *   3. COMPLIANCE: Security standards (ISO 27001, PCI-DSS)
+ *      require recording FAILED actions, not just successes.
+ *   4. ALERTING: Monitoring systems can easily filter isSuccess=false
+ *      to send automatic alerts via email/Slack.
  * ============================================================
  */
 public abstract class BaseAuditEvent extends ApplicationEvent {
 
-    /** Tên hành động. Ví dụ: "LOGIN", "CREATE_CONTACT", "UPDATE_PROJECT" */
+    /** Action name. E.g., "LOGIN", "CREATE_CONTACT", "UPDATE_PROJECT" */
     private final String action;
 
-    /** Tên bảng/tài nguyên bị tác động. Null nếu là Auth action. */
+    /** Target table/resource name. Null if Auth action. */
     private final String tableName;
 
-    /** Tên người dùng thực hiện hành động (đã trích từ SecurityContextHolder). */
+    /** Username performing the action (extracted from SecurityContextHolder). */
     private final String username;
 
-    /** IP thực của client (đã trích từ RequestContextHolder, hỗ trợ X-Forwarded-For). */
+    /** Actual client IP (extracted from RequestContextHolder, supports X-Forwarded-For). */
     private final String ipAddress;
 
     /**
-     * Thời điểm sự kiện xảy ra — ghi nhận tại HTTP Thread TRƯỚC publishEvent().
-     * Lý do: Nếu ghi trong Async Thread, sẽ bị trễ vài ms do hàng đợi ThreadPool.
+     * Time when the event occurred — captured in HTTP Thread BEFORE publishEvent().
+     * Reason: If recorded in Async Thread, it will be delayed a few ms due to ThreadPool queue.
      */
     private final Instant timestamp;
 
     /**
-     * Kết quả của hành động: true = thành công, false = thất bại.
+     * Result of the action: true = success, false = failure.
      *
-     * LÝ DO CẦN LƯU TRƯỜNG NÀY:
-     * → Cho phép Admin lọc riêng các hành động thất bại để điều tra.
-     * → Phát hiện bất thường: Nhiều isSuccess=false trong thời gian ngắn
-     *   từ cùng một IP = dấu hiệu tấn công.
-     * → Đáp ứng yêu cầu Compliance: Ghi nhận đầy đủ cả lỗi lẫn thành công.
+     * REASONS FOR SAVING THIS FIELD:
+     * → Allows Admins to filter failed actions separately for investigation.
+     * → Detect anomalies: Multiple isSuccess=false in a short time
+     *   from the same IP = sign of attack.
+     * → Meet Compliance requirements: Record both errors and successes completely.
      */
     private final boolean isSuccess;
 
     /**
-     * Thông báo lỗi nếu isSuccess = false. Null khi thành công.
+     * Error message if isSuccess = false. Null when successful.
      *
-     * LÝ DO LƯU ERRORTYPE THAY VÌ FULL STACKTRACE:
-     * → Full stacktrace có thể chứa thông tin nhạy cảm về hạ tầng.
-     * → Chỉ lưu tên Exception + message ngắn gọn là đủ để điều tra.
-     * → Ví dụ: "BadCredentialsException: Mật khẩu không chính xác"
+     * REASONS FOR SAVING ERRORTYPE INSTEAD OF FULL STACKTRACE:
+     * → Full stacktrace may contain sensitive infrastructure information.
+     * → Only saving Exception name + concise message is sufficient for investigation.
+     * → Example: "BadCredentialsException: Invalid password"
      */
     private final String errorMessage;
 
     /**
-     * Constructor đầy đủ — dùng khi biết kết quả thực thi (sau proceed()).
+     * Full Constructor — used when execution result is known (after proceed()).
      */
     protected BaseAuditEvent(Object  source,
                               String  action,
@@ -98,7 +98,7 @@ public abstract class BaseAuditEvent extends ApplicationEvent {
     public String  getTableName()         { return tableName; }
     public String  getUsername()          { return username; }
     public String  getIpAddress()         { return ipAddress; }
-    /** Dùng getAuditTimestamp() thay vì getTimestamp() vì ApplicationEvent đã có final getTimestamp() */
+    /** Use getAuditTimestamp() instead of getTimestamp() because ApplicationEvent already has a final getTimestamp() */
     public Instant getAuditTimestamp()    { return timestamp; }
     public boolean isSuccess()            { return isSuccess; }
     public String  getErrorMessage()      { return errorMessage; }

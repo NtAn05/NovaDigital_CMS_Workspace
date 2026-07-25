@@ -5,8 +5,8 @@ package com.example.demo.entity.enums;
  * Used by ProjectMilestone entity and MilestoneSyncRequest DTO.
  */
 public enum MilestoneStatus {
-    PENDING,      // Chưa bắt đầu
-    IN_PROGRESS,  // Đang thực hiện
-    COMPLETED,    // Hoàn thành
-    DELAYED       // Bị trễ hạn
+    PENDING,      // Not started
+    IN_PROGRESS,  // In progress
+    COMPLETED,    // Completed
+    DELAYED       // Delayed
 }

@@ -9,9 +9,9 @@ import java.util.List;
 @Repository
 public interface MilestoneMutationLogRepository extends JpaRepository<MilestoneMutationLog, Long> {
 
-    /** Lấy lịch sử biến động của một cột mốc cụ thể, mới nhất trước */
+    /** Get mutation history of a specific milestone, newest first */
     List<MilestoneMutationLog> findByMilestoneIdOrderByPerformedAtDesc(Long milestoneId);
 
-    /** Lấy toàn bộ lịch sử biến động của một dự án (tất cả milestones) */
+    /** Get all mutation history of a project (all milestones) */
     List<MilestoneMutationLog> findByProjectIdOrderByPerformedAtDesc(Long projectId);
 }

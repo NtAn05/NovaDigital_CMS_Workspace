@@ -16,19 +16,19 @@ import org.springframework.stereotype.Component;
 
 /**
  * ============================================================
- * AuditLogListener — Lớp Lưu Trữ (Persistence Layer)
+ * AuditLogListener — Persistence Layer
  * ============================================================
  *
- * NGUYÊN TẮC: Class này CHỈ làm nhiệm vụ DUY NHẤT:
- *   Nhận Event → Ánh xạ sang Entity → Gọi Repository lưu DB.
+ * PRINCIPLE: This class has a SINGLE responsibility:
+ *   Receive Event → Map to Entity → Call Repository to save DB.
  *
- * CHẠY BẤT ĐỒNG BỘ (@Async):
- *   → Không làm chậm HTTP Request của người dùng.
- *   → Chạy trên Thread riêng từ "auditExecutor" ThreadPool.
+ * RUN ASYNCHRONOUSLY (@Async):
+ *   → Does not slow down user HTTP Requests.
+ *   → Runs on dedicated thread from "auditExecutor" ThreadPool.
  *
- * VỀ isSuccess trong log:
- *   → Listener lưu cả event THẤT BẠI vào DB.
- *   → Admin có thể query WHERE is_success = 0 để xem các lỗi.
+ * ABOUT isSuccess in log:
+ *   → Listener saves FAILED events to DB as well.
+ *   → Admin can query WHERE is_success = 0 to view errors.
  * ============================================================
  */
 @Component
@@ -44,32 +44,32 @@ public class AuditLogListener {
     }
 
     /**
-     * Lắng nghe tất cả BaseAuditEvent (đa hình).
-     * Phân nhánh xử lý theo kiểu cụ thể của Event.
+     * Listens for all BaseAuditEvent (polymorphic).
+     * Dispatches processing based on the specific Event type.
      *
-     * THỨ TỰ KIỂM TRA: DataPayloadEvent trước DataAuditEvent
-     * vì DataPayloadEvent là kiến trúc mới hơn và ưu tiên hơn.
+     * CHECK ORDER: DataPayloadEvent before DataAuditEvent
+     * because DataPayloadEvent is a newer architecture and takes priority.
      */
     @EventListener
     @Async("auditExecutor")
     public void handleAuditLogEvent(BaseAuditEvent event) {
         try {
             if (event instanceof AuthActionEvent authEvent) {
-                // Nhánh: Ghi Auth Log (Login, Logout, Login_Failed...)
+                // Branch: Record Auth Log (Login, Logout, Login_Failed...)
                 saveAuthLog(authEvent);
 
             } else if (event instanceof DataPayloadEvent payloadEvent) {
-                // Nhánh: Ghi Data Log theo chiến lược lưu Request Payload
+                // Branch: Record Data Log following Request Payload strategy
                 saveDataLogFromPayload(payloadEvent);
 
             } else if (event instanceof DataAuditEvent dataEvent) {
-                // Nhánh: Ghi Data Log theo chiến lược cũ (Object Diff)
-                // Giữ lại để tương thích ngược với các @Auditable cũ còn dùng
+                // Branch: Record Data Log following old strategy (Object Diff)
+                // Retained for backward compatibility with older @Auditable usages
                 saveDataLogFromDiff(dataEvent);
             }
         } catch (Exception e) {
-            // KHÔNG ném lại Exception — tránh làm crash Async Thread
-            // Trong production nên thay bằng Logger:
+            // DO NOT re-throw Exception — prevent crashing Async Thread
+            // In production should be replaced with Logger:
             // log.error("[AuditLogListener] Failed to save audit log", e);
             e.printStackTrace();
         }
@@ -88,8 +88,8 @@ public class AuditLogListener {
     }
 
     private void saveDataLogFromPayload(DataPayloadEvent event) {
-        // Xây dựng nội dung detail từ payload JSON
-        // Format: "isSuccess=true | Tạo mới: {name: ...}" hoặc "isSuccess=false | Lỗi: ..."
+        // Build detail content from JSON payload
+        // Format: "isSuccess=true | Create new: {name: ...}" or "isSuccess=false | Error: ..."
         String detail = buildDetailFromPayload(event);
 
         DataAuditLog log = new DataAuditLog(
@@ -112,11 +112,11 @@ public class AuditLogListener {
     }
 
     /**
-     * Tạo chuỗi mô tả ngắn gọn để lưu vào cột "detail" trong DB.
+     * Builds a concise description string to save into the "detail" column in the DB.
      *
-     * Format mẫu:
-     *   ✅ Thành công  → "Tạo mới: {name: 'A', email: 'a@b.com'}"
-     *   ❌ Thất bại    → "[FAILED] BadCredentialsException: Sai mật khẩu | {email: 'a@b.com'}"
+     * Example format:
+     *   ✅ Success → "Create new: {name: 'A', email: 'a@b.com'}"
+     *   ❌ Failure → "[FAILED] BadCredentialsException: Invalid password | {email: 'a@b.com'}"
      */
     private String buildDetailFromPayload(DataPayloadEvent event) {
         String prefix = event.isSuccess() ? "" : "[FAILED] ";
@@ -129,7 +129,7 @@ public class AuditLogListener {
 
         String detail = prefix + error + payload;
 
-        // Giới hạn độ dài để không tràn cột TEXT
+        // Truncate length to avoid overflowing TEXT column
         return detail.length() > 2000 ? detail.substring(0, 1997) + "..." : detail;
     }
 }

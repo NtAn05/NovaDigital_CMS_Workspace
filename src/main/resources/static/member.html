@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -152,9 +152,11 @@
         <li><a href="about.html">Introduce</a></li>
         <li><a href="services.html">Services</a></li>
         <li><a href="portfolio.html">Project</a></li>
+        <li><a href="careers.html">Careers</a></li>
+        <li><a href="feedback.html">Feedback</a></li>
         <li><a href="contact.html">Contact</a></li>
         <li><a href="booking.html" class="nav-btn-booking">Book a Consultation</a></li>
-        <li class="auth-item"><a href="#" id="portal-logout-btn" class="nav-btn" style="background-color:#ef4444;border-color:#ef4444;">Logout</a></li>
+        <li><a href="#" class="nav-btn" id="default-get-started">Start Project</a></li>
       </ul>
     </nav>
   </header>
@@ -373,7 +375,7 @@
             const result = await response.json();
 
             if (response.ok && result.success) {
-              replyAlert.textContent = "âœ… " + (result.message || "Reply sent successfully!");
+              replyAlert.textContent = result.message || "Reply sent successfully!";
               replyAlert.className = "alert-message alert-success";
               replyAlert.style.cssText = "display:block;";
               

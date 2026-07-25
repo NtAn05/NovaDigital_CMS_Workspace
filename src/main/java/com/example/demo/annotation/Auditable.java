@@ -19,12 +19,12 @@ public @interface Auditable {
 
     /**
      * Target table or entity name: e.g., Contracts, Projects, Users
-     * Có thể để trống nếu là Auth action.
+     * Can be left empty if it is an Auth action.
      */
     String table() default "";
 
     /**
-     * Xác định đây là hành động đăng nhập/đăng xuất hay là thay đổi dữ liệu
+     * Determines if this is a login/logout action or a data mutation.
      */
     boolean isAuth() default false;
 }

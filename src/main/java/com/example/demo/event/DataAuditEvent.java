@@ -1,17 +1,17 @@
 package com.example.demo.event;
 
 /**
- * Event cho các hành động thay đổi dữ liệu (Object Diff strategy - legacy).
- * Giữ lại để tương thích ngược với code cũ đang dùng chiến lược Object Diff.
- * Kiến trúc mới dùng DataPayloadEvent thay thế.
+ * Event for data modification actions (Object Diff strategy - legacy).
+ * Retained for backward compatibility with existing code using Object Diff strategy.
+ * New architecture uses DataPayloadEvent instead.
  */
 public class DataAuditEvent extends BaseAuditEvent {
 
-    private final String detail; // JSON Diff string hoặc readable summary
+    private final String detail; // JSON Diff string or readable summary
 
     /**
-     * Constructor tương thích ngược (legacy) - 5 tham số.
-     * Mặc định: isSuccess = true, errorMessage = null.
+     * Backward-compatible constructor (legacy) - 5 parameters.
+     * Default: isSuccess = true, errorMessage = null.
      */
     public DataAuditEvent(Object source, String username, String action,
                           String tableName, String detail) {
@@ -20,7 +20,7 @@ public class DataAuditEvent extends BaseAuditEvent {
     }
 
     /**
-     * Constructor đầy đủ mới - 7 tham số.
+     * New full constructor - 7 parameters.
      */
     public DataAuditEvent(Object source, String username, String action,
                           String tableName, String detail,
