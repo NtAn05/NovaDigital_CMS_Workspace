@@ -34,6 +34,7 @@ public class ServiceController {
             r.setTitle(s.getTitle());
             r.setDescription(s.getDescription());
             r.setIconUrl(s.getIconUrl());
+            r.setBasePrice(s.getBasePrice());
             return r;
         }).collect(Collectors.toList());
     }
@@ -55,6 +56,7 @@ public class ServiceController {
         response.setTitle(service.getTitle());
         response.setDescription(service.getDescription());
         response.setIconUrl(service.getIconUrl());
+        response.setBasePrice(service.getBasePrice());
 
         return ResponseEntity.ok(response);
     }
@@ -76,11 +78,13 @@ public class ServiceController {
         service.setTitle(request.getTitle().trim());
         service.setDescription(request.getDescription().trim());
         service.setIconUrl(request.getIconUrl() != null ? request.getIconUrl() : "web");
+        service.setBasePrice(request.getBasePrice());
 
         Service saved = serviceRepository.save(service);
         ServiceResponse resp = new ServiceResponse();
         resp.setId(saved.getId()); resp.setTitle(saved.getTitle());
         resp.setDescription(saved.getDescription()); resp.setIconUrl(saved.getIconUrl());
+        resp.setBasePrice(saved.getBasePrice());
         return ResponseEntity.status(HttpStatus.CREATED).body(resp);
     }
 
@@ -98,11 +102,13 @@ public class ServiceController {
         if (request.getTitle()       != null && !request.getTitle().isBlank())       service.setTitle(request.getTitle().trim());
         if (request.getDescription() != null && !request.getDescription().isBlank()) service.setDescription(request.getDescription().trim());
         if (request.getIconUrl()     != null && !request.getIconUrl().isBlank())     service.setIconUrl(request.getIconUrl());
+        if (request.getBasePrice()   != null)                                        service.setBasePrice(request.getBasePrice());
 
         Service saved = serviceRepository.save(service);
         ServiceResponse resp = new ServiceResponse();
         resp.setId(saved.getId()); resp.setTitle(saved.getTitle());
         resp.setDescription(saved.getDescription()); resp.setIconUrl(saved.getIconUrl());
+        resp.setBasePrice(saved.getBasePrice());
         return ResponseEntity.ok(resp);
     }
 
