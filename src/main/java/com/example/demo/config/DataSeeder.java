@@ -191,7 +191,7 @@ public class DataSeeder implements CommandLineRunner {
 
         // ── 9. Consultation Appointments & Addons ────────────────────────────
         ConsultationAppointment appt1 = saveAppointment(svc1.getId(), user1.getId(), mem1.getId(),
-                LocalDate.now().plusDays(1), LocalTime.of(9, 0), AppointmentStatus.CONFIRMED,
+                LocalDate.now().plusDays(1), LocalTime.of(9, 0), AppointmentStatus.BOOKING,
                 "Consultation for upgrading automated payment system for Mart06 E-Commerce platform.", 1200.0);
 
         ConsultationAppointment appt2 = saveAppointment(svc2.getId(), user2.getId(), mem2.getId(),
@@ -199,7 +199,7 @@ public class DataSeeder implements CommandLineRunner {
                 "Consultation for Mobile Portal UI/UX design.", 800.0);
 
         ConsultationAppointment appt3 = saveAppointment(svc3.getId(), user1.getId(), mem1.getId(),
-                LocalDate.now().minusDays(5), LocalTime.of(10, 30), AppointmentStatus.COMPLETED,
+                LocalDate.now().minusDays(5), LocalTime.of(10, 30), AppointmentStatus.DONE,
                 "Consultation for AWS Cloud Infrastructure and Docker deployment for SaaS.", 1500.0);
 
         saveAppointmentAddon(appt1.getId(), addon1.getId());

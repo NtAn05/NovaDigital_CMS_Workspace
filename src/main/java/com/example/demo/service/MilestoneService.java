@@ -218,6 +218,19 @@ public class MilestoneService {
                     String.valueOf(request.getProgressPercentage()),
                     performedBy));
             milestone.setProgressPercentage(request.getProgressPercentage());
+            
+            // UC-Quotation: Nếu progress đạt 100%, tự động mở cổng đòi tiền (READY_FOR_PAYMENT)
+            if (request.getProgressPercentage() == 100) {
+                if (!"READY_FOR_PAYMENT".equals(milestone.getPaymentStatus())) {
+                    logs.add(buildLog(milestoneId, projectId,
+                            MutationActionType.SYNC_UPDATE,
+                            "paymentStatus",
+                            milestone.getPaymentStatus(),
+                            "READY_FOR_PAYMENT",
+                            performedBy));
+                    milestone.setPaymentStatus("READY_FOR_PAYMENT");
+                }
+            }
         }
 
         if (!request.getStatus().equals(milestone.getStatus())) {

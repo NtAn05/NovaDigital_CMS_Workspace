@@ -131,51 +131,10 @@ public class SecurityConfig {
                         // Reply to a contact: only ADMIN or MEMBER
                         .requestMatchers(HttpMethod.POST, "/api/contacts/**").hasAnyRole("ADMIN", "MEMBER")
 
-                        // Security rules for changing content / sensitive endpoints
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-
-                        // Modifying projects, services, members needs ADMIN or MEMBER (which is
-                        // Team_Member)
-                        .requestMatchers(HttpMethod.POST, "/api/projects", "/api/projects/**")
-                        .hasAnyRole("ADMIN", "MEMBER")
-                        .requestMatchers(HttpMethod.PUT, "/api/projects", "/api/projects/**")
-                        .hasAnyRole("ADMIN", "MEMBER")
-                        .requestMatchers(HttpMethod.DELETE, "/api/projects", "/api/projects/**")
-                        .hasAnyRole("ADMIN", "MEMBER")
-
-                        .requestMatchers(HttpMethod.POST, "/api/services", "/api/services/**")
-                        .hasAnyRole("ADMIN", "MEMBER")
-                        .requestMatchers(HttpMethod.PUT, "/api/services", "/api/services/**")
-                        .hasAnyRole("ADMIN", "MEMBER")
-                        .requestMatchers(HttpMethod.DELETE, "/api/services", "/api/services/**")
-                        .hasAnyRole("ADMIN", "MEMBER")
-
-                        .requestMatchers(HttpMethod.POST, "/api/members", "/api/members/**")
-                        .hasAnyRole("ADMIN", "MEMBER")
-                        .requestMatchers(HttpMethod.PUT, "/api/members", "/api/members/**")
-                        .hasAnyRole("ADMIN", "MEMBER")
-                        .requestMatchers(HttpMethod.DELETE, "/api/members", "/api/members/**")
-                        .hasAnyRole("ADMIN", "MEMBER")
-
-                        // Uploading files is restricted to authenticated users (so users can upload
-                        // avatars)
-                        .requestMatchers("/api/upload", "/api/upload/**").authenticated()
-
-                        // Get my contacts needs authentication
-                        .requestMatchers("/api/contacts/my").authenticated()
-                        .requestMatchers(HttpMethod.DELETE, "/api/contacts/**").authenticated()
-                        // Manage contacts (list/view) is for Admin / Member
-                        .requestMatchers(HttpMethod.GET, "/api/contacts", "/api/contacts/**")
-                        .hasAnyRole("ADMIN", "MEMBER")
-
-                        // Any other request
-                        // Service Add-ons: GET public (dùng để hiện danh sách khi đặt lịch),
-                        // POST/PUT/DELETE chỉ ADMIN hoặc MEMBER mới được phép
-                        .requestMatchers(HttpMethod.GET, "/api/service-addons/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/service-addons").hasAnyRole("ADMIN", "MEMBER")
-                        .requestMatchers(HttpMethod.PUT, "/api/service-addons/**").hasAnyRole("ADMIN", "MEMBER")
-                        .requestMatchers(HttpMethod.DELETE, "/api/service-addons/**").hasAnyRole("ADMIN", "MEMBER")
-                        .anyRequest().authenticated());
+                // Any other request
+                .requestMatchers("/api/quotations/public/**").permitAll()
+                .anyRequest().authenticated()
+            );
 
         http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 

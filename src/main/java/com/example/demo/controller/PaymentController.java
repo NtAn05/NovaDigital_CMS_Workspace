@@ -110,8 +110,8 @@ public class PaymentController {
         }
 
         // 4. Check if already paid / confirmed
-        if (appointment.getStatus() == AppointmentStatus.CONFIRMED || appointment.getStatus() == AppointmentStatus.COMPLETED) {
-            return ResponseEntity.badRequest().body(Map.of("message", "This appointment has already been paid or confirmed"));
+        if (appointment.getStatus() == AppointmentStatus.BOOKING || appointment.getStatus() == AppointmentStatus.DONE) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Lịch hẹn này đã được thanh toán hoặc xác nhận rồi"));
         }
 
         if (appointment.getStatus() == AppointmentStatus.CANCELLED) {
@@ -361,9 +361,9 @@ public class PaymentController {
         if (transaction.getAppointmentId() != null && transaction.getAppointmentId() > 0) {
             System.out.println(">>> [PaymentController] Processing booking payment for appointmentId: " + transaction.getAppointmentId());
             ConsultationAppointment appointment = appointmentRepository.findById(transaction.getAppointmentId()).orElse(null);
-            if (appointment != null && appointment.getStatus() != AppointmentStatus.CONFIRMED) {
+            if (appointment != null && appointment.getStatus() != AppointmentStatus.BOOKING) {
                 AppointmentStatus statusBefore = appointment.getStatus();
-                appointment.setStatus(AppointmentStatus.CONFIRMED);
+                appointment.setStatus(AppointmentStatus.BOOKING);
                 appointmentRepository.save(appointment);
 
                 // Send notifications
@@ -420,8 +420,8 @@ public class PaymentController {
     }
 
     private void notifyParties(ConsultationAppointment appointment, AppointmentStatus statusBefore) {
-        boolean justConfirmed = appointment.getStatus() == AppointmentStatus.CONFIRMED
-                && statusBefore != AppointmentStatus.CONFIRMED;
+        boolean justConfirmed = appointment.getStatus() == AppointmentStatus.BOOKING
+        && statusBefore != AppointmentStatus.BOOKING;
         if (justConfirmed) {
             if (appointment.getExpertId() != null) {
                 notifyExpertBookingConfirmed(appointment);

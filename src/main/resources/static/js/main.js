@@ -119,6 +119,56 @@ document.addEventListener("DOMContentLoaded", () => {
       }, 300);
     }
   }
+
+  // 7. Handle the "Accept & Place Deposit" link coming back from the quote email:
+  // sign the client into their account and show a confirmation on the home page.
+  if (urlParams.get("quoteApproved") === "true" && urlParams.get("qToken")) {
+    const qToken = urlParams.get("qToken");
+    const qUsername = urlParams.get("username") || "";
+    const qFullName = urlParams.get("fullName") || "";
+    const qRole = urlParams.get("role") || "";
+    const qEmail = urlParams.get("email") || "";
+    const qAvatarUrl = urlParams.get("avatarUrl") || "";
+    const qTitle = urlParams.get("quoteTitle") || "";
+
+    sessionStorage.setItem("token", qToken);
+    sessionStorage.setItem("authToken", qToken);
+    sessionStorage.setItem("username", qUsername);
+    sessionStorage.setItem("fullName", qFullName);
+    sessionStorage.setItem("role", qRole);
+    sessionStorage.setItem("email", qEmail);
+    sessionStorage.setItem("avatarUrl", qAvatarUrl);
+    sessionStorage.setItem("user", JSON.stringify({
+      username: qUsername,
+      fullName: qFullName,
+      email: qEmail,
+      role: qRole,
+      avatarUrl: qAvatarUrl || null
+    }));
+
+    // Refresh the navbar (and notification bell) now that we're signed in
+    updateNavbarAuth();
+
+    setTimeout(() => {
+      window.showToast(
+        "Quotation Accepted",
+        qTitle
+          ? `You have accepted the quotation for "${qTitle}". Our team will start the project shortly.`
+          : "You have accepted the quotation. Our team will start the project shortly.",
+        "success"
+      );
+    }, 200);
+
+    // Clean the sensitive params out of the URL bar
+    const cleanUrl = window.location.pathname;
+    window.history.replaceState({}, document.title, cleanUrl);
+  } else if (urlParams.get("quoteError")) {
+    setTimeout(() => {
+      window.showToast("Quotation Error", urlParams.get("quoteError"), "error");
+    }, 200);
+    const cleanUrl = window.location.pathname;
+    window.history.replaceState({}, document.title, cleanUrl);
+  }
 });
 
 // =============================================
@@ -2207,13 +2257,14 @@ async function fetchAdminBookings() {
         expertOptions += `<option value="${u.id}" ${selected}>${escapeHtml(u.fullName)}</option>`;
       });
 
-      // Status options
-      const statuses = ["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"];
-      let statusOptions = "";
-      statuses.forEach(s => {
-        const selected = (b.status === s) ? "selected" : "";
-        statusOptions += `<option value="${s}" ${selected}>${s}</option>`;
-      });
+        // Status options
+        const statuses = ["PENDING", "BOOKING", "PRICING", "CANCELLED", "DONE"];
+        const statusLabels = { PENDING: "Pending", BOOKING: "Booking", PRICING: "Pricing", CANCELLED: "Cancelled", DONE: "Done" };
+        let statusOptions = "";
+        statuses.forEach(s => {
+          const selected = (b.status === s) ? "selected" : "";
+          statusOptions += `<option value="${s}" ${selected}>${statusLabels[s]}</option>`;
+        });
 
       // Add-ons khách đã chọn lúc đặt (đọc từ b.addonIds, tra tên+giá qua _cache.addons)
       // Hiển thị dạng badge nhỏ dưới ô Price, không thêm cột mới nên không làm bảng rộng ra
@@ -2226,32 +2277,59 @@ async function fetchAdminBookings() {
           </div>`
         : `<div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px;">No add-ons</div>`;
 
-      // Hiển thị giá tĩnh (giá service cố định + add-ons khách chọn), không chỉnh sửa nữa
-      const addonsPriceNum  = Number(b.addonsPrice || 0);
-      const servicePriceNum = Number(b.totalPrice   || 0) - addonsPriceNum;
-      const totalPriceHtml  = b.totalPrice != null
-        ? `<div style="font-size:1rem;font-weight:700;color:var(--text-dark);">$${Number(b.totalPrice).toFixed(2)}</div>
-           ${addonsPriceNum > 0
-             ? `<div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px;">$${servicePriceNum.toFixed(2)} service + $${addonsPriceNum.toFixed(2)} add-ons</div>`
-             : `<div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px;">Service price only</div>`}`
-        : `<span style="color:var(--text-muted);font-size:0.82rem;font-style:italic;">Pending</span>`;
+      // Total price for this booking
+      const totalPriceHtml = (b.totalPrice != null)
+        ? `<div class="text-dark-inline" style="font-weight:700;">$${Number(b.totalPrice).toFixed(2)}</div>`
+        : `<div style="font-size:0.8rem;color:var(--text-muted);font-style:italic;">Not priced yet</div>`;
 
-      // Display files beautifully
-      let attachmentHtml = "—";
-      if (b.attachmentUrl) {
-        const fileName = b.attachmentUrl.split("/").pop();
-        attachmentHtml = `<a href="${escapeHtml(b.attachmentUrl)}" target="_blank" class="attachment-link" style="display:inline-flex;align-items:center;gap:4px;color:#2563eb;font-size:0.85rem;"><svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>${escapeHtml(fileName)}</a>`;
-      }
+      // Client-provided attachment, if any
+      const attachmentHtml = b.attachmentUrl
+        ? `<a href="${escapeHtml(b.attachmentUrl)}" target="_blank" style="color:var(--primary);font-weight:600;text-decoration:underline;display:flex;align-items:center;gap:4px;font-size:0.8rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+            View File
+          </a>`
+        : `<span style="font-size:0.8rem;color:var(--text-muted);">No File</span>`;
 
-      tr.innerHTML = `
+        // Once DONE, admin can no longer touch this booking in any way
+        const isLocked = b.status === "DONE";
+        // The date/time can only be edited manually while the booking is in the BOOKING state
+        const isEditableSchedule = b.status === "BOOKING";
+
+        const scheduleHtml = isEditableSchedule
+          ? `<input type="date" id="bkDate-${b.id}" value="${escapeHtml(b.appointmentDate)}" class="admin-select" style="padding:0.3rem;font-size:0.8rem;margin-bottom:4px;width:100%;max-width:150px;">
+             <input type="time" id="bkTime-${b.id}" value="${escapeHtml(b.timeSlot.substring(0, 5))}" class="admin-select" style="padding:0.3rem;font-size:0.8rem;width:100%;max-width:150px;margin-bottom:4px;">
+             <button class="btn-add" onclick="saveBookingSchedule(${b.id})" style="padding:0.25rem 0.5rem;font-size:0.75rem;border-radius:6px;cursor:pointer;">Save Date</button>`
+          : `<div class="text-dark-inline">${escapeHtml(b.appointmentDate)}</div>
+             <div style="font-size:0.85rem;color:var(--text-muted);">${escapeHtml(b.timeSlot.substring(0, 5))}</div>`;
+
+        let actionButtons = "";
+        if (b.status === "PRICING") {
+          actionButtons += `<button class="btn-add" onclick="openQuoteModal(${b.id})" style="padding:0.35rem 0.6rem;font-size:0.8rem;gap:4px;border-radius:6px;cursor:pointer;">
+              <svg viewBox="0 0 24 24" style="width:12px;height:12px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Create Quote
+            </button>`;
+        }
+        if (b.status === "BOOKING") {
+          actionButtons += `<button class="btn-add" onclick="openBookingEmailModal(${b.id})" style="padding:0.35rem 0.6rem;font-size:0.8rem;gap:4px;border-radius:6px;cursor:pointer;background-color:#4f46e5;">
+              <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M4 4h16v16H4z" opacity="0"/><path d="M22 6l-10 7L2 6"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg> Send Update Email
+            </button>`;
+        }
+        if (!isLocked) {
+          actionButtons += `<button class="btn-delete" onclick="deleteBooking(${b.id})" style="padding:0.35rem 0.6rem;font-size:0.8rem;gap:4px;border-radius:6px;background-color:#ef4444;color:#fff;border:none;cursor:pointer;">
+              <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>Delete
+            </button>`;
+        }
+        if (isLocked) {
+          actionButtons = `<span style="font-size:0.8rem;color:var(--text-muted);font-style:italic;">Done — no further action</span>`;
+        }
+
+        tr.innerHTML = `
         <td>
           <div class="text-dark-inline">${escapeHtml(client.fullName)}</div>
           <div style="font-size:0.8rem;color:var(--text-muted);">${escapeHtml(client.email)}</div>
         </td>
         <td class="text-dark-inline">${escapeHtml(service.title)}</td>
         <td>
-          <div class="text-dark-inline">${escapeHtml(b.appointmentDate)}</div>
-          <div style="font-size:0.85rem;color:var(--text-muted);">${escapeHtml(b.timeSlot.substring(0, 5))}</div>
+          ${scheduleHtml}
         </td>
         <td>
           ${totalPriceHtml}
@@ -2262,20 +2340,18 @@ async function fetchAdminBookings() {
           <div>${attachmentHtml}</div>
         </td>
         <td>
-          <select class="admin-select" onchange="updateBookingExpert(${b.id}, this.value)" style="padding:0.35rem;border-radius:6px;border:1px solid var(--border-color);font-size:0.85rem;width:100%;max-width:160px;background:var(--bg-card);color:var(--text-dark);">
+          <select class="admin-select" onchange="updateBookingExpert(${b.id}, this.value)" ${isLocked ? "disabled" : ""} style="padding:0.35rem;border-radius:6px;border:1px solid var(--border-color);font-size:0.85rem;width:100%;max-width:160px;background:var(--bg-card);color:var(--text-dark);">
             ${expertOptions}
           </select>
         </td>
         <td>
-          <select class="admin-select status-select status-${b.status.toLowerCase()}" onchange="updateBookingStatus(${b.id}, this.value)" style="padding:0.35rem 1.6rem 0.35rem 0.6rem;border-radius:6px;border:1px solid var(--border-color);font-weight:600;font-size:0.8rem;width:100%;min-width:118px;max-width:150px;">
+          <select class="admin-select status-select status-${b.status.toLowerCase()}" onchange="updateBookingStatus(${b.id}, this.value)" ${isLocked ? "disabled" : ""} style="padding:0.35rem;border-radius:6px;border:1px solid var(--border-color);font-weight:600;font-size:0.85rem;width:100%;max-width:130px;">
             ${statusOptions}
           </select>
         </td>
         <td>
-          <div style="display:flex;gap:4px;">
-            <button class="btn-delete" onclick="deleteBooking(${b.id})" style="padding:0.35rem 0.6rem;font-size:0.8rem;gap:4px;border-radius:6px;background-color:#ef4444;color:#fff;border:none;cursor:pointer;">
-              <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>Delete
-            </button>
+          <div style="display:flex;gap:4px;flex-direction:column;">
+            ${actionButtons}
           </div>
         </td>
       `;
@@ -2313,20 +2389,57 @@ async function updateBookingPrice(bookingId) {
     showToast("Please enter a valid project price.", "error");
     return;
   }
+}
+
+async function saveBookingSchedule(bookingId) {
+  const dateInput = document.getElementById(`bkDate-${bookingId}`);
+  const timeInput = document.getElementById(`bkTime-${bookingId}`);
+  if (!dateInput || !timeInput || !dateInput.value || !timeInput.value) {
+    showToast("Please pick both a date and a time.", "error");
+    return;
+  }
   try {
-    // Gửi "projectPrice" (giá dự án chưa gồm add-on) - backend tự cộng lại giá add-on
-    // khách đã chọn từ trước, tránh mất giá add-on mỗi lần admin chỉnh giá dự án.
     const response = await fetch(`/api/bookings/${bookingId}`, {
       method: "PUT",
       headers: adminHeaders(),
-      body: JSON.stringify({ projectPrice: Number(value) })
+      body: JSON.stringify({ appointmentDate: dateInput.value, timeSlot: timeInput.value })
     });
-    if (!response.ok) throw new Error("Failed to update price");
-    showToast("Price updated successfully!", "success");
+    if (!response.ok) throw new Error("Failed to update schedule");
+    showToast("Booking date updated — the client has been notified.", "success");
     fetchAdminBookings();
   } catch (err) {
     console.error(err);
-    showToast("Failed to update price: " + err.message, "error");
+    showToast("Failed to update schedule: " + err.message, "error");
+  }
+}
+
+function openBookingEmailModal(bookingId) {
+  const booking = _cache.bookings[bookingId];
+  if (!booking) return;
+  document.getElementById("bookingEmailId").value = booking.id;
+  document.getElementById("bookingEmailMessage").value = "";
+  document.getElementById("booking-email-modal-overlay").classList.add("is-open");
+}
+
+function closeBookingEmailModal() {
+  document.getElementById("booking-email-modal-overlay").classList.remove("is-open");
+}
+
+async function submitBookingUpdateEmail() {
+  const bookingId = document.getElementById("bookingEmailId").value;
+  const message = document.getElementById("bookingEmailMessage").value;
+  try {
+    const response = await fetch(`/api/bookings/${bookingId}/send-update-email`, {
+      method: "POST",
+      headers: adminHeaders(),
+      body: JSON.stringify({ message })
+    });
+    if (!response.ok) throw new Error("Failed to send email");
+    showToast("Update email sent to the client!", "success");
+    closeBookingEmailModal();
+  } catch (err) {
+    console.error(err);
+    showToast("Failed to send email: " + err.message, "error");
   }
 }
 
@@ -4674,3 +4787,643 @@ function initFooterMove() {
     container.appendChild(bottom);
   }
 }
+
+// =============================================
+//  Admin – Dashboard Overview Analytics
+// =============================================
+let myRevenueChartInstance = null;
+
+function getChartColors() {
+    const isDark = document.documentElement.classList.contains("dark-theme");
+    return {
+      textColor: isDark ? "#94a3b8" : "#64748b",
+      gridColor: isDark ? "#272e48" : "#e2e8f0",
+      tooltipBg: isDark ? "#161b2b" : "#ffffff",
+      tooltipBorder: isDark ? "#272e48" : "#e2e8f0",
+      gradientStart: isDark ? "rgba(99, 102, 241, 0.4)" : "rgba(37, 99, 235, 0.35)",
+      gradientEnd: isDark ? "rgba(99, 102, 241, 0.0)" : "rgba(37, 99, 235, 0.0)",
+      borderColor: isDark ? "#6366f1" : "#2563eb"
+    };
+  }
+
+  function updateChartTheme() {
+    if (myRevenueChartInstance) {
+      const colors = getChartColors();
+      myRevenueChartInstance.options.scales.x.grid.color = colors.gridColor;
+      myRevenueChartInstance.options.scales.x.ticks.color = colors.textColor;
+      myRevenueChartInstance.options.scales.y.grid.color = colors.gridColor;
+      myRevenueChartInstance.options.scales.y.ticks.color = colors.textColor;
+      myRevenueChartInstance.options.plugins.tooltip.backgroundColor = colors.tooltipBg;
+      myRevenueChartInstance.options.plugins.tooltip.borderColor = colors.tooltipBorder;
+      myRevenueChartInstance.options.plugins.tooltip.titleColor = document.documentElement.classList.contains("dark-theme") ? "#f8fafc" : "#0f172a";
+      myRevenueChartInstance.options.plugins.tooltip.bodyColor = document.documentElement.classList.contains("dark-theme") ? "#f8fafc" : "#0f172a";
+
+      const canvas = document.getElementById("revenueChart");
+      if (canvas) {
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+          gradient.addColorStop(0, colors.gradientStart);
+          gradient.addColorStop(1, colors.gradientEnd);
+          myRevenueChartInstance.data.datasets[0].backgroundColor = gradient;
+        }
+      }
+      myRevenueChartInstance.data.datasets[0].borderColor = colors.borderColor;
+      myRevenueChartInstance.data.datasets[0].pointBackgroundColor = colors.borderColor;
+
+      myRevenueChartInstance.update();
+    }
+  }
+
+  async function fetchAdminDashboardStats() {
+    const chartCanvas = document.getElementById("revenueChart");
+    if (!chartCanvas) return;
+
+    try {
+      const token = getAdminToken();
+      const response = await fetch("/api/admin/dashboard-stats", {
+        headers: token ? { "Authorization": "Bearer " + token } : {}
+      });
+      if (!response.ok) throw new Error("Failed to fetch dashboard stats");
+      const data = await response.json();
+
+      // Set counts in cards
+      const cardMessages = document.getElementById("stat-messages-count");
+      const cardUsers = document.getElementById("stat-users-count");
+      const cardMembers = document.getElementById("stat-members-count");
+      const cardProjects = document.getElementById("stat-projects-count");
+      const cardServices = document.getElementById("stat-services-count");
+      const cardTransactions = document.getElementById("stat-transactions-count");
+
+      if (cardMessages) cardMessages.textContent = data.messagesCount ?? "—";
+      if (cardUsers) cardUsers.textContent = data.accountsCount ?? "—";
+      if (cardMembers) cardMembers.textContent = data.membersCount ?? "—";
+      if (cardProjects) cardProjects.textContent = data.projectsCount ?? "—";
+      if (cardServices) cardServices.textContent = data.servicesCount ?? "—";
+      if (cardTransactions) cardTransactions.textContent = data.transactionsCount ?? "—";
+
+      // Render the chart
+      renderRevenueChart(data.revenueData);
+    } catch (err) {
+      console.error("fetchAdminDashboardStats error:", err);
+    }
+  }
+
+  function renderRevenueChart(revenueData) {
+    const canvas = document.getElementById("revenueChart");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const months = Object.keys(revenueData);
+    const amounts = Object.values(revenueData);
+
+    const colors = getChartColors();
+
+    if (myRevenueChartInstance) {
+      myRevenueChartInstance.destroy();
+    }
+
+    // Create gradient
+    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, colors.gradientStart);
+    gradient.addColorStop(1, colors.gradientEnd);
+
+    myRevenueChartInstance = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: months.map(m => {
+          const parts = m.split("-");
+          return parts.length === 2 ? `Tháng ${parts[1]}/${parts[0]}` : m;
+        }),
+        datasets: [{
+          label: "Doanh thu (USD)",
+          data: amounts,
+          borderColor: colors.borderColor,
+          borderWidth: 3,
+          backgroundColor: gradient,
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: colors.borderColor,
+          pointBorderColor: "#ffffff",
+          pointBorderWidth: 2,
+          pointRadius: 5,
+          pointHoverRadius: 7
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            backgroundColor: colors.tooltipBg,
+            titleColor: document.documentElement.classList.contains("dark-theme") ? "#f8fafc" : "#0f172a",
+            bodyColor: document.documentElement.classList.contains("dark-theme") ? "#f8fafc" : "#0f172a",
+            borderColor: colors.tooltipBorder,
+            borderWidth: 1,
+            padding: 12,
+            displayColors: false,
+            callbacks: {
+              label: function (context) {
+                let value = context.raw || 0;
+                return " Doanh thu: $" + value.toLocaleString();
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: {
+              color: colors.gridColor,
+              drawBorder: false
+            },
+            ticks: {
+              color: colors.textColor,
+              font: {
+                family: "Inter",
+                size: 11,
+                weight: 500
+              }
+            }
+          },
+          y: {
+            grid: {
+              color: colors.gridColor,
+              drawBorder: false
+            },
+            ticks: {
+              color: colors.textColor,
+              font: {
+                family: "Inter",
+                size: 11,
+                weight: 500
+              },
+              callback: function (value) {
+                return "$" + value.toLocaleString();
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+
+
+  window.toggleSidebar = function () {
+    document.body.classList.toggle("sidebar-collapsed");
+    const isCollapsed = document.body.classList.contains("sidebar-collapsed");
+    localStorage.setItem("adminSidebarCollapsed", isCollapsed);
+  }
+
+  // =======================================================
+  // UI/UX GLOBAL SCRIPTING OVERHAUL (TOASTS & VALIDATIONS)
+  // =======================================================
+
+  // 1. Toast Notification system
+  window.showToast = function (title, message, type = "success") {
+    let container = document.getElementById("toast-notification-container");
+    if (!container) {
+      container = document.createElement("div");
+      container.id = "toast-notification-container";
+      container.className = "toast-notification-container";
+      document.body.appendChild(container);
+    }
+
+    const toast = document.createElement("div");
+    toast.className = `toast-msg-item ${type}`;
+
+    let iconSvg = "";
+    if (type === "success") {
+      iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#24A148" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+    } else if (type === "error") {
+      iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#DA1E28" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
+    } else {
+      iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0F62FE" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`;
+    }
+
+    toast.innerHTML = `
+      <div class="toast-icon">${iconSvg}</div>
+      <div class="toast-content">
+        <div class="toast-title" style="margin:0;font-weight:700;font-size:0.9rem;">${title}</div>
+        <div class="toast-message" style="margin:2px 0 0 0;font-size:0.8rem;color:var(--text-muted);">${message}</div>
+      </div>
+    `;
+
+    container.appendChild(toast);
+
+    // Auto-remove after 4 seconds
+    setTimeout(() => {
+      toast.classList.add("fade-out");
+      setTimeout(() => {
+        toast.remove();
+      }, 300);
+    }, 4000);
+  };
+
+  // 2. Form live validation
+  function getValidationMessage(input) {
+    if (input.validity.valueMissing) {
+      return "This field is required.";
+    }
+    if (input.validity.typeMismatch) {
+      if (input.type === "email") return "Please enter a valid email address.";
+      if (input.type === "url") return "Please enter a valid URL.";
+    }
+    if (input.validity.tooShort) {
+      return `Please enter at least ${input.minLength} characters.`;
+    }
+    if (input.validity.patternMismatch) {
+      return "Input format does not match requirements.";
+    }
+    return input.validationMessage || "Invalid input field value.";
+  }
+
+  function validateField(input) {
+    const parent = input.closest(".floating-form-group") || input.parentElement;
+    let errorSpan = parent.querySelector(".error-helper-text");
+
+    if (input.type === "select-one") {
+      if (input.value !== "") {
+        input.classList.add("has-value");
+      } else {
+        input.classList.remove("has-value");
+      }
+    }
+
+    if (!input.checkValidity()) {
+      input.classList.add("input-error");
+      if (!errorSpan) {
+        errorSpan = document.createElement("span");
+        errorSpan.className = "error-helper-text";
+        parent.appendChild(errorSpan);
+      }
+      errorSpan.textContent = getValidationMessage(input);
+    } else {
+      input.classList.remove("input-error");
+      if (errorSpan) {
+        errorSpan.remove();
+      }
+    }
+  }
+
+  // Setup validation events on inputs
+  function setupLiveFormValidation() {
+    const forms = document.querySelectorAll("form");
+    forms.forEach(form => {
+      const inputs = form.querySelectorAll("input, textarea, select");
+      inputs.forEach(input => {
+        if (input.tagName === "SELECT") {
+          input.addEventListener("change", () => validateField(input));
+        }
+
+        input.addEventListener("blur", () => validateField(input));
+        input.addEventListener("input", () => {
+          if (input.classList.contains("input-error")) {
+            validateField(input);
+          }
+        });
+      });
+
+      // Validate all on submit
+      form.addEventListener("submit", (e) => {
+        let isFormValid = true;
+        inputs.forEach(input => {
+          validateField(input);
+          if (!input.checkValidity()) {
+            isFormValid = false;
+          }
+        });
+
+        if (!isFormValid) {
+          e.preventDefault();
+          window.showToast("Validation Error", "Please check the highlighted fields above.", "error");
+        }
+      });
+    });
+  }
+
+  // Run on DOM loaded
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", setupLiveFormValidation);
+  } else {
+    setupLiveFormValidation();
+  }
+const CHATBOT_HISTORY_KEY = 'nova_chatbot_history';
+
+const CHATBOT_SYSTEM_PROMPT =
+    "You are Nova AI, a support assistant for NovaDigital Agency's website ONLY. " +
+    "Your knowledge is strictly limited to: NovaDigital's services "+
+    "STRICT RULE: If a question is not about NovaDigital or this website — including general knowledge, coding help, " +
+    "other companies, personal advice, math, current events, or any topic outside the list above — you MUST NOT answer it. " +
+    "Instead, reply briefly that you can only help with questions about NovaDigital's services and this website, " +
+    "and ask if they'd like help with one of those instead. Do not attempt to be helpful on off-topic requests, " +
+    "even if you know the answer. Be warm, professional, and concise.";
+
+// Cached config from backend
+let _chatbotConfig = null;
+
+async function getChatbotConfig() {
+    if (_chatbotConfig) return _chatbotConfig;
+    try {
+        const res = await fetch('/api/chatbot/config');
+        if (!res.ok) throw new Error('Config fetch failed');
+        _chatbotConfig = await res.json();
+        return _chatbotConfig;
+    } catch (e) {
+        console.error('[Chatbot] Could not fetch config:', e);
+        return null;
+    }
+}
+
+async function callGroqDirectly(userMessage) {
+    const config = await getChatbotConfig();
+    if (!config || !config.apiKey) throw new Error('[Debug] Could not fetch /api/chatbot/config — is the server running?');
+
+    const apiKey = config.apiKey;
+    const groqModel = config.model || 'llama-3.3-70b-versatile';
+    const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+
+    try {
+        const res = await fetch(GROQ_URL, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: groqModel,
+                messages: [
+                    { role: 'system', content: CHATBOT_SYSTEM_PROMPT },
+                    { role: 'user', content: userMessage }
+                ]
+            })
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+            return data?.choices?.[0]?.message?.content || 'I received an empty response.';
+        }
+
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(`Groq HTTP ${res.status}: ${JSON.stringify(errBody)}`);
+    } catch (e) {
+        throw new Error(`[Debug] Groq failed: ${e.message}`);
+    }
+}
+
+function initChatbot() {
+    const fab             = document.getElementById('chatbot-fab');
+    const windowEl        = document.getElementById('chatbot-window');
+    const closeBtn        = document.getElementById('chatbot-close');
+    const messagesContainer = document.getElementById('chatbot-messages');
+    const inputEl         = document.getElementById('chatbot-input');
+    const sendBtn         = document.getElementById('chatbot-send');
+
+    if (!fab || !windowEl) return;
+
+    // ── History helpers (sessionStorage: survives page nav, clears on tab close / logout) ──
+    function loadHistory() {
+        try { return JSON.parse(sessionStorage.getItem(CHATBOT_HISTORY_KEY) || '[]'); }
+        catch { return []; }
+    }
+    function saveHistory(history) {
+        try { sessionStorage.setItem(CHATBOT_HISTORY_KEY, JSON.stringify(history)); } catch {}
+    }
+    function addToHistory(sender, text) {
+        const h = loadHistory();
+        h.push({ sender, text, time: Date.now() });
+        if (h.length > 100) h.splice(0, h.length - 100);
+        saveHistory(h);
+    }
+
+    // ── Render one bubble ──
+    function renderBubble(sender, text) {
+        const div = document.createElement('div');
+        div.className = 'chatbot-msg ' + (sender === 'user' ? 'chatbot-msg-user' : 'chatbot-msg-bot');
+        div.textContent = text;
+        messagesContainer.appendChild(div);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    // ── Restore persisted conversation ──
+    const history = loadHistory();
+    if (history.length === 0) {
+        const welcome = 'Hello! I am Nova AI. How can I help you today?';
+        renderBubble('bot', welcome);
+        addToHistory('bot', welcome);
+    } else {
+        history.forEach(m => renderBubble(m.sender, m.text));
+    }
+
+    // Prefetch config so first message is instant
+    getChatbotConfig();
+
+    // ── Toggle open/close ──
+    fab.addEventListener('click', () => {
+        windowEl.classList.toggle('active');
+        if (windowEl.classList.contains('active')) {
+            inputEl.focus();
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+    });
+    closeBtn.addEventListener('click', () => windowEl.classList.remove('active'));
+
+    // ── Send message ──
+    const sendMessage = async () => {
+        const text = inputEl.value.trim();
+        if (!text || sendBtn.disabled) return;
+
+        inputEl.value = '';
+        sendBtn.disabled = true;
+
+        renderBubble('user', text);
+        addToHistory('user', text);
+
+        // Typing indicator
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'chatbot-msg chatbot-msg-bot chatbot-typing';
+        typingDiv.innerHTML = '<span></span><span></span><span></span>';
+        messagesContainer.appendChild(typingDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+        try {
+            const reply = await callGroqDirectly(text);
+            typingDiv.remove();
+            renderBubble('bot', reply);
+            addToHistory('bot', reply);
+        } catch (err) {
+            console.error('[Chatbot] Error:', err);
+            typingDiv.remove();
+            // Show real error in chat for debugging
+            const msg = err.message || 'Sorry, I am currently unavailable. Please try again later.';
+            renderBubble('bot', msg);
+            addToHistory('bot', msg);
+        } finally {
+            sendBtn.disabled = false;
+            inputEl.focus();
+        }
+    };
+
+    sendBtn.addEventListener('click', sendMessage);
+    inputEl.addEventListener('keypress', e => {
+        if (e.key === 'Enter') { e.preventDefault(); sendMessage(); }
+    });
+}
+
+// Clear chatbot history on logout (called by logoutUser which already does sessionStorage.clear())
+function clearChatbotHistory() {
+    sessionStorage.removeItem(CHATBOT_HISTORY_KEY);
+}
+
+// =============================================
+//  Admin - Quotation Logic
+// =============================================
+
+function openQuoteModal(bookingId) {
+  const booking = _cache.bookings[bookingId];
+  if (!booking) {
+    showToast("Booking data not found", "error");
+    return;
+  }
+  const service = _cache.services[booking.serviceId] || { title: "Unknown Service" };
+  
+  document.getElementById("quoteBookingId").value = booking.id;
+  document.getElementById("quoteTitle").value = service.title + " Package";
+  document.getElementById("quoteSubtotal").value = booking.totalPrice.toFixed(2);
+  document.getElementById("quoteItemName").value = service.title;
+  document.getElementById("quoteDiscount").value = "0";
+  document.getElementById("quoteTax").value = "0";
+  document.getElementById("quoteDeposit").value = "20";
+  document.getElementById("quoteNotes").value = "";
+  
+  calculateQuoteTotal();
+  document.getElementById("quote-modal-overlay").classList.add("is-open");
+}
+
+function closeQuoteModal() {
+  document.getElementById("quote-modal-overlay").classList.remove("is-open");
+}
+
+function calculateQuoteTotal() {
+  const subtotal = parseFloat(document.getElementById("quoteSubtotal").value) || 0;
+  const discount = parseFloat(document.getElementById("quoteDiscount").value) || 0;
+  const tax = parseFloat(document.getElementById("quoteTax").value) || 0;
+  
+  const total = subtotal - discount + tax;
+  document.getElementById("quoteTotalAmount").value = total > 0 ? total.toFixed(2) : "0.00";
+}
+
+async function submitQuote() {
+  const title = document.getElementById("quoteTitle").value;
+  const bookingId = document.getElementById("quoteBookingId").value;
+  if (!title) {
+    showToast("Please enter a quotation title", "error");
+    return;
+  }
+  
+  const subtotal = parseFloat(document.getElementById("quoteSubtotal").value) || 0;
+  const discountAmount = parseFloat(document.getElementById("quoteDiscount").value) || 0;
+  const taxAmount = parseFloat(document.getElementById("quoteTax").value) || 0;
+  const totalAmount = parseFloat(document.getElementById("quoteTotalAmount").value) || 0;
+  const depositPercentage = parseFloat(document.getElementById("quoteDeposit").value) || 20;
+  const notes = document.getElementById("quoteNotes").value;
+  const itemName = document.getElementById("quoteItemName").value;
+  
+  const adminId = localStorage.getItem("userId") || sessionStorage.getItem("userId") || 1;
+  
+  const requestPayload = {
+    title,
+    subtotal,
+    discountAmount,
+    taxAmount,
+    totalAmount,
+    depositPercentage,
+    notes,
+    items: [
+      {
+        itemName: itemName,
+        description: "Main service package based on booking",
+        quantity: 1,
+        unitPrice: subtotal,
+        subtotal: subtotal
+      }
+    ]
+  };
+  
+  const btn = document.querySelector("#quote-modal-overlay .btn-save");
+  const originalText = btn.innerText;
+  btn.innerText = "Processing...";
+  btn.disabled = true;
+  
+  try {
+    // 1. Create quote
+    const createRes = await fetch(`/api/quotations/from-booking/${bookingId}?adminId=${adminId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...adminHeaders()
+      },
+      body: JSON.stringify(requestPayload)
+    });
+    
+    if (!createRes.ok) throw new Error("Failed to create quote");
+    const createdQuote = await createRes.json();
+    
+    // 2. Send email
+    btn.innerText = "Sending Email...";
+    const emailRes = await fetch(`/api/quotations/${createdQuote.id}/send-email`, {
+      method: "POST",
+      headers: adminHeaders()
+    });
+    
+    if (!emailRes.ok) throw new Error("Failed to send quote email");
+    
+    showToast("Quotation created and sent successfully to the client!", "success");
+    closeQuoteModal();
+  } catch (err) {
+    console.error("Quote error:", err);
+    showToast(err.message || "An error occurred", "error");
+  } finally {
+    btn.innerText = originalText;
+    btn.disabled = false;
+  }
+}
+
+// =============================================
+//  Admin - Quotation SSE Listener
+// =============================================
+function initQuotationSSE() {
+  const eventSource = new EventSource('/api/sse/stream');
+  
+  eventSource.addEventListener('QUOTE_APPROVED', (e) => {
+    // Play a bell sound (ensure you have a valid audio URL or fallback)
+    try {
+      const audio = new Audio('https://www.soundjay.com/buttons/sounds/bell-ringing-05.mp3');
+      audio.play().catch(err => console.log('Audio play prevented by browser:', err));
+    } catch(e) {}
+    
+    // Show toast notification
+    showToast(e.data, "success");
+    
+    // Refresh table if needed
+    if (document.getElementById("panel-bookings")?.classList.contains("active")) {
+       fetchAdminBookings();
+    }
+  });
+  
+  eventSource.onerror = (err) => {
+    console.log("SSE error for quotations", err);
+  };
+}
+
+// Call on admin page load if needed (can just check if admin panel exists)
+if (document.getElementById("panel-bookings")) {
+  initQuotationSSE();
+}
+
+window.initChatbot = initChatbot;
+window.clearChatbotHistory = clearChatbotHistory;

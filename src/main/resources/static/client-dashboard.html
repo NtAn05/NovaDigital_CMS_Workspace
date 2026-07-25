@@ -199,6 +199,8 @@
     <span>Real-time connected — milestone progress updates automatically when PM syncs</span>
   </div>
 
+  <div id="quotation-alerts-container"></div>
+
   <div class="projects" id="projectList">
     <div class="spinner"></div>
   </div>
@@ -364,7 +366,36 @@
     }
   }
 
+  async function checkActiveQuotations() {
+    const alertsContainer = document.getElementById('quotation-alerts-container');
+    if (!alertsContainer) return;
+    try {
+      const res = await fetch(`${API}/api/quotations/my`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const quotes = await res.json();
+        const proposedQuotes = quotes.filter(q => q.status === 'PROPOSED');
+        if (proposedQuotes.length > 0) {
+          alertsContainer.innerHTML = proposedQuotes.map(q => `
+            <div class="quote-alert" style="background: #3f2b0f; border: 1px solid var(--amber); color: var(--amber); padding: 14px 18px; border-radius: 12px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; font-size: 13.5px; font-weight: 600; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span>📧</span>
+                <span>Báo giá <strong>$${q.totalAmount.toFixed(2)}</strong> cho dự án "<strong>${escHtml(q.title)}</strong>" đã được gửi qua email của bạn. Vui lòng kiểm tra và duyệt báo giá từ hòm thư.</span>
+              </div>
+            </div>
+          `).join('');
+        } else {
+          alertsContainer.innerHTML = '';
+        }
+      }
+    } catch (e) {
+      console.error("Error fetching active quotations", e);
+    }
+  }
+
   loadProjects();
+  checkActiveQuotations();
 </script>
 <script src="/js/main.js"></script>
 </body>

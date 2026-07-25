@@ -4280,6 +4280,37 @@ html.dark-theme .status-completed {
   color: #4a5568;
   border-color: #cbd5e0;
 }
+.status-select.status-booking {
+  background-color: #ecfdf5;
+  color: #059669;
+  border-color: #a7f3d0;
+}
+.status-select.status-pricing {
+  background-color: #eef2ff;
+  color: #4f46e5;
+  border-color: #c7d2fe;
+}
+.status-select.status-done {
+  background-color: #ccfbf1;
+  color: #0d9488;
+  border-color: #99f6e4;
+}
+
+html.dark-theme .status-select.status-booking {
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #10b981 !important;
+  border-color: rgba(16, 185, 129, 0.25) !important;
+}
+html.dark-theme .status-select.status-pricing {
+  background: rgba(79, 70, 229, 0.15) !important;
+  color: #818cf8 !important;
+  border-color: rgba(79, 70, 229, 0.25) !important;
+}
+html.dark-theme .status-select.status-done {
+  background: rgba(13, 148, 136, 0.15) !important;
+  color: #2dd4bf !important;
+  border-color: rgba(13, 148, 136, 0.25) !important;
+}
 
 html.dark-theme .status-select.status-pending {
   background: rgba(245, 158, 11, 0.15) !important;
@@ -5774,73 +5805,3 @@ html.dark-theme .notification-item.unread .notif-item-msg {
 html.dark-theme .notification-item:hover {
   background: rgba(255, 255, 255, 0.07) !important;
 }
-
-/* =============================================
-   TECH VIDEO & CANVAS HERO (SHARED ACCROSS PAGES)
-   ============================================= */
-.portfolio-video-hero {
-  position: relative;
-  min-height: 55vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 120px 2rem 60px;
-  overflow: hidden;
-  color: #ffffff;
-  background: #090d16;
-}
-.video-background-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  z-index: 0;
-}
-.video-background-container canvas {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-.video-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(180deg, rgba(9, 13, 22, 0.1) 0%, rgba(9, 13, 22, 0.3) 70%, rgba(9, 13, 22, 0.95) 100%);
-  pointer-events: none;
-}
-.portfolio-hero-text {
-  position: relative;
-  z-index: 1;
-}
-.portfolio-hero-text h1 {
-  color: #ffffff;
-  font-size: 3.2rem;
-  font-weight: 800;
-  margin-top: 0.5rem;
-  letter-spacing: -0.5px;
-}
-.portfolio-hero-text p {
-  color: rgba(226, 232, 240, 0.9);
-  max-width: 700px;
-  margin: 0.75rem auto 0;
-  font-size: 1.15rem;
-  line-height: 1.6;
-}
-.tech-pill {
-  background: rgba(37, 99, 235, 0.25) !important;
-  color: #60a5fa !important;
-  border: 1px solid rgba(96, 165, 250, 0.3) !important;
-  backdrop-filter: blur(8px);
-}
-.gradient-tech-text {
-  background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
