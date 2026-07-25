@@ -690,8 +690,8 @@ function updateNavbarAuth() {
     }
   }
 
-  // Inject theme toggle button next to navbar links
-  injectThemeToggle();
+  // Theme toggle đã có ở sidebar/slide bên cạnh, không cần thêm vào navbar nữa
+  // injectThemeToggle();
 }
 
 // User Logout Logic
