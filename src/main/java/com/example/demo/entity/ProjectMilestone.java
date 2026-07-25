@@ -65,6 +65,13 @@ public class ProjectMilestone {
         return this.paid != null ? this.paid : false;
     }
 
+    @Column(name = "milestone_amount")
+    private Double milestoneAmount = 0.0;
+
+    @Column(name = "payment_status", length = 50)
+    private String paymentStatus = "UNPAID"; // UNPAID, READY_FOR_PAYMENT, PAID
+
+
     // ── Audit Timestamps ──────────────────────────────────
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

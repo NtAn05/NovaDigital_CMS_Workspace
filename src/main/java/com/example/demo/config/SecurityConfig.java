@@ -142,6 +142,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/contacts", "/api/contacts/**").hasAnyRole("ADMIN", "MEMBER")
 
                 // Any other request
+                .requestMatchers("/api/quotations/public/**").permitAll()
                 .anyRequest().authenticated()
             );
 

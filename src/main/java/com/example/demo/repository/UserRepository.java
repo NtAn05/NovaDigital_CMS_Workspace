@@ -26,4 +26,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
            countQuery = "SELECT count(*) FROM users", 
            nativeQuery = true)
     Page<User> findAllUsersSortedByLatestDataAudit(Pageable pageable);
+
+    java.util.List<User> findByRole(String role);
 }

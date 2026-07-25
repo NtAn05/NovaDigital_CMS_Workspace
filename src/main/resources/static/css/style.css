@@ -4162,6 +4162,37 @@ html.dark-theme .status-completed {
   color: #4a5568;
   border-color: #cbd5e0;
 }
+.status-select.status-booking {
+  background-color: #ecfdf5;
+  color: #059669;
+  border-color: #a7f3d0;
+}
+.status-select.status-pricing {
+  background-color: #eef2ff;
+  color: #4f46e5;
+  border-color: #c7d2fe;
+}
+.status-select.status-done {
+  background-color: #ccfbf1;
+  color: #0d9488;
+  border-color: #99f6e4;
+}
+
+html.dark-theme .status-select.status-booking {
+  background: rgba(16, 185, 129, 0.15) !important;
+  color: #10b981 !important;
+  border-color: rgba(16, 185, 129, 0.25) !important;
+}
+html.dark-theme .status-select.status-pricing {
+  background: rgba(79, 70, 229, 0.15) !important;
+  color: #818cf8 !important;
+  border-color: rgba(79, 70, 229, 0.25) !important;
+}
+html.dark-theme .status-select.status-done {
+  background: rgba(13, 148, 136, 0.15) !important;
+  color: #2dd4bf !important;
+  border-color: rgba(13, 148, 136, 0.25) !important;
+}
 
 html.dark-theme .status-select.status-pending {
   background: rgba(245, 158, 11, 0.15) !important;
@@ -5639,4 +5670,3 @@ html.dark-theme .notification-item.unread .notif-item-msg {
 html.dark-theme .notification-item:hover {
   background: rgba(255, 255, 255, 0.07) !important;
 }
-

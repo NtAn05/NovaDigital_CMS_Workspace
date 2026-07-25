@@ -15,6 +15,7 @@ import com.example.demo.repository.NotificationRepository;
 import com.example.demo.repository.ServiceRepository;
 import com.example.demo.service.BookingService;
 import com.example.demo.service.CaptchaService;
+import com.example.demo.service.EmailService;
 import com.example.demo.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -52,6 +53,9 @@ public class BookingController {
 
     @Autowired
     private CaptchaService captchaService;
+
+    @Autowired
+    private EmailService emailService;
 
     // ── Chống spam: sinh captcha ký tự mới ──
     @GetMapping("/captcha")
@@ -232,12 +236,37 @@ public class BookingController {
                     if (body.containsKey("status")) {
                         a.setStatus(AppointmentStatus.valueOf(body.get("status").toString()));
                     }
+
+                    // Admin (meant to be used while in BOOKING state) can reschedule the
+                    // appointment date/time manually. If it actually changes, notify the client.
+                    boolean dateChanged = false;
+                    if (body.containsKey("appointmentDate") && body.get("appointmentDate") != null
+                            && !body.get("appointmentDate").toString().isBlank()) {
+                        LocalDate newDate = LocalDate.parse(body.get("appointmentDate").toString());
+                        if (!newDate.equals(a.getAppointmentDate())) {
+                            a.setAppointmentDate(newDate);
+                            dateChanged = true;
+                        }
+                    }
+                    if (body.containsKey("timeSlot") && body.get("timeSlot") != null
+                            && !body.get("timeSlot").toString().isBlank()) {
+                        LocalTime newTime = LocalTime.parse(body.get("timeSlot").toString());
+                        if (!newTime.equals(a.getTimeSlot())) {
+                            a.setTimeSlot(newTime);
+                            dateChanged = true;
+                        }
+                    }
+
                     ConsultationAppointment saved = appointmentRepository.save(a);
 
-                    // Vừa chuyển sang CONFIRMED (không phải đã confirmed từ trước) và đã có expert được gán
+                    if (dateChanged) {
+                        notifyClientBookingRescheduled(saved);
+                    }
+
+                    // Vừa chuyển sang BOOKING (không phải đã ở đó từ trước) và đã có expert được gán
                     // -> báo cho member đó biết, kèm tên khách hàng thật
-                    boolean justConfirmed = saved.getStatus() == AppointmentStatus.CONFIRMED
-                            && statusBefore != AppointmentStatus.CONFIRMED;
+                    boolean justConfirmed = saved.getStatus() == AppointmentStatus.BOOKING
+                            && statusBefore != AppointmentStatus.BOOKING;
                     if (justConfirmed && saved.getExpertId() != null) {
                         notifyExpertBookingConfirmed(saved);
                     }
@@ -297,8 +326,71 @@ public class BookingController {
                 });
     }
 
+    // Admin sends a free-text update email to the client about this booking
+    // (e.g. the consultation date may need to change, or another issue came up).
+    // Intended for use while the booking is in the BOOKING state.
+    @PostMapping("/{id}/send-update-email")
+    public ResponseEntity<?> sendBookingUpdateEmail(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        return appointmentRepository.findById(id)
+                .<ResponseEntity<?>>map(a -> {
+                    User client = userRepository.findById(a.getClientId()).orElse(null);
+                    if (client == null || client.getEmail() == null || client.getEmail().isBlank()) {
+                        Map<String, Object> error = new HashMap<>();
+                        error.put("message", "This client has no email on file");
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+                    }
+
+                    String adminMessage = body.get("message") != null ? body.get("message").toString() : "";
+                    String serviceTitle = serviceRepository.findById(a.getServiceId())
+                            .map(Service::getTitle)
+                            .orElse("Service #" + a.getServiceId());
+
+                    emailService.sendBookingUpdateEmail(
+                            client.getEmail(),
+                            client.getFullName(),
+                            serviceTitle,
+                            a.getAppointmentDate().toString(),
+                            a.getTimeSlot().toString().substring(0, 5),
+                            adminMessage
+                    );
+
+                    Map<String, Object> res = new HashMap<>();
+                    res.put("success", true);
+                    res.put("message", "Email sent to " + client.getEmail());
+                    return ResponseEntity.ok(res);
+                })
+                .orElseGet(() -> {
+                    Map<String, Object> error = new HashMap<>();
+                    error.put("message", "Appointment not found with id = " + id);
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+                });
+    }
+
     /**
-     * Tạo thông báo trong app cho member được gán khi booking chuyển sang CONFIRMED,
+     * Tạo thông báo trong app cho khách hàng khi Admin chỉnh lại ngày/giờ hẹn thủ công
+     * (thường dùng khi booking đang ở trạng thái BOOKING).
+     */
+    private void notifyClientBookingRescheduled(ConsultationAppointment appointment) {
+        Long clientUserId = appointment.getClientId();
+        if (clientUserId == null) return;
+
+        String serviceTitle = serviceRepository.findById(appointment.getServiceId())
+                .map(Service::getTitle)
+                .orElse("service #" + appointment.getServiceId());
+
+        Notification noti = new Notification();
+        noti.setUserId(clientUserId);
+        noti.setTitle("Your consultation date has been updated");
+        noti.setMessage(String.format(
+                "Your consultation \"%s\" has been rescheduled to %s at %s. Please check your booking for details.",
+                serviceTitle, appointment.getAppointmentDate(),
+                appointment.getTimeSlot().toString().substring(0, 5)
+        ));
+        notificationRepository.save(noti);
+    }
+
+    /**
+     * Tạo thông báo trong app cho member được gán khi booking chuyển sang BOOKING,
      * hiện đúng tên khách hàng thật (không phải "Khách hàng #123").
      *
      * Lưu ý: expert_id trỏ thẳng về User.id (user có role ROLE_MEMBER), KHÔNG phải Member.id -

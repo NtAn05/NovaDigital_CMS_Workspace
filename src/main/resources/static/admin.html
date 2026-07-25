@@ -1891,6 +1891,85 @@
     </div>
   </div>
 
+  <!-- ===== QUOTE MODAL OVERLAY ===== -->
+  <div id="quote-modal-overlay" class="crud-modal-overlay">
+    <div class="crud-modal" style="max-width: 650px;">
+      <div class="crud-modal-header">
+        <h3>Create Quotation</h3>
+        <div class="crud-modal-close" onclick="closeQuoteModal()">&times;</div>
+      </div>
+      <div class="crud-modal-body">
+        <form id="quoteForm">
+          <input type="hidden" id="quoteBookingId">
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <label style="display:block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.85rem; color: var(--text-dark);">Quotation Title <span style="color:red">*</span></label>
+            <input type="text" id="quoteTitle" required style="width:100%; padding: 0.65rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem;" placeholder="e.g. Website Development Package">
+          </div>
+          
+          <div style="display:flex; gap: 1rem; margin-bottom: 1rem;">
+            <div class="form-group" style="flex: 1;">
+              <label style="display:block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.85rem; color: var(--text-dark);">Subtotal ($) <span style="color:red">*</span></label>
+              <input type="number" id="quoteSubtotal" step="0.01" required style="width:100%; padding: 0.65rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem;" oninput="calculateQuoteTotal()">
+            </div>
+            <div class="form-group" style="flex: 1;">
+              <label style="display:block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.85rem; color: var(--text-dark);">Discount ($)</label>
+              <input type="number" id="quoteDiscount" step="0.01" value="0" style="width:100%; padding: 0.65rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem;" oninput="calculateQuoteTotal()">
+            </div>
+          </div>
+
+          <div style="display:flex; gap: 1rem; margin-bottom: 1rem;">
+            <div class="form-group" style="flex: 1;">
+              <label style="display:block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.85rem; color: var(--text-dark);">Tax ($)</label>
+              <input type="number" id="quoteTax" step="0.01" value="0" style="width:100%; padding: 0.65rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem;" oninput="calculateQuoteTotal()">
+            </div>
+            <div class="form-group" style="flex: 1;">
+              <label style="display:block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.85rem; color: var(--text-dark);">Deposit Percentage (%) <span style="color:red">*</span></label>
+              <input type="number" id="quoteDeposit" step="0.1" value="20" required style="width:100%; padding: 0.65rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem;">
+            </div>
+          </div>
+          
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <label style="display:block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.85rem; color: var(--text-dark);">Total Amount ($)</label>
+            <input type="number" id="quoteTotalAmount" step="0.01" readonly style="width:100%; padding: 0.65rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem; font-weight: bold; background: #f8fafc;">
+          </div>
+          
+          <div class="form-group" style="margin-bottom: 1rem;">
+            <label style="display:block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.85rem; color: var(--text-dark);">Notes (Optional)</label>
+            <textarea id="quoteNotes" rows="3" style="width:100%; padding: 0.65rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem;"></textarea>
+          </div>
+          
+          <!-- Hidden items input for now, we just create 1 main item -->
+          <input type="hidden" id="quoteItemName">
+        </form>
+      </div>
+      <div class="crud-modal-footer">
+        <button class="btn-cancel" onclick="closeQuoteModal()">Cancel</button>
+        <button class="btn-save" onclick="submitQuote()">Send Quote Email</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== BOOKING UPDATE EMAIL MODAL OVERLAY ===== -->
+  <div id="booking-email-modal-overlay" class="crud-modal-overlay">
+    <div class="crud-modal" style="max-width: 550px;">
+      <div class="crud-modal-header">
+        <h3>Send Update Email to Client</h3>
+        <div class="crud-modal-close" onclick="closeBookingEmailModal()">&times;</div>
+      </div>
+      <div class="crud-modal-body">
+        <input type="hidden" id="bookingEmailId">
+        <div class="form-group" style="margin-bottom: 1rem;">
+          <label style="display:block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.85rem; color: var(--text-dark);">Message to Client</label>
+          <textarea id="bookingEmailMessage" rows="5" style="width:100%; padding: 0.65rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem;" placeholder="e.g. The proposed consultation date may need to change, please let us know your availability..."></textarea>
+        </div>
+      </div>
+      <div class="crud-modal-footer">
+        <button class="btn-cancel" onclick="closeBookingEmailModal()">Cancel</button>
+        <button class="btn-save" onclick="submitBookingUpdateEmail()">Send Email</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="/js/main.js"></script>
 </body>
