@@ -2277,6 +2277,19 @@ async function fetchAdminBookings() {
           </div>`
         : `<div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px;">No add-ons</div>`;
 
+      // Total price for this booking
+      const totalPriceHtml = (b.totalPrice != null)
+        ? `<div class="text-dark-inline" style="font-weight:700;">$${Number(b.totalPrice).toFixed(2)}</div>`
+        : `<div style="font-size:0.8rem;color:var(--text-muted);font-style:italic;">Not priced yet</div>`;
+
+      // Client-provided attachment, if any
+      const attachmentHtml = b.attachmentUrl
+        ? `<a href="${escapeHtml(b.attachmentUrl)}" target="_blank" style="color:var(--primary);font-weight:600;text-decoration:underline;display:flex;align-items:center;gap:4px;font-size:0.8rem;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+            View File
+          </a>`
+        : `<span style="font-size:0.8rem;color:var(--text-muted);">No File</span>`;
+
         // Once DONE, admin can no longer touch this booking in any way
         const isLocked = b.status === "DONE";
         // The date/time can only be edited manually while the booking is in the BOOKING state
@@ -2376,73 +2389,57 @@ async function updateBookingPrice(bookingId) {
     showToast("Please enter a valid project price.", "error");
     return;
   }
+}
 
-  async function saveBookingSchedule(bookingId) {
-    const dateInput = document.getElementById(`bkDate-${bookingId}`);
-    const timeInput = document.getElementById(`bkTime-${bookingId}`);
-    if (!dateInput || !timeInput || !dateInput.value || !timeInput.value) {
-      showToast("Please pick both a date and a time.", "error");
-      return;
-    }
-    try {
-      const response = await fetch(`/api/bookings/${bookingId}`, {
-        method: "PUT",
-        headers: adminHeaders(),
-        body: JSON.stringify({ appointmentDate: dateInput.value, timeSlot: timeInput.value })
-      });
-      if (!response.ok) throw new Error("Failed to update schedule");
-      showToast("Booking date updated — the client has been notified.", "success");
-      fetchAdminBookings();
-    } catch (err) {
-      console.error(err);
-      showToast("Failed to update schedule: " + err.message, "error");
-    }
+async function saveBookingSchedule(bookingId) {
+  const dateInput = document.getElementById(`bkDate-${bookingId}`);
+  const timeInput = document.getElementById(`bkTime-${bookingId}`);
+  if (!dateInput || !timeInput || !dateInput.value || !timeInput.value) {
+    showToast("Please pick both a date and a time.", "error");
+    return;
   }
-
-  function openBookingEmailModal(bookingId) {
-    const booking = _cache.bookings[bookingId];
-    if (!booking) return;
-    document.getElementById("bookingEmailId").value = booking.id;
-    document.getElementById("bookingEmailMessage").value = "";
-    document.getElementById("booking-email-modal-overlay").classList.add("is-open");
+  try {
+    const response = await fetch(`/api/bookings/${bookingId}`, {
+      method: "PUT",
+      headers: adminHeaders(),
+      body: JSON.stringify({ appointmentDate: dateInput.value, timeSlot: timeInput.value })
+    });
+    if (!response.ok) throw new Error("Failed to update schedule");
+    showToast("Booking date updated — the client has been notified.", "success");
+    fetchAdminBookings();
+  } catch (err) {
+    console.error(err);
+    showToast("Failed to update schedule: " + err.message, "error");
   }
+}
 
-  function closeBookingEmailModal() {
-    document.getElementById("booking-email-modal-overlay").classList.remove("is-open");
-  }
+function openBookingEmailModal(bookingId) {
+  const booking = _cache.bookings[bookingId];
+  if (!booking) return;
+  document.getElementById("bookingEmailId").value = booking.id;
+  document.getElementById("bookingEmailMessage").value = "";
+  document.getElementById("booking-email-modal-overlay").classList.add("is-open");
+}
 
-  async function submitBookingUpdateEmail() {
-    const bookingId = document.getElementById("bookingEmailId").value;
-    const message = document.getElementById("bookingEmailMessage").value;
-    try {
-      const response = await fetch(`/api/bookings/${bookingId}/send-update-email`, {
-        method: "POST",
-        headers: adminHeaders(),
-        body: JSON.stringify({ message })
-      });
-      if (!response.ok) throw new Error("Failed to send email");
-      showToast("Update email sent to the client!", "success");
-      closeBookingEmailModal();
-    } catch (err) {
-      console.error(err);
-      showToast("Failed to send email: " + err.message, "error");
-    }
-  }
+function closeBookingEmailModal() {
+  document.getElementById("booking-email-modal-overlay").classList.remove("is-open");
+}
 
-  async function deleteBooking(bookingId) {
-    if (!confirm("Are you sure you want to delete this booking appointment? This action cannot be undone.")) return;
-    try {
-      const response = await fetch(`/api/bookings/${bookingId}`, {
-        method: "DELETE",
-        headers: adminHeaders()
-      });
-      if (!response.ok) throw new Error("Failed to delete booking");
-      showToast("Booking deleted successfully!", "success");
-      fetchAdminBookings();
-    } catch (err) {
-      console.error(err);
-      showToast("Failed to delete booking: " + err.message, "error");
-    }
+async function submitBookingUpdateEmail() {
+  const bookingId = document.getElementById("bookingEmailId").value;
+  const message = document.getElementById("bookingEmailMessage").value;
+  try {
+    const response = await fetch(`/api/bookings/${bookingId}/send-update-email`, {
+      method: "POST",
+      headers: adminHeaders(),
+      body: JSON.stringify({ message })
+    });
+    if (!response.ok) throw new Error("Failed to send email");
+    showToast("Update email sent to the client!", "success");
+    closeBookingEmailModal();
+  } catch (err) {
+    console.error(err);
+    showToast("Failed to send email: " + err.message, "error");
   }
 }
 
@@ -4789,13 +4786,14 @@ function initFooterMove() {
   if (container && bottom) {
     container.appendChild(bottom);
   }
+}
 
-  // =============================================
-  //  Admin – Dashboard Overview Analytics
-  // =============================================
-  let myRevenueChartInstance = null;
+// =============================================
+//  Admin – Dashboard Overview Analytics
+// =============================================
+let myRevenueChartInstance = null;
 
-  function getChartColors() {
+function getChartColors() {
     const isDark = document.documentElement.classList.contains("dark-theme");
     return {
       textColor: isDark ? "#94a3b8" : "#64748b",
