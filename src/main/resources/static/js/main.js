@@ -158,19 +158,34 @@ function injectAuthModal() {
           <h2 id="auth-modal-heading">Welcome Back</h2>
           <p class="subtitle">Enter your details to access your account</p>
 
-          <form id="modal-loginForm" novalidate>
+          <form id="modal-loginForm" novalidate autocomplete="off">
             <div class="form-group">
               <label for="modal-usernameOrEmail">Username or Email *</label>
               <input type="text" id="modal-usernameOrEmail"
-                placeholder="Enter username or email" required autocomplete="username">
+                placeholder="Enter username or email" required autocomplete="off">
             </div>
             <div class="form-group">
               <label for="modal-password">Password *</label>
               <input type="password" id="modal-password"
-                placeholder="••••••••" required autocomplete="current-password">
+                placeholder="••••••••" required autocomplete="new-password">
             </div>
             <div style="text-align: right; margin-top: -0.5rem; margin-bottom: 1rem;">
               <a href="forgot-password.html" style="font-size: 0.85rem; color: var(--primary); text-decoration: none; font-weight: 500;">Forgot password?</a>
+            </div>
+            <!-- Captcha anti-spam: shown after 5 failed login attempts -->
+            <div id="modal-captcha-section" style="display:none; margin-bottom:1rem; padding:0.85rem; background:linear-gradient(135deg,#fff7ed,#fef3c7); border:1.5px solid #f59e0b; border-radius:12px;">
+              <div style="display:flex; align-items:center; gap:0.4rem; font-size:0.8rem; font-weight:600; color:#92400e; margin-bottom:0.6rem;">
+                <svg xmlns='http://www.w3.org/2000/svg' width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><path d='M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z'></path></svg>
+                Security Verification Required
+              </div>
+              <div style="display:flex; align-items:center; gap:8px; margin-bottom:0.55rem;">
+                <div id="modal-captcha-code" style="flex:1; background:#1e293b; border-radius:8px; padding:0.55rem 0.75rem; text-align:center; font-family:'Courier New',monospace; font-size:1.25rem; font-weight:700; letter-spacing:0.25em; color:#38bdf8; text-shadow:0 0 8px rgba(56,189,248,0.5); user-select:none; border:1px solid rgba(56,189,248,0.2);">------</div>
+                <button type="button" id="modal-captcha-refresh" title="New code" style="background:none; border:1.5px solid #d97706; border-radius:7px; padding:0.45rem; cursor:pointer; color:#d97706; display:flex; align-items:center;">
+                  <svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='23 4 23 10 17 10'></polyline><path d='M20.49 15a9 9 0 1 1-2.12-9.36L23 10'></path></svg>
+                </button>
+              </div>
+              <input type="text" id="modal-captcha-answer" placeholder="Type the code above" autocomplete="off" maxlength="8"
+                style="width:100%; padding:0.55rem 0.85rem; border:1.5px solid #d97706; border-radius:8px; font-size:0.9rem; background:#fff; box-sizing:border-box; outline:none;">
             </div>
             <button type="submit" class="submit-btn" style="margin-top:0.5rem;">Login</button>
             <div id="modal-login-alert" class="alert-message"></div>
@@ -187,26 +202,26 @@ function injectAuthModal() {
           <h2>Create Account</h2>
           <p class="subtitle">Join NovaDigital to experience premium services</p>
 
-          <form id="modal-registerForm" novalidate>
+          <form id="modal-registerForm" novalidate autocomplete="off">
             <div class="form-group">
               <label for="modal-username">Username *</label>
               <input type="text" id="modal-username"
-                placeholder="Choose a username" required minlength="4" maxlength="50" autocomplete="username">
+                placeholder="Choose a username" required minlength="4" maxlength="50" autocomplete="off">
             </div>
             <div class="form-group">
               <label for="modal-fullName">Full Name *</label>
               <input type="text" id="modal-fullName"
-                placeholder="Enter your full name" required autocomplete="name">
+                placeholder="Enter your full name" required autocomplete="off">
             </div>
             <div class="form-group">
               <label for="modal-email">Email Address *</label>
               <input type="email" id="modal-email"
-                placeholder="name@domain.com" required autocomplete="email">
+                placeholder="name@domain.com" required autocomplete="off">
             </div>
             <div class="form-group">
               <label for="modal-phone">Phone Number (10 digits)</label>
               <input type="tel" id="modal-phone"
-                placeholder="0123456789" pattern="[0-9]{10}" autocomplete="tel">
+                placeholder="0123456789" pattern="[0-9]{10}" autocomplete="off">
             </div>
             <div class="form-group">
               <label for="modal-reg-password">Password *</label>
@@ -247,17 +262,32 @@ function injectAuthModal() {
   initModalRegisterForm();
 }
 
+function clearModalLoginForm() {
+  const mForm = document.getElementById("modal-loginForm");
+  if (mForm) mForm.reset();
+  const muInput = document.getElementById("modal-usernameOrEmail");
+  const mpInput = document.getElementById("modal-password");
+  if (muInput) muInput.value = "";
+  if (mpInput) mpInput.value = "";
+}
+
 function openAuthModal(tab = "login") {
   const overlay = document.getElementById("auth-modal-overlay");
   if (!overlay) return;
+  clearModalLoginForm();
   overlay.classList.add("is-open");
   document.body.style.overflow = "hidden";
   switchAuthTab(tab);
+
+  setTimeout(clearModalLoginForm, 50);
+  setTimeout(clearModalLoginForm, 200);
+  setTimeout(clearModalLoginForm, 500);
 }
 
 function closeAuthModal() {
   const overlay = document.getElementById("auth-modal-overlay");
   if (!overlay) return;
+  clearModalLoginForm();
   overlay.classList.remove("is-open");
   document.body.style.overflow = "";
   // Clear all modal alerts on close
@@ -279,6 +309,9 @@ function switchAuthTab(tab) {
     registerTab.classList.remove("active"); registerTab.setAttribute("aria-selected", "false");
     loginPanel.classList.add("active");
     registerPanel.classList.remove("active");
+    clearModalLoginForm();
+    setTimeout(clearModalLoginForm, 50);
+    setTimeout(clearModalLoginForm, 200);
   } else {
     registerTab.classList.add("active"); registerTab.setAttribute("aria-selected", "true");
     loginTab.classList.remove("active"); loginTab.setAttribute("aria-selected", "false");
@@ -314,6 +347,10 @@ function showModalAlert(msg, isSuccess, elementId) {
 function initModalLoginForm() {
   const form = document.getElementById("modal-loginForm");
   if (!form) return;
+
+  clearModalLoginForm();
+  setTimeout(clearModalLoginForm, 50);
+  setTimeout(clearModalLoginForm, 200);
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
