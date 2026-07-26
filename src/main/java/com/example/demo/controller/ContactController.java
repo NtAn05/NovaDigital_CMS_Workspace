@@ -90,6 +90,24 @@ public class ContactController {
         return ResponseEntity.ok(contacts);
     }
 
+    @org.springframework.web.bind.annotation.PatchMapping("/{id}/status")
+    public ResponseEntity<?> updateContactStatus(@PathVariable Long id, @RequestBody java.util.Map<String, String> body) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            String newStatus = body.getOrDefault("status", "DONE").toUpperCase();
+            Contact contact = contactService.getContactById(id);
+            contact.setStatus(newStatus);
+            contactService.updateContact(contact);
+            response.put("success", true);
+            response.put("message", "Contact status updated to " + newStatus);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "Error: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteContact(@PathVariable Long id) {
         Map<String, Object> response = new HashMap<>();

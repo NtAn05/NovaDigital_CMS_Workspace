@@ -1006,6 +1006,7 @@ function initAdminDashboard() {
   fetchAdminProjectsTable();
   fetchAdminServicesTable();
   fetchAdminBookings();
+  fetchAdminDashboardStats(); // Load overview analytics (stats + revenue chart)
 }
 
 // =============================================
@@ -1027,6 +1028,9 @@ function switchAdminPanel(panelName, el) {
   }
   if (panelName === "bookings") {
     fetchAdminBookings();
+  }
+  if (panelName === "overview") {
+    fetchAdminDashboardStats(); // Refresh stats & chart when returning to overview
   }
 }
 
@@ -1984,6 +1988,7 @@ async function fetchAdminContacts() {
         hour: "2-digit", minute: "2-digit",
         day: "2-digit", month: "2-digit", year: "numeric"
       });
+      const isDone = contact.status === "DONE";
 
       row.innerHTML = `
         <td>
@@ -1993,19 +1998,67 @@ async function fetchAdminContacts() {
         <td class="text-dark-inline">${escapeHtml(contact.title)}</td>
         <td style="max-width:400px;white-space:pre-line;">${escapeHtml(contact.content)}</td>
         <td>${date}</td>
-        <td><span class="status-badge ${contact.status === 'DONE' ? 'status-done' : 'status-pending'}">${escapeHtml(contact.status)}</span></td>
+        <td><span class="status-badge ${isDone ? 'status-done' : 'status-pending'}">${escapeHtml(contact.status)}</span></td>
+        <td>
+          <div class="action-btns">
+            ${!isDone ? `<button class="btn-edit btn-toggle-status" title="Mark as Done" onclick="markContactDone(${contact.id}, this)">
+              <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Done
+            </button>` : ''}
+            <button class="btn-delete" title="Delete" onclick="deleteAdminContact(${contact.id}, this)">
+              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg> Delete
+            </button>
+          </div>
+        </td>
       `;
       tableBody.appendChild(row);
     });
   } catch (error) {
     console.error("Error loading admin contacts:", error);
-    tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:#ef4444;">Could not load contacts list. Please reload the page.</td></tr>`;
+    tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:#ef4444;">Could not load contacts list. Please reload the page.</td></tr>`;
   }
 }
 
 // =============================================
 //  In-App Notification Bell
 // =============================================
+
+// Mark a contact submission as DONE (admin side)
+async function markContactDone(contactId, btnEl) {
+  try {
+    const token = getAdminToken();
+    const res = await fetch(`/api/contacts/${contactId}/status`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify({ status: "DONE" })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    showToast("Contact marked as Done.", "success");
+    fetchAdminContacts();
+  } catch (err) {
+    showToast("Failed to update status: " + err.message, "error");
+  }
+}
+
+// Delete a contact submission (admin side)
+async function deleteAdminContact(contactId, btnEl) {
+  if (!confirm("Delete this contact submission? This cannot be undone.")) return;
+  try {
+    const token = getAdminToken();
+    const res = await fetch(`/api/contacts/${contactId}`, {
+      method: "DELETE",
+      headers: { "Authorization": "Bearer " + token }
+    });
+    if (!res.ok) throw new Error(await res.text());
+    showToast("Contact deleted.", "success");
+    fetchAdminContacts();
+  } catch (err) {
+    showToast("Failed to delete contact: " + err.message, "error");
+  }
+}
+
 
 function getAuthToken() {
   return localStorage.getItem("token") || sessionStorage.getItem("token") || "";
