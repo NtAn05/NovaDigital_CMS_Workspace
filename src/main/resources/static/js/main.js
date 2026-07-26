@@ -453,7 +453,9 @@ function initModalLoginForm() {
         showModalAlert("Login successful! Redirecting...", true, "modal-login-alert");
 
         setTimeout(() => {
-          if (data.role === "ROLE_ADMIN") {
+          if (data.role === "ROLE_RESOURCE") {
+            window.location.href = "resource-allocation.html";
+          } else if (data.role === "ROLE_ADMIN") {
             window.location.href = "admin.html";
           } else if (data.role === "Team_Member" || data.role === "ROLE_MEMBER") {
             window.location.href = "member-contact.html";
@@ -540,6 +542,14 @@ function checkRouteGuard() {
 
   const role  = localStorage.getItem("role")  || sessionStorage.getItem("role");
 
+
+  // Dedicated Resource Manager only uses the standalone Resource Allocation workspace.
+  if (token && role === "ROLE_RESOURCE") {
+    if (page !== "resource-allocation.html") {
+      window.location.href = "resource-allocation.html";
+      return;
+    }
+  }
 
   // Admin MUST stay in admin.html or user-profile.html
   if (token && role === "ROLE_ADMIN") {
@@ -857,7 +867,10 @@ function initLoginForm() {
         showAlert("Login successful! Redirecting...", true);
 
         setTimeout(() => {
-          if (data.role === "ROLE_ADMIN") {
+          if (data.role === "ROLE_RESOURCE") {
+            // Dedicated Resource Manager — goes to the Resource Allocation workspace
+            window.location.href = "resource-allocation.html";
+          } else if (data.role === "ROLE_ADMIN") {
             window.location.href = "admin.html";
           } else if (data.role === "ROLE_MEMBER") {
             // Internal team member — goes to PM Dashboard
@@ -1006,6 +1019,7 @@ function initAdminDashboard() {
   fetchAdminProjectsTable();
   fetchAdminServicesTable();
   fetchAdminBookings();
+  fetchAdminDashboardStats();
 }
 
 // =============================================

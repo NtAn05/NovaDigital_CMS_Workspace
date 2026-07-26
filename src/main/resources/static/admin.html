@@ -220,6 +220,9 @@
       gap: 1.1rem;
       box-shadow: 0 1px 4px rgba(0,0,0,0.04);
       transition: var(--transition);
+      /* Override global style.css animation default (opacity:0) */
+      opacity: 1;
+      transform: none;
     }
 
     .stat-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
@@ -802,6 +805,36 @@
               <p>Active Projects</p>
             </div>
           </div>
+          <!-- NEW: Services stat card -->
+          <div class="stat-card">
+            <div class="stat-icon" style="background:#fdf4ff;color:#a855f7;">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M20.49 12H22M19.07 19.07l-1.41-1.41M12 20.49V22M4.93 19.07l1.41-1.41M2 12h1.51M4.93 4.93l1.41 1.41M12 2v1.51"/></svg>
+            </div>
+            <div class="stat-data">
+              <h3 id="stat-services-count">—</h3>
+              <p>Services</p>
+            </div>
+          </div>
+          <!-- NEW: Paid Transactions stat card -->
+          <div class="stat-card">
+            <div class="stat-icon" style="background:#ecfdf5;color:#059669;">
+              <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            </div>
+            <div class="stat-data">
+              <h3 id="stat-transactions-count">—</h3>
+              <p>Paid Transactions</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- NEW: Revenue Chart -->
+        <div class="table-container" style="padding: 1.5rem; margin-bottom: 1.5rem;">
+          <div class="table-toolbar" style="border-bottom: 1px solid var(--border-color); margin-bottom: 1.25rem; padding-bottom: 1rem;">
+            <h2>Monthly Revenue (Last 6 Months)</h2>
+          </div>
+          <div style="position: relative; height: 280px;">
+            <canvas id="revenueChart"></canvas>
+          </div>
         </div>
 
         <div class="table-container">
@@ -816,10 +849,11 @@
                 <th>Message Body</th>
                 <th>Submitted Date</th>
                 <th>Status</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody id="contacts-table-body">
-              <tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);">Loading...</td></tr>
+              <tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);">Loading...</td></tr>
             </tbody>
           </table>
         </div>
