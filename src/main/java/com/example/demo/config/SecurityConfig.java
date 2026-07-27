@@ -175,6 +175,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/service-addons").hasAnyRole("ADMIN", "MEMBER")
                         .requestMatchers(HttpMethod.PUT, "/api/service-addons/**").hasAnyRole("ADMIN", "MEMBER")
                         .requestMatchers(HttpMethod.DELETE, "/api/service-addons/**").hasAnyRole("ADMIN", "MEMBER")
+                        .requestMatchers("/api/quotations/public/**").permitAll()
+
                         .anyRequest().authenticated());
 
         http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);

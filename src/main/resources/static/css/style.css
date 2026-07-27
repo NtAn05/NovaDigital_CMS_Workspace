@@ -4280,6 +4280,11 @@ html.dark-theme .status-completed {
   color: #4a5568;
   border-color: #cbd5e0;
 }
+.status-select.status-pricing {
+  background-color: #eef2ff;
+  color: #4f46e5;
+  border-color: #c7d2fe;
+}
 
 html.dark-theme .status-select.status-pending {
   background: rgba(245, 158, 11, 0.15) !important;
@@ -4300,6 +4305,11 @@ html.dark-theme .status-select.status-completed {
   background: rgba(100, 116, 139, 0.15) !important;
   color: #cbd5e1 !important;
   border-color: rgba(100, 116, 139, 0.25) !important;
+}
+html.dark-theme .status-select.status-pricing {
+  background: rgba(79, 70, 229, 0.15) !important;
+  color: #818cf8 !important;
+  border-color: rgba(79, 70, 229, 0.25) !important;
 }
 
 /* Toast Notification System */
@@ -5843,4 +5853,3 @@ html.dark-theme .notification-item:hover {
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
-
