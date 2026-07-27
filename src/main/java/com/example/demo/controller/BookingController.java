@@ -15,6 +15,7 @@ import com.example.demo.repository.NotificationRepository;
 import com.example.demo.repository.ServiceRepository;
 import com.example.demo.service.BookingService;
 import com.example.demo.service.CaptchaService;
+import com.example.demo.service.EmailService;
 import com.example.demo.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -52,6 +53,9 @@ public class BookingController {
 
     @Autowired
     private CaptchaService captchaService;
+
+    @Autowired
+    private EmailService emailService;
 
     // ── Anti-spam: generate new captcha characters ──
     @GetMapping("/captcha")
@@ -252,7 +256,31 @@ public class BookingController {
                         a.setTotalPrice(newBasePrice + addonsPrice);
                     }
 
+                    // Admin can reschedule the appointment date/time manually from the
+                    // Bookings panel. If it actually changes, notify the client.
+                    boolean dateChanged = false;
+                    if (body.containsKey("appointmentDate") && body.get("appointmentDate") != null
+                            && !body.get("appointmentDate").toString().isBlank()) {
+                        LocalDate newDate = LocalDate.parse(body.get("appointmentDate").toString());
+                        if (!newDate.equals(a.getAppointmentDate())) {
+                            a.setAppointmentDate(newDate);
+                            dateChanged = true;
+                        }
+                    }
+                    if (body.containsKey("timeSlot") && body.get("timeSlot") != null
+                            && !body.get("timeSlot").toString().isBlank()) {
+                        LocalTime newTime = LocalTime.parse(body.get("timeSlot").toString());
+                        if (!newTime.equals(a.getTimeSlot())) {
+                            a.setTimeSlot(newTime);
+                            dateChanged = true;
+                        }
+                    }
+
                     ConsultationAppointment saved = appointmentRepository.save(a);
+
+                    if (dateChanged) {
+                        notifyClientBookingRescheduled(saved);
+                    }
 
                     // Just transitioned to CONFIRMED (not confirmed before) and expert assigned
                     // -> notify assigned member with actual customer name
@@ -312,6 +340,68 @@ public class BookingController {
                     error.put("message", "Appointment not found with id = " + id);
                     return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
                 });
+    }
+
+    // Admin sends a free-text update email to the client about this booking
+    // (e.g. the consultation date may need to change, or another issue came up).
+    @PostMapping("/{id}/send-update-email")
+    public ResponseEntity<?> sendBookingUpdateEmail(@PathVariable Long id, @RequestBody Map<String, Object> body) {
+        return appointmentRepository.findById(id)
+                .<ResponseEntity<?>>map(a -> {
+                    User client = userRepository.findById(a.getClientId()).orElse(null);
+                    if (client == null || client.getEmail() == null || client.getEmail().isBlank()) {
+                        Map<String, Object> error = new HashMap<>();
+                        error.put("message", "This client has no email on file");
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+                    }
+
+                    String adminMessage = body.get("message") != null ? body.get("message").toString() : "";
+                    String serviceTitle = serviceRepository.findById(a.getServiceId())
+                            .map(Service::getTitle)
+                            .orElse("Service #" + a.getServiceId());
+
+                    emailService.sendBookingUpdateEmail(
+                            client.getEmail(),
+                            client.getFullName(),
+                            serviceTitle,
+                            a.getAppointmentDate().toString(),
+                            a.getTimeSlot().toString().substring(0, 5),
+                            adminMessage
+                    );
+
+                    Map<String, Object> res = new HashMap<>();
+                    res.put("success", true);
+                    res.put("message", "Email sent to " + client.getEmail());
+                    return ResponseEntity.ok(res);
+                })
+                .orElseGet(() -> {
+                    Map<String, Object> error = new HashMap<>();
+                    error.put("message", "Appointment not found with id = " + id);
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+                });
+    }
+
+    /**
+     * Create in-app notification for client when the admin manually reschedules
+     * their consultation date/time.
+     */
+    private void notifyClientBookingRescheduled(ConsultationAppointment appointment) {
+        Long clientUserId = appointment.getClientId();
+        if (clientUserId == null) return;
+
+        String serviceTitle = serviceRepository.findById(appointment.getServiceId())
+                .map(Service::getTitle)
+                .orElse("service #" + appointment.getServiceId());
+
+        Notification noti = new Notification();
+        noti.setUserId(clientUserId);
+        noti.setTitle("Your consultation date has been updated");
+        noti.setMessage(String.format(
+                "Your consultation \"%s\" has been rescheduled to %s at %s. Please check your booking for details.",
+                serviceTitle, appointment.getAppointmentDate(),
+                appointment.getTimeSlot().toString().substring(0, 5)
+        ));
+        notificationRepository.save(noti);
     }
 
     /**

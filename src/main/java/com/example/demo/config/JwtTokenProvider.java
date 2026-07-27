@@ -29,11 +29,18 @@ public class JwtTokenProvider {
 
     public String generateToken(Authentication authentication) {
         UserDetails userPrincipal = (UserDetails) authentication.getPrincipal();
+        return generateTokenFromUsername(userPrincipal.getUsername());
+    }
+
+    // Used for flows that don't have a Spring Security Authentication in context
+    // (e.g. the public "accept quotation" email link), so we can still sign the
+    // client straight into their account after they approve a deal.
+    public String generateTokenFromUsername(String username) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
 
         return Jwts.builder()
-                .setSubject(userPrincipal.getUsername())
+                .setSubject(username)
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(jwtSecretKey, SignatureAlgorithm.HS256)

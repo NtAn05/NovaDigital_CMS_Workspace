@@ -6,6 +6,7 @@ package com.example.demo.entity.enums;
 public enum AppointmentStatus {
     PENDING,
     CONFIRMED,
+    PRICING,
     CANCELLED,
     COMPLETED
 }
