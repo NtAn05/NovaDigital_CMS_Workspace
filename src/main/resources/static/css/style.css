@@ -4379,9 +4379,9 @@ html.dark-theme .toast-message {
    CHATBOT WIDGET STYLING
    ============================================= */
 #chatbot-fab {
-  position: relative;
-  bottom: auto;
-  right: auto;
+  position: fixed;   /* was: relative */
+  bottom: 2rem;      /* was: auto */
+  right: 2rem;       /* was: auto */
   width: 48px;
   height: 48px;
   background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%);

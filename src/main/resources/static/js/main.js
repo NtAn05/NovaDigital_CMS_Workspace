@@ -4902,3 +4902,101 @@ function initQuotationSSE() {
 if (document.getElementById("panel-bookings")) {
   initQuotationSSE();
 }
+
+// =============================================
+//  AI Chatbot Widget (Nova AI, powered by Groq)
+// =============================================
+let _chatbotInitialized = false;
+let _chatbotConfig = null;
+let _chatbotHistory = [];
+
+function initChatbot() {
+  if (_chatbotInitialized) return;
+  _chatbotInitialized = true;
+
+  const fab = document.getElementById("chatbot-fab");
+  const win = document.getElementById("chatbot-window");
+  const closeBtn = document.getElementById("chatbot-close");
+  const sendBtn = document.getElementById("chatbot-send");
+  const input = document.getElementById("chatbot-input");
+  const messages = document.getElementById("chatbot-messages");
+
+  if (!fab || !win) return;
+
+  fab.addEventListener("click", () => {
+    win.classList.toggle("active");
+    if (win.classList.contains("active") && !messages.dataset.greeted) {
+      messages.dataset.greeted = "1";
+      appendChatMessage("bot", "Hi! I'm Nova AI. Ask me anything about our services, pricing, or booking a consultation.");
+    }
+  });
+
+  closeBtn?.addEventListener("click", () => win.classList.remove("active"));
+
+  const send = () => sendChatMessage(input, messages);
+  sendBtn?.addEventListener("click", send);
+  input?.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      send();
+    }
+  });
+}
+
+function appendChatMessage(role, text) {
+  const messages = document.getElementById("chatbot-messages");
+  if (!messages) return;
+  const bubble = document.createElement("div");
+  bubble.className = `chatbot-msg chatbot-msg-${role === "user" ? "user" : "bot"}`;
+  bubble.textContent = text;
+  messages.appendChild(bubble);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+async function sendChatMessage(input, messages) {
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = "";
+  appendChatMessage("user", text);
+  _chatbotHistory.push({ role: "user", content: text });
+
+  const typing = document.createElement("div");
+  typing.className = "chatbot-typing";
+  typing.innerHTML = "<span></span><span></span><span></span>";
+  messages.appendChild(typing);
+  messages.scrollTop = messages.scrollHeight;
+
+  try {
+    if (!_chatbotConfig) {
+      const cfgRes = await fetch("/api/chatbot/config");
+      if (!cfgRes.ok) throw new Error("Chatbot is not configured");
+      _chatbotConfig = await cfgRes.json();
+    }
+
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${_chatbotConfig.apiKey}`
+      },
+      body: JSON.stringify({
+        model: _chatbotConfig.model,
+        messages: [
+          { role: "system", content: "You are Nova AI, a helpful assistant for NovaDigital, a software services agency. Be concise and friendly. And don't talk to any topic outside of the website" },
+          ..._chatbotHistory
+        ]
+      })
+    });
+
+    if (!res.ok) throw new Error("Chatbot request failed");
+    const data = await res.json();
+    const reply = data?.choices?.[0]?.message?.content || "Sorry, I couldn't come up with a response.";
+    typing.remove();
+    appendChatMessage("bot", reply);
+    _chatbotHistory.push({ role: "assistant", content: reply });
+  } catch (err) {
+    console.error("Chatbot error:", err);
+    typing.remove();
+    appendChatMessage("bot", "Sorry, something went wrong. Please try again in a moment.");
+  }
+}
