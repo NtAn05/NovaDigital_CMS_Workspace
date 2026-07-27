@@ -2207,74 +2207,14 @@ async function fetchAdminBookings() {
         expertOptions += `<option value="${u.id}" ${selected}>${escapeHtml(u.fullName)}</option>`;
       });
 
-      // Status options
-      const statuses = ["PENDING", "CONFIRMED", "PRICING", "CANCELLED", "COMPLETED"];
-      const statusLabels = { PENDING: "Pending", CONFIRMED: "Confirmed", PRICING: "Pricing", CANCELLED: "Cancelled", COMPLETED: "Completed" };
-      let statusOptions = "";
-      statuses.forEach(s => {
-        const selected = (b.status === s) ? "selected" : "";
-        statusOptions += `<option value="${s}" ${selected}>${statusLabels[s]}</option>`;
-      });
-
-      // Add-ons khách đã chọn lúc đặt (đọc từ b.addonIds, tra tên+giá qua _cache.addons)
-      // Hiển thị dạng badge nhỏ dưới ô Price, không thêm cột mới nên không làm bảng rộng ra
-      const addonsForBooking = (b.addonIds || [])
-        .map(id => _cache.addons[id])
-        .filter(Boolean);
-      const addonBadgesHtml = addonsForBooking.length
-        ? `<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:5px;max-width:190px;">
-            ${addonsForBooking.map(a => `<span title="+$${Number(a.priceModifier).toFixed(2)}" style="font-size:0.68rem;font-weight:600;padding:2px 6px;border-radius:10px;background:rgba(37,99,235,0.1);color:#2563eb;white-space:nowrap;">${escapeHtml(a.addonName)}</span>`).join("")}
-          </div>`
-        : `<div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px;">No add-ons</div>`;
-
-      // Hiển thị giá tĩnh (giá service cố định + add-ons khách chọn), không chỉnh sửa nữa
-      const addonsPriceNum  = Number(b.addonsPrice || 0);
-      const servicePriceNum = Number(b.totalPrice   || 0) - addonsPriceNum;
-      const totalPriceHtml  = b.totalPrice != null
-        ? `<div style="font-size:1rem;font-weight:700;color:var(--text-dark);">$${Number(b.totalPrice).toFixed(2)}</div>
-           ${addonsPriceNum > 0
-             ? `<div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px;">$${servicePriceNum.toFixed(2)} service + $${addonsPriceNum.toFixed(2)} add-ons</div>`
-             : `<div style="font-size:0.72rem;color:var(--text-muted);margin-top:2px;">Service price only</div>`}`
-        : `<span style="color:var(--text-muted);font-size:0.82rem;font-style:italic;">Pending</span>`;
-
-      // Display files beautifully
-      let attachmentHtml = "—";
-      if (b.attachmentUrl) {
-        const fileName = b.attachmentUrl.split("/").pop();
-        attachmentHtml = `<a href="${escapeHtml(b.attachmentUrl)}" target="_blank" class="attachment-link" style="display:inline-flex;align-items:center;gap:4px;color:#2563eb;font-size:0.85rem;"><svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>${escapeHtml(fileName)}</a>`;
-      }
-
-      // Once COMPLETED, admin can no longer touch this booking in any way
-      const isLocked = b.status === "COMPLETED";
-      // The date/time can only be edited manually while the booking is CONFIRMED
-      const isEditableSchedule = b.status === "CONFIRMED";
-
-      const scheduleHtml = isEditableSchedule
-        ? `<input type="date" id="bkDate-${b.id}" value="${escapeHtml(b.appointmentDate)}" class="admin-select" style="padding:0.3rem;font-size:0.8rem;margin-bottom:4px;width:100%;max-width:150px;">
-           <input type="time" id="bkTime-${b.id}" value="${escapeHtml(b.timeSlot.substring(0, 5))}" class="admin-select" style="padding:0.3rem;font-size:0.8rem;width:100%;max-width:150px;margin-bottom:4px;">
-           <button class="btn-add" onclick="saveBookingSchedule(${b.id})" style="padding:0.25rem 0.5rem;font-size:0.75rem;border-radius:6px;cursor:pointer;">Save Date</button>`
-        : `<div class="text-dark-inline">${escapeHtml(b.appointmentDate)}</div>
-           <div style="font-size:0.85rem;color:var(--text-muted);">${escapeHtml(b.timeSlot.substring(0, 5))}</div>`;
-
-      let actionButtons = "";
-      if (b.status === "PRICING") {
-        actionButtons += `<button class="btn-add" onclick="openQuoteModal(${b.id})" style="padding:0.35rem 0.6rem;font-size:0.8rem;gap:4px;border-radius:6px;cursor:pointer;">
-            <svg viewBox="0 0 24 24" style="width:12px;height:12px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Create Quote
-          </button>`;
-      }
-      if (b.status === "CONFIRMED") {
-        actionButtons += `<button class="btn-add" onclick="openBookingEmailModal(${b.id})" style="padding:0.35rem 0.6rem;font-size:0.8rem;gap:4px;border-radius:6px;cursor:pointer;background-color:#4f46e5;">
-            <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M4 4h16v16H4z" opacity="0"/><path d="M22 6l-10 7L2 6"/><rect x="2" y="4" width="20" height="16" rx="2"/></svg> Send Update Email
-          </button>`;
-      }
-      if (!isLocked) {
-        actionButtons += `<button class="btn-delete" onclick="deleteBooking(${b.id})" style="padding:0.35rem 0.6rem;font-size:0.8rem;gap:4px;border-radius:6px;background-color:#ef4444;color:#fff;border:none;cursor:pointer;">
-            <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>Delete
-          </button>`;
-      }
-      if (isLocked) {
-        actionButtons = `<span style="font-size:0.8rem;color:var(--text-muted);font-style:italic;">Completed — no further action</span>`;
-      }
+        // Status options
+        const statuses = ["PENDING", "CONFIRMED", "PRICING", "CANCELLED", "COMPLETED"];
+        const statusLabels = { PENDING: "Pending", CONFIRMED: "Confirmed", PRICING: "Pricing", CANCELLED: "Cancelled", COMPLETED: "Completed" };
+        let statusOptions = "";
+        statuses.forEach(s => {
+          const selected = (b.status === s) ? "selected" : "";
+          statusOptions += `<option value="${s}" ${selected}>${s}</option>`;
+        });
 
       tr.innerHTML = `
         <td>
@@ -2283,15 +2223,7 @@ async function fetchAdminBookings() {
         </td>
         <td class="text-dark-inline">${escapeHtml(service.title)}</td>
         <td>
-          ${scheduleHtml}
-        </td>
-        <td>
-          ${totalPriceHtml}
-          ${addonBadgesHtml}
-        </td>
-        <td style="max-width:250px;">
-          <div style="font-size:0.85rem;white-space:pre-wrap;margin-bottom:4px;">${escapeHtml(b.messageContent || "")}</div>
-          <div>${attachmentHtml}</div>
+            ${scheduleHtml}
         </td>
         <td>
           <select class="admin-select" onchange="updateBookingExpert(${b.id}, this.value)" ${isLocked ? "disabled" : ""} style="padding:0.35rem;border-radius:6px;border:1px solid var(--border-color);font-size:0.85rem;width:100%;max-width:160px;background:var(--bg-card);color:var(--text-dark);">
@@ -2312,55 +2244,190 @@ async function fetchAdminBookings() {
       tbody.appendChild(tr);
     });
 
-  } catch (err) {
-    console.error("fetchAdminBookings error:", err);
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:2rem;color:#ef4444;">Could not load bookings.</td></tr>`;
+    } catch (err) {
+      console.error("fetchAdminBookings error:", err);
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:#ef4444;">Could not load bookings.</td></tr>`;
+    }
   }
-}
 
-async function updateBookingExpert(bookingId, expertId) {
-  try {
-    const response = await fetch(`/api/bookings/${bookingId}`, {
-      method: "PUT",
-      headers: adminHeaders(),
-      body: JSON.stringify({ expertId: expertId ? Number(expertId) : null })
-    });
-    if (!response.ok) throw new Error("Failed to update expert");
-    showToast("Expert assigned successfully!", "success");
-    fetchAdminBookings();
-  } catch (err) {
-    console.error(err);
-    showToast("Failed to assign expert: " + err.message, "error");
-  }
-}
+  // =============================================
+  //  Admin – Consultation Booking Detail Modal
+  // =============================================
 
-// Admin tự set giá cho từng booking theo mức độ dự án (to/nhỏ) và số add-on đã thoả thuận với khách,
-// không còn tự động tính từ Service_Addon khách tick chọn nữa (khách giờ không thấy/không chọn giá lúc đặt).
-async function updateBookingPrice(bookingId) {
-  const input = document.getElementById(`price-input-${bookingId}`);
-  const value = input.value.trim();
-  if (value === "" || isNaN(Number(value)) || Number(value) < 0) {
-    showToast("Please enter a valid project price.", "error");
-    return;
-  }
-  try {
-    // Gửi "projectPrice" (giá dự án chưa gồm add-on) - backend tự cộng lại giá add-on
-    // khách đã chọn từ trước, tránh mất giá add-on mỗi lần admin chỉnh giá dự án.
-    const response = await fetch(`/api/bookings/${bookingId}`, {
-      method: "PUT",
-      headers: adminHeaders(),
-      body: JSON.stringify({ projectPrice: Number(value) })
-    });
-    if (!response.ok) throw new Error("Failed to update price");
-    showToast("Price updated successfully!", "success");
-    fetchAdminBookings();
-  } catch (err) {
-    console.error(err);
-    showToast("Failed to update price: " + err.message, "error");
-  }
-}
+  async function openBookingDetailModal(bookingId) {
+    const modal = document.getElementById("booking-detail-modal-overlay");
+    const container = document.getElementById("bd-modal-body");
+    const idLabel = document.getElementById("bd-booking-id");
+    if (!modal || !container) return;
 
-async function saveBookingSchedule(bookingId) {
+    let b = _cache.bookings[bookingId];
+    if (!b) {
+      try {
+        const res = await fetch(`/api/bookings/${bookingId}`, { headers: adminHeaders() });
+        if (res.ok) {
+          b = await res.json();
+          _cache.bookings[bookingId] = b;
+        }
+      } catch (e) {
+        console.error("Fetch single booking error:", e);
+      }
+    }
+
+    if (!b) {
+      showToast("Booking information not found.", "error");
+      return;
+    }
+
+    if (idLabel) idLabel.textContent = `Booking #${b.id}`;
+
+    const client = _cache.users[b.clientId] || { fullName: `User #${b.clientId}`, email: "—", phone: "—" };
+    const service = _cache.services[b.serviceId] || { title: `Service #${b.serviceId}` };
+    const expert = b.expertId ? (_cache.users[b.expertId] || { fullName: `Expert #${b.expertId}`, email: "" }) : null;
+
+    let attachmentHtml = "<span style='color:var(--text-muted); font-size:0.85rem;'>None</span>";
+    if (b.attachmentUrl) {
+      const fileName = b.attachmentUrl.split("/").pop();
+      attachmentHtml = `<a href="${escapeHtml(b.attachmentUrl)}" target="_blank" class="attachment-link" style="display:inline-flex;align-items:center;gap:4px;color:#2563eb;font-weight:600;font-size:0.85rem;text-decoration:none;"><svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>${escapeHtml(fileName)}</a>`;
+    }
+
+    container.innerHTML = `
+      <!-- Service & Pricing Summary -->
+      <div style="padding: 1.15rem 1.25rem; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-white);">
+        <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 700; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem;">
+          <svg viewBox="0 0 24 24" style="width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+          Service & Pricing Summary
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; padding-bottom: 0.65rem; border-bottom: 1px dashed var(--border-color);">
+          <span style="font-size: 0.95rem; font-weight: 700;" class="text-dark-inline">${escapeHtml(service.title)}</span>
+          <span style="font-size: 0.83rem; color: var(--text-muted); font-weight: 600;">Client: ${escapeHtml(client.fullName)}</span>
+        </div>
+
+        <!-- Editable Base Price -->
+        <div style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-light, #f8fafc); padding: 0.65rem 0.85rem; border-radius: 8px; margin-bottom: 0.65rem; border: 1px solid var(--border-color);">
+          <span style="font-size: 0.85rem; font-weight: 600; color: var(--text-dark);">Service Base Price ($):</span>
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <input type="number" id="bd-price-input-${b.id}" value="${Number(b.basePrice || 0)}" min="0" step="0.01" style="width: 95px; padding: 0.35rem 0.55rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; background: var(--bg-card); color: var(--text-dark);">
+            <button type="button" onclick="updateBookingPriceFromModal(${b.id})" style="padding: 0.35rem 0.7rem; font-size: 0.78rem; font-weight: 600; border-radius: 6px; background: #2563eb; color: #fff; border: none; cursor: pointer;">Save</button>
+          </div>
+        </div>
+
+        <div id="bd-addons-section-${b.id}" style="font-size: 0.83rem; color: var(--text-muted); margin-bottom: 0.65rem;">
+          Loading add-ons...
+        </div>
+
+        <div style="border-top: 1px solid var(--border-color); padding-top: 0.65rem; margin-top: 0.5rem; display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-weight: 800; font-size: 0.95rem;" class="text-dark-inline">Total Amount</span>
+          <span style="font-weight: 800; font-size: 1.2rem; color: #2563eb;" id="bd-total-price-val-${b.id}">$${Number(b.totalPrice || 0).toFixed(2)}</span>
+        </div>
+      </div>
+
+      <!-- Client Request & Attachment -->
+      <div style="padding: 1.15rem 1.25rem; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-white);">
+        <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 700; margin-bottom: 0.65rem; display: flex; align-items: center; gap: 0.4rem;">
+          <svg viewBox="0 0 24 24" style="width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          Client Request & Message
+        </div>
+        <div style="font-size: 0.88rem; line-height: 1.5; color: var(--text-dark); white-space: pre-wrap; background: var(--bg-light, #f8fafc); padding: 0.8rem 1rem; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 0.75rem;">${escapeHtml(b.messageContent || "No specific request/message provided.")}</div>
+        
+        <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem;">
+          <span style="font-weight: 600; color: var(--text-muted);">Attachment:</span>
+          ${attachmentHtml}
+        </div>
+      </div>
+    `;
+
+    modal.onclick = (e) => {
+      if (e.target === modal) closeBookingDetailModal();
+    };
+
+    modal.classList.add("is-open");
+    document.body.style.overflow = "hidden";
+
+    // Load add-ons detail async
+    try {
+      const res = await fetch(`/api/bookings/pricing?serviceId=${b.serviceId}`);
+      if (res.ok) {
+        const data = await res.json();
+        const addonsSection = document.getElementById(`bd-addons-section-${b.id}`);
+        if (addonsSection) {
+          const selectedAddons = (data.addons || []).filter(a => b.addonIds && b.addonIds.includes(a.id));
+          if (selectedAddons.length > 0) {
+            let addonsListHtml = `<div style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.3rem;">Selected Add-ons:</div><ul style="margin: 0; padding-left: 1.2rem; font-size: 0.83rem; color: var(--text-dark);">`;
+            selectedAddons.forEach(a => {
+              addonsListHtml += `<li><strong>${escapeHtml(a.addonName)}</strong> (+$${Number(a.priceModifier).toFixed(2)})</li>`;
+            });
+            addonsListHtml += `</ul>`;
+            addonsSection.innerHTML = addonsListHtml;
+          } else {
+            addonsSection.innerHTML = `<span style="font-size:0.83rem; color:var(--text-muted);">Selected Add-ons: None</span>`;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("Could not load pricing addons:", e);
+    }
+  }
+
+  function closeBookingDetailModal() {
+    const modal = document.getElementById("booking-detail-modal-overlay");
+    if (modal) modal.classList.remove("is-open");
+    document.body.style.overflow = "";
+  }
+
+  async function updateBookingPriceFromModal(bookingId) {
+    const input = document.getElementById(`bd-price-input-${bookingId}`);
+    if (!input) return;
+    const newPrice = parseFloat(input.value);
+    if (isNaN(newPrice) || newPrice < 0) {
+      showToast("Please enter a valid price.", "error");
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/bookings/${bookingId}`, {
+        method: "PUT",
+        headers: adminHeaders(),
+        body: JSON.stringify({ basePrice: newPrice })
+      });
+      if (response.ok) {
+        const updated = await response.json();
+        _cache.bookings[bookingId] = updated;
+        const totalValEl = document.getElementById(`bd-total-price-val-${bookingId}`);
+        if (totalValEl) totalValEl.textContent = `$${Number(updated.totalPrice || 0).toFixed(2)}`;
+        showToast("Booking price updated successfully!", "success");
+        fetchAdminBookings();
+      } else {
+        const errData = await response.json().catch(() => ({}));
+        showToast(errData.message || "Failed to update price.", "error");
+      }
+    } catch (err) {
+      console.error("updateBookingPriceFromModal error:", err);
+      showToast("Could not connect to server.", "error");
+    }
+  }
+
+  window.openBookingDetailModal = openBookingDetailModal;
+  window.closeBookingDetailModal = closeBookingDetailModal;
+  window.updateBookingPriceFromModal = updateBookingPriceFromModal;
+
+  async function updateBookingExpert(bookingId, expertId) {
+    try {
+      const response = await fetch(`/api/bookings/${bookingId}`, {
+        method: "PUT",
+        headers: adminHeaders(),
+        body: JSON.stringify({ expertId: expertId ? Number(expertId) : null })
+      });
+      if (!response.ok) throw new Error("Failed to update expert");
+      showToast("Expert assigned successfully!", "success");
+      fetchAdminBookings();
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to assign expert: " + err.message, "error");
+    }
+  }
+
+  async function saveBookingSchedule(bookingId) {
   const dateInput = document.getElementById(`bkDate-${bookingId}`);
   const timeInput = document.getElementById(`bkTime-${bookingId}`);
   if (!dateInput || !timeInput || !dateInput.value || !timeInput.value) {
@@ -4754,7 +4821,230 @@ function initFooterMove() {
   const bottom = document.querySelector(".footer-bottom");
   if (container && bottom) {
     container.appendChild(bottom);
+   }
   }
+
+  // =============================================
+  //  Admin – Dashboard Overview Analytics
+  // =============================================
+  let myRevenueChartInstance = null;
+
+  function getChartColors() {
+    const isDark = document.documentElement.classList.contains("dark-theme");
+    return {
+      textColor: isDark ? "#94a3b8" : "#64748b",
+      gridColor: isDark ? "#272e48" : "#e2e8f0",
+      tooltipBg: isDark ? "#161b2b" : "#ffffff",
+      tooltipBorder: isDark ? "#272e48" : "#e2e8f0",
+      gradientStart: isDark ? "rgba(99, 102, 241, 0.4)" : "rgba(37, 99, 235, 0.35)",
+      gradientEnd: isDark ? "rgba(99, 102, 241, 0.0)" : "rgba(37, 99, 235, 0.0)",
+      borderColor: isDark ? "#6366f1" : "#2563eb"
+    };
+  }
+
+  function updateChartTheme() {
+    if (myRevenueChartInstance) {
+      const colors = getChartColors();
+      myRevenueChartInstance.options.scales.x.grid.color = colors.gridColor;
+      myRevenueChartInstance.options.scales.x.ticks.color = colors.textColor;
+      myRevenueChartInstance.options.scales.y.grid.color = colors.gridColor;
+      myRevenueChartInstance.options.scales.y.ticks.color = colors.textColor;
+      myRevenueChartInstance.options.plugins.tooltip.backgroundColor = colors.tooltipBg;
+      myRevenueChartInstance.options.plugins.tooltip.borderColor = colors.tooltipBorder;
+      myRevenueChartInstance.options.plugins.tooltip.titleColor = document.documentElement.classList.contains("dark-theme") ? "#f8fafc" : "#0f172a";
+      myRevenueChartInstance.options.plugins.tooltip.bodyColor = document.documentElement.classList.contains("dark-theme") ? "#f8fafc" : "#0f172a";
+
+      const canvas = document.getElementById("revenueChart");
+      if (canvas) {
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+          gradient.addColorStop(0, colors.gradientStart);
+          gradient.addColorStop(1, colors.gradientEnd);
+          myRevenueChartInstance.data.datasets[0].backgroundColor = gradient;
+        }
+      }
+      myRevenueChartInstance.data.datasets[0].borderColor = colors.borderColor;
+      myRevenueChartInstance.data.datasets[0].pointBackgroundColor = colors.borderColor;
+
+      myRevenueChartInstance.update();
+    }
+  }
+
+  async function fetchAdminDashboardStats() {
+    const chartCanvas = document.getElementById("revenueChart");
+    if (!chartCanvas) return;
+
+    try {
+      const token = getAdminToken();
+      const response = await fetch("/api/admin/dashboard-stats", {
+        headers: token ? { "Authorization": "Bearer " + token } : {}
+      });
+      if (!response.ok) throw new Error("Failed to fetch dashboard stats");
+      const data = await response.json();
+
+      // Set counts in cards
+      const cardMessages = document.getElementById("stat-messages-count");
+      const cardUsers = document.getElementById("stat-users-count");
+      const cardMembers = document.getElementById("stat-members-count");
+      const cardProjects = document.getElementById("stat-projects-count");
+      const cardServices = document.getElementById("stat-services-count");
+      const cardTransactions = document.getElementById("stat-transactions-count");
+
+      if (cardMessages) cardMessages.textContent = data.messagesCount ?? "—";
+      if (cardUsers) cardUsers.textContent = data.accountsCount ?? "—";
+      if (cardMembers) cardMembers.textContent = data.membersCount ?? "—";
+      if (cardProjects) cardProjects.textContent = data.projectsCount ?? "—";
+      if (cardServices) cardServices.textContent = data.servicesCount ?? "—";
+      if (cardTransactions) cardTransactions.textContent = data.transactionsCount ?? "—";
+
+      // Render the chart
+      renderRevenueChart(data.revenueData);
+    } catch (err) {
+      console.error("fetchAdminDashboardStats error:", err);
+    }
+  }
+
+  function renderRevenueChart(revenueData) {
+    const canvas = document.getElementById("revenueChart");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const months = Object.keys(revenueData);
+    const amounts = Object.values(revenueData);
+
+    const colors = getChartColors();
+
+    if (myRevenueChartInstance) {
+      myRevenueChartInstance.destroy();
+    }
+
+    // Create gradient
+    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, colors.gradientStart);
+    gradient.addColorStop(1, colors.gradientEnd);
+
+    myRevenueChartInstance = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: months.map(m => {
+          const parts = m.split("-");
+          return parts.length === 2 ? `Month ${parts[1]}/${parts[0]}` : m;
+        }),
+        datasets: [{
+          label: "Revenue (USD)",
+          data: amounts,
+          borderColor: colors.borderColor,
+          borderWidth: 3,
+          backgroundColor: gradient,
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: colors.borderColor,
+          pointBorderColor: "#ffffff",
+          pointBorderWidth: 2,
+          pointRadius: 5,
+          pointHoverRadius: 7
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          },
+          tooltip: {
+            backgroundColor: colors.tooltipBg,
+            titleColor: document.documentElement.classList.contains("dark-theme") ? "#f8fafc" : "#0f172a",
+            bodyColor: document.documentElement.classList.contains("dark-theme") ? "#f8fafc" : "#0f172a",
+            borderColor: colors.tooltipBorder,
+            borderWidth: 1,
+            padding: 12,
+            displayColors: false,
+            callbacks: {
+              label: function (context) {
+                let value = context.raw || 0;
+                return " Revenue: $" + value.toLocaleString();
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: {
+              color: colors.gridColor,
+              drawBorder: false
+            },
+            ticks: {
+              color: colors.textColor,
+              font: {
+                family: "Inter",
+                size: 11,
+                weight: 500
+              }
+            }
+          },
+          y: {
+            grid: {
+              color: colors.gridColor,
+              drawBorder: false
+            },
+            ticks: {
+              color: colors.textColor,
+              font: {
+                family: "Inter",
+                size: 11,
+                weight: 500
+              },
+              callback: function (value) {
+                return "$" + value.toLocaleString();
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+
+
+  window.toggleSidebar = function () {
+    document.body.classList.toggle("sidebar-collapsed");
+    const isCollapsed = document.body.classList.contains("sidebar-collapsed");
+    localStorage.setItem("adminSidebarCollapsed", isCollapsed);
+  }
+
+// =============================================
+//  Admin - Quotation SSE Listener
+// =============================================
+function initQuotationSSE() {
+  const eventSource = new EventSource('/api/sse/stream');
+  
+  eventSource.addEventListener('QUOTE_APPROVED', (e) => {
+    // Play a bell sound (ensure you have a valid audio URL or fallback)
+    try {
+      const audio = new Audio('https://www.soundjay.com/buttons/sounds/bell-ringing-05.mp3');
+      audio.play().catch(err => console.log('Audio play prevented by browser:', err));
+    } catch(e) {}
+    
+    // Show toast notification
+    showToast(e.data, "success");
+    
+    // Refresh table if needed
+    if (document.getElementById("panel-bookings")?.classList.contains("active")) {
+       fetchAdminBookings();
+    }
+  });
+  
+  eventSource.onerror = (err) => {
+    console.log("SSE error for quotations", err);
+  };
+}
+
+// Call on admin page load if needed (can just check if admin panel exists)
+if (document.getElementById("panel-bookings")) {
+  initQuotationSSE();
 }
 
 // =============================================
