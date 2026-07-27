@@ -1,16 +1,22 @@
 // Dynamic Data Loading, Authentication, and UI logic for NovaDigital Creative Agency
 
-// Sync auth from localStorage → sessionStorage for new tabs/windows
+
+// Clear persistent authentication keys if a new browser session starts (empty sessionStorage)
+// Initialize sidebar collapsed state based on localStorage preference
+(function () {
+  const isCollapsed = localStorage.getItem("adminSidebarCollapsed") === "true";
+  if (isCollapsed) {
+    document.body.classList.add("sidebar-collapsed");
+  }
+})();
+
+// Clear persistent authentication keys if a new browser session starts (empty sessionStorage)
 function initSessionClean() {
   const sessionToken = sessionStorage.getItem("token");
-  const localToken   = localStorage.getItem("token") || localStorage.getItem("authToken");
-
-  if (!sessionToken && localToken) {
-    // New tab/window: copy localStorage → sessionStorage so route guards work
+  if (!sessionToken) {
     const authKeys = ["token", "authToken", "username", "fullName", "role", "email", "avatarUrl", "user", "userId"];
     authKeys.forEach(key => {
-      const val = localStorage.getItem(key);
-      if (val) sessionStorage.setItem(key, val);
+      localStorage.removeItem(key);
     });
   }
 }
@@ -82,9 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
   } else if (page === "inbox.html" || page === "index.html") {
     // Fetch inbox if user is logged in
     const token = localStorage.getItem("token") || sessionStorage.getItem("token");
- 
     const email = localStorage.getItem("email") || sessionStorage.getItem("email");
- 
     console.log("Token:", token);
     console.log("Email:", email);
     if (token && email) {
@@ -158,16 +162,16 @@ function injectAuthModal() {
           <h2 id="auth-modal-heading">Welcome Back</h2>
           <p class="subtitle">Enter your details to access your account</p>
 
-          <form id="modal-loginForm" novalidate autocomplete="off">
+          <form id="modal-loginForm" novalidate>
             <div class="form-group">
               <label for="modal-usernameOrEmail">Username or Email *</label>
               <input type="text" id="modal-usernameOrEmail"
-                placeholder="Enter username or email" required autocomplete="off">
+                placeholder="Enter username or email" required autocomplete="username">
             </div>
             <div class="form-group">
               <label for="modal-password">Password *</label>
               <input type="password" id="modal-password"
-                placeholder="••••••••" required autocomplete="new-password">
+                placeholder="••••••••" required autocomplete="current-password">
             </div>
             <div style="text-align: right; margin-top: -0.5rem; margin-bottom: 1rem;">
               <a href="forgot-password.html" style="font-size: 0.85rem; color: var(--primary); text-decoration: none; font-weight: 500;">Forgot password?</a>
@@ -191,6 +195,34 @@ function injectAuthModal() {
             <div id="modal-login-alert" class="alert-message"></div>
           </form>
 
+          <button type="button" id="modalGoogleSignInBtn" style="
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            padding: 0.85rem 1.5rem;
+            background: #fff;
+            border: 1.5px solid #dadce0;
+            border-radius: 50px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #3c4043;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 1rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+          " onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='#fff'">
+            <svg width="20" height="20" viewBox="0 0 48 48">
+              <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+              <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+              <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+              <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+              <path fill="none" d="M0 0h48v48H0z"/>
+            </svg>
+            Continue with Google
+          </button>
+
           <div class="auth-modal-divider">
             Don't have an account?
             <a onclick="switchAuthTab('register')">Register now</a>
@@ -202,26 +234,26 @@ function injectAuthModal() {
           <h2>Create Account</h2>
           <p class="subtitle">Join NovaDigital to experience premium services</p>
 
-          <form id="modal-registerForm" novalidate autocomplete="off">
+          <form id="modal-registerForm" novalidate>
             <div class="form-group">
               <label for="modal-username">Username *</label>
               <input type="text" id="modal-username"
-                placeholder="Choose a username" required minlength="4" maxlength="50" autocomplete="off">
+                placeholder="Choose a username" required minlength="4" maxlength="50" autocomplete="username">
             </div>
             <div class="form-group">
               <label for="modal-fullName">Full Name *</label>
               <input type="text" id="modal-fullName"
-                placeholder="Enter your full name" required autocomplete="off">
+                placeholder="Enter your full name" required autocomplete="name">
             </div>
             <div class="form-group">
               <label for="modal-email">Email Address *</label>
               <input type="email" id="modal-email"
-                placeholder="name@domain.com" required autocomplete="off">
+                placeholder="name@domain.com" required autocomplete="email">
             </div>
             <div class="form-group">
               <label for="modal-phone">Phone Number (10 digits)</label>
               <input type="tel" id="modal-phone"
-                placeholder="0123456789" pattern="[0-9]{10}" autocomplete="off">
+                placeholder="0123456789" pattern="[0-9]{10}" autocomplete="tel">
             </div>
             <div class="form-group">
               <label for="modal-reg-password">Password *</label>
@@ -262,32 +294,33 @@ function injectAuthModal() {
   initModalRegisterForm();
 }
 
-function clearModalLoginForm() {
+function openAuthModal(tab = "login") {
+  const overlay = document.getElementById("auth-modal-overlay");
+  if (!overlay) return;
+  
   const mForm = document.getElementById("modal-loginForm");
   if (mForm) mForm.reset();
   const muInput = document.getElementById("modal-usernameOrEmail");
   const mpInput = document.getElementById("modal-password");
   if (muInput) muInput.value = "";
   if (mpInput) mpInput.value = "";
-}
 
-function openAuthModal(tab = "login") {
-  const overlay = document.getElementById("auth-modal-overlay");
-  if (!overlay) return;
-  clearModalLoginForm();
   overlay.classList.add("is-open");
   document.body.style.overflow = "hidden";
   switchAuthTab(tab);
-
-  setTimeout(clearModalLoginForm, 50);
-  setTimeout(clearModalLoginForm, 200);
-  setTimeout(clearModalLoginForm, 500);
 }
 
 function closeAuthModal() {
   const overlay = document.getElementById("auth-modal-overlay");
   if (!overlay) return;
-  clearModalLoginForm();
+
+  const mForm = document.getElementById("modal-loginForm");
+  if (mForm) mForm.reset();
+  const muInput = document.getElementById("modal-usernameOrEmail");
+  const mpInput = document.getElementById("modal-password");
+  if (muInput) muInput.value = "";
+  if (mpInput) mpInput.value = "";
+
   overlay.classList.remove("is-open");
   document.body.style.overflow = "";
   // Clear all modal alerts on close
@@ -309,9 +342,6 @@ function switchAuthTab(tab) {
     registerTab.classList.remove("active"); registerTab.setAttribute("aria-selected", "false");
     loginPanel.classList.add("active");
     registerPanel.classList.remove("active");
-    clearModalLoginForm();
-    setTimeout(clearModalLoginForm, 50);
-    setTimeout(clearModalLoginForm, 200);
   } else {
     registerTab.classList.add("active"); registerTab.setAttribute("aria-selected", "true");
     loginTab.classList.remove("active"); loginTab.setAttribute("aria-selected", "false");
@@ -348,9 +378,41 @@ function initModalLoginForm() {
   const form = document.getElementById("modal-loginForm");
   if (!form) return;
 
-  clearModalLoginForm();
-  setTimeout(clearModalLoginForm, 50);
-  setTimeout(clearModalLoginForm, 200);
+  // ── Captcha state ──
+  let modalCaptchaToken = null;
+  let modalCaptchaRequired = false;
+
+  const captchaSection = document.getElementById("modal-captcha-section");
+  const captchaCodeEl  = document.getElementById("modal-captcha-code");
+  const captchaInput   = document.getElementById("modal-captcha-answer");
+  const captchaRefresh = document.getElementById("modal-captcha-refresh");
+
+  async function loadModalCaptcha() {
+    if (!captchaCodeEl) return;
+    captchaCodeEl.textContent = "...";
+    if (captchaInput) captchaInput.value = "";
+    try {
+      const res = await fetch("/api/auth/captcha");
+      const data = await res.json();
+      modalCaptchaToken = data.token;
+      captchaCodeEl.textContent = data.code.split("").join(" ");
+    } catch (_) {
+      captchaCodeEl.textContent = "ERROR";
+      modalCaptchaToken = null;
+    }
+  }
+
+  function showModalCaptchaUI() {
+    if (!captchaSection || modalCaptchaRequired) return;
+    modalCaptchaRequired = true;
+    captchaSection.style.display = "block";
+    captchaSection.style.animation = "captchaSlideIn 0.35s ease";
+    loadModalCaptcha();
+  }
+
+  if (captchaRefresh) {
+    captchaRefresh.addEventListener("click", loadModalCaptcha);
+  }
 
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -363,47 +425,59 @@ function initModalLoginForm() {
       return;
     }
 
+    // Validate captcha if required
+    if (modalCaptchaRequired) {
+      if (!captchaInput || !captchaInput.value.trim()) {
+        showModalAlert("Please enter the captcha code.", false, "modal-login-alert");
+        return;
+      }
+      if (!modalCaptchaToken) {
+        showModalAlert("Captcha not loaded. Please refresh and try again.", false, "modal-login-alert");
+        await loadModalCaptcha();
+        return;
+      }
+    }
+
     try {
       showModalAlert("Logging in...", null, "modal-login-alert");
+
+      const body = { usernameOrEmail, password };
+      if (modalCaptchaRequired && modalCaptchaToken) {
+        body.captchaToken = modalCaptchaToken;
+        body.captchaAnswer = captchaInput ? captchaInput.value.trim() : "";
+      }
 
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ usernameOrEmail, password })
+        body: JSON.stringify(body)
       });
 
       const data = await response.json();
 
       if (response.ok && data.token) {
-        // Write to localStorage
-        localStorage.setItem("token",     data.token);
-        localStorage.setItem("authToken", data.token);
-        localStorage.setItem("username",  data.username);
-        localStorage.setItem("fullName",  data.fullName);
-        localStorage.setItem("role",      data.role);
-        localStorage.setItem("email",     data.email);
-        localStorage.setItem("avatarUrl", data.avatarUrl || "");
-        localStorage.setItem("user", JSON.stringify({
-          username:  data.username,
-          fullName:  data.fullName,
-          email:     data.email,
-          role:      data.role,
+        // Write to sessionStorage for route guard and header sync compatibility
+        sessionStorage.setItem("token", data.token);
+        sessionStorage.setItem("authToken", data.token);
+        sessionStorage.setItem("username", data.username);
+        sessionStorage.setItem("fullName", data.fullName);
+        sessionStorage.setItem("role", data.role);
+        sessionStorage.setItem("email", data.email);
+        sessionStorage.setItem("avatarUrl", data.avatarUrl || "");
+        sessionStorage.setItem("user", JSON.stringify({
+          username: data.username,
+          fullName: data.fullName,
+          email: data.email,
+          role: data.role,
           avatarUrl: data.avatarUrl || null
         }));
-
-        // Write to sessionStorage for route guard and header sync compatibility
-        sessionStorage.setItem("token",     data.token);
-        sessionStorage.setItem("authToken", data.token);
-        sessionStorage.setItem("username",  data.username);
-        sessionStorage.setItem("fullName",  data.fullName);
-        sessionStorage.setItem("role",      data.role);
-        sessionStorage.setItem("email",     data.email);
-        sessionStorage.setItem("avatarUrl", data.avatarUrl || "");
 
         showModalAlert("Login successful! Redirecting...", true, "modal-login-alert");
 
         setTimeout(() => {
-          if (data.role === "ROLE_ADMIN") {
+          if (data.role === "ROLE_RESOURCE") {
+            window.location.href = "resource-allocation.html";
+          } else if (data.role === "ROLE_ADMIN") {
             window.location.href = "admin.html";
           } else if (data.role === "Team_Member" || data.role === "ROLE_MEMBER") {
             window.location.href = "member-contact.html";
@@ -418,6 +492,11 @@ function initModalLoginForm() {
           }
         }, 1000);
       } else {
+        // Handle captcha-required from server
+        if (data.captchaRequired) {
+          showModalCaptchaUI();
+          if (modalCaptchaRequired) loadModalCaptcha();
+        }
         showModalAlert(data.message || "Login failed. Please check your credentials.", false, "modal-login-alert");
       }
     } catch (error) {
@@ -487,13 +566,20 @@ function checkRouteGuard() {
   const page = path.substring(path.lastIndexOf('/') + 1) || "index.html";
 
   const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+  const role = localStorage.getItem("role") || sessionStorage.getItem("role");
 
-  const role  = localStorage.getItem("role")  || sessionStorage.getItem("role");
-
+  // Dedicated Resource Manager only uses the standalone Resource Allocation workspace.
+  if (token && role === "ROLE_RESOURCE") {
+    const resourceAllowedPages = ["resource-allocation.html", "hr-recruitment.html", "member-profile.html", "user-profile.html"];
+    if (!resourceAllowedPages.includes(page)) {
+      window.location.href = "resource-allocation.html";
+      return;
+    }
+  }
 
   // Admin MUST stay in admin.html or user-profile.html
   if (token && role === "ROLE_ADMIN") {
-    if (page !== "admin.html" && page !== "user-profile.html") {
+    if (page !== "admin.html" && page !== "user-profile.html" && page !== "admin-messages.html") {
       window.location.href = "admin.html";
       return;
     }
@@ -552,17 +638,13 @@ function updateNavbarAuth() {
   const navLinksContainer = document.querySelector(".nav-links");
   if (!navLinksContainer) return;
 
-
-  const token    = localStorage.getItem("token")    || sessionStorage.getItem("token");
-  const role     = localStorage.getItem("role")     || sessionStorage.getItem("role");
-
-  
-
+  const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+  const role = localStorage.getItem("role") || sessionStorage.getItem("role");
   const fullName = localStorage.getItem("fullName") || sessionStorage.getItem("fullName");
 
-  const isPortalUser = token && (role === "ROLE_ADMIN" || role === "ROLE_MEMBER" || role === "Team_Member");
+  const isPortalUser = token && (role === "ROLE_ADMIN" || role === "ROLE_MEMBER" || role === "Team_Member" || role === "ROLE_RESOURCE");
 
-  // If Admin or Member, hide all standard navigation links (Home, Services, etc.)
+  // If Admin, Member, or Resource Manager (HR), hide all standard navigation links (Home, Services, etc.)
   if (isPortalUser) {
     navLinksContainer.querySelectorAll("li").forEach(li => {
       // Hide standard links. Dynamic auth-items (Dashboard, Logout) will be added back later.
@@ -573,7 +655,9 @@ function updateNavbarAuth() {
     // Also hide the logo link to homepage or change it
     const logo = document.getElementById("header-logo");
     if (logo) {
-      const targetPage = role === "ROLE_ADMIN" ? "admin.html" : "member-contact.html";
+      let targetPage = "member-contact.html";
+      if (role === "ROLE_ADMIN") targetPage = "admin.html";
+      if (role === "ROLE_RESOURCE") targetPage = "resource-allocation.html";
       logo.setAttribute("href", targetPage);
       logo.onclick = (e) => { e.preventDefault(); }; // Disable clicking logo to go anywhere
       logo.style.cursor = "default";
@@ -593,7 +677,7 @@ function updateNavbarAuth() {
   // Remove any previously-injected auth items
   navLinksContainer.querySelectorAll(".auth-item").forEach(item => item.remove());
 
-  // Get the static "Get Started Now" button (if present in HTML)
+  // Get the static "Start Project" button (if present in HTML)
   const defaultBtnEl = navLinksContainer.querySelector("#default-get-started");
   const defaultBtnLi = defaultBtnEl ? defaultBtnEl.closest("li") : null;
 
@@ -604,7 +688,7 @@ function updateNavbarAuth() {
     dropdownLi.className = "auth-item user-dropdown-container";
     dropdownLi.style.position = "relative";
 
-    const username  = localStorage.getItem("username") || sessionStorage.getItem("username");
+    const username = localStorage.getItem("username") || sessionStorage.getItem("username");
     const avatarUrl = localStorage.getItem("avatarUrl") || sessionStorage.getItem("avatarUrl");
 
     function getInitials(name) {
@@ -621,6 +705,17 @@ function updateNavbarAuth() {
         <a href="admin.html" class="dropdown-item">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
           Dashboard
+        </a>
+      `;
+    } else if (role === "ROLE_RESOURCE") {
+      menuItemsHtml = `
+        <a href="resource-allocation.html" class="dropdown-item">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+          Resource Workspace
+        </a>
+        <a href="member-profile.html" class="dropdown-item">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Profile
         </a>
       `;
     } else if (role === "Team_Member" || role === "ROLE_MEMBER") {
@@ -644,6 +739,10 @@ function updateNavbarAuth() {
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
           Inbox
         </a>
+        <a href="my-bookings.html" class="dropdown-item">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          My Bookings
+        </a>
         <a href="transaction.html" class="dropdown-item">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           My Transaction
@@ -657,10 +756,10 @@ function updateNavbarAuth() {
 
     dropdownLi.innerHTML = `
       <div class="user-avatar-trigger" id="user-avatar-trigger" style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;padding:0.25rem 0;">
-        ${avatarUrl ? 
-          `<img src="${escapeHtml(avatarUrl)}" alt="Avatar" class="nav-avatar-img" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid var(--primary);">` :
-          `<div class="nav-avatar-initials" style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg, var(--primary) 0%, var(--primary-purple) 100%);color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;">${escapeHtml(initials)}</div>`
-        }
+        ${avatarUrl ?
+        `<img src="${escapeHtml(avatarUrl)}" alt="Avatar" class="nav-avatar-img" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:2px solid var(--primary);">` :
+        `<div class="nav-avatar-initials" style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg, var(--primary) 0%, var(--primary-purple) 100%);color:white;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;">${escapeHtml(initials)}</div>`
+      }
         <span class="nav-username-txt" style="font-weight:600;font-size:0.95rem;color:var(--text-muted);">${escapeHtml(fullName || username)}</span>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="12" height="12" style="color:var(--text-muted);"><polyline points="6 9 12 15 18 9"></polyline></svg>
       </div>
@@ -676,7 +775,7 @@ function updateNavbarAuth() {
 
     navLinksContainer.appendChild(dropdownLi);
 
-    // Chuông thông báo - chỉ hiện khi đã đăng nhập, đặt ngay trước avatar dropdown
+    // Notification bell - visible only when logged in, placed right before avatar dropdown
     injectNotificationBell(navLinksContainer, dropdownLi);
 
     const trigger = dropdownLi.querySelector("#user-avatar-trigger");
@@ -703,7 +802,7 @@ function updateNavbarAuth() {
       logoutUser();
     });
   } else {
-    // — Guest: bind the static "Get Started Now" button → opens auth modal —
+    // — Guest: bind the static "Start Project" button → opens auth modal —
     if (defaultBtnLi) {
       // Make sure the static button is visible
       defaultBtnLi.style.display = "";
@@ -718,7 +817,7 @@ function updateNavbarAuth() {
       // Fallback: create button dynamically if static one is missing
       const li = document.createElement("li");
       li.className = "auth-item";
-      li.innerHTML = `<a href="#" id="get-started-btn" class="nav-btn">Get Started Now</a>`;
+      li.innerHTML = `<a href="#" id="get-started-btn" class="nav-btn">Start Project</a>`;
       navLinksContainer.appendChild(li);
       document.getElementById("get-started-btn").addEventListener("click", (e) => {
         e.preventDefault();
@@ -727,15 +826,28 @@ function updateNavbarAuth() {
     }
   }
 
-  // Theme toggle đã có ở sidebar/slide bên cạnh, không cần thêm vào navbar nữa
+  // Inject theme toggle button next to navbar links
   // injectThemeToggle();
 }
 
 // User Logout Logic
 function logoutUser() {
+  // Purge storage
   localStorage.clear();
   sessionStorage.clear();
-  window.location.href = "index.html";
+  
+  // Clear chatbot history explicitly if function exists
+  if (typeof clearChatbotHistory === "function") {
+    clearChatbotHistory();
+  }
+  
+  // Perform a clean redirect & hard reset to login anchor
+  window.location.href = window.location.origin + "/index.html";
+  
+  // Force reload if already on index page so Navbar state resets instantly
+  if (window.location.pathname.endsWith("index.html") || window.location.pathname === "/") {
+    window.location.reload();
+  }
 }
 
 // =============================================
@@ -746,6 +858,57 @@ function initLoginForm() {
   const form = document.getElementById("loginForm");
   const alertMsg = document.getElementById("alertMessage");
   if (!form || !alertMsg) return;
+
+  const uInput = document.getElementById("usernameOrEmail");
+  const pInput = document.getElementById("password");
+
+  const clearLoginForm = () => {
+    form.reset();
+    if (uInput) uInput.value = "";
+    if (pInput) pInput.value = "";
+  };
+
+  // Force clear inputs on load and delay clear to override browser autofill
+  clearLoginForm();
+  setTimeout(clearLoginForm, 50);
+  setTimeout(clearLoginForm, 200);
+  window.addEventListener("pageshow", clearLoginForm);
+
+  // ── Captcha state ──
+  let loginCaptchaToken = null;
+  let captchaRequired = false;
+
+  const captchaSection = document.getElementById("loginCaptchaSection");
+  const captchaCodeEl  = document.getElementById("loginCaptchaCode");
+  const captchaInput   = document.getElementById("loginCaptchaAnswer");
+  const captchaRefresh = document.getElementById("loginCaptchaRefresh");
+
+  async function loadLoginCaptcha() {
+    if (!captchaCodeEl) return;
+    captchaCodeEl.textContent = "...";
+    if (captchaInput) captchaInput.value = "";
+    try {
+      const res = await fetch("/api/auth/captcha");
+      const data = await res.json();
+      loginCaptchaToken = data.token;
+      // Render code as spaced individual characters for stylized look
+      captchaCodeEl.textContent = data.code.split("").join(" ");
+    } catch (_) {
+      captchaCodeEl.textContent = "ERROR";
+      loginCaptchaToken = null;
+    }
+  }
+
+  function showCaptcha() {
+    if (!captchaSection || captchaRequired) return;
+    captchaRequired = true;
+    captchaSection.classList.add("active");
+    loadLoginCaptcha();
+  }
+
+  if (captchaRefresh) {
+    captchaRefresh.addEventListener("click", loadLoginCaptcha);
+  }
 
   // Show query-param message
   const urlParams = new URLSearchParams(window.location.search);
@@ -766,55 +929,66 @@ function initLoginForm() {
       return;
     }
 
+    // Validate captcha fields if required
+    if (captchaRequired) {
+      if (!captchaInput || !captchaInput.value.trim()) {
+        showAlert("Please enter the captcha code.", false);
+        return;
+      }
+      if (!loginCaptchaToken) {
+        showAlert("Captcha not loaded. Please refresh the code and try again.", false);
+        await loadLoginCaptcha();
+        return;
+      }
+    }
+
     try {
       showAlert("Logging in...", null);
+
+      const body = { usernameOrEmail, password };
+      if (captchaRequired && loginCaptchaToken) {
+        body.captchaToken = loginCaptchaToken;
+        body.captchaAnswer = captchaInput ? captchaInput.value.trim() : "";
+      }
 
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ usernameOrEmail, password })
+        body: JSON.stringify(body)
       });
 
       const data = await response.json();
 
       if (response.ok && data.token) {
-        // Store both 'token' (legacy) and 'authToken' (used by new dashboards) in localStorage
-        localStorage.setItem("token",     data.token);
-        localStorage.setItem("authToken", data.token);
-        localStorage.setItem("username",  data.username);
-        localStorage.setItem("fullName",  data.fullName);
-        localStorage.setItem("role",      data.role);
-        localStorage.setItem("email",     data.email);
-        localStorage.setItem("avatarUrl", data.avatarUrl || "");
-        // Store full user object for PM / Client dashboards
-        localStorage.setItem("user", JSON.stringify({
-          username:  data.username,
-          fullName:  data.fullName,
-          email:     data.email,
-          role:      data.role,
+        // Write to sessionStorage for route guard and header sync compatibility
+        sessionStorage.setItem("token", data.token);
+        sessionStorage.setItem("authToken", data.token);
+        sessionStorage.setItem("username", data.username);
+        sessionStorage.setItem("fullName", data.fullName);
+        sessionStorage.setItem("role", data.role);
+        sessionStorage.setItem("email", data.email);
+        sessionStorage.setItem("avatarUrl", data.avatarUrl || "");
+        sessionStorage.setItem("user", JSON.stringify({
+          username: data.username,
+          fullName: data.fullName,
+          email: data.email,
+          role: data.role,
           avatarUrl: data.avatarUrl || null
         }));
-
-        // Write to sessionStorage for route guard and header sync compatibility
-        sessionStorage.setItem("token",     data.token);
-        sessionStorage.setItem("authToken", data.token);
-        sessionStorage.setItem("username",  data.username);
-        sessionStorage.setItem("fullName",  data.fullName);
-        sessionStorage.setItem("role",      data.role);
-        sessionStorage.setItem("email",     data.email);
-        sessionStorage.setItem("avatarUrl", data.avatarUrl || "");
 
         showAlert("Login successful! Redirecting...", true);
 
         setTimeout(() => {
-          if (data.role === "ROLE_ADMIN") {
+          if (data.role === "ROLE_RESOURCE") {
+            window.location.href = "resource-allocation.html";
+          } else if (data.role === "ROLE_ADMIN") {
             window.location.href = "admin.html";
           } else if (data.role === "ROLE_MEMBER") {
             // Internal team member — goes to PM Dashboard
             window.location.href = "member-contact.html";
           } else if (data.role === "ROLE_USER") {
             // External client — goes to Client Portal
-            window.location.href = "client-dashboard.html";
+            window.location.href = "index.html";
           } else {
             const redirect = sessionStorage.getItem("redirectAttempt");
             if (redirect) {
@@ -826,6 +1000,12 @@ function initLoginForm() {
           }
         }, 1000);
       } else {
+        // Handle captcha-required response from server
+        if (data.captchaRequired) {
+          showCaptcha();
+          // If wrong captcha, reload a fresh one
+          if (captchaRequired) loadLoginCaptcha();
+        }
         showAlert(data.message || "Login failed. Please check your credentials.", false);
       }
     } catch (error) {
@@ -849,6 +1029,7 @@ function initLoginForm() {
     }
   }
 }
+
 
 function initRegisterForm() {
   const form = document.getElementById("registerForm");
@@ -956,177 +1137,196 @@ function initAdminDashboard() {
   fetchAdminProjectsTable();
   fetchAdminServicesTable();
   fetchAdminBookings();
-}
+  fetchAdminDashboardStats();
 
-// =============================================
-//  Admin – Panel Switching
-// =============================================
-
-function switchAdminPanel(panelName, el) {
-  // Deactivate all sidebar links
-  document.querySelectorAll(".sidebar-nav a").forEach(a => a.classList.remove("active"));
-  if (el) el.classList.add("active");
-
-  // Hide all panels, show target
-  document.querySelectorAll(".admin-panel").forEach(p => p.classList.remove("active"));
-  const panel = document.getElementById("panel-" + panelName);
-  if (panel) panel.classList.add("active");
-
-  if (panelName === "audit" || panelName === "audit-logs") {
-    loadDataUsers(0);
-  }
-  if (panelName === "bookings") {
-    fetchAdminBookings();
-  }
-}
-
-// =============================================
-//  Admin – Auth Helpers
-// =============================================
-
-function getAdminToken() {
-  return localStorage.getItem("token") || sessionStorage.getItem("token") || "";
-}
-
-function adminHeaders() {
-  return {
-    "Content-Type": "application/json",
-    "Authorization": "Bearer " + getAdminToken()
-  };
-}
-
-// =============================================
-//  Admin – Table Filter
-// =============================================
-
-function filterTable(tbodyId, query) {
-  const tbody = document.getElementById(tbodyId);
-  if (!tbody) return;
-  const q = query.toLowerCase();
-  tbody.querySelectorAll("tr[data-searchable]").forEach(row => {
-    const text = (row.getAttribute("data-searchable") || "").toLowerCase();
-    row.style.display = text.includes(q) ? "" : "none";
-  });
-}
-
-// =============================================
-//  Admin – CRUD Modal State
-// =============================================
-
-let _crudState = { type: null, item: null };
-let _deleteState = { type: null, id: null };
-
-// Cache for loaded data (used to pass objects to modal)
-const _cache = { users: {}, members: {}, projects: {}, services: {}, bookings: {}, addons: {} };
-
-function openCrudModal(type, id) {
-  const item = id !== null ? (_cache[type + "s"] || _cache[type])[id] : null;
-  _crudState = { type, item };
-
-  const overlay = document.getElementById("crud-modal-overlay");
-  const title = document.getElementById("crud-modal-title");
-  const body = document.getElementById("crud-modal-body");
-  const alert = document.getElementById("crud-alert");
-  if (!overlay) return;
-
-  if (alert) { alert.style.display = "none"; alert.textContent = ""; alert.className = "crud-alert alert-message"; }
-
-  const labels = { user: "User", member: "Member", project: "Project", service: "Service" };
-  title.textContent = item ? `Edit ${labels[type]}` : `Add New ${labels[type]}`;
-  body.innerHTML = buildCrudForm(type, item);
-
-  // Bind file upload trigger for projects or members
-  if (type === "project" || type === "member") {
-    const fileInputId = type === "project" ? "cf-imageFile" : "cf-avatarFile";
-    const urlInputId  = type === "project" ? "cf-imageUrl"  : "cf-avatarUrl";
-    const fileInput   = document.getElementById(fileInputId);
-
-    if (fileInput) {
-      fileInput.addEventListener("change", async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-
-        const preview   = document.getElementById("cf-preview");
-        const urlInput  = document.getElementById(urlInputId);
-
-        // Helper: read file as Base64 Data URL (always works, no server needed)
-        const readAsDataUrl = (f) => new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload  = () => resolve(reader.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(f);
-        });
-
-        showCrudAlert("Uploading image...", null);
-
-        // 1️⃣ Try server upload first (with auth token)
-        try {
-          const formData = new FormData();
-          formData.append("file", file);
-
-          const res  = await fetch("/api/upload", {
-            method: "POST",
-            headers: { "Authorization": "Bearer " + getAdminToken() },
-            body: formData
-          });
-          const data = await res.json().catch(() => ({}));
-
-          if (res.ok && data.url) {
-
-            urlInput.value = data.url;
-            if (preview) { preview.src = data.url; preview.style.display = "block"; }
-            showCrudAlert("✅ Image uploaded successfully!", true);
-            return; // done – no need for fallback
-          }
-          // Server returned non-ok or no url → fall through to Base64
-          console.warn("Server upload failed (status:", res.status, "), falling back to Base64.");
-        } catch (uploadErr) {
-          console.warn("Server upload error, falling back to Base64:", uploadErr);
-        }
-
-        // 2️⃣ Fallback: use Base64 Data URL directly
-        try {
-          const dataUrl = await readAsDataUrl(file);
-          urlInput.value = dataUrl;
-          if (preview) { preview.src = dataUrl; preview.style.display = "block"; }
-          showCrudAlert("✅ Image ready (local preview).", true);
-        } catch (b64Err) {
-          console.error("Base64 read error:", b64Err);
-          showCrudAlert("Could not load image. Please try a different file.", false);
-        }
-      });
+  // Handle cross-page panel routing via URL query parameter
+  const urlParams = new URLSearchParams(window.location.search);
+  const panelParam = urlParams.get('panel');
+  if (panelParam) {
+    const navLink = document.getElementById('nav-' + panelParam);
+    if (navLink) {
+      switchAdminPanel(panelParam, navLink);
     }
   }
 
-
-  overlay.classList.add("is-open");
-  document.body.style.overflow = "hidden";
 }
+  // =============================================
+  //  Admin – Panel Switching
+  // =============================================
 
-function closeCrudModal() {
-  const overlay = document.getElementById("crud-modal-overlay");
-  if (overlay) overlay.classList.remove("is-open");
-  document.body.style.overflow = "";
-  _crudState = { type: null, item: null };
-}
+  function switchAdminPanel(panelName, el) {
+    // Deactivate all sidebar links
+    document.querySelectorAll(".sidebar-nav a").forEach(a => a.classList.remove("active"));
+    if (el) el.classList.add("active");
 
-// =============================================
-//  Admin – Form Builder
-// =============================================
+    // Hide all panels, show target
+    document.querySelectorAll(".admin-panel").forEach(p => p.classList.remove("active"));
+    const panel = document.getElementById("panel-" + panelName);
+    if (panel) panel.classList.add("active");
 
-function buildCrudForm(type, item) {
-  const v = item || {};
-  const fld = (id, label, type2, value, extra = "") => `
+    if (panelName === "audit" || panelName === "audit-logs") {
+      loadDataUsers(0);
+    }
+    if (panelName === "bookings") {
+      fetchAdminBookings();
+    }
+    if (panelName === "messages") {
+      loadUserMessages();
+    }
+  }
+
+  // =============================================
+  //  Admin – Auth Helpers
+  // =============================================
+
+  function getAdminToken() {
+    return localStorage.getItem("token") || sessionStorage.getItem("token") || "";
+  }
+
+  function adminHeaders() {
+    return {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + getAdminToken()
+    };
+  }
+
+  // =============================================
+  //  Admin – Table Filter
+  // =============================================
+
+  function filterTable(tbodyId, query) {
+    const tbody = document.getElementById(tbodyId);
+    if (!tbody) return;
+    const q = query.toLowerCase();
+    tbody.querySelectorAll("tr[data-searchable]").forEach(row => {
+      const text = (row.getAttribute("data-searchable") || "").toLowerCase();
+      row.style.display = text.includes(q) ? "" : "none";
+    });
+  }
+
+  // =============================================
+  //  Admin – CRUD Modal State
+  // =============================================
+
+  let _crudState = { type: null, item: null };
+  let _deleteState = { type: null, id: null };
+
+  // Cache for loaded data (used to pass objects to modal)
+  const _cache = { users: {}, members: {}, projects: {}, services: {}, bookings: {} };
+
+  function openCrudModal(type, id) {
+    const item = id !== null ? (_cache[type + "s"] || _cache[type])[id] : null;
+    _crudState = { type, item };
+
+    const overlay = document.getElementById("crud-modal-overlay");
+    const title = document.getElementById("crud-modal-title");
+    const body = document.getElementById("crud-modal-body");
+    const alert = document.getElementById("crud-alert");
+    if (!overlay) return;
+
+    if (alert) { alert.style.display = "none"; alert.textContent = ""; alert.className = "crud-alert alert-message"; }
+
+    const labels = { user: "User", member: "Member", project: "Project", service: "Service" };
+    title.textContent = item ? `Edit ${labels[type]}` : `Add New ${labels[type]}`;
+    body.innerHTML = buildCrudForm(type, item);
+
+    // Load add-on list for an existing service being edited
+    if (type === "service" && item) {
+      loadServiceAddonsForModal(item.id);
+    }
+
+    // Bind file upload trigger for projects or members
+    if (type === "project" || type === "member") {
+      const fileInputId = type === "project" ? "cf-imageFile" : "cf-avatarFile";
+      const urlInputId = type === "project" ? "cf-imageUrl" : "cf-avatarUrl";
+      const fileInput = document.getElementById(fileInputId);
+
+      if (fileInput) {
+        fileInput.addEventListener("change", async (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+
+          const preview = document.getElementById("cf-preview");
+          const urlInput = document.getElementById(urlInputId);
+
+          // Helper: read file as Base64 Data URL (always works, no server needed)
+          const readAsDataUrl = (f) => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(f);
+          });
+
+          showCrudAlert("Uploading image...", null);
+
+          // 1️⃣ Try server upload first (with auth token)
+          try {
+            const formData = new FormData();
+            formData.append("file", file);
+
+            const res = await fetch("/api/upload", {
+              method: "POST",
+              headers: { "Authorization": "Bearer " + getAdminToken() },
+              body: formData
+            });
+            const data = await res.json().catch(() => ({}));
+
+            if (res.ok && data.url) {
+
+              urlInput.value = data.url;
+              if (preview) { preview.src = data.url; preview.style.display = "block"; }
+              showCrudAlert("✅ Image uploaded successfully!", true);
+              return; // done – no need for fallback
+            }
+            // Server returned non-ok or no url → fall through to Base64
+            console.warn("Server upload failed (status:", res.status, "), falling back to Base64.");
+          } catch (uploadErr) {
+            console.warn("Server upload error, falling back to Base64:", uploadErr);
+          }
+
+          // 2️⃣ Fallback: use Base64 Data URL directly
+          try {
+            const dataUrl = await readAsDataUrl(file);
+            urlInput.value = dataUrl;
+            if (preview) { preview.src = dataUrl; preview.style.display = "block"; }
+            showCrudAlert("✅ Image ready (local preview).", true);
+          } catch (b64Err) {
+            console.error("Base64 read error:", b64Err);
+            showCrudAlert("Could not load image. Please try a different file.", false);
+          }
+        });
+      }
+    }
+
+
+    overlay.classList.add("is-open");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeCrudModal() {
+    const overlay = document.getElementById("crud-modal-overlay");
+    if (overlay) overlay.classList.remove("is-open");
+    document.body.style.overflow = "";
+    _crudState = { type: null, item: null };
+  }
+
+  // =============================================
+  //  Admin – Form Builder
+  // =============================================
+
+  function buildCrudForm(type, item) {
+    const v = item || {};
+    const fld = (id, label, type2, value, extra = "") => `
     <div class="form-group">
       <label for="${id}">${label}</label>
       <input type="${type2}" id="${id}" value="${escapeHtml(String(value || ""))}" ${extra}>
     </div>`;
-  const txt = (id, label, value, extra = "") => `
+    const txt = (id, label, value, extra = "") => `
     <div class="form-group">
       <label for="${id}">${label}</label>
       <textarea id="${id}" rows="3" ${extra}>${escapeHtml(String(value || ""))}</textarea>
     </div>`;
-  const sel = (id, label, opts, selected) => `
+    const sel = (id, label, opts, selected) => `
     <div class="form-group">
       <label for="${id}">${label}</label>
       <select id="${id}" class="crud-select">
@@ -1134,14 +1334,14 @@ function buildCrudForm(type, item) {
       </select>
     </div>`;
 
-  if (type === "user") return `
-    ${fld("cf-username",  "Username *", "text",  v.username, `placeholder="Enter username" required ${item ? 'readonly style="background:#f8fafc;cursor:not-allowed;"' : ""}`)}
-    ${fld("cf-fullName",  "Full Name *",     "text",  v.fullName, 'placeholder="Enter full name" required')}
-    ${fld("cf-email",     "Email *",          "email", v.email,    'placeholder="name@domain.com" required')}
-    ${fld("cf-phone",     "Phone Number",   "tel",   v.phone,    'placeholder="0123456789" pattern="[0-9]{10}"')}
+    if (type === "user") return `
+    ${fld("cf-username", "Username *", "text", v.username, `placeholder="Enter username" required ${item ? 'readonly style="background:#f8fafc;cursor:not-allowed;"' : ""}`)}
+    ${fld("cf-fullName", "Full Name *", "text", v.fullName, 'placeholder="Enter full name" required')}
+    ${fld("cf-email", "Email *", "email", v.email, 'placeholder="name@domain.com" required')}
+    ${fld("cf-phone", "Phone Number", "tel", v.phone, 'placeholder="0123456789" pattern="[0-9]{10}"')}
     ${!item ? fld("cf-password", "Password *", "password", "", 'placeholder="Min 6 characters" required minlength="6"') : ""}
 
-    ${sel("cf-role", "Role *", [["ROLE_USER","User"],["ROLE_ADMIN","Admin"],["ROLE_MEMBER","Team Member"]], v.role || "ROLE_USER")}
+    ${sel("cf-role", "Role *", [["ROLE_USER", "User"], ["ROLE_ADMIN", "Admin"], ["ROLE_MEMBER", "Team Member"]], v.role || "ROLE_USER")}
 
     <div class="form-group" style="width: 100%;">
       <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; justify-content: flex-start;">
@@ -1151,222 +1351,239 @@ function buildCrudForm(type, item) {
     </div>
   `;
 
-  if (type === "member") return `
-    ${fld("cf-name",       "Member Name *",         "text", v.name,        'placeholder="Enter member name" required')}
-    ${fld("cf-role",       "Position / Role *",       "text", v.role,        'placeholder="e.g. Frontend Developer" required')}
+    if (type === "member") return `
+    ${fld("cf-name", "Member Name *", "text", v.name, 'placeholder="Enter member name" required')}
+    ${fld("cf-role", "Position / Role *", "text", v.role, 'placeholder="e.g. Frontend Developer" required')}
     <div class="form-group">
       <label for="cf-avatarFile">Avatar Image *</label>
       <input type="file" id="cf-avatarFile" accept="image/*" style="width:100%; padding:0.5rem; border:1px dashed var(--border-color); border-radius:var(--radius-sm); background:var(--bg-light); cursor:pointer;">
       <input type="hidden" id="cf-avatarUrl" value="${escapeHtml(String(v.avatarUrl || ""))}">
       ${v.avatarUrl ? `<img id="cf-preview" src="${escapeHtml(v.avatarUrl)}" style="margin-top: 0.75rem; max-width: 150px; height: auto; border-radius: 6px; border: 1px solid var(--border-color); display: block;">` : `<img id="cf-preview" style="margin-top: 0.75rem; max-width: 150px; height: auto; border-radius: 6px; border: 1px solid var(--border-color); display: none;">`}
     </div>
-    ${fld("cf-facebookUrl","Facebook URL",               "url",  v.facebookUrl, 'placeholder="https://facebook.com/..."')}
-    ${fld("cf-githubUrl",  "GitHub URL",                 "url",  v.githubUrl,   'placeholder="https://github.com/..."')}
-    ${fld("cf-linkedinUrl","LinkedIn URL",               "url",  v.linkedinUrl, 'placeholder="https://linkedin.com/in/..."')}
-    ${fld("cf-skills",     "Professional Skills",       "text", v.skills,      'placeholder="e.g. Java, React, SQL"')}
-    ${fld("cf-projects",   "Projects Worked On",        "text", v.projectsWorked, 'placeholder="e.g. CMS Portal, E-Commerce App"')}
+    ${fld("cf-facebookUrl", "Facebook URL", "url", v.facebookUrl, 'placeholder="https://facebook.com/..."')}
+    ${fld("cf-githubUrl", "GitHub URL", "url", v.githubUrl, 'placeholder="https://github.com/..."')}
+    ${fld("cf-linkedinUrl", "LinkedIn URL", "url", v.linkedinUrl, 'placeholder="https://linkedin.com/in/..."')}
+    ${fld("cf-skills", "Professional Skills", "text", v.skills, 'placeholder="e.g. Java, React, SQL"')}
+    ${fld("cf-projects", "Projects Worked On", "text", v.projectsWorked, 'placeholder="e.g. CMS Portal, E-Commerce App"')}
   `;
 
-  if (type === "project") return `
-    ${fld("cf-title",       "Project Title *",   "text", v.title,       'placeholder="Enter project title" required')}
-    ${fld("cf-category",    "Category *",    "text", v.category,    'placeholder="e.g. Web Development" required')}
+    if (type === "project") return `
+    ${fld("cf-title", "Project Title *", "text", v.title, 'placeholder="Enter project title" required')}
+    ${fld("cf-category", "Category *", "text", v.category, 'placeholder="e.g. Web Development" required')}
     <div class="form-group">
       <label for="cf-imageFile">Cover Image *</label>
       <input type="file" id="cf-imageFile" accept="image/*" style="width:100%; padding:0.5rem; border:1px dashed var(--border-color); border-radius:var(--radius-sm); background:var(--bg-light); cursor:pointer;">
       <input type="hidden" id="cf-imageUrl" value="${escapeHtml(String(v.imageUrl || ""))}">
       ${v.imageUrl ? `<img id="cf-preview" src="${escapeHtml(v.imageUrl)}" style="margin-top: 0.75rem; max-width: 150px; height: auto; border-radius: 6px; border: 1px solid var(--border-color); display: block;">` : `<img id="cf-preview" style="margin-top: 0.75rem; max-width: 150px; height: auto; border-radius: 6px; border: 1px solid var(--border-color); display: none;">`}
     </div>
-    ${txt("cf-description", "Description *",               v.description, 'placeholder="Project description..." required')}
+    ${txt("cf-description", "Description *", v.description, 'placeholder="Project description..." required')}
     ${txt("cf-technologies", "Technologies Used", v.technologies, 'placeholder="e.g. React, Node.js, MongoDB..."')}
   `;
 
-  if (type === "service") return `
+    if (type === "service") return `
     ${fld("cf-title", "Service Title *", "text", v.title, 'placeholder="Enter service title" required')}
     ${sel("cf-iconUrl", "Service Icon *",
-      [["web","🌐 Web Design"],["design","🎨 UI/UX Design"],["marketing","📊 Marketing"],
-       ["mobile","📱 Mobile App"],["branding","🎯 Branding"],["cloud","☁️ Cloud Solutions"]],
+      [["web", "🌐 Web Design"], ["design", "🎨 UI/UX Design"], ["marketing", "📊 Marketing"],
+      ["mobile", "📱 Mobile App"], ["branding", "🎯 Branding"], ["cloud", "☁️ Cloud Solutions"]],
       v.iconUrl || "web")}
     ${txt("cf-description", "Description *", v.description, 'placeholder="Service description..." required')}
-    ${fld("cf-basePrice", "Base Price ($) *", "number", v.basePrice != null ? v.basePrice : '', 'placeholder="0.00" min="0" step="0.01" required')}
+    <div class="form-group" style="width:100%;">
+      <label style="margin-bottom:0.5rem;display:block;">Add-on Packages</label>
+      ${item ? `
+        <div id="cf-addons-list" style="border:1px solid var(--border-color);border-radius:var(--radius-sm);padding:0.25rem 0.75rem;max-height:220px;overflow-y:auto;">
+          <div style="padding:0.75rem;color:var(--text-muted);font-size:0.85rem;">Loading add-ons...</div>
+        </div>
+        <div style="display:flex;gap:0.5rem;margin-top:0.6rem;align-items:center;">
+          <input type="text" id="cf-addon-new-name" placeholder="New add-on name" style="flex:1;padding:0.5rem 0.6rem;border:1px solid var(--border-color);border-radius:var(--radius-sm);font-size:0.85rem;">
+          <input type="number" id="cf-addon-new-price" placeholder="Price" min="0" step="0.01" style="width:100px;padding:0.5rem 0.6rem;border:1px solid var(--border-color);border-radius:var(--radius-sm);font-size:0.85rem;">
+          <button type="button" class="btn-save" style="padding:0.5rem 0.8rem;font-size:0.8rem;white-space:nowrap;" onclick="addServiceAddon(${item.id})">+ Add</button>
+        </div>
+      ` : `
+        <div style="padding:0.75rem;border:1px dashed var(--border-color);border-radius:var(--radius-sm);color:var(--text-muted);font-size:0.85rem;">
+          Save this service first, then reopen it to manage its add-on packages.
+        </div>
+      `}
+    </div>
   `;
 
-  return "<p>Unknown type.</p>";
-}
+    return "<p>Unknown type.</p>";
+  }
 
-// =============================================
-//  Admin – CRUD Submit
-// =============================================
+  // =============================================
+  //  Admin – CRUD Submit
+  // =============================================
 
-async function submitCrudForm() {
-  const { type, item } = _crudState;
-  if (!type) return;
+  async function submitCrudForm() {
+    const { type, item } = _crudState;
+    if (!type) return;
 
-  const isEdit = !!item;
-  let payload = {};
-  let valid = true;
+    const isEdit = !!item;
+    let payload = {};
+    let valid = true;
 
-  const g = id => (document.getElementById(id)?.value || "").trim();
-  const gv = id => document.getElementById(id)?.value || "";
+    const g = id => (document.getElementById(id)?.value || "").trim();
+    const gv = id => document.getElementById(id)?.value || "";
 
-  if (type === "user") {
-    payload = {
-      username: g("cf-username"), fullName: g("cf-fullName"), email: g("cf-email"),
-      phone: g("cf-phone"), role: gv("cf-role"), enabled: document.getElementById("cf-enabled")?.checked
+    if (type === "user") {
+      payload = {
+        username: g("cf-username"), fullName: g("cf-fullName"), email: g("cf-email"),
+        phone: g("cf-phone"), role: gv("cf-role"), enabled: document.getElementById("cf-enabled")?.checked
+      };
+      if (!isEdit) payload.password = gv("cf-password");
+      if (!payload.username || !payload.fullName || !payload.email) valid = false;
+    }
+
+    if (type === "member") {
+      payload = {
+        name: g("cf-name"), role: g("cf-role"), avatarUrl: g("cf-avatarUrl"),
+        facebookUrl: g("cf-facebookUrl"), githubUrl: g("cf-githubUrl"), linkedinUrl: g("cf-linkedinUrl"),
+        skills: g("cf-skills"), projects: g("cf-projects")
+      };
+      if (!payload.name || !payload.avatarUrl) valid = false;
+    }
+
+    if (type === "project") {
+      payload = {
+        title: g("cf-title"), category: g("cf-category"), imageUrl: g("cf-imageUrl"),
+        description: g("cf-description"), technologies: g("cf-technologies")
+      };
+      if (!payload.title || !payload.category || !payload.imageUrl || !payload.description) valid = false;
+    }
+
+    if (type === "service") {
+      payload = { title: g("cf-title"), iconUrl: gv("cf-iconUrl"), description: g("cf-description") };
+      if (!payload.title || !payload.description) valid = false;
+    }
+
+    if (!valid) { showCrudAlert("Please fill in all required fields (*)", false); return; }
+
+    const eps = {
+      user: "/api/admin/users", member: "/api/members",
+      project: "/api/projects", service: "/api/services"
     };
-    if (!isEdit) payload.password = gv("cf-password");
-    if (!payload.username || !payload.fullName || !payload.email) valid = false;
+
+    const url = isEdit ? `${eps[type]}/${item.id}` : eps[type];
+    const method = isEdit ? "PUT" : "POST";
+
+    try {
+      showCrudAlert("Processing...", null);
+      const response = await fetch(url, { method, headers: adminHeaders(), body: JSON.stringify(payload) });
+      const data = await response.json().catch(() => ({}));
+
+      if (response.ok) {
+        showCrudAlert(isEdit ? "✅ Updated successfully!" : "✅ Added successfully!", true);
+        setTimeout(() => {
+          closeCrudModal();
+          if (type === "user") fetchAdminUsers();
+          if (type === "member") fetchAdminMembersTable();
+          if (type === "project") fetchAdminProjectsTable();
+          if (type === "service") fetchAdminServicesTable();
+        }, 700);
+      } else {
+        showCrudAlert(data.message || "Operation failed. Please try again.", false);
+      }
+    } catch (err) {
+      console.error("CRUD submit error:", err);
+      showCrudAlert("Could not connect to server.", false);
+    }
   }
 
-  if (type === "member") {
-    payload = { name: g("cf-name"), role: g("cf-role"), avatarUrl: g("cf-avatarUrl"),
-                facebookUrl: g("cf-facebookUrl"), githubUrl: g("cf-githubUrl"), linkedinUrl: g("cf-linkedinUrl"),
-                skills: g("cf-skills"), projects: g("cf-projects") };
-    if (!payload.name || !payload.avatarUrl) valid = false;
+  function showCrudAlert(msg, isSuccess) {
+    const el = document.getElementById("crud-alert");
+    if (!el) return;
+    el.textContent = msg;
+    el.className = "crud-alert alert-message";
+    el.removeAttribute("style");
+    if (isSuccess === true) { el.classList.add("alert-success"); el.style.display = "block"; }
+    else if (isSuccess === false) { el.classList.add("alert-error"); el.style.display = "block"; }
+    else { el.style.cssText = "display:block;background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;"; }
   }
 
-  if (type === "project") {
-    payload = {
-      title: g("cf-title"), category: g("cf-category"), imageUrl: g("cf-imageUrl"),
-      description: g("cf-description"), technologies: g("cf-technologies")
+  // =============================================
+  //  Admin – Confirm Delete
+  // =============================================
+
+  function openDeleteConfirm(type, id, name) {
+    _deleteState = { type, id };
+    const overlay = document.getElementById("confirm-modal-overlay");
+    const text = document.getElementById("confirm-modal-text");
+    if (text) text.textContent = `Are you sure you want to delete "${name}"? This action cannot be undone.`;
+    if (overlay) overlay.classList.add("is-open");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeConfirmModal() {
+    const overlay = document.getElementById("confirm-modal-overlay");
+    if (overlay) overlay.classList.remove("is-open");
+    document.body.style.overflow = "";
+    _deleteState = { type: null, id: null };
+  }
+
+  async function confirmDelete() {
+    const { type, id } = _deleteState;
+    if (!type || id === null) return;
+
+    const eps = {
+      user: "/api/admin/users", member: "/api/members",
+      project: "/api/projects", service: "/api/services"
     };
-    if (!payload.title || !payload.category || !payload.imageUrl || !payload.description) valid = false;
-  }
-
-  if (type === "service") {
-    payload = { title: g("cf-title"), iconUrl: gv("cf-iconUrl"), description: g("cf-description"),
-                basePrice: parseFloat(g("cf-basePrice")) || 0 };
-    if (!payload.title || !payload.description || g("cf-basePrice") === "") valid = false;
-  }
-
-  if (!valid) { showCrudAlert("Please fill in all required fields (*)", false); return; }
-
-  const eps = {
-    user: "/api/admin/users", member: "/api/members",
-    project: "/api/projects", service: "/api/services"
-  };
-
-  const url = isEdit ? `${eps[type]}/${item.id}` : eps[type];
-  const method = isEdit ? "PUT" : "POST";
-
-  try {
-    showCrudAlert("Processing...", null);
-    const response = await fetch(url, { method, headers: adminHeaders(), body: JSON.stringify(payload) });
-    const data = await response.json().catch(() => ({}));
-
-    if (response.ok) {
-      showCrudAlert(isEdit ? "✅ Updated successfully!" : "✅ Added successfully!", true);
-      setTimeout(() => {
-        closeCrudModal();
+    try {
+      const response = await fetch(`${eps[type]}/${id}`, { method: "DELETE", headers: adminHeaders() });
+      if (response.ok) {
+        closeConfirmModal();
         if (type === "user") fetchAdminUsers();
         if (type === "member") fetchAdminMembersTable();
         if (type === "project") fetchAdminProjectsTable();
         if (type === "service") fetchAdminServicesTable();
-      }, 700);
-    } else {
-      showCrudAlert(data.message || "Operation failed. Please try again.", false);
+      } else {
+        showToast("Delete failed. Please try again.", "error");
+      }
+    } catch (err) {
+      console.error("Delete error:", err);
+      showToast("Could not connect to server.", "error");
     }
-  } catch (err) {
-    console.error("CRUD submit error:", err);
-    showCrudAlert("Could not connect to server.", false);
   }
-}
 
-function showCrudAlert(msg, isSuccess) {
-  const el = document.getElementById("crud-alert");
-  if (!el) return;
-  el.textContent = msg;
-  el.className = "crud-alert alert-message";
-  el.removeAttribute("style");
-  if (isSuccess === true) { el.classList.add("alert-success"); el.style.display = "block"; }
-  else if (isSuccess === false) { el.classList.add("alert-error"); el.style.display = "block"; }
-  else { el.style.cssText = "display:block;background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;"; }
-}
+  // =============================================
+  //  Admin – Table Renderers
+  // =============================================
 
-// =============================================
-//  Admin – Confirm Delete
-// =============================================
+  async function fetchAdminUsers() {
+    const tbody = document.getElementById("users-table-body");
+    const statCount = document.getElementById("stat-users-count");
+    if (!tbody) return;
 
-function openDeleteConfirm(type, id, name) {
-  _deleteState = { type, id };
-  const overlay = document.getElementById("confirm-modal-overlay");
-  const text    = document.getElementById("confirm-modal-text");
-  if (text) text.textContent = `Are you sure you want to delete "${name}"? This action cannot be undone.`;
-  if (overlay) overlay.classList.add("is-open");
-  document.body.style.overflow = "hidden";
-}
+    try {
+      const response = await fetch("/api/admin/users", { headers: adminHeaders() });
+      const rawUsers = await response.json();
+      const users = (rawUsers || []).filter(u => u.role !== "ROLE_ADMIN" && u.role !== "ADMIN");
 
-function closeConfirmModal() {
-  const overlay = document.getElementById("confirm-modal-overlay");
-  if (overlay) overlay.classList.remove("is-open");
-  document.body.style.overflow = "";
-  _deleteState = { type: null, id: null };
-}
+      if (statCount) statCount.textContent = users.length;
+      tbody.innerHTML = "";
 
-async function confirmDelete() {
-  const { type, id } = _deleteState;
-  if (!type || id === null) return;
-
-  const eps = {
-    user: "/api/admin/users", member: "/api/members",
-    project: "/api/projects", service: "/api/services"
-  };
-  try {
-    const response = await fetch(`${eps[type]}/${id}`, { method: "DELETE", headers: adminHeaders() });
-    if (response.ok) {
-      closeConfirmModal();
-      if (type === "user") fetchAdminUsers();
-      if (type === "member") fetchAdminMembersTable();
-      if (type === "project") fetchAdminProjectsTable();
-      if (type === "service") fetchAdminServicesTable();
-    } else {
-      alert("Delete failed. Please try again.");
-    }
-  } catch (err) {
-    console.error("Delete error:", err);
-    alert("Could not connect to server.");
-  }
-}
-
-// =============================================
-//  Admin – Table Renderers
-// =============================================
-
-async function fetchAdminUsers() {
-  const tbody = document.getElementById("users-table-body");
-  const statCount = document.getElementById("stat-users-count");
-  if (!tbody) return;
-
-  try {
-    const response = await fetch("/api/admin/users", { headers: adminHeaders() });
-    if (!response.ok) throw new Error("Failed");
-    const users = await response.json();
-
-    if (statCount) statCount.textContent = users.length;
-    tbody.innerHTML = "";
-
-    if (!users.length) {
-      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text-muted);">No users found.</td></tr>`;
-      return;
-    }
-
-    users.forEach(u => {
-      _cache.users[u.id] = u;
-      const tr = document.createElement("tr");
-      tr.setAttribute("data-searchable", `${u.fullName} ${u.username} ${u.email}`);
-      const initials = (u.fullName || "?")[0].toUpperCase();
-
-      // Check if user is online (last login within last 5 minutes)
-      let isOnline = false;
-      let lastLoginText = "—";
-      if (u.lastLogin) {
-        const lastLogin = new Date(u.lastLogin);
-        const now = new Date();
-        const diffMinutes = (now - lastLogin) / (1000 * 60);
-        isOnline = diffMinutes < 5;
-        lastLoginText = lastLogin.toLocaleString("en-US");
+      if (!users.length) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text-muted);">No users found.</td></tr>`;
+        return;
       }
 
-      tr.innerHTML = `
+      users.forEach(u => {
+        _cache.users[u.id] = u;
+        const tr = document.createElement("tr");
+        tr.setAttribute("data-searchable", `${u.fullName} ${u.username} ${u.email}`);
+        const initials = (u.fullName || "?")[0].toUpperCase();
+
+        // Check if user is online (last login within last 5 minutes)
+        let isOnline = false;
+        let lastLoginHtml = "";
+        if (u.lastLogin) {
+          const lastLogin = new Date(u.lastLogin);
+          const now = new Date();
+          const diffMinutes = (now - lastLogin) / (1000 * 60);
+          isOnline = diffMinutes < 5;
+          lastLoginHtml = `<br><small style="color: #64748b; font-size: 11px; white-space: nowrap;">${lastLogin.toLocaleString("en-US")}</small>`;
+        }
+
+        tr.innerHTML = `
         <td>
           <div class="table-user-cell">
             <div class="user-initials">${initials}</div>
@@ -1386,7 +1603,7 @@ async function fetchAdminUsers() {
           <span class="status-badge ${isOnline ? 'badge-online' : 'badge-offline'}">
             ${isOnline ? 'Online' : 'Offline'}
           </span>
-          <br><small style="color: #64748b; font-size: 11px; white-space: nowrap;">${lastLoginText}</small>
+          ${lastLoginHtml}
         </td>
         <td>
           <div class="action-btns">
@@ -1398,74 +1615,74 @@ async function fetchAdminUsers() {
             </button>
           </div>
         </td>`;
-      tbody.appendChild(tr);
-    });
-  } catch (err) {
-    console.error("fetchAdminUsers error:", err);
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:2rem;color:#ef4444;">Could not load user list.</td></tr>`;
-  }
-}
-
-async function toggleUserStatus(userId) {
-  const user = _cache.users[userId];
-  if (!user) return;
-
-  try {
-    // Get current user data to preserve all fields except enabled
-    const newStatus = !user.enabled;
-    const response = await fetch(`/api/admin/users/${userId}`, {
-      method: "PUT",
-      headers: adminHeaders(),
-      body: JSON.stringify({
-        enabled: newStatus
-      })
-    });
-
-    if (response.ok) {
-      // Update local cache
-      _cache.users[userId].enabled = newStatus;
-      // Refresh table
-      fetchAdminUsers();
-    } else {
-      alert("Operation failed. Please try again.");
+        tbody.appendChild(tr);
+      });
+    } catch (err) {
+      console.error("fetchAdminUsers error:", err);
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:2rem;color:#ef4444;">Could not load user list.</td></tr>`;
     }
-  } catch (err) {
-    console.error("Toggle status error:", err);
-    alert("Could not connect to server.");
   }
-}
 
-async function fetchAdminMembersTable() {
-  const tbody = document.getElementById("members-table-body");
-  const statCount = document.getElementById("stat-members-count");
-  if (!tbody) return;
+  async function toggleUserStatus(userId) {
+    const user = _cache.users[userId];
+    if (!user) return;
 
-  try {
-    const response = await fetch("/api/members");
-    if (!response.ok) throw new Error("Failed");
-    const members = await response.json();
+    try {
+      // Get current user data to preserve all fields except enabled
+      const newStatus = !user.enabled;
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: "PUT",
+        headers: adminHeaders(),
+        body: JSON.stringify({
+          enabled: newStatus
+        })
+      });
 
-    if (statCount) statCount.textContent = members.length;
-    tbody.innerHTML = "";
-
-    if (!members.length) {
-      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted);">No members found.</td></tr>`;
-      return;
+      if (response.ok) {
+        // Update local cache
+        _cache.users[userId].enabled = newStatus;
+        // Refresh table
+        fetchAdminUsers();
+      } else {
+        showToast("Operation failed. Please try again.", "error");
+      }
+    } catch (err) {
+      console.error("Toggle status error:", err);
+      showToast("Could not connect to server.", "error");
     }
+  }
 
-    members.forEach(m => {
-      _cache.members[m.id] = m;
-      const tr = document.createElement("tr");
-      tr.setAttribute("data-searchable", `${m.name} ${m.role}`);
-      const fbSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="#1877F2" viewBox="0 0 24 24" style="vertical-align:middle;"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>`;
-      const ghSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 24 24" style="vertical-align:middle;color:var(--text-dark);"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>`;
-      const liSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="#0A66C2" viewBox="0 0 24 24" style="vertical-align:middle;"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.779-1.75-1.75s.784-1.75 1.75-1.75 1.75.779 1.75 1.75-.784 1.75-1.75 1.75zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>`;
+  async function fetchAdminMembersTable() {
+    const tbody = document.getElementById("members-table-body");
+    const statCount = document.getElementById("stat-members-count");
+    if (!tbody) return;
 
-      const mkFbLink = url => url ? `<a href="${escapeHtml(url)}" target="_blank" title="Facebook">${fbSvg}</a>` : "—";
-      const mkGhLink = url => url ? `<a href="${escapeHtml(url)}" target="_blank" title="GitHub">${ghSvg}</a>` : "—";
-      const mkLiLink = url => url ? `<a href="${escapeHtml(url)}" target="_blank" title="LinkedIn">${liSvg}</a>` : "—";
+    try {
+      const response = await fetch("/api/members");
+      if (!response.ok) throw new Error("Failed");
+      const members = await response.json();
 
-      tr.innerHTML = `
+      if (statCount) statCount.textContent = members.length;
+      tbody.innerHTML = "";
+
+      if (!members.length) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted);">No members found.</td></tr>`;
+        return;
+      }
+
+      members.forEach(m => {
+        _cache.members[m.id] = m;
+        const tr = document.createElement("tr");
+        tr.setAttribute("data-searchable", `${m.name} ${m.role}`);
+        const fbSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="#1877F2" viewBox="0 0 24 24" style="vertical-align:middle;"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>`;
+        const ghSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 24 24" style="vertical-align:middle;color:var(--text-dark);"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>`;
+        const liSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="#0A66C2" viewBox="0 0 24 24" style="vertical-align:middle;"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.779-1.75-1.75s.784-1.75 1.75-1.75 1.75.779 1.75 1.75-.784 1.75-1.75 1.75zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>`;
+
+        const mkFbLink = url => url ? `<a href="${escapeHtml(url)}" target="_blank" title="Facebook">${fbSvg}</a>` : "—";
+        const mkGhLink = url => url ? `<a href="${escapeHtml(url)}" target="_blank" title="GitHub">${ghSvg}</a>` : "—";
+        const mkLiLink = url => url ? `<a href="${escapeHtml(url)}" target="_blank" title="LinkedIn">${liSvg}</a>` : "—";
+
+        tr.innerHTML = `
         <td><img src="${escapeHtml(m.avatarUrl || "")}" alt="${escapeHtml(m.name || "")}" class="table-avatar"
               onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=60&h=60'"></td>
         <td class="text-dark-inline">${escapeHtml(m.name || "")}</td>
@@ -1483,37 +1700,37 @@ async function fetchAdminMembersTable() {
             </button>
           </div>
         </td>`;
-      tbody.appendChild(tr);
-    });
-  } catch (err) {
-    console.error("fetchAdminMembersTable error:", err);
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:#ef4444;">Could not load member list.</td></tr>`;
-  }
-}
-
-async function fetchAdminProjectsTable() {
-  const tbody = document.getElementById("projects-table-body");
-  const statCount = document.getElementById("stat-projects-count");
-  if (!tbody) return;
-
-  try {
-    const response = await fetch("/api/projects");
-    if (!response.ok) throw new Error("Failed");
-    const projects = await response.json();
-
-    if (statCount) statCount.textContent = projects.length;
-    tbody.innerHTML = "";
-
-    if (!projects.length) {
-      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);">No projects found.</td></tr>`;
-      return;
+        tbody.appendChild(tr);
+      });
+    } catch (err) {
+      console.error("fetchAdminMembersTable error:", err);
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:#ef4444;">Could not load member list.</td></tr>`;
     }
+  }
 
-    projects.forEach(p => {
-      _cache.projects[p.id] = p;
-      const tr = document.createElement("tr");
-      tr.setAttribute("data-searchable", `${p.title} ${p.category} ${p.description}`);
-      tr.innerHTML = `
+  async function fetchAdminProjectsTable() {
+    const tbody = document.getElementById("projects-table-body");
+    const statCount = document.getElementById("stat-projects-count");
+    if (!tbody) return;
+
+    try {
+      const response = await fetch("/api/projects");
+      if (!response.ok) throw new Error("Failed");
+      const projects = await response.json();
+
+      if (statCount) statCount.textContent = projects.length;
+      tbody.innerHTML = "";
+
+      if (!projects.length) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);">No projects found.</td></tr>`;
+        return;
+      }
+
+      projects.forEach(p => {
+        _cache.projects[p.id] = p;
+        const tr = document.createElement("tr");
+        tr.setAttribute("data-searchable", `${p.title} ${p.category} ${p.description}`);
+        tr.innerHTML = `
         <td><img src="${escapeHtml(p.imageUrl || "")}" alt="${escapeHtml(p.title || "")}"
               style="width:78px;height:48px;object-fit:cover;border-radius:6px;border:1px solid var(--border-color);"
               onerror="this.src='https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=78&h=48'"></td>
@@ -1525,9 +1742,6 @@ async function fetchAdminProjectsTable() {
             <button class="btn-edit" style="background:#2563eb; color:#fff; border-color:#2563eb;" onclick="openMilestoneModal(${p.id})">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;margin-right:2px;"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>Milestones
             </button>
-            <button class="btn-edit" style="background:#059669; color:#fff; border-color:#059669;" onclick="openAssignmentModal(${p.id}, '${escapeHtml(p.title || '')}')">
-              &#128101; Assign
-            </button>
             <button class="btn-edit"   onclick="openCrudModal('project', ${p.id})">
               <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit
             </button>
@@ -1536,57 +1750,46 @@ async function fetchAdminProjectsTable() {
             </button>
           </div>
         </td>`;
-      tbody.appendChild(tr);
-    });
-  } catch (err) {
-    console.error("fetchAdminProjectsTable error:", err);
-    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:#ef4444;">Could not load project list.</td></tr>`;
-  }
-}
-
-async function fetchAdminServicesTable() {
-  const tbody = document.getElementById("services-table-body");
-  if (!tbody) return;
-
-  try {
-    const response = await fetch("/api/services");
-    if (!response.ok) throw new Error("Failed");
-    const services = await response.json();
-
-    tbody.innerHTML = "";
-
-    if (!services.length) {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);">No services found.</td></tr>`;
-      return;
+        tbody.appendChild(tr);
+      });
+    } catch (err) {
+      console.error("fetchAdminProjectsTable error:", err);
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:#ef4444;">Could not load project list.</td></tr>`;
     }
+  }
 
-    const iconLabels = {
-      web: "🌐 Web Design", design: "🎨 UI/UX", marketing: "📊 Marketing",
-      mobile: "📱 Mobile", branding: "🎯 Branding", cloud: "☁️ Cloud"
-    };
+  async function fetchAdminServicesTable() {
+    const tbody = document.getElementById("services-table-body");
+    if (!tbody) return;
 
-    services.forEach(s => {
-      _cache.services[s.id] = s;
-      const tr = document.createElement("tr");
-      tr.id = `service-row-${s.id}`;
-      tr.setAttribute("data-searchable", `${s.title} ${s.description}`);
-      tr.innerHTML = `
+    try {
+      const response = await fetch("/api/services");
+      if (!response.ok) throw new Error("Failed");
+      const services = await response.json();
+
+      tbody.innerHTML = "";
+
+      if (!services.length) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--text-muted);">No services found.</td></tr>`;
+        return;
+      }
+
+      const iconLabels = {
+        web: "🌐 Web Design", design: "🎨 UI/UX", marketing: "📊 Marketing",
+        mobile: "📱 Mobile", branding: "🎯 Branding", cloud: "☁️ Cloud"
+      };
+
+      services.forEach(s => {
+        _cache.services[s.id] = s;
+        const tr = document.createElement("tr");
+        tr.setAttribute("data-searchable", `${s.title} ${s.description}`);
+        tr.innerHTML = `
         <td class="text-dark-inline">${escapeHtml(s.title || "")}</td>
         <td><span class="status-badge badge-active">${iconLabels[s.iconUrl] || escapeHtml(s.iconUrl || "—")}</span></td>
-        <td style="max-width:220px;white-space:pre-wrap;">${escapeHtml((s.description || "").substring(0, 100))}${(s.description || "").length > 100 ? "..." : ""}</td>
-        <td>
-          <span style="font-weight:600;color:var(--text-dark);">${s.basePrice != null ? "$" + Number(s.basePrice).toFixed(2) : "<span style='color:var(--text-muted);font-size:0.8rem;'>Not set</span>"}</span>
-        </td>
-        <td id="addon-cell-${s.id}">
-          <button onclick="toggleAddonPanel(${s.id}, '${escapeHtml((s.title || "").replace(/'/g, "\\'"))}')"
-                  id="addon-toggle-btn-${s.id}"
-                  style="padding:0.3rem 0.65rem;border-radius:6px;border:1px solid var(--border-color);background:var(--bg-card);color:var(--text-dark);cursor:pointer;font-size:0.8rem;display:inline-flex;align-items:center;gap:5px;">
-            <span id="addon-count-${s.id}">...</span> add-ons <span style="font-size:0.7rem;opacity:0.6;">▼</span>
-          </button>
-        </td>
+        <td style="max-width:260px;white-space:pre-wrap;">${escapeHtml((s.description || "").substring(0, 100))}${(s.description || "").length > 100 ? "..." : ""}</td>
         <td>
           <div class="action-btns">
-            <button class="btn-edit" onclick="openCrudModal('service', ${s.id})">
+            <button class="btn-edit"   onclick="openCrudModal('service', ${s.id})">
               <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit
             </button>
             <button class="btn-delete" onclick="openDeleteConfirm('service', ${s.id}, '${escapeHtml(s.title || "")}')">
@@ -1594,348 +1797,176 @@ async function fetchAdminServicesTable() {
             </button>
           </div>
         </td>`;
-      tbody.appendChild(tr);
-
-      // Tải số lượng add-on ngay sau khi render row (hiển thị badge đếm)
-      fetch(`/api/services/${s.id}/addons`)
-        .then(r => r.ok ? r.json() : [])
-        .then(addons => {
-          addons.forEach(a => { _cache.addons[a.id] = a; });
-          const countEl = document.getElementById(`addon-count-${s.id}`);
-          if (countEl) countEl.textContent = addons.length;
-        })
-        .catch(() => {
-          const countEl = document.getElementById(`addon-count-${s.id}`);
-          if (countEl) countEl.textContent = "?";
-        });
-    });
-  } catch (err) {
-    console.error("fetchAdminServicesTable error:", err);
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:#ef4444;">Could not load service list.</td></tr>`;
-  }
-}
-
-// =============================================
-//  Service Add-ons — Inline panel trong cột bảng Services
-//  Click vào badge đếm → expand 1 row phụ ngay bên dưới để CRUD add-on
-// =============================================
-
-const _addonPanelOpen = {}; // track service nào đang mở panel
-
-async function toggleAddonPanel(serviceId, serviceTitle) {
-  const existingPanel = document.getElementById(`addon-panel-row-${serviceId}`);
-  if (existingPanel) {
-    // Đang mở → đóng lại
-    existingPanel.remove();
-    delete _addonPanelOpen[serviceId];
-    const btn = document.getElementById(`addon-toggle-btn-${serviceId}`);
-    if (btn) btn.querySelector("span:last-child").textContent = "▼";
-    return;
+        tbody.appendChild(tr);
+      });
+    } catch (err) {
+      console.error("fetchAdminServicesTable error:", err);
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:2rem;color:#ef4444;">Could not load service list.</td></tr>`;
+    }
   }
 
-  // Chưa mở → mở inline panel
-  _addonPanelOpen[serviceId] = true;
-  const btn = document.getElementById(`addon-toggle-btn-${serviceId}`);
-  if (btn) btn.querySelector("span:last-child").textContent = "▲";
+  // =============================================
+  //  Admin – Service Add-on CRUD (per service, inside the Service edit modal)
+  // =============================================
 
-  const serviceRow = document.getElementById(`service-row-${serviceId}`);
-  if (!serviceRow) return;
+  const _serviceAddonsCache = {};
 
-  // Tạo row phụ span toàn bộ cột
-  const panelRow = document.createElement("tr");
-  panelRow.id = `addon-panel-row-${serviceId}`;
-  panelRow.innerHTML = `
-    <td colspan="6" style="padding:0;background:var(--bg-card);border-top:none;">
-      <div style="padding:1rem 1.2rem;border:1px solid var(--border-color);border-top:none;border-radius:0 0 8px 8px;background:var(--bg-card);">
-        <div style="font-size:0.8rem;font-weight:600;color:var(--text-muted);margin-bottom:0.6rem;text-transform:uppercase;letter-spacing:0.05em;">Add-ons — ${escapeHtml(serviceTitle)}</div>
-        <div id="addon-inline-list-${serviceId}" style="display:flex;flex-direction:column;gap:6px;margin-bottom:0.75rem;">
-          <div style="color:var(--text-muted);font-size:0.85rem;">Loading...</div>
-        </div>
-        <div style="display:flex;gap:8px;align-items:center;padding-top:0.5rem;border-top:1px solid var(--border-color);">
-          <input type="text" id="new-addon-name-${serviceId}" placeholder="Add-on name" style="flex:1.5;padding:0.4rem 0.6rem;border-radius:6px;border:1px solid var(--border-color);background:var(--bg-input,var(--bg-card));color:var(--text-dark);font-size:0.85rem;">
-          <input type="number" id="new-addon-price-${serviceId}" placeholder="Price ($)" min="0" step="0.01" style="flex:0.8;padding:0.4rem 0.6rem;border-radius:6px;border:1px solid var(--border-color);background:var(--bg-input,var(--bg-card));color:var(--text-dark);font-size:0.85rem;">
-          <button onclick="createInlineAddon(${serviceId})" style="padding:0.4rem 0.8rem;border-radius:6px;border:none;background:#2563eb;color:#fff;cursor:pointer;font-size:0.82rem;font-weight:600;white-space:nowrap;">+ Add</button>
-        </div>
-      </div>
-    </td>`;
-  serviceRow.insertAdjacentElement("afterend", panelRow);
+  async function loadServiceAddonsForModal(serviceId) {
+    const listEl = document.getElementById("cf-addons-list");
+    if (!listEl) return;
+    listEl.innerHTML = `<div style="padding:0.75rem;color:var(--text-muted);font-size:0.85rem;">Loading add-ons...</div>`;
+    try {
+      const response = await fetch(`/api/services/${serviceId}/addons`);
+      if (!response.ok) throw new Error("Failed to load add-ons");
+      const addons = await response.json();
+      addons.forEach(a => { _serviceAddonsCache[a.id] = a; });
+      renderServiceAddonsList(serviceId, addons);
+    } catch (err) {
+      console.error("loadServiceAddonsForModal error:", err);
+      listEl.innerHTML = `<div style="padding:0.75rem;color:#ef4444;font-size:0.85rem;">Could not load add-ons.</div>`;
+    }
+  }
 
-  await refreshInlineAddonList(serviceId);
-}
-
-async function refreshInlineAddonList(serviceId) {
-  const container = document.getElementById(`addon-inline-list-${serviceId}`);
-  if (!container) return;
-
-  try {
-    const res = await fetch(`/api/services/${serviceId}/addons`);
-    const addons = res.ok ? await res.json() : [];
-    addons.forEach(a => { _cache.addons[a.id] = a; });
-
-    // Cập nhật badge đếm
-    const countEl = document.getElementById(`addon-count-${serviceId}`);
-    if (countEl) countEl.textContent = addons.length;
-
+  function renderServiceAddonsList(serviceId, addons) {
+    const listEl = document.getElementById("cf-addons-list");
+    if (!listEl) return;
     if (!addons.length) {
-      container.innerHTML = `<div style="color:var(--text-muted);font-size:0.85rem;font-style:italic;">No add-ons yet.</div>`;
+      listEl.innerHTML = `<div style="padding:0.75rem;color:var(--text-muted);font-size:0.85rem;">No add-ons yet for this service.</div>`;
       return;
     }
-
-    container.innerHTML = addons.map(a => `
-      <div id="addon-inline-item-${a.id}" style="display:flex;align-items:center;gap:8px;padding:0.35rem 0.5rem;border-radius:6px;background:rgba(37,99,235,0.05);border:1px solid rgba(37,99,235,0.12);">
-        <span id="addon-name-display-${a.id}" style="flex:1.5;font-size:0.85rem;font-weight:500;color:var(--text-dark);">${escapeHtml(a.addonName)}</span>
-        <span id="addon-price-display-${a.id}" style="flex:0.6;font-size:0.85rem;font-weight:600;color:#2563eb;">$${Number(a.priceModifier).toFixed(2)}</span>
-        <input type="text"   id="addon-edit-name-${a.id}"  value="${escapeHtml(a.addonName)}"       style="display:none;flex:1.5;padding:0.3rem 0.5rem;border-radius:5px;border:1px solid var(--border-color);font-size:0.82rem;background:var(--bg-input,var(--bg-card));color:var(--text-dark);">
-        <input type="number" id="addon-edit-price-${a.id}" value="${Number(a.priceModifier).toFixed(2)}" min="0" step="0.01" style="display:none;flex:0.6;padding:0.3rem 0.5rem;border-radius:5px;border:1px solid var(--border-color);font-size:0.82rem;background:var(--bg-input,var(--bg-card));color:var(--text-dark);">
-        <button id="addon-edit-btn-${a.id}"   onclick="startInlineAddonEdit(${a.id})"            style="padding:0.25rem 0.5rem;border-radius:5px;border:1px solid #2563eb;background:transparent;color:#2563eb;cursor:pointer;font-size:0.78rem;">Edit</button>
-        <button id="addon-save-btn-${a.id}"   onclick="saveInlineAddonEdit(${a.id},${serviceId})" style="display:none;padding:0.25rem 0.5rem;border-radius:5px;border:none;background:#2563eb;color:#fff;cursor:pointer;font-size:0.78rem;">Save</button>
-        <button id="addon-cancel-btn-${a.id}" onclick="cancelInlineAddonEdit(${a.id})"           style="display:none;padding:0.25rem 0.5rem;border-radius:5px;border:1px solid var(--border-color);background:transparent;color:var(--text-muted);cursor:pointer;font-size:0.78rem;">✕</button>
-        <button onclick="deleteInlineAddon(${a.id},${serviceId})"                                 style="padding:0.25rem 0.5rem;border-radius:5px;border:1px solid #ef4444;background:transparent;color:#ef4444;cursor:pointer;font-size:0.78rem;">Del</button>
-      </div>`).join("");
-  } catch (e) {
-    container.innerHTML = `<div style="color:#ef4444;font-size:0.85rem;">Failed to load add-ons.</div>`;
-  }
-}
-
-function startInlineAddonEdit(addonId) {
-  document.getElementById(`addon-name-display-${addonId}`).style.display  = "none";
-  document.getElementById(`addon-price-display-${addonId}`).style.display = "none";
-  document.getElementById(`addon-edit-name-${addonId}`).style.display     = "flex";
-  document.getElementById(`addon-edit-price-${addonId}`).style.display    = "flex";
-  document.getElementById(`addon-edit-btn-${addonId}`).style.display      = "none";
-  document.getElementById(`addon-save-btn-${addonId}`).style.display      = "inline-block";
-  document.getElementById(`addon-cancel-btn-${addonId}`).style.display    = "inline-block";
-}
-
-function cancelInlineAddonEdit(addonId) {
-  document.getElementById(`addon-name-display-${addonId}`).style.display  = "inline";
-  document.getElementById(`addon-price-display-${addonId}`).style.display = "inline";
-  document.getElementById(`addon-edit-name-${addonId}`).style.display     = "none";
-  document.getElementById(`addon-edit-price-${addonId}`).style.display    = "none";
-  document.getElementById(`addon-edit-btn-${addonId}`).style.display      = "inline-block";
-  document.getElementById(`addon-save-btn-${addonId}`).style.display      = "none";
-  document.getElementById(`addon-cancel-btn-${addonId}`).style.display    = "none";
-}
-
-async function saveInlineAddonEdit(addonId, serviceId) {
-  const name  = document.getElementById(`addon-edit-name-${addonId}`).value.trim();
-  const price = document.getElementById(`addon-edit-price-${addonId}`).value.trim();
-  if (!name || price === "" || isNaN(Number(price)) || Number(price) < 0) {
-    showToast("Vui lòng nhập tên và giá hợp lệ.", "error"); return;
-  }
-  try {
-    const res = await fetch(`/api/service-addons/${addonId}`, {
-      method: "PUT", headers: adminHeaders(),
-      body: JSON.stringify({ addonName: name, priceModifier: Number(price) })
-    });
-    if (!res.ok) throw new Error(await extractErrorMessage(res, "update"));
-    showToast("Add-on updated!", "success");
-    await refreshInlineAddonList(serviceId);
-  } catch (err) { showToast("Failed: " + err.message, "error"); }
-}
-
-async function deleteInlineAddon(addonId, serviceId) {
-  try {
-    const res = await fetch(`/api/service-addons/${addonId}`, { method: "DELETE", headers: adminHeaders() });
-    if (!res.ok) throw new Error(await extractErrorMessage(res, "delete"));
-    showToast("Add-on deleted.", "success");
-    await refreshInlineAddonList(serviceId);
-  } catch (err) { showToast("Failed: " + err.message, "error"); }
-}
-
-async function createInlineAddon(serviceId) {
-  const name  = document.getElementById(`new-addon-name-${serviceId}`).value.trim();
-  const price = document.getElementById(`new-addon-price-${serviceId}`).value.trim();
-  if (!name) { showToast("Vui lòng nhập tên add-on.", "error"); return; }
-  if (price === "" || isNaN(Number(price)) || Number(price) < 0) { showToast("Vui lòng nhập giá hợp lệ.", "error"); return; }
-  try {
-    const res = await fetch("/api/service-addons", {
-      method: "POST", headers: adminHeaders(),
-      body: JSON.stringify({ serviceId, addonName: name, priceModifier: Number(price) })
-    });
-    if (!res.ok) throw new Error(await extractErrorMessage(res, "create"));
-    document.getElementById(`new-addon-name-${serviceId}`).value  = "";
-    document.getElementById(`new-addon-price-${serviceId}`).value = "";
-    showToast("Add-on added!", "success");
-    await refreshInlineAddonList(serviceId);
-  } catch (err) { showToast("Failed: " + err.message, "error"); }
-}
-
-// =============================================
-//  Service Add-ons Management (admin sets these per service,
-//  used as reference when admin manually prices each booking)
-// =============================================
-
-let _currentAddonServiceId = null;
-
-async function openAddonModal(serviceId, serviceTitle) {
-  _currentAddonServiceId = serviceId;
-  document.getElementById("addonModalTitle").textContent = `Manage Add-ons — ${serviceTitle}`;
-  document.getElementById("addonModalOverlay").style.display = "flex";
-  document.getElementById("newAddonName").value = "";
-  document.getElementById("newAddonPrice").value = "";
-  await loadServiceAddons(serviceId);
-}
-
-function closeAddonModal() {
-  document.getElementById("addonModalOverlay").style.display = "none";
-  _currentAddonServiceId = null;
-}
-
-async function loadServiceAddons(serviceId) {
-  const listEl = document.getElementById("addonList");
-  listEl.innerHTML = `<p style="color:var(--text-muted);font-size:0.85rem;">Loading...</p>`;
-  try {
-    const res = await fetch(`/api/services/${serviceId}/addons`);
-    if (!res.ok) throw new Error("Failed to load add-ons");
-    const addons = await res.json();
-
-    if (!addons.length) {
-      listEl.innerHTML = `<p style="color:var(--text-muted);font-size:0.85rem;">No add-ons yet for this service.</p>`;
-      return;
-    }
-
     listEl.innerHTML = addons.map(a => `
-      <div class="addon-row" id="addon-row-${a.id}" style="padding:8px 12px;border:1px solid var(--border-color);border-radius:8px;">
-        <div id="addon-view-${a.id}" style="display:flex;justify-content:space-between;align-items:center;">
-          <div>
-            <div style="font-weight:600;font-size:0.9rem;color:var(--text-dark);">${escapeHtml(a.addonName)}</div>
-            <div style="font-size:0.8rem;color:var(--text-muted);">$${Number(a.priceModifier).toFixed(2)}</div>
-          </div>
-          <div style="display:flex;gap:6px;">
-            <button onclick="startEditAddon(${a.id}, '${escapeHtml(a.addonName).replace(/'/g, "\\'")}', ${a.priceModifier})" style="background:none;border:none;color:#2563eb;cursor:pointer;font-size:1rem;" title="Edit">✎</button>
-            <button onclick="deleteServiceAddon(${a.id})" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:1rem;" title="Delete">🗑</button>
-          </div>
+      <div class="cf-addon-row" data-addon-id="${a.id}" style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0;border-bottom:1px solid var(--border-color);">
+        <div style="flex:1;min-width:0;">
+          <div class="text-dark-inline" style="font-size:0.9rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(a.addonName)}</div>
         </div>
-        <div id="addon-edit-${a.id}" style="display:none;gap:8px;align-items:center;">
-          <input type="text" id="edit-name-${a.id}" style="flex:1.4;padding:0.4rem;border-radius:6px;border:1px solid var(--border-color);background:var(--bg-card);color:var(--text-dark);font-size:0.85rem;">
-          <input type="number" id="edit-price-${a.id}" min="0" step="0.01" style="flex:0.6;padding:0.4rem;border-radius:6px;border:1px solid var(--border-color);background:var(--bg-card);color:var(--text-dark);font-size:0.85rem;">
-          <button onclick="saveEditAddon(${a.id})" style="padding:0.4rem 0.6rem;border-radius:6px;border:none;background:#2563eb;color:#fff;cursor:pointer;font-size:0.8rem;">Save</button>
-          <button onclick="cancelEditAddon(${a.id})" style="padding:0.4rem 0.6rem;border-radius:6px;border:1px solid var(--border-color);background:var(--bg-card);color:var(--text-dark);cursor:pointer;font-size:0.8rem;">Cancel</button>
+        <div style="width:80px;font-weight:600;color:var(--primary,#2563eb);font-size:0.9rem;text-align:right;">$${Number(a.priceModifier).toFixed(2)}</div>
+        <div style="display:flex;gap:4px;flex-shrink:0;">
+          <button type="button" class="btn-edit" style="padding:0.3rem 0.55rem;font-size:0.75rem;" onclick="startEditServiceAddon(${serviceId}, ${a.id})">Edit</button>
+          <button type="button" class="btn-delete" style="padding:0.3rem 0.55rem;font-size:0.75rem;" onclick="deleteServiceAddonInline(${serviceId}, ${a.id}, '${escapeHtml(a.addonName).replace(/'/g, "\\'")}')">Delete</button>
         </div>
       </div>
     `).join("");
-  } catch (err) {
-    listEl.innerHTML = `<p style="color:#ef4444;font-size:0.85rem;">Could not load add-ons.</p>`;
   }
-}
 
-function startEditAddon(addonId, currentName, currentPrice) {
-  document.getElementById(`addon-view-${addonId}`).style.display = "none";
-  const editRow = document.getElementById(`addon-edit-${addonId}`);
-  editRow.style.display = "flex";
-  document.getElementById(`edit-name-${addonId}`).value = currentName;
-  document.getElementById(`edit-price-${addonId}`).value = currentPrice;
-}
-
-function cancelEditAddon(addonId) {
-  document.getElementById(`addon-view-${addonId}`).style.display = "flex";
-  document.getElementById(`addon-edit-${addonId}`).style.display = "none";
-}
-
-async function saveEditAddon(addonId) {
-  const name = document.getElementById(`edit-name-${addonId}`).value.trim();
-  const price = document.getElementById(`edit-price-${addonId}`).value.trim();
-
-  if (!name) { showToast("Please enter an add-on name.", "error"); return; }
-  if (price === "" || isNaN(Number(price)) || Number(price) < 0) { showToast("Please enter a valid price.", "error"); return; }
-
-  try {
-    const res = await fetch(`/api/service-addons/${addonId}`, {
-      method: "PUT",
-      headers: adminHeaders(),
-      body: JSON.stringify({ addonName: name, priceModifier: Number(price) })
-    });
-    if (!res.ok) throw new Error(await extractErrorMessage(res, "update"));
-    showToast("Add-on updated!", "success");
-    loadServiceAddons(_currentAddonServiceId);
-  } catch (err) {
-    showToast("Failed to update add-on: " + err.message, "error");
+  function startEditServiceAddon(serviceId, addonId) {
+    const a = _serviceAddonsCache[addonId];
+    const row = document.querySelector(`.cf-addon-row[data-addon-id="${addonId}"]`);
+    if (!a || !row) return;
+    row.innerHTML = `
+      <input type="text" id="cf-addon-edit-name-${addonId}" value="${escapeHtml(a.addonName)}" style="flex:1;min-width:0;padding:0.4rem;border:1px solid var(--border-color);border-radius:6px;font-size:0.85rem;">
+      <input type="number" id="cf-addon-edit-price-${addonId}" value="${a.priceModifier}" min="0" step="0.01" style="width:80px;padding:0.4rem;border:1px solid var(--border-color);border-radius:6px;font-size:0.85rem;">
+      <div style="display:flex;gap:4px;flex-shrink:0;">
+        <button type="button" class="btn-save" style="padding:0.3rem 0.55rem;font-size:0.75rem;" onclick="saveServiceAddonEdit(${serviceId}, ${addonId})">Save</button>
+        <button type="button" class="btn-cancel" style="padding:0.3rem 0.55rem;font-size:0.75rem;" onclick="loadServiceAddonsForModal(${serviceId})">Cancel</button>
+      </div>
+    `;
   }
-}
 
-// Đọc message thật từ response lỗi của backend (vd "Cannot find member with id = ..."),
-// và tự suy ra lý do phổ biến khi backend không trả JSON (401/403 do token hết hạn/thiếu quyền)
-async function extractErrorMessage(res, fallbackAction) {
-  if (res.status === 401) return "Bạn chưa đăng nhập hoặc token đã hết hạn (401) - vui lòng đăng nhập lại.";
-  if (res.status === 403) return "Tài khoản không đủ quyền (403) - cần role ADMIN hoặc MEMBER, hoặc token đã hết hiệu lực do server vừa restart, vui lòng đăng nhập lại.";
-  try {
-    const data = await res.json();
-    if (data && data.message) return data.message;
-  } catch (e) { /* body không phải JSON, bỏ qua */ }
-  return `Failed to ${fallbackAction} add-on (HTTP ${res.status})`;
-}
-
-async function createServiceAddon() {
-  const nameInput = document.getElementById("newAddonName");
-  const priceInput = document.getElementById("newAddonPrice");
-  const name = nameInput.value.trim();
-  const price = priceInput.value.trim();
-
-  if (!name) { showToast("Please enter an add-on name.", "error"); return; }
-  if (price === "" || isNaN(Number(price)) || Number(price) < 0) { showToast("Please enter a valid price.", "error"); return; }
-
-  try {
-    const res = await fetch("/api/service-addons", {
-      method: "POST",
-      headers: adminHeaders(),
-      body: JSON.stringify({ serviceId: _currentAddonServiceId, addonName: name, priceModifier: Number(price) })
-    });
-    if (!res.ok) throw new Error(await extractErrorMessage(res, "create"));
-    nameInput.value = "";
-    priceInput.value = "";
-    showToast("Add-on created!", "success");
-    loadServiceAddons(_currentAddonServiceId);
-  } catch (err) {
-    showToast("Failed to create add-on: " + err.message, "error");
-  }
-}
-
-async function deleteServiceAddon(addonId) {
-  try {
-    const res = await fetch(`/api/service-addons/${addonId}`, {
-      method: "DELETE",
-      headers: adminHeaders()
-    });
-    if (!res.ok) throw new Error(await extractErrorMessage(res, "delete"));
-    showToast("Add-on deleted.", "success");
-    loadServiceAddons(_currentAddonServiceId);
-  } catch (err) {
-    showToast("Failed to delete add-on: " + err.message, "error");
-  }
-}
-
-async function fetchAdminContacts() {
-  const tableBody = document.getElementById("contacts-table-body");
-  const statsCount = document.getElementById("stat-messages-count");
-  if (!tableBody) return;
-
-  try {
-    const token = getAdminToken();
-    const response = await fetch("/api/contacts", {
-      headers: token ? { "Authorization": "Bearer " + token } : {}
-    });
-    if (!response.ok) throw new Error("Failed to fetch contact submissions");
-    const contacts = await response.json();
-
-    tableBody.innerHTML = "";
-
-    if (contacts.length === 0) {
-      tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;">No contact messages found.</td></tr>`;
-      if (statsCount) statsCount.textContent = "0";
+  async function saveServiceAddonEdit(serviceId, addonId) {
+    const name = (document.getElementById(`cf-addon-edit-name-${addonId}`)?.value || "").trim();
+    const price = parseFloat(document.getElementById(`cf-addon-edit-price-${addonId}`)?.value);
+    if (!name || isNaN(price) || price < 0) {
+      showToast("Please enter a valid add-on name and non-negative price.", "warning");
       return;
     }
-
-    if (statsCount) statsCount.textContent = contacts.length;
-
-    contacts.forEach(contact => {
-      const row  = document.createElement("tr");
-      const date = new Date(contact.createdAt).toLocaleDateString("en-US", {
-        hour: "2-digit", minute: "2-digit",
-        day: "2-digit", month: "2-digit", year: "numeric"
+    try {
+      const response = await fetch(`/api/services/${serviceId}/addons/${addonId}`, {
+        method: "PUT",
+        headers: adminHeaders(),
+        body: JSON.stringify({ addonName: name, priceModifier: price })
       });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || "Failed to update add-on");
+      showToast("Add-on updated successfully!", "success");
+      loadServiceAddonsForModal(serviceId);
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to update add-on: " + err.message, "error");
+    }
+  }
 
-      row.innerHTML = `
+  function deleteServiceAddonInline(serviceId, addonId, name) {
+    showConfirmModal({
+      title: "Delete Add-on",
+      message: `Are you sure you want to delete "${name}"? This action cannot be undone.`,
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`/api/services/${serviceId}/addons/${addonId}`, {
+            method: "DELETE",
+            headers: adminHeaders()
+          });
+          if (!response.ok) throw new Error("Failed to delete add-on");
+          showToast("Add-on deleted successfully!", "success");
+          loadServiceAddonsForModal(serviceId);
+        } catch (err) {
+          console.error(err);
+          showToast("Failed to delete add-on: " + err.message, "error");
+        }
+      }
+    });
+  }
+
+  async function addServiceAddon(serviceId) {
+    const nameInput = document.getElementById("cf-addon-new-name");
+    const priceInput = document.getElementById("cf-addon-new-price");
+    const name = (nameInput?.value || "").trim();
+    const price = parseFloat(priceInput?.value);
+    if (!name || isNaN(price) || price < 0) {
+      showToast("Please enter a valid add-on name and non-negative price.", "warning");
+      return;
+    }
+    try {
+      const response = await fetch(`/api/services/${serviceId}/addons`, {
+        method: "POST",
+        headers: adminHeaders(),
+        body: JSON.stringify({ addonName: name, priceModifier: price })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || "Failed to add add-on");
+      if (nameInput) nameInput.value = "";
+      if (priceInput) priceInput.value = "";
+      showToast("Add-on added successfully!", "success");
+      loadServiceAddonsForModal(serviceId);
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to add add-on: " + err.message, "error");
+    }
+  }
+
+  async function fetchAdminContacts() {
+    const tableBody = document.getElementById("contacts-table-body");
+    const statsCount = document.getElementById("stat-messages-count");
+
+    try {
+      const token = getAdminToken();
+      const response = await fetch("/api/contacts", {
+        headers: token ? { "Authorization": "Bearer " + token } : {}
+      });
+      if (!response.ok) throw new Error("Failed to fetch contact submissions");
+      const contacts = await response.json();
+
+      if (statsCount) statsCount.textContent = contacts.length;
+
+      if (!tableBody) return;
+      tableBody.innerHTML = "";
+
+      if (contacts.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;">No contact messages found.</td></tr>`;
+        return;
+      }
+
+      if (statsCount) statsCount.textContent = contacts.length;
+
+      contacts.forEach(contact => {
+        const row = document.createElement("tr");
+        const date = new Date(contact.createdAt).toLocaleDateString("en-US", {
+          hour: "2-digit", minute: "2-digit",
+          day: "2-digit", month: "2-digit", year: "numeric"
+        });
+
+        row.innerHTML = `
         <td>
           <div class="text-dark-inline">${escapeHtml(contact.name)}</div>
           <div style="font-size:0.85rem;color:var(--text-muted);">${escapeHtml(contact.email)}</div>
@@ -1953,6 +1984,264 @@ async function fetchAdminContacts() {
   }
 }
 
+  let allMessages = [];
+  let filteredMessages = [];
+  let activeReplyId = null;
+
+  async function loadUserMessages() {
+    try {
+      const token = getAdminToken();
+      const response = await fetch("/api/contacts/admin/user-messages", {
+        headers: token ? { "Authorization": "Bearer " + token } : {}
+      });
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          showToast("Session expired or unauthorized. Please login again.", "error");
+          window.location.href = "login.html";
+          return;
+        }
+        throw new Error("Failed to fetch messages");
+      }
+      allMessages = await response.json();
+      
+      // Update Overview stats count dynamically if the element is present
+      const statsCount = document.getElementById("stat-messages-count");
+      if (statsCount) statsCount.textContent = allMessages.length;
+      
+      applyFilters();
+    } catch (err) {
+      console.error(err);
+      const tbody = document.getElementById("messages-table-body");
+      if (tbody) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" style="text-align: center; padding: 2rem; color: #ef4444; font-weight: 600;">
+              Error loading messages: ${err.message}
+            </td>
+          </tr>
+        `;
+      }
+    }
+  }
+
+  function applyFilters() {
+    const searchInput = document.getElementById("search-input");
+    const filterStatus = document.getElementById("filter-status");
+    if (!searchInput || !filterStatus) return;
+
+    const searchTerm = searchInput.value.trim().toLowerCase();
+    const statusFilter = filterStatus.value;
+
+    filteredMessages = allMessages.filter(msg => {
+      // Status filter
+      if (statusFilter === "REPLIED" && !msg.replied) return false;
+      if (statusFilter === "UNREPLIED" && msg.replied) return false;
+
+      // Search term filter
+      if (searchTerm) {
+        const matchUsername = (msg.username || "").toLowerCase().includes(searchTerm);
+        const matchFullName = (msg.fullName || "").toLowerCase().includes(searchTerm);
+        const matchEmail = (msg.email || "").toLowerCase().includes(searchTerm);
+        const matchContent = (msg.content || "").toLowerCase().includes(searchTerm);
+        const matchTitle = (msg.title || "").toLowerCase().includes(searchTerm);
+        return matchUsername || matchFullName || matchEmail || matchContent || matchTitle;
+      }
+
+      return true;
+    });
+
+    renderTable();
+  }
+
+  function renderTable() {
+    const tbody = document.getElementById("messages-table-body");
+    if (!tbody) return;
+
+    if (filteredMessages.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+            No matching client messages found.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    const role = localStorage.getItem("role") || sessionStorage.getItem("role");
+    tbody.innerHTML = filteredMessages.map(msg => {
+      const dateStr = new Date(msg.createdAt).toLocaleString("en-US", {
+        hour: "2-digit", minute: "2-digit",
+        day: "2-digit", month: "2-digit", year: "numeric"
+      });
+
+      const statusBadge = msg.replied 
+        ? `<span class="status-badge badge-replied">Replied</span>`
+        : `<span class="status-badge badge-unreplied">Unreplied</span>`;
+
+      let replyContentHtml = "";
+      if (msg.replied) {
+        const repliedDateStr = new Date(msg.repliedAt).toLocaleString("en-US", {
+          hour: "2-digit", minute: "2-digit",
+          day: "2-digit", month: "2-digit", year: "numeric"
+        });
+        replyContentHtml = `
+          <div class="replied-box">
+            <div style="font-weight: 700; margin-bottom: 0.2rem;">Replied on ${repliedDateStr}:</div>
+            <p style="margin: 0; white-space: pre-wrap;">${escapeHtml(msg.reply)}</p>
+          </div>
+        `;
+      }
+
+      const isRepliable = !msg.replied && role !== "ROLE_ADMIN";
+
+      return `
+        <tr>
+          <td>
+            <div style="font-weight: 700; color: var(--text-dark);">${escapeHtml(msg.fullName)}</div>
+            <div style="font-size: 0.78rem; color: var(--text-muted);">@${escapeHtml(msg.username)}</div>
+          </td>
+          <td>
+            <div style="font-size: 0.85rem; font-weight: 600; color: var(--color-primary, #2563eb);">${escapeHtml(msg.email)}</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">${escapeHtml(msg.phone || "N/A")}</div>
+          </td>
+          <td style="font-weight: 600; color: var(--text-dark);">${escapeHtml(msg.title || "")}</td>
+          <td>
+            <p style="margin: 0; line-height: 1.4; white-space: pre-wrap;">${escapeHtml(msg.content || "")}</p>
+            ${replyContentHtml}
+          </td>
+          <td>
+            <div>${statusBadge}</div>
+            <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.25rem;">Sent: ${dateStr}</div>
+          </td>
+          <td>
+            <div class="action-btns">
+              ${isRepliable ? `
+                <button class="btn-edit" style="background:var(--color-primary, #2563eb); color:#fff; border:none;" onclick="openReplyDialog(${msg.id}, '${escapeHtml(msg.fullName)}', '${escapeHtml(msg.title)}')">
+                  Reply
+                </button>
+              ` : ''}
+              <button class="btn-delete" onclick="deleteMessage(${msg.id})">
+                Delete
+              </button>
+            </div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function handleSearch() {
+    applyFilters();
+  }
+
+  function handleFilter() {
+    applyFilters();
+  }
+
+  function openReplyDialog(msgId, senderName, title) {
+    activeReplyId = msgId;
+    const senderSpan = document.getElementById("reply-dialog-sender");
+    const titleSpan = document.getElementById("reply-dialog-msg-title");
+    const textarea = document.getElementById("reply-textarea");
+    const overlay = document.getElementById("reply-dialog-overlay");
+
+    if (senderSpan) senderSpan.textContent = senderName;
+    if (titleSpan) titleSpan.textContent = title;
+    if (textarea) textarea.value = "";
+    if (overlay) overlay.style.display = "flex";
+    if (textarea) textarea.focus();
+  }
+
+  function closeReplyDialog() {
+    activeReplyId = null;
+    const overlay = document.getElementById("reply-dialog-overlay");
+    const textarea = document.getElementById("reply-textarea");
+    if (overlay) overlay.style.display = "none";
+    if (textarea) textarea.value = "";
+  }
+
+  async function submitReply() {
+    if (!activeReplyId) return;
+    const textarea = document.getElementById("reply-textarea");
+    if (!textarea) return;
+    const text = textarea.value.trim();
+    if (!text) {
+      showToast("Please enter a reply message.", "warning");
+      return;
+    }
+
+    const btn = document.getElementById("btn-send-reply");
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "Sending...";
+    }
+
+    try {
+      const token = getAdminToken();
+      const response = await fetch(`/api/contacts/${activeReplyId}/reply`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": token ? "Bearer " + token : ""
+        },
+        body: JSON.stringify({ message: text })
+      });
+
+      if (!response.ok) throw new Error("Failed to send reply");
+
+      showToast("Reply sent successfully!", "success");
+      closeReplyDialog();
+      await loadUserMessages();
+    } catch (err) {
+      console.error(err);
+      showToast("Error: " + err.message, "error");
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "Send Reply";
+      }
+    }
+  }
+
+  async function deleteMessage(msgId) {
+    showConfirmModal({
+      title: "Delete Message",
+      message: "Are you sure you want to delete this message? This action cannot be undone.",
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      onConfirm: async () => {
+        try {
+          const token = getAdminToken();
+          const response = await fetch(`/api/contacts/${msgId}`, {
+            method: "DELETE",
+            headers: token ? { "Authorization": "Bearer " + token } : {}
+          });
+
+          if (!response.ok) throw new Error("Failed to delete message");
+
+          showToast("Message deleted successfully!", "success");
+          await loadUserMessages();
+        } catch (err) {
+          console.error(err);
+          showToast("Error deleting message: " + err.message, "error");
+        }
+      }
+    });
+  }
+
+  // Expose functions globally to onclick handlers
+  window.switchAdminPanel = switchAdminPanel;
+  window.loadUserMessages = loadUserMessages;
+  window.applyFilters = applyFilters;
+  window.renderTable = renderTable;
+  window.handleSearch = handleSearch;
+  window.handleFilter = handleFilter;
+  window.openReplyDialog = openReplyDialog;
+  window.closeReplyDialog = closeReplyDialog;
+  window.submitReply = submitReply;
+  window.deleteMessage = deleteMessage;
+
 // =============================================
 //  In-App Notification Bell
 // =============================================
@@ -1962,7 +2251,7 @@ function getAuthToken() {
 }
 
 function injectNotificationBell(navLinksContainer, beforeEl) {
-  // Tránh chèn trùng nếu hàm này bị gọi lại (updateNavbarAuth có thể chạy nhiều lần)
+  // Avoid duplicate injection if function is re-called (updateNavbarAuth may run multiple times)
   const old = navLinksContainer.querySelector(".notification-bell-container");
   if (old) old.remove();
 
@@ -2016,7 +2305,7 @@ function injectNotificationBell(navLinksContainer, beforeEl) {
     } catch (e) { console.error(e); }
   });
 
-  // Tải số thông báo chưa đọc ngay khi vào trang, rồi poll mỗi 30s để cập nhật gần-realtime
+  // Load unread notification count on page load, then poll every 30s for near-realtime updates
   loadNotificationUnreadCount();
   if (window._notificationPollInterval) clearInterval(window._notificationPollInterval);
   window._notificationPollInterval = setInterval(loadNotificationUnreadCount, 30000);
@@ -2037,7 +2326,7 @@ async function loadNotificationUnreadCount() {
     } else {
       badge.style.display = "none";
     }
-  } catch (e) { /* im lặng bỏ qua - không làm phiền người dùng vì lỗi phụ này */ }
+  } catch (e) { /* silently ignore secondary errors */ }
 }
 
 async function loadNotificationList() {
@@ -2056,12 +2345,11 @@ async function loadNotificationList() {
     }
 
     listEl.innerHTML = list.map(n => `
-      <a href="${escapeHtml(n.link || '#')}" class="notification-item" data-id="${n.id}"
-         style="display:block;padding:10px 12px;border-radius:8px;text-decoration:none;color:inherit;margin-bottom:4px;
-                background:${n.read ? 'transparent' : 'rgba(37,99,235,0.06)'};border-left:3px solid ${n.read ? 'transparent' : '#2563eb'};">
-        <div style="font-weight:600;font-size:0.85rem;color:var(--text-dark,#111);">${escapeHtml(n.title)}</div>
-        <div style="font-size:0.8rem;color:var(--text-muted);margin-top:2px;line-height:1.4;">${escapeHtml(n.message)}</div>
-        <div style="font-size:0.72rem;color:var(--text-muted);margin-top:4px;">${formatNotificationTime(n.createdAt)}</div>
+      <a href="${escapeHtml(n.link || '#')}" class="notification-item ${n.read ? 'read' : 'unread'}" data-id="${n.id}"
+         style="display:block;padding:10px 12px;border-radius:8px;text-decoration:none;margin-bottom:4px;">
+        <div class="notif-item-title" style="font-weight:600;font-size:0.85rem;margin-bottom:2px;">${escapeHtml(n.title)}</div>
+        <div class="notif-item-msg" style="font-size:0.8rem;margin-top:2px;line-height:1.4;">${escapeHtml(n.message)}</div>
+        <div class="notif-item-time" style="font-size:0.72rem;margin-top:4px;">${formatNotificationTime(n.createdAt)}</div>
       </a>
     `).join("");
 
@@ -2074,7 +2362,7 @@ async function loadNotificationList() {
             headers: { "Authorization": "Bearer " + getAuthToken() }
           });
           loadNotificationUnreadCount();
-        } catch (err) { /* không chặn điều hướng nếu lỗi đánh dấu đã đọc */ }
+        } catch (err) { /* do not block navigation if marking read fails */ }
       });
     });
   } catch (e) {
@@ -2096,153 +2384,304 @@ function formatNotificationTime(iso) {
   return d.toLocaleDateString();
 }
 
-// =============================================
-//  Toast Notification System
-// =============================================
+  // =============================================
+  //  Unified Notification System (Toast, Alert, Confirm)
+  // =============================================
 
-function showToast(message, type = "success") {
-  let container = document.getElementById("toast-container");
-  if (!container) {
-    container = document.createElement("div");
-    container.id = "toast-container";
-    container.className = "toast-container";
-    document.body.appendChild(container);
+  function ensureToastStyles() {
+    if (document.getElementById("toast-system-styles")) return;
+    const style = document.createElement("style");
+    style.id = "toast-system-styles";
+    style.textContent = `
+      #toast-container, .toast-container, #toast-notification-container {
+        position: fixed;
+        bottom: 24px;
+        right: 24px;
+        z-index: 999999;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        pointer-events: none;
+        max-width: 380px;
+        width: calc(100vw - 48px);
+      }
+      .toast-item, .toast-msg-item, .live-toast {
+        pointer-events: auto;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 18px;
+        border-radius: 12px;
+        background: #111827;
+        color: #f3f4f6;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.12);
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        font-family: inherit;
+        font-size: 0.9rem;
+      }
+      .toast-item.show, .toast-msg-item.show, .live-toast.show {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+      .toast-item.success, .toast-msg-item.success { border-left: 4px solid #10b981; }
+      .toast-item.error, .toast-msg-item.error, .toast-item.danger { border-left: 4px solid #ef4444; }
+      .toast-item.warning, .toast-msg-item.warning { border-left: 4px solid #f59e0b; }
+      .toast-item.info, .toast-msg-item.info { border-left: 4px solid #3b82f6; }
+    `;
+    document.head.appendChild(style);
   }
 
-  const toast = document.createElement("div");
-  toast.className = `toast-item ${type}`;
-  
-  let iconSvg = "";
-  if (type === "success") {
-    iconSvg = `<svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#10b981;fill:none;stroke-width:2.5;"><polyline points="20 6 9 17 4 12"/></svg>`;
-  } else if (type === "error") {
-    iconSvg = `<svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#ef4444;fill:none;stroke-width:2.5;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
-  } else {
-    iconSvg = `<svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#3b82f6;fill:none;stroke-width:2.5;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`;
+  function showToast(arg1, arg2, arg3) {
+    ensureToastStyles();
+    let title = "";
+    let message = "";
+    let type = "success";
+
+    const validTypes = ["success", "error", "warning", "info", "danger"];
+    if (arg2 && validTypes.includes(String(arg2).toLowerCase())) {
+      message = arg1 || "";
+      type = String(arg2).toLowerCase();
+      if (type === "danger") type = "error";
+      title = arg3 || "";
+    } else if (arg1 && !arg2 && !arg3) {
+      message = arg1;
+      type = "success";
+    } else {
+      title = arg1 || "";
+      message = arg2 || "";
+      type = String(arg3 || "success").toLowerCase();
+      if (type === "danger") type = "error";
+    }
+
+    let container = document.getElementById("toast-container");
+    if (!container) {
+      container = document.createElement("div");
+      container.id = "toast-container";
+      container.className = "toast-container";
+      document.body.appendChild(container);
+    }
+
+    const toast = document.createElement("div");
+    toast.className = `toast-item ${type}`;
+
+    let iconSvg = "";
+    if (type === "success") {
+      iconSvg = `<svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#10b981;fill:none;stroke-width:2.5;flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>`;
+    } else if (type === "error") {
+      iconSvg = `<svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#ef4444;fill:none;stroke-width:2.5;flex-shrink:0;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+    } else if (type === "warning") {
+      iconSvg = `<svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#f59e0b;fill:none;stroke-width:2.5;flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
+    } else {
+      iconSvg = `<svg viewBox="0 0 24 24" style="width:20px;height:20px;stroke:#3b82f6;fill:none;stroke-width:2.5;flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`;
+    }
+
+    const titleHtml = title ? `<div style="font-weight:700;font-size:0.9rem;margin-bottom:2px;">${escapeHtml(title)}</div>` : "";
+    toast.innerHTML = `
+      ${iconSvg}
+      <div style="flex:1;min-width:0;">
+        ${titleHtml}
+        <div class="toast-message" style="line-height:1.4;">${escapeHtml(message)}</div>
+      </div>
+      <button onclick="this.parentElement.remove()" style="background:none;border:none;color:#9ca3af;cursor:pointer;font-size:1.1rem;line-height:1;padding:0 0 0 8px;">&times;</button>
+    `;
+
+    container.appendChild(toast);
+    setTimeout(() => toast.classList.add("show"), 10);
+    setTimeout(() => {
+      toast.classList.remove("show");
+      setTimeout(() => toast.remove(), 400);
+    }, 4000);
   }
 
-  toast.innerHTML = `
-    ${iconSvg}
-    <div class="toast-message">${escapeHtml(message)}</div>
-  `;
+  window.showToast = showToast;
+  window.showSuccessToast = (msg) => showToast(msg, "success");
 
-  container.appendChild(toast);
+  window.showFormAlert = function (target, message, typeOrIsSuccess = "error") {
+    let el = typeof target === "string" ? document.getElementById(target) : target;
+    if (!el) return;
 
-  setTimeout(() => toast.classList.add("show"), 10);
-
-  setTimeout(() => {
-    toast.classList.remove("show");
-    setTimeout(() => toast.remove(), 400);
-  }, 4000);
-}
-
-// =============================================
-//  Admin – Consultation Bookings
-// =============================================
-
-async function fetchAdminBookings() {
-  const tbody = document.getElementById("bookings-table-body");
-  if (!tbody) return;
-
-  try {
-    const token = getAdminToken();
-    const response = await fetch("/api/bookings", {
-      headers: adminHeaders()
-    });
-    if (!response.ok) throw new Error("Failed to fetch bookings");
-    const bookings = await response.json();
-
-    // Ensure dependent caches are loaded
-    if (Object.keys(_cache.services).length === 0) {
-      await fetchAdminServicesTable();
-    }
-    if (Object.keys(_cache.users).length === 0) {
-      await fetchAdminUsers();
+    let type = "error";
+    if (typeof typeOrIsSuccess === "boolean") {
+      type = typeOrIsSuccess ? "success" : "error";
+    } else if (typeof typeOrIsSuccess === "string") {
+      type = typeOrIsSuccess.toLowerCase();
     }
 
-    // Nạp add-on của từng service có mặt trong danh sách booking (cache theo addon id
-    // để tra tên add-on khách đã chọn, phục vụ hiển thị trong ô Price bên dưới)
-    const serviceIdsInUse = [...new Set(bookings.map(b => b.serviceId).filter(id => id != null))];
-    const serviceIdsToFetch = serviceIdsInUse.filter(id => !_cache._addonsLoadedForService?.has(id));
-    if (serviceIdsToFetch.length) {
-      _cache._addonsLoadedForService = _cache._addonsLoadedForService || new Set();
-      await Promise.all(serviceIdsToFetch.map(async (sid) => {
-        try {
-          const res = await fetch(`/api/services/${sid}/addons`);
-          if (res.ok) {
-            const addons = await res.json();
-            addons.forEach(a => { _cache.addons[a.id] = a; });
-          }
-        } catch (e) {
-          console.error(`Failed to load add-ons for service ${sid}`, e);
-        } finally {
-          _cache._addonsLoadedForService.add(sid);
-        }
-      }));
+    const isSuccess = type === "success";
+    el.textContent = message;
+    el.className = `alert-message ${isSuccess ? "alert-success" : "alert-danger"}`;
+    el.style.cssText = `
+      display: block;
+      padding: 0.75rem 1rem;
+      margin: 0.75rem 0;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      line-height: 1.4;
+      transition: all 0.3s ease;
+      ${isSuccess 
+        ? 'background: rgba(16, 185, 129, 0.12); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3);' 
+        : 'background: rgba(239, 68, 68, 0.12); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);'}
+    `;
+  };
+
+  window.clearFormAlert = function (target) {
+    let el = typeof target === "string" ? document.getElementById(target) : target;
+    if (el) {
+      el.style.display = "none";
+      el.textContent = "";
+    }
+  };
+
+  window.showConfirmModal = function ({ title = "Confirm", message = "Are you sure you want to proceed?", confirmText = "Confirm", cancelText = "Cancel", onConfirm }) {
+    let overlay = document.getElementById("global-confirm-modal");
+    if (!overlay) {
+      overlay = document.createElement("div");
+      overlay.id = "global-confirm-modal";
+      overlay.style.cssText = `
+        position: fixed; inset: 0; z-index: 999999;
+        background: rgba(10, 15, 30, 0.75); backdrop-filter: blur(8px);
+        display: flex; align-items: center; justify-content: center;
+        opacity: 0; visibility: hidden; transition: all 0.25s ease;
+      `;
+      overlay.innerHTML = `
+        <div style="background: #111827; border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 24px; max-width: 420px; width: 90%; box-shadow: 0 20px 50px rgba(0,0,0,0.5); transform: translateY(20px); transition: all 0.25s ease;" id="confirm-modal-box">
+          <h3 id="confirm-modal-title" style="margin: 0 0 10px 0; font-size: 1.15rem; font-weight: 700; color: #fff;"></h3>
+          <p id="confirm-modal-msg" style="margin: 0 0 20px 0; font-size: 0.9rem; color: #9ca3af; line-height: 1.5;"></p>
+          <div style="display: flex; gap: 12px; justify-content: flex-end;">
+            <button id="confirm-modal-cancel" style="padding: 9px 18px; border-radius: 8px; background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #e5e7eb; font-weight: 600; cursor: pointer; transition: all 0.2s;"></button>
+            <button id="confirm-modal-ok" style="padding: 9px 18px; border-radius: 8px; background: #ef4444; border: none; color: #fff; font-weight: 600; cursor: pointer; transition: all 0.2s;"></button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
     }
 
-    // Expert (chuyên gia tư vấn) = User có role ROLE_MEMBER, KHÔNG phải bảng members cũ
-    const memberUsers = Object.values(_cache.users).filter(u => u.role === "ROLE_MEMBER");
+    const titleEl = document.getElementById("confirm-modal-title");
+    const msgEl = document.getElementById("confirm-modal-msg");
+    const cancelBtn = document.getElementById("confirm-modal-cancel");
+    const okBtn = document.getElementById("confirm-modal-ok");
+    const box = document.getElementById("confirm-modal-box");
 
-    tbody.innerHTML = "";
+    titleEl.textContent = title;
+    msgEl.textContent = message;
+    cancelBtn.textContent = cancelText;
+    okBtn.textContent = confirmText;
 
-    if (!bookings.length) {
-      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text-muted);">No bookings found.</td></tr>`;
-      return;
+    function closeModal() {
+      overlay.style.opacity = "0";
+      overlay.style.visibility = "hidden";
+      box.style.transform = "translateY(20px)";
     }
 
-    bookings.forEach(b => {
-      _cache.bookings[b.id] = b;
+    cancelBtn.onclick = closeModal;
+    overlay.onclick = (e) => { if (e.target === overlay) closeModal(); };
 
-      const tr = document.createElement("tr");
-      const client = _cache.users[b.clientId] || { fullName: `User #${b.clientId}`, email: "" };
-      const service = _cache.services[b.serviceId] || { title: `Service #${b.serviceId}` };
-      
-      tr.setAttribute("data-searchable", `${client.fullName} ${service.title} ${b.appointmentDate} ${b.status}`);
+    okBtn.onclick = async () => {
+      closeModal();
+      if (typeof onConfirm === "function") {
+        await onConfirm();
+      }
+    };
 
-      // Expert select options - lấy từ User role=ROLE_MEMBER (đúng người sẽ nhận thông báo/đăng nhập)
-      let expertOptions = `<option value="">-- Assign Expert --</option>`;
-      memberUsers.forEach(u => {
-        const selected = (b.expertId && String(b.expertId) === String(u.id)) ? "selected" : "";
-        expertOptions += `<option value="${u.id}" ${selected}>${escapeHtml(u.fullName)}</option>`;
+    overlay.style.visibility = "visible";
+    overlay.style.opacity = "1";
+    box.style.transform = "translateY(0)";
+  };
+
+  // =============================================
+  //  Admin – Consultation Bookings
+  // =============================================
+
+  async function fetchAdminBookings() {
+    const tbody = document.getElementById("bookings-table-body");
+    if (!tbody) return;
+
+    try {
+      const token = getAdminToken();
+      const response = await fetch("/api/bookings", {
+        headers: adminHeaders()
       });
+      if (!response.ok) throw new Error("Failed to fetch bookings");
+      const bookings = await response.json();
+
+      // Ensure dependent caches are loaded
+      if (Object.keys(_cache.services).length === 0) {
+        await fetchAdminServicesTable();
+      }
+      if (Object.keys(_cache.users).length === 0) {
+        await fetchAdminUsers();
+      }
+
+      // Expert (consultant) = User with role ROLE_MEMBER
+      const memberUsers = Object.values(_cache.users).filter(u => u.role === "ROLE_MEMBER");
+
+      tbody.innerHTML = "";
+
+      if (!bookings.length) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);">No bookings found.</td></tr>`;
+        return;
+      }
+
+      bookings.forEach(b => {
+        _cache.bookings[b.id] = b;
+
+        const tr = document.createElement("tr");
+        const client = _cache.users[b.clientId] || { fullName: `User #${b.clientId}`, email: "" };
+        const service = _cache.services[b.serviceId] || { title: `Service #${b.serviceId}` };
+
+        tr.setAttribute("data-searchable", `${client.fullName} ${service.title} ${b.appointmentDate} ${b.status}`);
+
+        // Expert select options
+        let expertOptions = `<option value="">-- Assign Expert --</option>`;
+        memberUsers.forEach(u => {
+          const selected = (b.expertId && String(b.expertId) === String(u.id)) ? "selected" : "";
+          expertOptions += `<option value="${u.id}" ${selected}>${escapeHtml(u.fullName)}</option>`;
+        });
 
         // Status options
-        const statuses = ["PENDING", "CONFIRMED", "PRICING", "CANCELLED", "COMPLETED"];
-        const statusLabels = { PENDING: "Pending", CONFIRMED: "Confirmed", PRICING: "Pricing", CANCELLED: "Cancelled", COMPLETED: "Completed" };
+        const statuses = ["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"];
         let statusOptions = "";
         statuses.forEach(s => {
           const selected = (b.status === s) ? "selected" : "";
           statusOptions += `<option value="${s}" ${selected}>${s}</option>`;
         });
 
-      tr.innerHTML = `
+        tr.innerHTML = `
         <td>
           <div class="text-dark-inline">${escapeHtml(client.fullName)}</div>
           <div style="font-size:0.8rem;color:var(--text-muted);">${escapeHtml(client.email)}</div>
         </td>
         <td class="text-dark-inline">${escapeHtml(service.title)}</td>
         <td>
-            ${scheduleHtml}
+          <div class="text-dark-inline">${escapeHtml(b.appointmentDate)}</div>
+          <div style="font-size:0.85rem;color:var(--text-muted);">${escapeHtml(b.timeSlot ? b.timeSlot.substring(0, 5) : "")}</div>
         </td>
         <td>
-          <select class="admin-select" onchange="updateBookingExpert(${b.id}, this.value)" ${isLocked ? "disabled" : ""} style="padding:0.35rem;border-radius:6px;border:1px solid var(--border-color);font-size:0.85rem;width:100%;max-width:160px;background:var(--bg-card);color:var(--text-dark);">
+          <select class="admin-select" onchange="updateBookingExpert(${b.id}, this.value)" style="padding:0.35rem;border-radius:6px;border:1px solid var(--border-color);font-size:0.85rem;width:100%;max-width:160px;background:var(--bg-card);color:var(--text-dark);">
             ${expertOptions}
           </select>
         </td>
         <td>
-          <select class="admin-select status-select status-${b.status.toLowerCase()}" onchange="updateBookingStatus(${b.id}, this.value)" ${isLocked ? "disabled" : ""} style="padding:0.35rem 1.6rem 0.35rem 0.6rem;border-radius:6px;border:1px solid var(--border-color);font-weight:600;font-size:0.8rem;width:100%;min-width:118px;max-width:150px;">
+          <select class="admin-select status-select status-${b.status.toLowerCase()}" onchange="updateBookingStatus(${b.id}, this.value)" style="padding:0.35rem;border-radius:6px;border:1px solid var(--border-color);font-weight:600;font-size:0.85rem;width:100%;max-width:130px;">
             ${statusOptions}
           </select>
         </td>
         <td>
-          <div style="display:flex;gap:4px;flex-direction:column;">
-            ${actionButtons}
+          <div style="display:flex;gap:6px;align-items:center;">
+            <button type="button" class="btn-detail" onclick="openBookingDetailModal(${b.id})" style="padding:0.35rem 0.65rem;font-size:0.8rem;gap:4px;border-radius:6px;background:rgba(37,99,235,0.1);color:#2563eb;border:1px solid rgba(37,99,235,0.22);cursor:pointer;font-weight:600;display:inline-flex;align-items:center;transition:all 0.2s ease;">
+              <svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>View Detail
+            </button>
+            <button type="button" class="btn-delete" onclick="deleteBooking(${b.id})" style="padding:0.35rem 0.6rem;font-size:0.8rem;gap:4px;border-radius:6px;background-color:#ef4444;color:#fff;border:none;cursor:pointer;">
+              <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>Delete
+            </button>
           </div>
         </td>
       `;
-      tbody.appendChild(tr);
-    });
+        tbody.appendChild(tr);
+      });
 
     } catch (err) {
       console.error("fetchAdminBookings error:", err);
@@ -2427,265 +2866,327 @@ async function fetchAdminBookings() {
     }
   }
 
-  async function saveBookingSchedule(bookingId) {
-  const dateInput = document.getElementById(`bkDate-${bookingId}`);
-  const timeInput = document.getElementById(`bkTime-${bookingId}`);
-  if (!dateInput || !timeInput || !dateInput.value || !timeInput.value) {
-    showToast("Please pick both a date and a time.", "error");
-    return;
+  async function updateBookingStatus(bookingId, status) {
+    try {
+      const response = await fetch(`/api/bookings/${bookingId}`, {
+        method: "PUT",
+        headers: adminHeaders(),
+        body: JSON.stringify({ status })
+      });
+      if (!response.ok) throw new Error("Failed to update status");
+      showToast("Booking status updated successfully!", "success");
+      fetchAdminBookings();
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to update status: " + err.message, "error");
+    }
   }
-  try {
-    const response = await fetch(`/api/bookings/${bookingId}`, {
-      method: "PUT",
-      headers: adminHeaders(),
-      body: JSON.stringify({ appointmentDate: dateInput.value, timeSlot: timeInput.value })
+
+  // Admin edits the service price of a specific booking; server adds the client's already
+  // selected add-on(s) on top of it and returns the recalculated final total.
+  async function updateBookingPrice(bookingId) {
+    const input = document.getElementById(`cf-booking-price-${bookingId}`);
+    const price = parseFloat(input?.value);
+    if (isNaN(price) || price < 0) {
+      showToast("Please enter a valid, non-negative price.", "warning");
+      return;
+    }
+    try {
+      const response = await fetch(`/api/bookings/${bookingId}`, {
+        method: "PUT",
+        headers: adminHeaders(),
+        body: JSON.stringify({ basePrice: price })
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || "Failed to update price");
+      showToast("Price updated — total recalculated with add-on(s)!", "success");
+      fetchAdminBookings();
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to update price: " + err.message, "error");
+    }
+  }
+
+  async function deleteBooking(bookingId) {
+    showConfirmModal({
+      title: "Delete Booking",
+      message: "Are you sure you want to delete this booking appointment? This action cannot be undone.",
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`/api/bookings/${bookingId}`, {
+            method: "DELETE",
+            headers: adminHeaders()
+          });
+          if (!response.ok) throw new Error("Failed to delete booking");
+          showToast("Booking deleted successfully!", "success");
+          fetchAdminBookings();
+        } catch (err) {
+          console.error(err);
+          showToast("Failed to delete booking: " + err.message, "error");
+        }
+      }
     });
-    if (!response.ok) throw new Error("Failed to update schedule");
-    showToast("Booking date updated — the client has been notified.", "success");
-    fetchAdminBookings();
-  } catch (err) {
-    console.error(err);
-    showToast("Failed to update schedule: " + err.message, "error");
   }
-}
 
-function openBookingEmailModal(bookingId) {
-  const booking = _cache.bookings[bookingId];
-  if (!booking) return;
-  document.getElementById("bookingEmailId").value = booking.id;
-  document.getElementById("bookingEmailMessage").value = "";
-  document.getElementById("booking-email-modal-overlay").classList.add("is-open");
-}
+  // =============================================
+  //  Data Fetching – Services / Members / Projects
+  // =============================================
 
-function closeBookingEmailModal() {
-  document.getElementById("booking-email-modal-overlay").classList.remove("is-open");
-}
+  async function fetchServices() {
+    const servicesGrid = document.getElementById("services-grid");
+    if (!servicesGrid) return;
 
-async function submitBookingUpdateEmail() {
-  const bookingId = document.getElementById("bookingEmailId").value;
-  const message = document.getElementById("bookingEmailMessage").value;
-  try {
-    const response = await fetch(`/api/bookings/${bookingId}/send-update-email`, {
-      method: "POST",
-      headers: adminHeaders(),
-      body: JSON.stringify({ message })
-    });
-    if (!response.ok) throw new Error("Failed to send email");
-    showToast("Update email sent to the client!", "success");
-    closeBookingEmailModal();
-  } catch (err) {
-    console.error(err);
-    showToast("Failed to send email: " + err.message, "error");
-  }
-}
+    try {
+      const response = await fetch("/api/services");
+      if (!response.ok) throw new Error("Failed to fetch services");
+      const services = await response.json();
 
-async function updateBookingStatus(bookingId, status) {
-  try {
-    const response = await fetch(`/api/bookings/${bookingId}`, {
-      method: "PUT",
-      headers: adminHeaders(),
-      body: JSON.stringify({ status })
-    });
-    if (!response.ok) throw new Error("Failed to update status");
-    showToast("Booking status updated successfully!", "success");
-    fetchAdminBookings();
-  } catch (err) {
-    console.error(err);
-    showToast("Failed to update status: " + err.message, "error");
-  }
-}
+      servicesGrid.innerHTML = "";
 
-async function deleteBooking(bookingId) {
-  if (!confirm("Are you sure you want to delete this booking appointment? This action cannot be undone.")) return;
-  try {
-    const response = await fetch(`/api/bookings/${bookingId}`, {
-      method: "DELETE",
-      headers: adminHeaders()
-    });
-    if (!response.ok) throw new Error("Failed to delete booking");
-    showToast("Booking deleted successfully!", "success");
-    fetchAdminBookings();
-  } catch (err) {
-    console.error(err);
-    showToast("Failed to delete booking: " + err.message, "error");
-  }
-}
+      const icons = {
+        web: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>`,
+        design: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"></path><path d="M12 8A4 4 0 1 0 12 16A4 4 0 1 0 12 8Z"></path><path d="M12 2V6"></path><path d="M12 18V22"></path><path d="M4.93 4.93L7.76 7.76"></path><path d="M16.24 16.24L19.07 19.07"></path><path d="M2 12H6"></path><path d="M18 12H22"></path><path d="M4.93 19.07L7.76 16.24"></path><path d="M16.24 7.76L19.07 4.93"></path></svg>`,
+        marketing: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>`,
+        mobile: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>`,
+        branding: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>`,
+        cloud: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.88 18.04A6 6 0 0 0 6 18a5.5 5.5 0 0 0 .5-10.96 4 4 0 1 0 7.82-1.74l.06-.02a6 6 0 0 0 6.5 12.76z"></path></svg>`
+      };
 
-// =============================================
-//  Data Fetching – Services / Members / Projects
-// =============================================
+      const accentClasses = {
+        web: "service-web", design: "service-design", marketing: "service-marketing",
+        mobile: "service-mobile", branding: "service-branding", cloud: "service-cloud"
+      };
 
-async function fetchServices() {
-  const servicesGrid = document.getElementById("services-grid");
-  if (!servicesGrid) return;
+      services.forEach(service => {
+        const card = document.createElement("div");
+        card.className = "service-card";
+        const iconKey = service.iconUrl || "web";
+        const iconSvg = icons[iconKey] || icons.web;
+        const accentClass = accentClasses[iconKey] || accentClasses.web;
 
-  try {
-    const response = await fetch("/api/services");
-    if (!response.ok) throw new Error("Failed to fetch services");
-    const services = await response.json();
-
-    servicesGrid.innerHTML = "";
-
-    const icons = {
-      web: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>`,
-      design: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"></path><path d="M12 8A4 4 0 1 0 12 16A4 4 0 1 0 12 8Z"></path><path d="M12 2V6"></path><path d="M12 18V22"></path><path d="M4.93 4.93L7.76 7.76"></path><path d="M16.24 16.24L19.07 19.07"></path><path d="M2 12H6"></path><path d="M18 12H22"></path><path d="M4.93 19.07L7.76 16.24"></path><path d="M16.24 7.76L19.07 4.93"></path></svg>`,
-      marketing: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>`,
-      mobile: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>`,
-      branding: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>`,
-      cloud: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.88 18.04A6 6 0 0 0 6 18a5.5 5.5 0 0 0 .5-10.96 4 4 0 1 0 7.82-1.74l.06-.02a6 6 0 0 0 6.5 12.76z"></path></svg>`
-    };
-
-    const accentClasses = {
-      web: "service-web", design: "service-design", marketing: "service-marketing",
-      mobile: "service-mobile", branding: "service-branding", cloud: "service-cloud"
-    };
-
-    services.forEach(service => {
-      const card = document.createElement("div");
-      card.className = "service-card";
-      const iconKey = service.iconUrl || "web";
-      const iconSvg = icons[iconKey] || icons.web;
-      const accentClass = accentClasses[iconKey] || accentClasses.web;
-
-      card.innerHTML = `
+        card.innerHTML = `
         <div class="service-icon-wrapper ${accentClass}">${iconSvg}</div>
         <h3>${escapeHtml(service.title)}</h3>
         <p>${escapeHtml(service.description)}</p>
       `;
-      servicesGrid.appendChild(card);
-    });
-  } catch (error) {
-    console.error("Error loading services:", error);
-    servicesGrid.innerHTML = `<p class="error-msg">Could not load services. Please try again later.</p>`;
-  }
-}
-
-async function fetchMembers() {
-  const teamGrid = document.getElementById("team-grid");
-  if (!teamGrid) return;
-
-  try {
-    const response = await fetch("/api/members");
-    if (!response.ok) throw new Error("Failed to fetch members");
-    const members = await response.json();
-
-    teamGrid.innerHTML = "";
-
-    const facebookIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/></svg>`;
-    const githubIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>`;
-    const linkedinIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.779-1.75-1.75s.784-1.75 1.75-1.75 1.75.779 1.75 1.75-.784 1.75-1.75 1.75zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>`;
-
-    members.forEach(member => {
-      const card = document.createElement("div");
-      card.className = "member-card";
-      const fbLink = member.facebookUrl ? `<a href="${member.facebookUrl}" target="_blank">${facebookIcon}</a>` : "";
-      const ghLink = member.githubUrl ? `<a href="${member.githubUrl}"   target="_blank">${githubIcon}</a>` : "";
-      const liLink = member.linkedinUrl ? `<a href="${member.linkedinUrl}" target="_blank">${linkedinIcon}</a>` : "";
-
-      card.innerHTML = `
-        <div class="member-avatar-wrapper">
-          <img class="member-avatar" src="${member.avatarUrl}" alt="${escapeHtml(member.name)}"
-            onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150&h=150'">
-        </div>
-        <h3>${escapeHtml(member.name)}</h3>
-        <p class="member-role">${escapeHtml(member.role)}</p>
-        <div class="member-socials">${fbLink}${ghLink}${liLink}</div>
-      `;
-      teamGrid.appendChild(card);
-    });
-  } catch (error) {
-    console.error("Error loading members:", error);
-    teamGrid.innerHTML = `<p class="error-msg">Could not load members. Please try again later.</p>`;
-  }
-}
-
-function getTechClass(tech) {
-  const t = tech.toLowerCase();
-  if (t.includes('html') || t.includes('css')) return 'html';
-  if (t.includes('javascript') || t.includes('js')) return 'js';
-  if (t.includes('react')) return 'react';
-  if (t.includes('node')) return 'node';
-  if (t.includes('java') || t.includes('spring')) return 'java';
-  if (t.includes('sql') || t.includes('database') || t.includes('postgres') || t.includes('mysql')) return 'database';
-  return 'default';
-}
-
-function openProjectModal(project) {
-  const modalOverlay = document.getElementById('project-modal-overlay');
-  const modalImage = document.getElementById('project-modal-image');
-  const modalCategory = document.getElementById('project-modal-category');
-  const modalTitle = document.getElementById('project-modal-title');
-  const modalDescription = document.getElementById('project-modal-description');
-  const modalTechnologiesWrapper = document.getElementById('project-modal-technologies-wrapper');
-  const modalTechnologies = document.getElementById('project-modal-technologies');
-  const modalLinkWrapper = document.getElementById('project-modal-link-wrapper');
-  const modalLink = document.getElementById('project-modal-link');
-
-  if (!modalOverlay) return;
-
-  modalImage.src = project.imageUrl || 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&h=400';
-  modalImage.alt = project.title || 'Project Image';
-  modalCategory.textContent = project.category || 'Project';
-  modalTitle.textContent = project.title || 'Project Title';
-  modalDescription.textContent = project.description || 'No description available.';
-
-  if (project.technologies) {
-    const techArray = project.technologies.split(',').map(t => t.trim()).filter(t => t);
-    modalTechnologies.innerHTML = techArray.map(tech =>
-      `<span class="tech-tag ${getTechClass(tech)}">${escapeHtml(tech)}</span>`
-    ).join('');
-    modalTechnologiesWrapper.style.display = 'block';
-  } else {
-    modalTechnologiesWrapper.style.display = 'none';
+        servicesGrid.appendChild(card);
+      });
+    } catch (error) {
+      console.error("Error loading services:", error);
+      servicesGrid.innerHTML = `<p class="error-msg">Could not load services. Please try again later.</p>`;
+    }
   }
 
-  if (modalLinkWrapper && modalLink) {
-    modalLink.href = `https://demo.novadigital.com/${(project.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
-    modalLinkWrapper.style.display = 'block';
+  async function fetchMembers() {
+    // Team members are hardcoded directly on about.html page, so this is a no-op
+    return;
   }
 
-  modalOverlay.classList.add('is-open');
-  document.body.style.overflow = 'hidden';
-  
-  // Set active project tracker and fetch milestones in real-time
-  activeProjectInModal = project.id;
-  fetchAndRenderProjectMilestones(project.id);
-}
+  function getTechClass(tech) {
+    const t = tech.toLowerCase();
+    if (t.includes('html') || t.includes('css')) return 'html';
+    if (t.includes('javascript') || t.includes('js')) return 'js';
+    if (t.includes('react')) return 'react';
+    if (t.includes('node')) return 'node';
+    if (t.includes('java') || t.includes('spring')) return 'java';
+    if (t.includes('sql') || t.includes('database') || t.includes('postgres') || t.includes('mysql')) return 'database';
+    return 'default';
+  }
 
-function closeProjectModal() {
-  const modalOverlay = document.getElementById('project-modal-overlay');
-  if (!modalOverlay) return;
-  modalOverlay.classList.remove('is-open');
-  document.body.style.overflow = '';
-  
-  // Clear active project tracker
-  activeProjectInModal = null;
-}
+  function openProjectModal(project) {
+    const modalOverlay = document.getElementById('project-modal-overlay');
+    const modalImage = document.getElementById('project-modal-image');
+    const modalCategory = document.getElementById('project-modal-category');
+    const modalTitle = document.getElementById('project-modal-title');
+    const modalDescription = document.getElementById('project-modal-description');
+    const modalTechnologiesWrapper = document.getElementById('project-modal-technologies-wrapper');
+    const modalTechnologies = document.getElementById('project-modal-technologies');
+    const modalLinkWrapper = document.getElementById('project-modal-link-wrapper');
+    const modalLink = document.getElementById('project-modal-link');
 
-// Global tracking for currently open modal project
-let activeProjectInModal = null;
+    if (!modalOverlay) return;
 
-// Fetch and render milestones timeline inside project modal
-async function fetchAndRenderProjectMilestones(projectId) {
-  const container = document.getElementById('project-modal-milestones-list');
-  if (!container) return;
+    modalImage.src = project.imageUrl || 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&h=400';
+    modalImage.alt = project.title || 'Project Image';
+    modalCategory.textContent = project.category || 'Project';
+    modalTitle.textContent = project.title || 'Project Title';
+    modalDescription.textContent = project.description || 'No description available.';
 
-  container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.9rem;">Loading milestones...</p>`;
-
-  try {
-    const response = await fetch(`/api/projects/${projectId}/milestones`);
-    if (!response.ok) throw new Error("Failed to load milestones");
-    const milestones = await response.json();
-
-    if (!milestones || milestones.length === 0) {
-      container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.9rem;">No milestones defined for this project.</p>`;
-      return;
+    if (project.technologies) {
+      const techArray = project.technologies.split(',').map(t => t.trim()).filter(t => t);
+      modalTechnologies.innerHTML = techArray.map(tech =>
+        `<span class="tech-tag ${getTechClass(tech)}">${escapeHtml(tech)}</span>`
+      ).join('');
+      modalTechnologiesWrapper.style.display = 'block';
+    } else {
+      modalTechnologiesWrapper.style.display = 'none';
     }
 
-    container.innerHTML = milestones.map(m => {
-      const statusClass = m.status.toLowerCase();
-      const isCompleted = m.status === 'COMPLETED';
-      return `
+    if (modalLinkWrapper && modalLink) {
+      modalLink.onclick = (e) => {
+        e.preventDefault();
+        openDemoSliderModal(project);
+      };
+      modalLinkWrapper.style.display = 'block';
+    }
+
+    modalOverlay.classList.add('is-open');
+    document.body.style.overflow = 'hidden';
+
+    // Set active project tracker and fetch milestones in real-time
+    activeProjectInModal = project.id;
+    if (typeof project.id === 'number') {
+      fetchAndRenderProjectMilestones(project.id);
+    } else {
+      const milestonesList = document.getElementById('project-modal-milestones-list');
+      if (milestonesList) {
+        milestonesList.innerHTML = `<p style="color: var(--text-muted); font-size: 0.9rem; font-style: italic;">No active milestones for this demo project.</p>`;
+      }
+    }
+  }
+
+  function closeProjectModal() {
+    const modalOverlay = document.getElementById('project-modal-overlay');
+    if (!modalOverlay) return;
+    modalOverlay.classList.remove('is-open');
+    document.body.style.overflow = '';
+
+    // Clear active project tracker
+    activeProjectInModal = null;
+  }
+
+  let currentSliderIndex = 0;
+  let sliderImagesList = [];
+
+  function openDemoSliderModal(project) {
+    const sliderModal = document.getElementById('demo-slider-modal');
+    const sliderTitle = document.getElementById('demo-slider-title');
+    const sliderTrack = document.getElementById('demo-slider-track');
+    const sliderDots = document.getElementById('demo-slider-dots');
+
+    if (!sliderModal || !sliderTrack || !sliderDots) return;
+
+    sliderTitle.textContent = `${project.title || 'Project'} - Live Demo Gallery`;
+    
+    // Determine 5 relevant demo images based on project specific demoImages or category
+    let imgs = project.demoImages || [];
+    if (imgs.length === 0) {
+      const category = (project.category || '').toLowerCase();
+      if (category.includes('e-commerce') || category.includes('web')) {
+        imgs = [
+          'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1469037490029-44ab9539d5e1?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?auto=format&fit=crop&w=800&q=80'
+        ];
+      } else {
+        imgs = [
+          'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=800&q=80',
+          'https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=80'
+        ];
+      }
+    }
+
+    sliderImagesList = imgs;
+    currentSliderIndex = 0;
+
+    // Render slider track images
+    sliderTrack.innerHTML = imgs.map(img => 
+      `<img src="${img}" class="demo-slide-img" alt="Demo Screen" onerror="this.src='https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&h=400'">`
+    ).join('');
+
+    // Render dots
+    sliderDots.innerHTML = imgs.map((_, i) => 
+      `<span class="demo-slider-dot ${i === 0 ? 'active' : ''}" data-index="${i}"></span>`
+    ).join('');
+
+    // Bind dots click
+    const dots = sliderDots.querySelectorAll('.demo-slider-dot');
+    dots.forEach(dot => {
+      dot.onclick = () => {
+        const targetIdx = parseInt(dot.getAttribute('data-index'));
+        goToSlide(targetIdx);
+      };
+    });
+
+    updateSliderState();
+    sliderModal.classList.add('is-open');
+
+    // Bind close and arrow actions
+    document.getElementById('demo-slider-close').onclick = closeDemoSliderModal;
+    document.getElementById('demo-slider-prev').onclick = () => goToSlide(currentSliderIndex - 1);
+    document.getElementById('demo-slider-next').onclick = () => goToSlide(currentSliderIndex + 1);
+
+    sliderModal.onclick = (e) => {
+      if (e.target === sliderModal) closeDemoSliderModal();
+    };
+  }
+
+  function goToSlide(index) {
+    if (index < 0 || index >= sliderImagesList.length) return;
+    currentSliderIndex = index;
+    updateSliderState();
+  }
+
+  function updateSliderState() {
+    const sliderTrack = document.getElementById('demo-slider-track');
+    const prevBtn = document.getElementById('demo-slider-prev');
+    const nextBtn = document.getElementById('demo-slider-next');
+    const dots = document.querySelectorAll('.demo-slider-dot');
+
+    if (!sliderTrack) return;
+
+    sliderTrack.style.transform = `translateX(-${currentSliderIndex * 100}%)`;
+
+    if (prevBtn) prevBtn.disabled = currentSliderIndex === 0;
+    if (nextBtn) nextBtn.disabled = currentSliderIndex === sliderImagesList.length - 1;
+
+    dots.forEach((dot, i) => {
+      if (i === currentSliderIndex) {
+        dot.classList.add('active');
+      } else {
+        dot.classList.remove('active');
+      }
+    });
+  }
+
+  function closeDemoSliderModal() {
+    const sliderModal = document.getElementById('demo-slider-modal');
+    if (sliderModal) {
+      sliderModal.classList.remove('is-open');
+    }
+  }
+
+  // Global tracking for currently open modal project
+  let activeProjectInModal = null;
+
+  // Fetch and render milestones timeline inside project modal
+  async function fetchAndRenderProjectMilestones(projectId) {
+    const container = document.getElementById('project-modal-milestones-list');
+    if (!container) return;
+
+    container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.9rem;">Loading milestones...</p>`;
+
+    try {
+      const response = await fetch(`/api/projects/${projectId}/milestones`);
+      if (!response.ok) throw new Error("Failed to load milestones");
+      const milestones = await response.json();
+
+      if (!milestones || milestones.length === 0) {
+        container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.9rem;">No milestones defined for this project.</p>`;
+        return;
+      }
+
+      container.innerHTML = milestones.map(m => {
+        const statusClass = m.status.toLowerCase();
+        const isCompleted = m.status === 'COMPLETED';
+        return `
         <div class="milestone-item" id="milestone-item-${m.id}">
           <div class="milestone-dot ${statusClass}" id="milestone-dot-${m.id}"></div>
           <div class="milestone-header">
@@ -2709,105 +3210,105 @@ async function fetchAndRenderProjectMilestones(projectId) {
           ` : ''}
         </div>
       `;
-    }).join('');
-  } catch (err) {
-    console.error("fetchAndRenderProjectMilestones error:", err);
-    container.innerHTML = `<p style="color: #ef4444; font-size: 0.9rem;">Could not load milestones.</p>`;
+      }).join('');
+    } catch (err) {
+      console.error("fetchAndRenderProjectMilestones error:", err);
+      container.innerHTML = `<p style="color: #ef4444; font-size: 0.9rem;">Could not load milestones.</p>`;
+    }
   }
-}
 
-// Initialize Server-Sent Events stream for real-time milestone updates
-function initMilestoneSSE() {
-  const toastContainer = document.getElementById('live-toast-container');
-  if (!toastContainer) return; // Only run on pages that have the toast container
+  // Initialize Server-Sent Events stream for real-time milestone updates
+  function initMilestoneSSE() {
+    const toastContainer = document.getElementById('live-toast-container');
+    if (!toastContainer) return; // Only run on pages that have the toast container
 
-  const eventSource = new EventSource('/api/milestones/stream');
+    const eventSource = new EventSource('/api/milestones/stream');
 
-  eventSource.addEventListener('connected', (e) => {
-    console.log("SSE Connection live:", JSON.parse(e.data).message);
-  });
+    eventSource.addEventListener('connected', (e) => {
+      console.log("SSE Connection live:", JSON.parse(e.data).message);
+    });
 
-  eventSource.addEventListener('milestone-update', (e) => {
-    try {
-      const payload = JSON.parse(e.data);
-      console.log("Live milestone event received:", payload);
+    eventSource.addEventListener('milestone-update', (e) => {
+      try {
+        const payload = JSON.parse(e.data);
+        console.log("Live milestone event received:", payload);
 
-      // 1. Display Toast notification
-      showLiveToast(payload.eventType, payload.mutationSummary);
+        // 1. Display Toast notification
+        showLiveToast(payload.eventType, payload.mutationSummary);
 
-      // 2. If this update belongs to the active project in the open modal, update UI in real-time
-      if (activeProjectInModal === payload.projectId && payload.milestone) {
-        const m = payload.milestone;
-        
-        // Update progress bar
-        const progressFill = document.getElementById(`milestone-progress-fill-${m.id}`);
-        const progressText = document.getElementById(`milestone-progress-text-${m.id}`);
-        if (progressFill && progressText) {
-          progressFill.style.width = `${m.progressPercentage}%`;
-          progressText.textContent = `${m.progressPercentage}%`;
-          if (m.status === 'COMPLETED') {
-            progressFill.classList.add('completed');
-          } else {
-            progressFill.classList.remove('completed');
+        // 2. If this update belongs to the active project in the open modal, update UI in real-time
+        if (activeProjectInModal === payload.projectId && payload.milestone) {
+          const m = payload.milestone;
+
+          // Update progress bar
+          const progressFill = document.getElementById(`milestone-progress-fill-${m.id}`);
+          const progressText = document.getElementById(`milestone-progress-text-${m.id}`);
+          if (progressFill && progressText) {
+            progressFill.style.width = `${m.progressPercentage}%`;
+            progressText.textContent = `${m.progressPercentage}%`;
+            if (m.status === 'COMPLETED') {
+              progressFill.classList.add('completed');
+            } else {
+              progressFill.classList.remove('completed');
+            }
+          }
+
+          // Update status badge
+          const badge = document.getElementById(`milestone-badge-${m.id}`);
+          const dot = document.getElementById(`milestone-dot-${m.id}`);
+          if (badge && dot) {
+            badge.className = 'milestone-status-badge';
+            dot.className = 'milestone-dot';
+
+            const statusClass = m.status.toLowerCase();
+            badge.classList.add(statusClass);
+            dot.classList.add(statusClass);
+
+            badge.textContent = m.status;
+          }
+
+          // Add a temporary highlight animation to the milestone element
+          const item = document.getElementById(`milestone-item-${m.id}`);
+          if (item) {
+            item.style.transition = 'background-color 0.3s ease';
+            item.style.backgroundColor = 'rgba(37, 99, 235, 0.08)';
+            setTimeout(() => {
+              item.style.backgroundColor = 'transparent';
+            }, 1000);
           }
         }
-
-        // Update status badge
-        const badge = document.getElementById(`milestone-badge-${m.id}`);
-        const dot = document.getElementById(`milestone-dot-${m.id}`);
-        if (badge && dot) {
-          badge.className = 'milestone-status-badge';
-          dot.className = 'milestone-dot';
-
-          const statusClass = m.status.toLowerCase();
-          badge.classList.add(statusClass);
-          dot.classList.add(statusClass);
-
-          badge.textContent = m.status;
-        }
-
-        // Add a temporary highlight animation to the milestone element
-        const item = document.getElementById(`milestone-item-${m.id}`);
-        if (item) {
-          item.style.transition = 'background-color 0.3s ease';
-          item.style.backgroundColor = 'rgba(37, 99, 235, 0.08)';
-          setTimeout(() => {
-            item.style.backgroundColor = 'transparent';
-          }, 1000);
-        }
+      } catch (err) {
+        console.error("Error handling SSE event:", err);
       }
-    } catch (err) {
-      console.error("Error handling SSE event:", err);
-    }
-  });
+    });
 
-  eventSource.onerror = (err) => {
-    console.warn("SSE connection encountered an error, reconnecting...", err);
-  };
-}
-
-function showLiveToast(eventType, message) {
-  const container = document.getElementById('live-toast-container');
-  if (!container) return;
-
-  const toast = document.createElement('div');
-  toast.className = 'live-toast';
-  
-  let title = 'Project Milestone Update';
-  let iconSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2z"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>`;
-
-  if (eventType === 'MILESTONE_CREATED') {
-    title = 'New Milestone Added';
-    toast.classList.add('success');
-    iconSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>`;
-  } else if (eventType === 'MILESTONE_UPDATED') {
-    title = 'Milestone Sync Status';
-    toast.classList.add('success');
-  } else if (eventType === 'MILESTONE_DELETED') {
-    title = 'Milestone Removed';
+    eventSource.onerror = (err) => {
+      console.warn("SSE connection encountered an error, reconnecting...", err);
+    };
   }
 
-  toast.innerHTML = `
+  function showLiveToast(eventType, message) {
+    const container = document.getElementById('live-toast-container');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = 'live-toast';
+
+    let title = 'Project Milestone Update';
+    let iconSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2z"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg>`;
+
+    if (eventType === 'MILESTONE_CREATED') {
+      title = 'New Milestone Added';
+      toast.classList.add('success');
+      iconSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>`;
+    } else if (eventType === 'MILESTONE_UPDATED') {
+      title = 'Milestone Sync Status';
+      toast.classList.add('success');
+    } else if (eventType === 'MILESTONE_DELETED') {
+      title = 'Milestone Removed';
+    }
+
+    toast.innerHTML = `
     <div class="live-toast-icon">${iconSVG}</div>
     <div class="live-toast-body">
       <div class="live-toast-title">${escapeHtml(title)}</div>
@@ -2816,399 +3317,512 @@ function showLiveToast(eventType, message) {
     <button class="live-toast-close" onclick="this.parentElement.remove()">&times;</button>
   `;
 
-  container.appendChild(toast);
+    container.appendChild(toast);
 
-  // Trigger animation reflow
-  setTimeout(() => {
-    toast.classList.add('show');
-  }, 10);
-
-  // Auto remove toast after 5 seconds
-  setTimeout(() => {
-    toast.classList.remove('show');
+    // Trigger animation reflow
     setTimeout(() => {
-      toast.remove();
-    }, 400);
-  }, 5000);
-}
+      toast.classList.add('show');
+    }, 10);
 
-let allProjects = [];
+    // Auto remove toast after 5 seconds
+    setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => {
+        toast.remove();
+      }, 400);
+    }, 5000);
+  }
 
-function renderFilteredProjects(category) {
-    const projectsGrid = document.getElementById("projects-grid");
-    if (!projectsGrid) return;
-
-    const filtered = category === "all"
-        ? allProjects
-        : allProjects.filter(p => (p.category || "").toLowerCase().includes(category.toLowerCase()));
-
-    projectsGrid.innerHTML = "";
-
-    if (filtered.length === 0) {
-        projectsGrid.innerHTML = `<p style="text-align: center; grid-column: 1 / -1; color: var(--text-muted); padding: 3rem 0; font-weight: 500;">No projects found in this category.</p>`;
-        return;
+  const staticProjects = [
+    {
+      id: "static-1",
+      title: "Mart06 Fashion System",
+      description: "High-performance online shopping platform with seamless automated payment integration and full inventory management.",
+      category: "Website E-Commerce",
+      technologies: "Java, Spring Boot, MySQL, Thymeleaf, CSS3",
+      imageUrl: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=500&h=300",
+      demoImages: [
+        'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1469037490029-44ab9539d5e1?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?auto=format&fit=crop&w=800&q=80'
+      ]
+    },
+    {
+      id: "static-2",
+      title: "NovaDigital Mobile Portal",
+      description: "Premium mobile application for project coordination, client messaging, and real-time SSE milestone progress alerts.",
+      category: "Mobile Application",
+      technologies: "React Native, Node.js, SSE, MySQL",
+      imageUrl: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&w=500&h=300",
+      demoImages: [
+        'https://images.unsplash.com/photo-1581291518633-83b4ebd1d83e?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1551650975-87deedd944c3?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=800&q=80'
+      ]
+    },
+    {
+      id: "static-3",
+      title: "CloudPay Analytics Dashboard",
+      description: "SaaS analytics dashboard with real-time financial reporting, role-based access control, and Stripe billing integration.",
+      category: "Cloud SaaS",
+      technologies: "Vue.js, Spring Boot, PostgreSQL, Docker",
+      imageUrl: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=500&h=300",
+      demoImages: [
+        'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1563013544-824ae1d704d3?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=800&q=80'
+      ]
+    },
+    {
+      id: "static-4",
+      title: "Vespera Branding Identity",
+      description: "Luxury visual identity design, custom typography, brand guidelines, and assets.",
+      category: "Branding Design",
+      technologies: "Figma, Illustrator, Brand Strategy",
+      imageUrl: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS-qBs7oaYxuHoIWnqe6f1qtKPyYP9kyNtMlbPXiAS2Hg&s=10",
+      demoImages: [
+        'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS-qBs7oaYxuHoIWnqe6f1qtKPyYP9kyNtMlbPXiAS2Hg&s=10',
+        'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1586717791821-3f44a563fa4c?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1541462608141-2ffb68df685e?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=80'
+      ]
+    },
+    {
+      id: "static-5",
+      title: "Apex SEO & Marketing Campaign",
+      description: "High-impact search engine optimization and digital marketing campaign driving 200% growth.",
+      category: "Marketing Campaign",
+      technologies: "Google Analytics, SEO, SEM, Content Marketing",
+      imageUrl: "https://images.unsplash.com/photo-1434626881859-194d67b2b86f?auto=format&fit=crop&w=500&h=300",
+      demoImages: [
+        'https://images.unsplash.com/photo-1434626881859-194d67b2b86f?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1551836022-b5b3bb1945ff?auto=format&fit=crop&w=800&q=80'
+      ]
+    },
+    {
+      id: "static-6",
+      title: "Aurora Smart Home App",
+      description: "Internet of Things (IoT) mobile dashboard controlling smart lighting, temperature, and security.",
+      category: "Mobile Application",
+      technologies: "Flutter, Firebase, IoT WebSockets",
+      imageUrl: "https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=500&h=300",
+      demoImages: [
+        'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1543512214-318c7553f230?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1558002038-028f2c2bbd39?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1508847154043-be12a62861c1?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80'
+      ]
+    },
+    {
+      id: "static-7",
+      title: "Omni Channel Retail System",
+      description: "Comprehensive point-of-sale and online catalog syncing automatically with inventory databases.",
+      category: "Website Development",
+      technologies: "React, Node.js, Express, PostgreSQL",
+      imageUrl: "https://images.unsplash.com/photo-1472851294608-062f824d29cc?auto=format&fit=crop&w=500&h=300",
+      demoImages: [
+        'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1556740758-90de374c12ad?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1472851294608-062f824d29cc?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1507925921958-8a62f3d1a50d?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1563013544-824ae1d704d3?auto=format&fit=crop&w=800&q=80'
+      ]
+    },
+    {
+      id: "static-8",
+      title: "Stellar UI Component Library",
+      description: "A collection of premium, interactive user interface components built with CSS3 and modern JS.",
+      category: "UI/UX Design",
+      technologies: "HTML5, TailwindCSS, Vue.js, Storybook",
+      imageUrl: "https://www.vuescript.com/wp-content/uploads/2024/03/Fully-Styled-And-Customizable-UI-Components-Library-Stellar-370x297.webp",
+      demoImages: [
+        'https://www.vuescript.com/wp-content/uploads/2024/03/Fully-Styled-And-Customizable-UI-Components-Library-Stellar-370x297.webp',
+        'https://images.unsplash.com/photo-1541462608141-2ffb68df685e?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?auto=format&fit=crop&w=800&q=80'
+      ]
+    },
+    {
+      id: "static-9",
+      title: "Krypton Edge Cloud Cluster",
+      description: "Automated infrastructure provisioning using Kubernetes with load balancing and auto-scaling.",
+      category: "Cloud Solutions",
+      technologies: "Kubernetes, Terraform, AWS, Docker",
+      imageUrl: "https://images.unsplash.com/photo-1544383835-bda2bc66a55d?auto=format&fit=crop&w=500&h=300",
+      demoImages: [
+        'https://images.unsplash.com/photo-1544383835-bda2bc66a55d?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1600132806370-bf17e65e942f?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=800&q=80',
+        'https://images.unsplash.com/photo-1597852074816-d933c4d2b988?auto=format&fit=crop&w=800&q=80'
+      ]
     }
+  ];
 
-    filtered.forEach((project, index) => {
-        const card = document.createElement("div");
-        card.className = "project-card project-card-anim";
-        card.style.animationDelay = `${index * 0.06}s`;
-
-        card.innerHTML = `
-            <div class="project-image-wrapper">
-                <img class="project-image" src="${project.imageUrl}" alt="${escapeHtml(project.title)}"
-                    onerror="this.src='https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=500&h=300'">
-            </div>
-            <div class="project-body">
-                <span class="project-category">${escapeHtml(project.category)}</span>
-                <h3 class="project-title-clickable">${escapeHtml(project.title)}</h3>
-                <p>${escapeHtml(project.description)}</p>
-                <div class="project-link">
-                    View Details
-                    <span class="arrow">➔</span>
-                </div>
-            </div>
-        `;
-
-        const elementsToClick = [
-            card.querySelector('.project-title-clickable'),
-            card.querySelector('.project-link'),
-            card.querySelector('.project-image-wrapper')
-        ];
-        elementsToClick.forEach(el => {
-            if (el) {
-                el.addEventListener('click', () => {
-                    openProjectModal(project);
-                });
-            }
-        });
-
-        projectsGrid.appendChild(card);
-    });
-}
-
-async function fetchProjects() {
+  async function fetchProjects() {
     const projectsGrid = document.getElementById("projects-grid");
     if (!projectsGrid) return;
 
     try {
-        const response = await fetch("/api/projects");
-        if (!response.ok) throw new Error("Failed to fetch projects");
-        allProjects = await response.json();
-
-        renderFilteredProjects("all");
-
-        const filterContainer = document.getElementById("project-filters");
-        if (filterContainer) {
-            const buttons = filterContainer.querySelectorAll(".filter-btn");
-            buttons.forEach(btn => {
-                btn.addEventListener("click", () => {
-                    buttons.forEach(b => b.classList.remove("active"));
-                    btn.classList.add("active");
-                    renderFilteredProjects(btn.getAttribute("data-filter"));
-                });
+      const cards = projectsGrid.querySelectorAll(".project-card");
+      
+      // Bind click listeners on static cards to open modal
+      cards.forEach((card, idx) => {
+        const project = staticProjects[idx];
+        if (!project) return;
+        
+        const elementsToClick = [
+          card.querySelector('.project-title-clickable'),
+          card.querySelector('.project-link'),
+          card.querySelector('.project-image-wrapper')
+        ];
+        
+        elementsToClick.forEach(el => {
+          if (el) {
+            el.addEventListener('click', (e) => {
+              e.preventDefault();
+              openProjectModal(project);
             });
-        }
-
-        const projectModalClose = document.getElementById('project-modal-close');
-        const projectModalOverlay = document.getElementById('project-modal-overlay');
-
-        if (projectModalClose) {
-            projectModalClose.addEventListener('click', closeProjectModal);
-        }
-
-        if (projectModalOverlay) {
-            projectModalOverlay.addEventListener('click', (e) => {
-                if (e.target === projectModalOverlay) closeProjectModal();
-            });
-        }
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') closeProjectModal();
+          }
         });
+      });
+
+      // Bind filter buttons
+      const filterContainer = document.getElementById("project-filters");
+      if (filterContainer) {
+        const buttons = filterContainer.querySelectorAll(".filter-btn");
+        buttons.forEach(btn => {
+          btn.addEventListener("click", () => {
+            buttons.forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            
+            const filterValue = btn.getAttribute("data-filter").toLowerCase();
+            cards.forEach(card => {
+              const cardCat = (card.getAttribute("data-category") || "").toLowerCase();
+              if (filterValue === "all" || cardCat.includes(filterValue)) {
+                card.style.display = "flex";
+              } else {
+                card.style.display = "none";
+              }
+            });
+          });
+        });
+      }
+
+      // Bind modal close events
+      const projectModalClose = document.getElementById('project-modal-close');
+      const projectModalOverlay = document.getElementById('project-modal-overlay');
+
+      if (projectModalClose) {
+        projectModalClose.addEventListener('click', closeProjectModal);
+      }
+
+      if (projectModalOverlay) {
+        projectModalOverlay.addEventListener('click', (e) => {
+          if (e.target === projectModalOverlay) closeProjectModal();
+        });
+      }
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          closeProjectModal();
+          closeDemoSliderModal();
+        }
+      });
+
     } catch (error) {
-        console.error("Error loading projects:", error);
-        projectsGrid.innerHTML = `<p class="error-msg">Could not load projects list. Please try again later.</p>`;
+      console.error("Error setting up projects page:", error);
     }
-       
-}
-
-// =============================================
-//  Contact Form
-// =============================================
-
-function initContactForm() {
-  const form = document.getElementById("contactForm");
-  const alertMsg = document.getElementById("alertMessage");
-  if (!form || !alertMsg) return;
-
-  const nameInput = document.getElementById("name");
-  const emailInput = document.getElementById("email");
-  const serviceSelect = document.getElementById("serviceSelect");
-  const serviceGrid = document.getElementById("service-select-grid");
-  const selectOverlay = document.getElementById("service-select-overlay");
-
-  if (nameInput) {
-    nameInput.value = localStorage.getItem("fullName") || sessionStorage.getItem("fullName") || localStorage.getItem("username") || sessionStorage.getItem("username") || "";
-    nameInput.readOnly = true;
-  }
-  if (emailInput) {
-    emailInput.value = localStorage.getItem("email") || sessionStorage.getItem("email") || "";
-    emailInput.readOnly = true;
   }
 
-  if (serviceSelect && serviceGrid) {
-    fetch("/api/services")
-      .then(res => res.json())
-      .then(services => {
-        serviceSelect.innerHTML = '<option value="" disabled selected>Choose a service to hire...</option>';
-        serviceGrid.innerHTML = '';
+  // =============================================
+  //  Contact Form
+  // =============================================
 
-        const icons = {
-          web: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>`,
-          design: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"></path><path d="M12 8A4 4 0 1 0 12 16A4 4 0 1 0 12 8Z"></path><path d="M12 2V6"></path><path d="M12 18V22"></path><path d="M4.93 4.93L7.76 7.76"></path><path d="M16.24 16.24L19.07 19.07"></path><path d="M2 12H6"></path><path d="M18 12H22"></path><path d="M4.93 19.07L7.76 16.24"></path><path d="M16.24 7.76L19.07 4.93"></path></svg>`,
-          marketing: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>`,
-          mobile: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>`,
-          branding: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>`,
-          cloud: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.88 18.04A6 6 0 0 0 6 18a5.5 5.5 0 0 0 .5-10.96 4 4 0 1 0 7.82-1.74l.06-.02a6 6 0 0 0 6.5 12.76z"></path></svg>`
-        };
+  function initContactForm() {
+    const form = document.getElementById("contactForm");
+    const alertMsg = document.getElementById("alertMessage");
+    if (!form || !alertMsg) return;
 
-        services.forEach(service => {
-          const option = document.createElement("option");
-          option.value = service.title;
-          option.textContent = service.title;
-          serviceSelect.appendChild(option);
+    const nameInput = document.getElementById("name");
+    const emailInput = document.getElementById("email");
+    const serviceSelect = document.getElementById("serviceSelect");
+    const serviceGrid = document.getElementById("service-select-grid");
+    const selectOverlay = document.getElementById("service-select-overlay");
 
-          const card = document.createElement("div");
-          card.className = "modal-service-card";
-          const iconKey = service.iconUrl || "web";
-          const iconSvg = icons[iconKey] || icons.web;
+    if (nameInput) {
+      nameInput.value = localStorage.getItem("fullName") || sessionStorage.getItem("fullName") || localStorage.getItem("username") || sessionStorage.getItem("username") || "";
+      nameInput.readOnly = true;
+    }
+    if (emailInput) {
+      emailInput.value = localStorage.getItem("email") || sessionStorage.getItem("email") || "";
+      emailInput.readOnly = true;
+    }
 
-          card.innerHTML = `
+    if (serviceSelect && serviceGrid) {
+      fetch("/api/services")
+        .then(res => res.json())
+        .then(services => {
+          serviceSelect.innerHTML = '<option value="" disabled selected>Choose a service to hire...</option>';
+          serviceGrid.innerHTML = '';
+
+          const icons = {
+            web: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>`,
+            design: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"></path><path d="M12 8A4 4 0 1 0 12 16A4 4 0 1 0 12 8Z"></path><path d="M12 2V6"></path><path d="M12 18V22"></path><path d="M4.93 4.93L7.76 7.76"></path><path d="M16.24 16.24L19.07 19.07"></path><path d="M2 12H6"></path><path d="M18 12H22"></path><path d="M4.93 19.07L7.76 16.24"></path><path d="M16.24 7.76L19.07 4.93"></path></svg>`,
+            marketing: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>`,
+            mobile: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>`,
+            branding: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>`,
+            cloud: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.88 18.04A6 6 0 0 0 6 18a5.5 5.5 0 0 0 .5-10.96 4 4 0 1 0 7.82-1.74l.06-.02a6 6 0 0 0 6.5 12.76z"></path></svg>`
+          };
+
+          services.forEach(service => {
+            const option = document.createElement("option");
+            option.value = service.title;
+            option.textContent = service.title;
+            serviceSelect.appendChild(option);
+
+            const card = document.createElement("div");
+            card.className = "modal-service-card";
+            const iconKey = service.iconUrl || "web";
+            const iconSvg = icons[iconKey] || icons.web;
+
+            card.innerHTML = `
             <div class="modal-service-icon">${iconSvg}</div>
             <h4>${escapeHtml(service.title)}</h4>
             <p>${escapeHtml(service.description)}</p>
           `;
 
-          card.addEventListener("click", () => {
-            serviceSelect.value = service.title;
-            const titleField = document.getElementById("title");
-            if (titleField) {
-              titleField.value = `Register service: ${service.title}`;
-            }
-            if (selectOverlay) {
-              selectOverlay.classList.remove("is-open");
-            }
-          });
+            card.addEventListener("click", () => {
+              serviceSelect.value = service.title;
+              const titleField = document.getElementById("title");
+              if (titleField) {
+                titleField.value = `Register service: ${service.title}`;
+              }
+              if (selectOverlay) {
+                selectOverlay.classList.remove("is-open");
+              }
+            });
 
-          serviceGrid.appendChild(card);
+            serviceGrid.appendChild(card);
+          });
+        })
+        .catch(err => {
+          console.error("Error loading services for contact form:", err);
+          serviceSelect.innerHTML = '<option value="" disabled selected>Could not load services</option>';
+          serviceGrid.innerHTML = '<div style="grid-column: span 2; text-align: center; color: #ef4444; padding: 2rem;">Could not load services. Please reload the page.</div>';
         });
-      })
-      .catch(err => {
-        console.error("Error loading services for contact form:", err);
-        serviceSelect.innerHTML = '<option value="" disabled selected>Could not load services</option>';
-        serviceGrid.innerHTML = '<div style="grid-column: span 2; text-align: center; color: #ef4444; padding: 2rem;">Could not load services. Please reload the page.</div>';
-      });
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const service = document.getElementById("serviceSelect").value;
+      const title = document.getElementById("title").value.trim();
+      const content = document.getElementById("content").value.trim();
+
+      if (!name || !email || !service || !title || !content) {
+        showAlert("Please fill in all required fields.", false);
+        return;
+      }
+
+      try {
+        showAlert("Sending message...", null);
+
+        // We prefix the title with [Service: ...] to record it properly in the database
+        const finalTitle = `[Service: ${service}] ${title}`;
+
+        const response = await fetch("/api/contacts", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + (localStorage.getItem("token") || sessionStorage.getItem("token") || "")
+          },
+          body: JSON.stringify({ name, email, title: finalTitle, content })
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+          showAlert("Thank you! Your message has been sent successfully.", true);
+          form.reset();
+          // Restore overlay for subsequent clicks if needed, or leave it closed.
+        } else {
+          showAlert(result.message || "Failed to send message. Please try again.", false);
+        }
+      } catch (error) {
+        console.error("Error submitting contact form:", error);
+        showAlert("Could not connect to server. Please try again later.", false);
+      }
+    });
+
+    function showAlert(msg, isSuccess) {
+      alertMsg.textContent = msg;
+      alertMsg.className = "alert-message";
+      if (isSuccess === true) {
+        alertMsg.classList.add("alert-success"); alertMsg.style.display = "block";
+      } else if (isSuccess === false) {
+        alertMsg.classList.add("alert-error"); alertMsg.style.display = "block";
+      } else {
+        alertMsg.style.display = "block";
+        alertMsg.style.backgroundColor = "#f1f5f9";
+        alertMsg.style.color = "#334155";
+        alertMsg.style.border = "1px solid #cbd5e1";
+      }
+    }
   }
 
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
+  // =============================================
+  //  Utility
+  // =============================================
 
-    const name = document.getElementById("name").value.trim();
-    const email = document.getElementById("email").value.trim();
-    const service = document.getElementById("serviceSelect").value;
-    const title = document.getElementById("title").value.trim();
-    const content = document.getElementById("content").value.trim();
+  function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>'"]/g,
+      tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+    );
+  }
 
-    if (!name || !email || !service || !title || !content) {
-      showAlert("Please fill in all required fields.", false);
-      return;
+  // =============================================
+  //  Inbox
+  // =============================================
+
+  async function fetchInbox(email) {
+    console.log("fetchInbox called with email:", email);
+    const inboxSection = document.getElementById("inbox-section");
+    const inboxContainer = document.getElementById("inbox-container");
+    const toolbar = document.getElementById("inbox-toolbar");
+
+    if (!inboxSection || !inboxContainer) return;
+
+    // Initialize state
+    if (!window.inboxState) {
+      window.inboxState = {
+        contacts: [],
+        currentPage: 1,
+        pageSize: 5,
+        selectedIds: new Set(),
+        email: email
+      };
+      initInboxEventListeners(email);
+    } else {
+      window.inboxState.email = email;
     }
 
     try {
-      showAlert("Sending message...", null);
+      const apiUrl = `/api/contacts/my?email=${encodeURIComponent(email)}`;
+      const token = sessionStorage.getItem("token") || localStorage.getItem("token") || "";
 
-      // We prefix the title with [Service: ...] to record it properly in the database
-      const finalTitle = `[Service: ${service}] ${title}`;
-
-      const response = await fetch("/api/contacts", {
-        method:  "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer " + (localStorage.getItem("token") || "")
-        },
-        body:    JSON.stringify({ name, email, title: finalTitle, content })
+      const response = await fetch(apiUrl, {
+        headers: { "Authorization": "Bearer " + token }
       });
+      if (!response.ok) throw new Error(`Failed to fetch inbox: ${response.status}`);
 
-      const result = await response.json();
+      const contacts = await response.json();
+      window.inboxState.contacts = contacts;
+      window.inboxState.selectedIds.clear(); // Reset selections
 
-      if (response.ok && result.success) {
-        showAlert("Thank you! Your message has been sent successfully.", true);
-        form.reset();
-        // Restore overlay for subsequent clicks if needed, or leave it closed.
-      } else {
-        showAlert(result.message || "Failed to send message. Please try again.", false);
+      // Update "Select All" checkbox
+      const selectAllCheckbox = document.getElementById("select-all-checkbox");
+      if (selectAllCheckbox) selectAllCheckbox.checked = false;
+
+      renderInboxPage();
+
+      // Show/hide toolbar based on message count
+      if (toolbar) {
+        toolbar.style.display = contacts.length > 0 ? "flex" : "none";
+      }
+
+      inboxSection.style.display = "block";
+      console.log("Inbox section displayed");
+
+      // Update quick inbox badge
+      const quickInbox = document.getElementById("quick-inbox");
+      if (quickInbox) {
+        const inboxBadge = quickInbox.querySelector(".quick-inbox-badge");
+        const hasReplies = contacts.some(c => c.reply);
+        if (hasReplies && inboxBadge) {
+          inboxBadge.style.display = "block";
+        } else if (inboxBadge) {
+          inboxBadge.style.display = "none";
+        }
       }
     } catch (error) {
-      console.error("Error submitting contact form:", error);
-      showAlert("Could not connect to server. Please try again later.", false);
-    }
-  });
-
-  function showAlert(msg, isSuccess) {
-    alertMsg.textContent = msg;
-    alertMsg.className = "alert-message";
-    if (isSuccess === true) {
-      alertMsg.classList.add("alert-success"); alertMsg.style.display = "block";
-    } else if (isSuccess === false) {
-      alertMsg.classList.add("alert-error"); alertMsg.style.display = "block";
-    } else {
-      alertMsg.style.display = "block";
-      alertMsg.style.backgroundColor = "#f1f5f9";
-      alertMsg.style.color = "#334155";
-      alertMsg.style.border = "1px solid #cbd5e1";
-    }
-  }
-}
-
-// =============================================
-//  Utility
-// =============================================
-
-function escapeHtml(str) {
-  if (!str) return '';
-  return str.replace(/[&<>'"]/g,
-    tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
-  );
-}
-
-// =============================================
-//  Inbox
-// =============================================
-
-async function fetchInbox(email) {
-  console.log("fetchInbox called with email:", email);
-  const inboxSection = document.getElementById("inbox-section");
-  const inboxContainer = document.getElementById("inbox-container");
-  const toolbar = document.getElementById("inbox-toolbar");
-
-  if (!inboxSection || !inboxContainer) return;
-
-  // Initialize state
-  if (!window.inboxState) {
-    window.inboxState = {
-      contacts: [],
-      currentPage: 1,
-      pageSize: 5,
-      selectedIds: new Set(),
-      email: email
-    };
-    initInboxEventListeners(email);
-  } else {
-    window.inboxState.email = email;
-  }
-
-  try {
-    const apiUrl = `/api/contacts/my?email=${encodeURIComponent(email)}`;
-    const token = sessionStorage.getItem("token") || localStorage.getItem("token") || "";
-
-    const response = await fetch(apiUrl, {
-      headers: { "Authorization": "Bearer " + token }
-    });
-    if (!response.ok) throw new Error(`Failed to fetch inbox: ${response.status}`);
-    
-    const contacts = await response.json();
-    window.inboxState.contacts = contacts;
-    window.inboxState.selectedIds.clear(); // Reset selections
-    
-    // Update "Select All" checkbox
-    const selectAllCheckbox = document.getElementById("select-all-checkbox");
-    if (selectAllCheckbox) selectAllCheckbox.checked = false;
-
-    renderInboxPage();
-
-    // Show/hide toolbar based on message count
-    if (toolbar) {
-      toolbar.style.display = contacts.length > 0 ? "flex" : "none";
-    }
-
-    inboxSection.style.display = "block";
-    console.log("Inbox section displayed");
-    
-    // Update quick inbox badge
-    const quickInbox = document.getElementById("quick-inbox");
-    if (quickInbox) {
-      const inboxBadge = quickInbox.querySelector(".quick-inbox-badge");
-      const hasReplies = contacts.some(c => c.reply);
-      if (hasReplies && inboxBadge) {
-        inboxBadge.style.display = "block";
-      } else if (inboxBadge) {
-        inboxBadge.style.display = "none";
-      }
-    }
-  } catch (error) {
-    console.error("Error loading inbox:", error);
-    inboxContainer.innerHTML = `
+      console.error("Error loading inbox:", error);
+      inboxContainer.innerHTML = `
       <div style="text-align:center;padding:3rem;color:#ef4444;">
         <p>Could not load inbox. Error: ${error.message}</p>
       </div>
     `;
-    inboxSection.style.display = "block";
+      inboxSection.style.display = "block";
+    }
   }
-}
 
-function renderInboxPage() {
-  const container = document.getElementById("inbox-container");
-  const paginationContainer = document.getElementById("inbox-pagination");
-  if (!container) return;
+  function renderInboxPage() {
+    const container = document.getElementById("inbox-container");
+    const paginationContainer = document.getElementById("inbox-pagination");
+    if (!container) return;
 
-  const state = window.inboxState;
-  const contacts = state.contacts;
-  
-  if (contacts.length === 0) {
-    container.innerHTML = `
+    const state = window.inboxState;
+    const contacts = state.contacts;
+
+    if (contacts.length === 0) {
+      container.innerHTML = `
       <div style="text-align:center;padding:3rem;color:var(--text-muted);">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:64px;height:64px;margin:0 auto 1rem;opacity:0.5;"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"></path></svg>
         <p>No messages found. You can send a message on the Contact page to test.</p>
       </div>
     `;
-    if (paginationContainer) paginationContainer.style.display = "none";
-    updateDeleteSelectedBtnState();
-    return;
-  }
+      if (paginationContainer) paginationContainer.style.display = "none";
+      updateDeleteSelectedBtnState();
+      return;
+    }
 
-  // Calculate page bounds
-  const totalItems = contacts.length;
-  const totalPages = Math.ceil(totalItems / state.pageSize);
-  
-  // Guard current page
-  if (state.currentPage > totalPages) {
-    state.currentPage = Math.max(1, totalPages);
-  }
-  
-  const startIndex = (state.currentPage - 1) * state.pageSize;
-  const endIndex = Math.min(startIndex + state.pageSize, totalItems);
-  const pageItems = contacts.slice(startIndex, endIndex);
+    // Calculate page bounds
+    const totalItems = contacts.length;
+    const totalPages = Math.ceil(totalItems / state.pageSize);
 
-  container.innerHTML = "";
+    // Guard current page
+    if (state.currentPage > totalPages) {
+      state.currentPage = Math.max(1, totalPages);
+    }
 
-  pageItems.forEach(contact => {
-    const card = document.createElement("div");
-    card.className = "inbox-card";
+    const startIndex = (state.currentPage - 1) * state.pageSize;
+    const endIndex = Math.min(startIndex + state.pageSize, totalItems);
+    const pageItems = contacts.slice(startIndex, endIndex);
 
-    const createdAt = new Date(contact.createdAt).toLocaleDateString("en-US", {
-      hour: "2-digit", minute: "2-digit",
-      day: "2-digit", month: "2-digit", year: "numeric"
-    });
+    container.innerHTML = "";
 
-    const repliedAt = contact.repliedAt ? new Date(contact.repliedAt).toLocaleDateString("en-US", {
-      hour: "2-digit", minute: "2-digit",
-      day: "2-digit", month: "2-digit", year: "numeric"
-    }) : null;
+    pageItems.forEach(contact => {
+      const card = document.createElement("div");
+      card.className = "inbox-card";
 
-    const isChecked = state.selectedIds.has(contact.id) ? "checked" : "";
+      const createdAt = new Date(contact.createdAt).toLocaleDateString("en-US", {
+        hour: "2-digit", minute: "2-digit",
+        day: "2-digit", month: "2-digit", year: "numeric"
+      });
 
-    card.innerHTML = `
+      const repliedAt = contact.repliedAt ? new Date(contact.repliedAt).toLocaleDateString("en-US", {
+        hour: "2-digit", minute: "2-digit",
+        day: "2-digit", month: "2-digit", year: "numeric"
+      }) : null;
+
+      const isChecked = state.selectedIds.has(contact.id) ? "checked" : "";
+
+      card.innerHTML = `
       <div style="display:flex; gap: 1.25rem; align-items: flex-start;">
         <input type="checkbox" class="message-checkbox" data-id="${contact.id}" ${isChecked} style="width: 18px; height: 18px; cursor: pointer; accent-color: #00f0ff; margin-top: 0.25rem; flex-shrink: 0;">
         <div style="flex-grow: 1; min-width: 0;">
@@ -3242,308 +3856,348 @@ function renderInboxPage() {
         </div>
       </div>
     `;
-    container.appendChild(card);
-  });
+      container.appendChild(card);
+    });
 
-  // Render pagination controls
-  if (paginationContainer) {
-    if (totalPages <= 1) {
-      paginationContainer.style.display = "none";
-    } else {
-      paginationContainer.style.display = "flex";
-      paginationContainer.innerHTML = "";
-
-      // Previous button
-      const prevBtn = document.createElement("button");
-      prevBtn.className = "pagination-btn";
-      prevBtn.innerHTML = "&laquo; Prev";
-      prevBtn.disabled = state.currentPage === 1;
-      prevBtn.style.cssText = "background:rgba(255,255,255,0.05); color:var(--text-dark); border:1px solid var(--border-color); padding:0.4rem 1rem; border-radius:50px; font-weight:600; font-size:0.85rem; cursor:pointer; transition:all 0.2s;";
-      if (prevBtn.disabled) {
-        prevBtn.style.opacity = "0.4";
-        prevBtn.style.cursor = "not-allowed";
+    // Render pagination controls
+    if (paginationContainer) {
+      if (totalPages <= 1) {
+        paginationContainer.style.display = "none";
       } else {
-        prevBtn.addEventListener("click", () => {
-          state.currentPage--;
-          renderInboxPage();
-        });
-      }
-      paginationContainer.appendChild(prevBtn);
+        paginationContainer.style.display = "flex";
+        paginationContainer.innerHTML = "";
 
-      // Page numbers
-      for (let i = 1; i <= totalPages; i++) {
-        const pageBtn = document.createElement("button");
-        pageBtn.className = "pagination-btn";
-        pageBtn.textContent = i;
-        pageBtn.style.cssText = "width:36px; height:36px; display:flex; align-items:center; justify-content:center; border-radius:50%; font-weight:600; font-size:0.85rem; border:1px solid var(--border-color); transition:all 0.2s; cursor:pointer;";
-        
-        if (i === state.currentPage) {
-          pageBtn.style.background = "linear-gradient(135deg, #00f0ff, #0070f3)";
-          pageBtn.style.color = "#fff";
-          pageBtn.style.borderColor = "transparent";
-          pageBtn.style.boxShadow = "0 0 10px rgba(0, 240, 255, 0.3)";
+        // Previous button
+        const prevBtn = document.createElement("button");
+        prevBtn.className = "pagination-btn";
+        prevBtn.innerHTML = "&laquo; Prev";
+        prevBtn.disabled = state.currentPage === 1;
+        prevBtn.style.cssText = "background:rgba(255,255,255,0.05); color:var(--text-dark); border:1px solid var(--border-color); padding:0.4rem 1rem; border-radius:50px; font-weight:600; font-size:0.85rem; cursor:pointer; transition:all 0.2s;";
+        if (prevBtn.disabled) {
+          prevBtn.style.opacity = "0.4";
+          prevBtn.style.cursor = "not-allowed";
         } else {
-          pageBtn.style.background = "rgba(255,255,255,0.05)";
-          pageBtn.style.color = "var(--text-dark)";
-          pageBtn.addEventListener("click", () => {
-            state.currentPage = i;
+          prevBtn.addEventListener("click", () => {
+            state.currentPage--;
             renderInboxPage();
           });
         }
-        paginationContainer.appendChild(pageBtn);
-      }
+        paginationContainer.appendChild(prevBtn);
 
-      // Next button
-      const nextBtn = document.createElement("button");
-      nextBtn.className = "pagination-btn";
-      nextBtn.innerHTML = "Next &raquo;";
-      nextBtn.disabled = state.currentPage === totalPages;
-      nextBtn.style.cssText = "background:rgba(255,255,255,0.05); color:var(--text-dark); border:1px solid var(--border-color); padding:0.4rem 1rem; border-radius:50px; font-weight:600; font-size:0.85rem; cursor:pointer; transition:all 0.2s;";
-      if (nextBtn.disabled) {
-        nextBtn.style.opacity = "0.4";
-        nextBtn.style.cursor = "not-allowed";
-      } else {
-        nextBtn.addEventListener("click", () => {
-          state.currentPage++;
-          renderInboxPage();
+        // Page numbers
+        for (let i = 1; i <= totalPages; i++) {
+          const pageBtn = document.createElement("button");
+          pageBtn.className = "pagination-btn";
+          pageBtn.textContent = i;
+          pageBtn.style.cssText = "width:36px; height:36px; display:flex; align-items:center; justify-content:center; border-radius:50%; font-weight:600; font-size:0.85rem; border:1px solid var(--border-color); transition:all 0.2s; cursor:pointer;";
+
+          if (i === state.currentPage) {
+            pageBtn.style.background = "linear-gradient(135deg, #00f0ff, #0070f3)";
+            pageBtn.style.color = "#fff";
+            pageBtn.style.borderColor = "transparent";
+            pageBtn.style.boxShadow = "0 0 10px rgba(0, 240, 255, 0.3)";
+          } else {
+            pageBtn.style.background = "rgba(255,255,255,0.05)";
+            pageBtn.style.color = "var(--text-dark)";
+            pageBtn.addEventListener("click", () => {
+              state.currentPage = i;
+              renderInboxPage();
+            });
+          }
+          paginationContainer.appendChild(pageBtn);
+        }
+
+        // Next button
+        const nextBtn = document.createElement("button");
+        nextBtn.className = "pagination-btn";
+        nextBtn.innerHTML = "Next &raquo;";
+        nextBtn.disabled = state.currentPage === totalPages;
+        nextBtn.style.cssText = "background:rgba(255,255,255,0.05); color:var(--text-dark); border:1px solid var(--border-color); padding:0.4rem 1rem; border-radius:50px; font-weight:600; font-size:0.85rem; cursor:pointer; transition:all 0.2s;";
+        if (nextBtn.disabled) {
+          nextBtn.style.opacity = "0.4";
+          nextBtn.style.cursor = "not-allowed";
+        } else {
+          nextBtn.addEventListener("click", () => {
+            state.currentPage++;
+            renderInboxPage();
+          });
+        }
+        paginationContainer.appendChild(nextBtn);
+      }
+    }
+
+    updateDeleteSelectedBtnState();
+  }
+
+  function updateDeleteSelectedBtnState() {
+    const deleteSelectedBtn = document.getElementById("delete-selected-btn");
+    if (!deleteSelectedBtn) return;
+
+    const state = window.inboxState;
+    const count = state.selectedIds.size;
+
+    if (count > 0) {
+      deleteSelectedBtn.removeAttribute("disabled");
+      deleteSelectedBtn.style.background = "rgba(239, 68, 68, 0.3)";
+      deleteSelectedBtn.style.color = "#fca5a5";
+      deleteSelectedBtn.style.borderColor = "rgba(239, 68, 68, 0.6)";
+    } else {
+      deleteSelectedBtn.setAttribute("disabled", "true");
+      deleteSelectedBtn.style.background = "rgba(239, 68, 68, 0.15)";
+      deleteSelectedBtn.style.color = "#f87171";
+      deleteSelectedBtn.style.borderColor = "rgba(239, 68, 68, 0.3)";
+      deleteSelectedBtn.style.opacity = "0.5";
+    }
+  }
+
+  function initInboxEventListeners(email) {
+    const container = document.getElementById("inbox-container");
+    const selectAll = document.getElementById("select-all-checkbox");
+    const deleteSelected = document.getElementById("delete-selected-btn");
+    const deleteAll = document.getElementById("delete-all-btn");
+
+    if (!container) return;
+
+    // Handle single item deletion and individual checkboxes delegation
+    container.addEventListener("click", async (e) => {
+      // Check if clicked delete single button
+      const deleteBtn = e.target.closest(".delete-single-btn");
+      if (deleteBtn) {
+        const id = deleteBtn.getAttribute("data-id");
+        showConfirmModal({
+          title: "Delete Message",
+          message: "Are you sure you want to delete this message? This action cannot be undone.",
+          confirmText: "Delete",
+          cancelText: "Cancel",
+          onConfirm: async () => {
+            await executeDelete(`/api/contacts/${id}`, "DELETE");
+            fetchInbox(email);
+          }
         });
+        return;
       }
-      paginationContainer.appendChild(nextBtn);
-    }
-  }
 
-  updateDeleteSelectedBtnState();
-}
-
-function updateDeleteSelectedBtnState() {
-  const deleteSelectedBtn = document.getElementById("delete-selected-btn");
-  if (!deleteSelectedBtn) return;
-  
-  const state = window.inboxState;
-  const count = state.selectedIds.size;
-  
-  if (count > 0) {
-    deleteSelectedBtn.removeAttribute("disabled");
-    deleteSelectedBtn.style.background = "rgba(239, 68, 68, 0.3)";
-    deleteSelectedBtn.style.color = "#fca5a5";
-    deleteSelectedBtn.style.borderColor = "rgba(239, 68, 68, 0.6)";
-  } else {
-    deleteSelectedBtn.setAttribute("disabled", "true");
-    deleteSelectedBtn.style.background = "rgba(239, 68, 68, 0.15)";
-    deleteSelectedBtn.style.color = "#f87171";
-    deleteSelectedBtn.style.borderColor = "rgba(239, 68, 68, 0.3)";
-    deleteSelectedBtn.style.opacity = "0.5";
-  }
-}
-
-function initInboxEventListeners(email) {
-  const container = document.getElementById("inbox-container");
-  const selectAll = document.getElementById("select-all-checkbox");
-  const deleteSelected = document.getElementById("delete-selected-btn");
-  const deleteAll = document.getElementById("delete-all-btn");
-
-  if (!container) return;
-
-  // Handle single item deletion and individual checkboxes delegation
-  container.addEventListener("click", async (e) => {
-    // Check if clicked delete single button
-    const deleteBtn = e.target.closest(".delete-single-btn");
-    if (deleteBtn) {
-      const id = deleteBtn.getAttribute("data-id");
-      if (confirm("Are you sure you want to delete this message? This action cannot be undone.")) {
-        await executeDelete(`/api/contacts/${id}`, "DELETE");
-        fetchInbox(email);
-      }
-      return;
-    }
-    
-    // Check if clicked individual checkbox
-    const checkbox = e.target.closest(".message-checkbox");
-    if (checkbox) {
-      const id = parseInt(checkbox.getAttribute("data-id"), 10);
-      const state = window.inboxState;
-      if (checkbox.checked) {
-        state.selectedIds.add(id);
-      } else {
-        state.selectedIds.delete(id);
-      }
-      
-      // Update select-all checkbox state
-      if (selectAll) {
-        const visibleCheckboxes = container.querySelectorAll(".message-checkbox");
-        const allChecked = Array.from(visibleCheckboxes).every(cb => cb.checked);
-        selectAll.checked = allChecked && visibleCheckboxes.length > 0;
-      }
-      
-      updateDeleteSelectedBtnState();
-    }
-  });
-
-  // Handle select all checkbox
-  if (selectAll) {
-    selectAll.addEventListener("change", (e) => {
-      const state = window.inboxState;
-      const checked = e.target.checked;
-      
-      // Select/deselect items on the CURRENT page
-      const currentCheckboxes = container.querySelectorAll(".message-checkbox");
-      currentCheckboxes.forEach(checkbox => {
-        checkbox.checked = checked;
+      // Check if clicked individual checkbox
+      const checkbox = e.target.closest(".message-checkbox");
+      if (checkbox) {
         const id = parseInt(checkbox.getAttribute("data-id"), 10);
-        if (checked) {
+        const state = window.inboxState;
+        if (checkbox.checked) {
           state.selectedIds.add(id);
         } else {
           state.selectedIds.delete(id);
         }
+
+        // Update select-all checkbox state
+        if (selectAll) {
+          const visibleCheckboxes = container.querySelectorAll(".message-checkbox");
+          const allChecked = Array.from(visibleCheckboxes).every(cb => cb.checked);
+          selectAll.checked = allChecked && visibleCheckboxes.length > 0;
+        }
+
+        updateDeleteSelectedBtnState();
+      }
+    });
+
+    // Handle select all checkbox
+    if (selectAll) {
+      selectAll.addEventListener("change", (e) => {
+        const state = window.inboxState;
+        const checked = e.target.checked;
+
+        // Select/deselect items on the CURRENT page
+        const currentCheckboxes = container.querySelectorAll(".message-checkbox");
+        currentCheckboxes.forEach(checkbox => {
+          checkbox.checked = checked;
+          const id = parseInt(checkbox.getAttribute("data-id"), 10);
+          if (checked) {
+            state.selectedIds.add(id);
+          } else {
+            state.selectedIds.delete(id);
+          }
+        });
+
+        updateDeleteSelectedBtnState();
       });
-      
-      updateDeleteSelectedBtnState();
-    });
-  }
-
-  // Handle delete selected button
-  if (deleteSelected) {
-    deleteSelected.addEventListener("click", async () => {
-      const state = window.inboxState;
-      if (state.selectedIds.size === 0) return;
-      
-      if (confirm(`Are you sure you want to delete the ${state.selectedIds.size} selected message(s)? This action cannot be undone.`)) {
-        const idsArray = Array.from(state.selectedIds);
-        const idsParam = idsArray.join(",");
-        await executeDelete(`/api/contacts/my?ids=${idsParam}`, "DELETE");
-        fetchInbox(email);
-      }
-    });
-  }
-
-  // Handle delete all button
-  if (deleteAll) {
-    deleteAll.addEventListener("click", async () => {
-      if (confirm("Are you sure you want to delete ALL messages in your inbox? This action cannot be undone.")) {
-        await executeDelete("/api/contacts/my", "DELETE");
-        fetchInbox(email);
-      }
-    });
-  }
-}
-
-async function executeDelete(url, method) {
-  try {
-    const token = sessionStorage.getItem("token") || localStorage.getItem("token") || "";
-    const response = await fetch(url, {
-      method: method,
-      headers: {
-        "Authorization": "Bearer " + token
-      }
-    });
-    const result = await response.json();
-    if (response.ok && result.success !== false) {
-      alert(result.message || "Deletion successful!");
-    } else {
-      alert(result.message || "Failed to delete message(s).");
     }
-  } catch (error) {
-    console.error("Delete operation failed:", error);
-    alert("An error occurred during deletion. Please try again.");
+
+    // Handle delete selected button
+    if (deleteSelected) {
+      deleteSelected.addEventListener("click", async () => {
+        const state = window.inboxState;
+        if (state.selectedIds.size === 0) return;
+
+        showConfirmModal({
+          title: "Delete Selected Messages",
+          message: `Are you sure you want to delete the ${state.selectedIds.size} selected message(s)? This action cannot be undone.`,
+          confirmText: "Delete Selected",
+          cancelText: "Cancel",
+          onConfirm: async () => {
+            const idsArray = Array.from(state.selectedIds);
+            const idsParam = idsArray.join(",");
+            await executeDelete(`/api/contacts/my?ids=${idsParam}`, "DELETE");
+            fetchInbox(email);
+          }
+        });
+      });
+    }
+
+    // Handle delete all button
+    if (deleteAll) {
+      deleteAll.addEventListener("click", async () => {
+        showConfirmModal({
+          title: "Delete All Messages",
+          message: "Are you sure you want to delete ALL messages in your inbox? This action cannot be undone.",
+          confirmText: "Delete All",
+          cancelText: "Cancel",
+          onConfirm: async () => {
+            await executeDelete("/api/contacts/my", "DELETE");
+            fetchInbox(email);
+          }
+        });
+      });
+    }
   }
-}
 
-// =============================================
-// Scroll Animation Initialization
-// =============================================
-function initScrollAnimations() {
-  // Handle both animate-on-scroll and scroll-animate classes
-  const animatedElements1 = document.querySelectorAll('.animate-on-scroll');
-  const animatedElements2 = document.querySelectorAll('.scroll-animate');
+  async function executeDelete(url, method) {
+    try {
+      const token = sessionStorage.getItem("token") || localStorage.getItem("token") || "";
+      const response = await fetch(url, {
+        method: method,
+        headers: {
+          "Authorization": "Bearer " + token
+        }
+      });
+      const result = await response.json();
+      if (response.ok && result.success !== false) {
+        showToast(result.message || "Deletion successful!", "success");
+      } else {
+        showToast(result.message || "Failed to delete message(s).", "error");
+      }
+    } catch (error) {
+      console.error("Delete operation failed:", error);
+      showToast("An error occurred during deletion. Please try again.", "error");
+    }
+  }
 
-  const observerOptions = {
-    root: null,
-    rootMargin: '0px 0px -50px 0px',
-    threshold: 0.1
+  // =============================================
+  // Scroll Animation Initialization
+  // =============================================
+  function initScrollAnimations() {
+    // Handle both animate-on-scroll and scroll-animate classes
+    const animatedElements1 = document.querySelectorAll('.animate-on-scroll');
+    const animatedElements2 = document.querySelectorAll('.scroll-animate');
+
+    const observerOptions = {
+      root: null,
+      rootMargin: '0px 0px -50px 0px',
+      threshold: 0.1
+    };
+
+    const observer = new IntersectionObserver((entries, index) => {
+      entries.forEach((entry, idx) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('animate');
+          setTimeout(() => {
+            entry.target.classList.add('visible');
+          }, idx * 100);
+          observer.unobserve(entry.target);
+        }
+      });
+    }, observerOptions);
+
+    animatedElements1.forEach(el => observer.observe(el));
+    animatedElements2.forEach(el => observer.observe(el));
+  }
+
+  // Shared View Transition API helper for Circular Reveal Theme Toggle
+  window.toggleThemeWithTransition = function (event, toggleCallback) {
+    const rect = (event && event.currentTarget) ? event.currentTarget.getBoundingClientRect() : null;
+    const x = rect ? (rect.left + rect.width / 2) : (event ? event.clientX : window.innerWidth / 2);
+    const y = rect ? (rect.top + rect.height / 2) : (event ? event.clientY : window.innerHeight / 2);
+    document.documentElement.style.setProperty('--click-x', `${x}px`);
+    document.documentElement.style.setProperty('--click-y', `${y}px`);
+
+    if (!document.startViewTransition) {
+      document.documentElement.classList.add("theme-transitioning");
+      toggleCallback();
+      setTimeout(() => {
+        document.documentElement.classList.remove("theme-transitioning");
+      }, 350);
+      return;
+    }
+
+    document.startViewTransition(toggleCallback);
   };
 
-  const observer = new IntersectionObserver((entries, index) => {
-    entries.forEach((entry, idx) => {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('animate');
-        setTimeout(() => {
-          entry.target.classList.add('visible');
-        }, idx * 100);
-        observer.unobserve(entry.target);
+  function injectThemeToggle() {
+    const navbar = document.querySelector(".navbar");
+    if (!navbar) return;
+    if (document.getElementById("theme-toggle-btn")) return;
+
+    const toggleBtn = document.createElement("button");
+    toggleBtn.id = "theme-toggle-btn";
+    toggleBtn.setAttribute("aria-label", "Toggle dark/light theme");
+    toggleBtn.style.cssText = `background:none;border:none;cursor:pointer;padding:0.5rem;display:inline-flex;align-items:center;justify-content:center;transition:var(--transition);margin-left:0.5rem;outline:none;border-radius:50%;width:38px;height:38px;`;
+
+    const sunIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;color:#eab308;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
+    const moonIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;color:#6366f1;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
+
+    const currentTheme = localStorage.getItem("theme") || "light";
+    if (currentTheme === "dark") {
+      document.documentElement.classList.add("dark-theme");
+      toggleBtn.innerHTML = sunIcon;
+    } else {
+      document.documentElement.classList.remove("dark-theme");
+      toggleBtn.innerHTML = moonIcon;
+    }
+
+    toggleBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      window.toggleThemeWithTransition(e, () => {
+        const isDark = document.documentElement.classList.contains("dark-theme");
+        if (isDark) {
+          document.documentElement.classList.remove("dark-theme");
+          localStorage.setItem("theme", "light");
+          toggleBtn.innerHTML = moonIcon;
+        } else {
+          document.documentElement.classList.add("dark-theme");
+          localStorage.setItem("theme", "dark");
+          toggleBtn.innerHTML = sunIcon;
+        }
+      });
+      if (typeof updateChartTheme === "function") {
+        updateChartTheme();
       }
     });
-  }, observerOptions);
 
-  animatedElements1.forEach(el => observer.observe(el));
-  animatedElements2.forEach(el => observer.observe(el));
-}
-
-// =============================================
-// Theme Switcher (Dark/Light Mode)
-// =============================================
-function injectThemeToggle() {
-  const navbar = document.querySelector(".navbar");
-  if (!navbar) return;
-  if (document.getElementById("theme-toggle-btn")) return;
-
-  const toggleBtn = document.createElement("button");
-  toggleBtn.id = "theme-toggle-btn";
-  toggleBtn.setAttribute("aria-label", "Toggle dark/light theme");
-  toggleBtn.style.cssText = `background:none;border:none;cursor:pointer;padding:0.5rem;display:inline-flex;align-items:center;justify-content:center;transition:var(--transition);margin-left:0.5rem;outline:none;border-radius:50%;width:38px;height:38px;`;
-
-  const sunIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;color:#eab308;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
-  const moonIcon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;color:#6366f1;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
-
-  const currentTheme = localStorage.getItem("theme") || "light";
-  if (currentTheme === "dark") {
-    document.documentElement.classList.add("dark-theme");
-    toggleBtn.innerHTML = sunIcon;
-  } else {
-    document.documentElement.classList.remove("dark-theme");
-    toggleBtn.innerHTML = moonIcon;
-  }
-
-  toggleBtn.addEventListener("click", (e) => {
-    e.preventDefault();
-    const isDark = document.documentElement.classList.contains("dark-theme");
-    if (isDark) {
-      document.documentElement.classList.remove("dark-theme");
-      localStorage.setItem("theme", "light");
-      toggleBtn.innerHTML = moonIcon;
+    const navLinks = document.querySelector(".nav-links");
+    if (navLinks) {
+      const li = document.createElement("li");
+      li.id = "theme-toggle-li";
+      li.className = "auth-item";
+      li.style.display = "inline-flex";
+      li.style.alignItems = "center";
+      li.appendChild(toggleBtn);
+      navLinks.appendChild(li);
     } else {
-      document.documentElement.classList.add("dark-theme");
-      localStorage.setItem("theme", "dark");
-      toggleBtn.innerHTML = sunIcon;
+      navbar.appendChild(toggleBtn);
     }
-  });
-
-  const navLinks = document.querySelector(".nav-links");
-  if (navLinks) {
-    const li = document.createElement("li");
-    li.id = "theme-toggle-li";
-    li.className = "auth-item";
-    li.style.display = "inline-flex";
-    li.style.alignItems = "center";
-    li.appendChild(toggleBtn);
-    navLinks.appendChild(li);
-  } else {
-    navbar.appendChild(toggleBtn);
   }
-}
 
-// =============================================
-// Floating Quick Access Panel
-// =============================================
-function injectQuickPanel() {
-  if (document.getElementById("quick-panel")) return;
+  // =============================================
+  // Floating Quick Access Panel
+  // =============================================
+  function injectQuickPanel() {
+    if (document.getElementById("quick-panel")) return;
 
-  const quickPanel = document.createElement("div");
-  quickPanel.id = "quick-panel";
-  quickPanel.className = "quick-panel";
+    const quickPanel = document.createElement("div");
+    quickPanel.id = "quick-panel";
+    quickPanel.className = "quick-panel";
 
-  const currentTheme = localStorage.getItem("theme") || "light";
+    const currentTheme = localStorage.getItem("theme") || "light";
 
-  quickPanel.innerHTML = `
+    quickPanel.innerHTML = `
     <button id="quick-theme-toggle" class="quick-panel-btn" aria-label="Toggle Theme">
       <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:${currentTheme === 'dark' ? 'block' : 'none'};width:20px;height:20px;color:#eab308;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
       <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:${currentTheme === 'light' ? 'block' : 'none'};width:20px;height:20px;color:#6366f1;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
@@ -3557,192 +4211,209 @@ function injectQuickPanel() {
     </button>
   `;
 
-  document.body.appendChild(quickPanel);
+    document.body.appendChild(quickPanel);
 
-  // Scroll to top
-  const scrollTopBtn = document.getElementById("quick-scroll-top");
-  window.addEventListener("scroll", () => {
-    if (window.scrollY > 300) {
-      scrollTopBtn.style.opacity = "1";
-      scrollTopBtn.style.pointerEvents = "auto";
-    } else {
-      scrollTopBtn.style.opacity = "0";
-      scrollTopBtn.style.pointerEvents = "none";
+    // Append chatbot FAB button inside quick-panel for pixel-perfect vertical alignment and sizing
+    const fabEl = document.getElementById("chatbot-fab");
+    if (fabEl) {
+      fabEl.classList.add("quick-panel-btn");
+      quickPanel.appendChild(fabEl);
     }
-  });
-  scrollTopBtn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
 
-  // Theme toggle
-  const qThemeBtn = document.getElementById("quick-theme-toggle");
-  const sunIcon = qThemeBtn.querySelector(".sun-icon");
-  const moonIcon = qThemeBtn.querySelector(".moon-icon");
+    // Scroll to top
+    const scrollTopBtn = document.getElementById("quick-scroll-top");
+    window.addEventListener("scroll", () => {
+      if (window.scrollY > 300) {
+        scrollTopBtn.style.opacity = "1";
+        scrollTopBtn.style.pointerEvents = "auto";
+      } else {
+        scrollTopBtn.style.opacity = "0";
+        scrollTopBtn.style.pointerEvents = "none";
+      }
+    });
+    scrollTopBtn.addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
 
-  qThemeBtn.addEventListener("click", () => {
-    const isDark = document.documentElement.classList.contains("dark-theme");
-    if (isDark) {
-      document.documentElement.classList.remove("dark-theme");
-      localStorage.setItem("theme", "light");
-      sunIcon.style.display = "none";
-      moonIcon.style.display = "block";
-    } else {
-      document.documentElement.classList.add("dark-theme");
-      localStorage.setItem("theme", "dark");
-      sunIcon.style.display = "block";
-      moonIcon.style.display = "none";
-    }
-    // Sync with header toggle
-    const headerToggle = document.getElementById("theme-toggle-btn");
-    if (headerToggle) {
-      const hSun = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;color:#eab308;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
-      const hMoon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;color:#6366f1;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
-      headerToggle.innerHTML = isDark ? hMoon : hSun;
-    }
-  });
+    // Theme toggle
+    const qThemeBtn = document.getElementById("quick-theme-toggle");
+    const sunIcon = qThemeBtn.querySelector(".sun-icon");
+    const moonIcon = qThemeBtn.querySelector(".moon-icon");
 
-  // Inbox shortcut (show only if logged in)
-
-  const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-
-  if (token) {
-    const quickInbox = document.getElementById("quick-inbox");
-    if (quickInbox) {
-      quickInbox.style.display = "flex";
-      quickInbox.addEventListener("click", (e) => {
-        const path = window.location.pathname;
-        const page = path.substring(path.lastIndexOf('/') + 1) || "index.html";
-        if (page === "inbox.html") {
-          e.preventDefault();
-          const section = document.getElementById("inbox-section");
-          if (section) {
-            section.scrollIntoView({ behavior: "smooth" });
-          }
+    qThemeBtn.addEventListener("click", (e) => {
+      window.toggleThemeWithTransition(e, () => {
+        const isDark = document.documentElement.classList.contains("dark-theme");
+        if (isDark) {
+          document.documentElement.classList.remove("dark-theme");
+          localStorage.setItem("theme", "light");
+          sunIcon.style.display = "none";
+          moonIcon.style.display = "block";
+        } else {
+          document.documentElement.classList.add("dark-theme");
+          localStorage.setItem("theme", "dark");
+          sunIcon.style.display = "block";
+          moonIcon.style.display = "none";
+        }
+        // Sync with header toggle
+        const headerToggle = document.getElementById("theme-toggle-btn");
+        if (headerToggle) {
+          const hSun = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;color:#eab308;"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>`;
+          const hMoon = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;color:#6366f1;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>`;
+          headerToggle.innerHTML = isDark ? hMoon : hSun;
         }
       });
+      if (typeof updateChartTheme === "function") {
+        updateChartTheme();
+      }
+    });
+
+    // Inbox shortcut (hide on admin & hr & member pages or for ROLE_ADMIN)
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    const role = localStorage.getItem("role") || sessionStorage.getItem("role");
+    const currentPath = window.location.pathname.toLowerCase();
+
+    const isAdminOrHrPage = currentPath.includes("admin") || currentPath.includes("hr") || currentPath.includes("resource") || currentPath.includes("member") || role === "ROLE_ADMIN";
+
+    const quickInbox = document.getElementById("quick-inbox");
+    if (token && !isAdminOrHrPage) {
+      if (quickInbox) {
+        quickInbox.style.display = "flex";
+        quickInbox.addEventListener("click", (e) => {
+          const path = window.location.pathname;
+          const page = path.substring(path.lastIndexOf('/') + 1) || "index.html";
+          if (page === "inbox.html") {
+            e.preventDefault();
+            const section = document.getElementById("inbox-section");
+            if (section) {
+              section.scrollIntoView({ behavior: "smooth" });
+            }
+          }
+        });
+      }
+    } else if (quickInbox) {
+      quickInbox.style.display = "none";
     }
   }
-}
 
 
-// Hero H1 text click animation
-function initHeroTextClick() {
-  const heroH1 = document.querySelector(".hero-content h1");
-  if (!heroH1) return;
+  // Hero H1 text click animation
+  function initHeroTextClick() {
+    const heroH1 = document.querySelector(".hero-content h1");
+    if (!heroH1) return;
 
-  heroH1.style.cursor = "pointer";
-  heroH1.addEventListener("click", () => {
-    if (heroH1.classList.contains("hero-text-clicked")) return;
-    heroH1.classList.add("hero-text-clicked");
-    setTimeout(() => {
-      heroH1.classList.remove("hero-text-clicked");
-    }, 800);
-  });
-}
-
-// =============================================
-//  Audit Logs Dashboard Logic
-// =============================================
-
-const AUDIT_PAGE_SIZE = 10;
-let auditDataPage = 0;
-let auditAuthPage = 0;
-let auditModalPage = 0;
-let auditModalUsername = '';
-
-function switchAuditTab(tabId) {
-  const dataTabBtn = document.getElementById('btn-tab-data');
-  const authTabBtn = document.getElementById('btn-tab-auth');
-  const dataTab = document.getElementById('dataTab');
-  const authTab = document.getElementById('authTab');
-
-  if (tabId === 'dataTab') {
-    dataTab.style.display = 'block';
-    authTab.style.display = 'none';
-    dataTabBtn.style.background = 'linear-gradient(135deg, rgba(37,99,235,0.1), rgba(79,70,229,0.1))';
-    dataTabBtn.style.borderColor = 'rgba(37,99,235,0.2)';
-    dataTabBtn.style.color = '#2563eb';
-    authTabBtn.style.background = 'transparent';
-    authTabBtn.style.borderColor = 'transparent';
-    authTabBtn.style.color = 'var(--text-muted)';
-    loadDataUsers(0);
-  } else {
-    authTab.style.display = 'block';
-    dataTab.style.display = 'none';
-    authTabBtn.style.background = 'linear-gradient(135deg, rgba(37,99,235,0.1), rgba(79,70,229,0.1))';
-    authTabBtn.style.borderColor = 'rgba(37,99,235,0.2)';
-    authTabBtn.style.color = '#2563eb';
-    dataTabBtn.style.background = 'transparent';
-    dataTabBtn.style.borderColor = 'transparent';
-    dataTabBtn.style.color = 'var(--text-muted)';
-    loadAuthLogs(0);
-  }
-}
-
-function formatAuditDate(dateString) {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  return date.toLocaleString('vi-VN', {
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', second: '2-digit'
-  });
-}
-
-function getDataActionBadge(action) {
-  const upperAction = action ? action.toUpperCase() : '';
-  if (upperAction.includes('CREATE') || upperAction.includes('INSERT')) {
-    return `<span class="status-badge badge-active">CREATE</span>`;
-  } else if (upperAction.includes('UPDATE')) {
-    return `<span class="status-badge badge-user">UPDATE</span>`;
-  } else if (upperAction.includes('DELETE')) {
-    return `<span style="background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; padding: 0.2rem 0.6rem; border-radius: 50px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase;">DELETE</span>`;
-  }
-  return `<span class="status-badge status-pending">${action}</span>`;
-}
-
-function formatDiff(detailStr) {
-  if (!detailStr || detailStr === '[]' || detailStr === 'null') {
-    return '<span style="color: var(--text-muted); font-style: italic;">Không có thay đổi chi tiết</span>';
+    heroH1.style.cursor = "pointer";
+    heroH1.addEventListener("click", () => {
+      if (heroH1.classList.contains("hero-text-clicked")) return;
+      heroH1.classList.add("hero-text-clicked");
+      setTimeout(() => {
+        heroH1.classList.remove("hero-text-clicked");
+      }, 800);
+    });
   }
 
-  // Check if it's a failed log (starts with [FAILED])
-  let isFailed = false;
-  let errorMessage = '';
-  let jsonPart = detailStr;
+  // =============================================
+  //  Audit Logs Dashboard Logic
+  // =============================================
 
-  if (detailStr.startsWith('[FAILED]')) {
-    isFailed = true;
-    const separatorIdx = detailStr.indexOf(' | ');
-    if (separatorIdx !== -1) {
-      errorMessage = detailStr.substring(8, separatorIdx);
-      jsonPart = detailStr.substring(separatorIdx + 3);
+  const AUDIT_PAGE_SIZE = 10;
+  let auditDataPage = 0;
+  let auditAuthPage = 0;
+  let auditModalPage = 0;
+  let auditModalUsername = '';
+
+  function switchAuditTab(tabId) {
+    const dataTabBtn = document.getElementById('btn-tab-data');
+    const authTabBtn = document.getElementById('btn-tab-auth');
+    const dataTab = document.getElementById('dataTab');
+    const authTab = document.getElementById('authTab');
+
+    if (tabId === 'dataTab') {
+      dataTab.style.display = 'block';
+      authTab.style.display = 'none';
+      dataTabBtn.style.background = 'linear-gradient(135deg, rgba(37,99,235,0.1), rgba(79,70,229,0.1))';
+      dataTabBtn.style.borderColor = 'rgba(37,99,235,0.2)';
+      dataTabBtn.style.color = '#2563eb';
+      authTabBtn.style.background = 'transparent';
+      authTabBtn.style.borderColor = 'transparent';
+      authTabBtn.style.color = 'var(--text-muted)';
+      loadDataUsers(0);
     } else {
-      errorMessage = detailStr.substring(8);
-      jsonPart = '';
+      authTab.style.display = 'block';
+      dataTab.style.display = 'none';
+      authTabBtn.style.background = 'linear-gradient(135deg, rgba(37,99,235,0.1), rgba(79,70,229,0.1))';
+      authTabBtn.style.borderColor = 'rgba(37,99,235,0.2)';
+      authTabBtn.style.color = '#2563eb';
+      dataTabBtn.style.background = 'transparent';
+      dataTabBtn.style.borderColor = 'transparent';
+      dataTabBtn.style.color = 'var(--text-muted)';
+      loadAuthLogs(0);
     }
   }
 
-  let html = '';
-  if (isFailed) {
-    html += `
+  function formatAuditDate(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleString('en-US', {
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit'
+    });
+  }
+
+  function getDataActionBadge(action) {
+    const upperAction = action ? action.toUpperCase() : '';
+    if (upperAction.includes('CREATE') || upperAction.includes('INSERT')) {
+      return `<span class="status-badge badge-active">CREATE</span>`;
+    } else if (upperAction.includes('UPDATE')) {
+      return `<span class="status-badge badge-user">UPDATE</span>`;
+    } else if (upperAction.includes('DELETE')) {
+      return `<span style="background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; padding: 0.2rem 0.6rem; border-radius: 50px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase;">DELETE</span>`;
+    }
+    return `<span class="status-badge status-pending">${action}</span>`;
+  }
+
+  function formatDiff(detailStr) {
+    if (!detailStr || detailStr === '[]' || detailStr === 'null') {
+      return '<span style="color: var(--text-muted); font-style: italic;">No detailed changes</span>';
+    }
+
+    // Check if it's a failed log (starts with [FAILED])
+    let isFailed = false;
+    let errorMessage = '';
+    let jsonPart = detailStr;
+
+    if (detailStr.startsWith('[FAILED]')) {
+      isFailed = true;
+      const separatorIdx = detailStr.indexOf(' | ');
+      if (separatorIdx !== -1) {
+        errorMessage = detailStr.substring(8, separatorIdx);
+        jsonPart = detailStr.substring(separatorIdx + 3);
+      } else {
+        errorMessage = detailStr.substring(8);
+        jsonPart = '';
+      }
+    }
+
+    let html = '';
+    if (isFailed) {
+      html += `
             <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 0.6rem 0.8rem; margin-bottom: 0.6rem; color: #dc2626; font-size: 0.8rem;">
                 <div style="font-weight: 700; display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">
                     <svg viewBox="0 0 24 24" style="width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.5;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                    Thao tác thất bại
+                    Operation failed
                 </div>
                 <div style="font-family: monospace; font-size: 0.75rem; word-break: break-all;">${errorMessage}</div>
             </div>
         `;
-  }
+    }
 
-  if (!jsonPart || jsonPart === '(no payload)') {
-    return html || '<span style="color: var(--text-muted); font-style: italic;">Không có dữ liệu</span>';
-  }
+    if (!jsonPart || jsonPart === '(no payload)') {
+      return html || '<span style="color: var(--text-muted); font-style: italic;">No data</span>';
+    }
 
-  try {
-    const parsed = JSON.parse(jsonPart);
+    try {
+      const parsed = JSON.parse(jsonPart);
 
-    if (Array.isArray(parsed)) {
-      // Render a beautiful 3-column table like the mockup
-      let tableHtml = html + `
+      if (Array.isArray(parsed)) {
+        // Render a beautiful 3-column table like the mockup
+        let tableHtml = html + `
                 <div style="overflow-x: auto; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-light); box-shadow: var(--shadow-sm);">
                     <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.8rem;">
                         <thead>
@@ -3755,48 +4426,48 @@ function formatDiff(detailStr) {
                         <tbody>
             `;
 
-      parsed.forEach((diff, idx) => {
-        const field = diff.field || 'unknown';
-        const oldVal = diff.old !== null ? diff.old : '';
-        const newVal = diff.new !== null ? diff.new : '';
+        parsed.forEach((diff, idx) => {
+          const field = diff.field || 'unknown';
+          const oldVal = diff.old !== null ? diff.old : '';
+          const newVal = diff.new !== null ? diff.new : '';
 
-        const beforeCell = oldVal !== ''
-          ? `<span style="display: inline-flex; align-items: center; gap: 4px; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; padding: 0.2rem 0.5rem; border-radius: 6px; font-family: monospace; text-decoration: line-through; font-size: 0.78rem;">
+          const beforeCell = oldVal !== ''
+            ? `<span style="display: inline-flex; align-items: center; gap: 4px; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; padding: 0.2rem 0.5rem; border-radius: 6px; font-family: monospace; text-decoration: line-through; font-size: 0.78rem;">
                         <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:3;stroke-linecap:round;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                         ${oldVal}
                        </span>`
-          : `<span style="color: var(--text-muted); font-style: italic; font-size: 0.75rem;">(null)</span>`;
+            : `<span style="color: var(--text-muted); font-style: italic; font-size: 0.75rem;">(null)</span>`;
 
-        const afterCell = newVal !== ''
-          ? `<span style="display: inline-flex; align-items: center; gap: 4px; background: #d1fae5; color: #059669; border: 1px solid #a7f3d0; padding: 0.2rem 0.5rem; border-radius: 6px; font-family: monospace; font-weight: 600; font-size: 0.78rem;">
+          const afterCell = newVal !== ''
+            ? `<span style="display: inline-flex; align-items: center; gap: 4px; background: #d1fae5; color: #059669; border: 1px solid #a7f3d0; padding: 0.2rem 0.5rem; border-radius: 6px; font-family: monospace; font-weight: 600; font-size: 0.78rem;">
                         <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;"><polyline points="20 6 9 17 4 12"></polyline></svg>
                         ${newVal}
                        </span>`
-          : `<span style="color: #ef4444; background: #fef2f2; border: 1px solid #fee2e2; padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.75rem; font-weight:600; display: inline-flex; align-items: center; gap: 4px;">
+            : `<span style="color: #ef4444; background: #fef2f2; border: 1px solid #fee2e2; padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.75rem; font-weight:600; display: inline-flex; align-items: center; gap: 4px;">
                         <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2.5;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-                        Đã xóa
+                        Deleted
                        </span>`;
 
-        const borderStyle = idx < parsed.length - 1 ? 'border-bottom: 1px solid var(--border-color);' : '';
+          const borderStyle = idx < parsed.length - 1 ? 'border-bottom: 1px solid var(--border-color);' : '';
 
-        tableHtml += `
+          tableHtml += `
                     <tr style="${borderStyle}">
                         <td style="padding: 0.75rem 1rem; font-weight: 700; color: #4f46e5; font-size: 0.75rem; font-family: var(--font-heading);">${field.toUpperCase()}</td>
                         <td style="padding: 0.75rem 1rem; background: rgba(254, 242, 242, 0.4);">${beforeCell}</td>
                         <td style="padding: 0.75rem 1rem; background: rgba(236, 253, 245, 0.4);">${afterCell}</td>
                     </tr>
                 `;
-      });
+        });
 
-      tableHtml += `
+        tableHtml += `
                         </tbody>
                     </table>
                 </div>
             `;
-      return tableHtml;
-    } else if (typeof parsed === 'object') {
-      // Render the JSON payload object in the same 3-column table format!
-      let tableHtml = html + `
+        return tableHtml;
+      } else if (typeof parsed === 'object') {
+        // Render the JSON payload object in the same 3-column table format!
+        let tableHtml = html + `
                 <div style="overflow-x: auto; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-light); box-shadow: var(--shadow-sm);">
                     <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.8rem;">
                         <thead>
@@ -3809,142 +4480,142 @@ function formatDiff(detailStr) {
                         <tbody>
             `;
 
-      const entries = Object.entries(parsed).filter(([key]) => key !== 'id' && key !== 'createdAt' && key !== 'updatedAt');
-      entries.forEach(([key, val], idx) => {
-        let formattedVal = val !== null ? val.toString() : '';
-        if (formattedVal.length > 200) {
-          formattedVal = formattedVal.substring(0, 197) + '...';
-        }
+        const entries = Object.entries(parsed).filter(([key]) => key !== 'id' && key !== 'createdAt' && key !== 'updatedAt');
+        entries.forEach(([key, val], idx) => {
+          let formattedVal = val !== null ? val.toString() : '';
+          if (formattedVal.length > 200) {
+            formattedVal = formattedVal.substring(0, 197) + '...';
+          }
 
-        const beforeCell = `<span style="color: var(--text-muted); font-style: italic; font-size: 0.75rem;">(null)</span>`;
-        const afterCell = formattedVal !== ''
-          ? `<span style="display: inline-flex; align-items: center; gap: 4px; background: #d1fae5; color: #059669; border: 1px solid #a7f3d0; padding: 0.2rem 0.5rem; border-radius: 6px; font-family: monospace; font-weight: 600; font-size: 0.78rem;">
+          const beforeCell = `<span style="color: var(--text-muted); font-style: italic; font-size: 0.75rem;">(null)</span>`;
+          const afterCell = formattedVal !== ''
+            ? `<span style="display: inline-flex; align-items: center; gap: 4px; background: #d1fae5; color: #059669; border: 1px solid #a7f3d0; padding: 0.2rem 0.5rem; border-radius: 6px; font-family: monospace; font-weight: 600; font-size: 0.78rem;">
                         <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;"><polyline points="20 6 9 17 4 12"></polyline></svg>
                         ${formattedVal}
                        </span>`
-          : `<span style="color: var(--text-muted); font-style: italic; font-size: 0.75rem;">(null)</span>`;
+            : `<span style="color: var(--text-muted); font-style: italic; font-size: 0.75rem;">(null)</span>`;
 
-        const borderStyle = idx < entries.length - 1 ? 'border-bottom: 1px solid var(--border-color);' : '';
+          const borderStyle = idx < entries.length - 1 ? 'border-bottom: 1px solid var(--border-color);' : '';
 
-        tableHtml += `
+          tableHtml += `
                     <tr style="${borderStyle}">
                         <td style="padding: 0.75rem 1rem; font-weight: 700; color: #4f46e5; font-size: 0.75rem; font-family: var(--font-heading);">${key.toUpperCase()}</td>
                         <td style="padding: 0.75rem 1rem; background: rgba(254, 242, 242, 0.2);">${beforeCell}</td>
                         <td style="padding: 0.75rem 1rem; background: rgba(236, 253, 245, 0.4);">${afterCell}</td>
                     </tr>
                 `;
-      });
+        });
 
-      tableHtml += `
+        tableHtml += `
                         </tbody>
                     </table>
                 </div>
             `;
-      return tableHtml;
-    }
-  } catch (e) {
-    // Fallback for raw text
-    html += `
+        return tableHtml;
+      }
+    } catch (e) {
+      // Fallback for raw text
+      html += `
             <div style="font-family: monospace; font-size: 0.8rem; max-height: 120px; overflow-y: auto; background: var(--bg-light); padding: 0.6rem 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); word-break: break-all; white-space: pre-wrap; color: var(--text-dark);">
                 ${jsonPart}
             </div>
         `;
-    return html;
-  }
-}
-
-function getAuthStatusBadge(action) {
-  const upperAction = action ? action.toUpperCase() : '';
-  if (upperAction === 'LOGIN' || upperAction === 'LOGOUT') {
-    return `<span class="status-badge badge-active">Thành công</span>`;
-  } else if (upperAction.includes('FAILED') || upperAction.includes('ERROR')) {
-    return `<span style="background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; padding: 0.2rem 0.6rem; border-radius: 50px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase;">Thất bại</span>`;
-  } else if (upperAction === 'CHANGE_PASSWORD') {
-    return `<span class="status-badge status-pending">Đổi mật khẩu</span>`;
-  }
-  return `<span class="status-badge status-pending">${action}</span>`;
-}
-
-function getRoleBadge(role) {
-  if (role === 'ROLE_ADMIN' || role === 'ADMIN') {
-    return `<span class="status-badge badge-admin" style="background:#f3f0ff;color:#7c3aed;border:1px solid #ddd6fe;">ADMIN</span>`;
-  }
-  if (role === 'ROLE_TEAM_MEMBER' || role === 'TEAM_MEMBER') {
-    return `<span class="status-badge badge-user" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;">TEAM MEMBER</span>`;
-  }
-  return `<span class="status-badge" style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;">USER</span>`;
-}
-
-function renderAuditPagination(containerId, totalPages, currentPage, callbackName) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-  if (totalPages <= 1) { container.innerHTML = ''; return; }
-
-  const btnStyle = `style="min-width:34px;height:34px;border-radius:8px;border:1px solid var(--border-color);background:#fff;color:var(--text-dark);font-size:0.82rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:all 0.2s;"`;
-  const activeBtnStyle = `style="min-width:34px;height:34px;border-radius:8px;border:1px solid #2563eb;background:#2563eb;color:#fff;font-size:0.82rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;"`;
-  const disabledStyle = `style="min-width:34px;height:34px;border-radius:8px;border:1px solid #e2e8f0;background:#f8fafc;color:#cbd5e1;font-size:0.82rem;font-weight:600;display:inline-flex;align-items:center;justify-content:center;cursor:not-allowed;"`;
-
-  let html = `<span style="font-size:0.82rem;color:var(--text-muted);margin-right:0.5rem;">Trang ${currentPage + 1} / ${totalPages}</span>`;
-
-  // Prev
-  if (currentPage === 0) {
-    html += `<span ${disabledStyle}>‹</span>`;
-  } else {
-    html += `<button ${btnStyle} onclick="${callbackName}(${currentPage - 1})">‹</button>`;
+      return html;
+    }
   }
 
-  let start = Math.max(0, currentPage - 2);
-  let end = Math.min(totalPages - 1, currentPage + 2);
-
-  if (start > 0) {
-    html += `<button ${btnStyle} onclick="${callbackName}(0)">1</button>`;
-    if (start > 1) html += `<span style="color:var(--text-muted);padding:0 4px;">…</span>`;
-  }
-  for (let i = start; i <= end; i++) {
-    html += `<button ${i === currentPage ? activeBtnStyle : btnStyle} onclick="${callbackName}(${i})">${i + 1}</button>`;
-  }
-  if (end < totalPages - 1) {
-    if (end < totalPages - 2) html += `<span style="color:var(--text-muted);padding:0 4px;">…</span>`;
-    html += `<button ${btnStyle} onclick="${callbackName}(${totalPages - 1})">${totalPages}</button>`;
+  function getAuthStatusBadge(action) {
+    const upperAction = action ? action.toUpperCase() : '';
+    if (upperAction === 'LOGIN' || upperAction === 'LOGOUT') {
+      return `<span class="status-badge badge-active">Success</span>`;
+    } else if (upperAction.includes('FAILED') || upperAction.includes('ERROR')) {
+      return `<span style="background: #fef2f2; color: #ef4444; border: 1px solid #fecaca; padding: 0.2rem 0.6rem; border-radius: 50px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase;">Failure</span>`;
+    } else if (upperAction === 'CHANGE_PASSWORD') {
+      return `<span class="status-badge status-pending">Change Password</span>`;
+    }
+    return `<span class="status-badge status-pending">${action}</span>`;
   }
 
-  // Next
-  if (currentPage === totalPages - 1) {
-    html += `<span ${disabledStyle}>›</span>`;
-  } else {
-    html += `<button ${btnStyle} onclick="${callbackName}(${currentPage + 1})">›</button>`;
+  function getRoleBadge(role) {
+    if (role === 'ROLE_ADMIN' || role === 'ADMIN') {
+      return `<span class="status-badge badge-admin" style="background:#f3f0ff;color:#7c3aed;border:1px solid #ddd6fe;">ADMIN</span>`;
+    }
+    if (role === 'ROLE_TEAM_MEMBER' || role === 'TEAM_MEMBER') {
+      return `<span class="status-badge badge-user" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;">TEAM MEMBER</span>`;
+    }
+    return `<span class="status-badge" style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;">USER</span>`;
   }
 
-  container.innerHTML = html;
-}
+  function renderAuditPagination(containerId, totalPages, currentPage, callbackName) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    if (totalPages <= 1) { container.innerHTML = ''; return; }
 
-async function fetchAuditWithAuth(url) {
-  const token = sessionStorage.getItem("token") || localStorage.getItem("token") || "";
-  const res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
-  if (!res.ok) throw new Error('Lỗi truy cập dữ liệu (' + res.status + ')');
-  return res.json();
-}
+    const btnStyle = `style="min-width:34px;height:34px;border-radius:8px;border:1px solid var(--border-color);background:#fff;color:var(--text-dark);font-size:0.82rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:all 0.2s;"`;
+    const activeBtnStyle = `style="min-width:34px;height:34px;border-radius:8px;border:1px solid #2563eb;background:#2563eb;color:#fff;font-size:0.82rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;"`;
+    const disabledStyle = `style="min-width:34px;height:34px;border-radius:8px;border:1px solid #e2e8f0;background:#f8fafc;color:#cbd5e1;font-size:0.82rem;font-weight:600;display:inline-flex;align-items:center;justify-content:center;cursor:not-allowed;"`;
 
-// Tab 1: User list sorted by latest data audit activity
-async function loadDataUsers(page = 0) {
-  auditDataPage = page;
-  const tbody = document.getElementById('dataTableBody');
-  tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);">Đang tải...</td></tr>`;
+    let html = `<span style="font-size:0.82rem;color:var(--text-muted);margin-right:0.5rem;">Page ${currentPage + 1} / ${totalPages}</span>`;
 
-  try {
-    const data = await fetchAuditWithAuth(`/api/audit/data-users?page=${page}&size=${AUDIT_PAGE_SIZE}`);
-
-    if (!data.content || data.content.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);">Không có người dùng nào.</td></tr>`;
-      document.getElementById('dataPagination').innerHTML = '';
-      return;
+    // Prev
+    if (currentPage === 0) {
+      html += `<span ${disabledStyle}>‹</span>`;
+    } else {
+      html += `<button ${btnStyle} onclick="${callbackName}(${currentPage - 1})">‹</button>`;
     }
 
-    tbody.innerHTML = '';
-    data.content.forEach(user => {
-      const initials = (user.fullName || user.username || '?').charAt(0).toUpperCase();
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
+    let start = Math.max(0, currentPage - 2);
+    let end = Math.min(totalPages - 1, currentPage + 2);
+
+    if (start > 0) {
+      html += `<button ${btnStyle} onclick="${callbackName}(0)">1</button>`;
+      if (start > 1) html += `<span style="color:var(--text-muted);padding:0 4px;">…</span>`;
+    }
+    for (let i = start; i <= end; i++) {
+      html += `<button ${i === currentPage ? activeBtnStyle : btnStyle} onclick="${callbackName}(${i})">${i + 1}</button>`;
+    }
+    if (end < totalPages - 1) {
+      if (end < totalPages - 2) html += `<span style="color:var(--text-muted);padding:0 4px;">…</span>`;
+      html += `<button ${btnStyle} onclick="${callbackName}(${totalPages - 1})">${totalPages}</button>`;
+    }
+
+    // Next
+    if (currentPage === totalPages - 1) {
+      html += `<span ${disabledStyle}>›</span>`;
+    } else {
+      html += `<button ${btnStyle} onclick="${callbackName}(${currentPage + 1})">›</button>`;
+    }
+
+    container.innerHTML = html;
+  }
+
+  async function fetchAuditWithAuth(url) {
+    const token = sessionStorage.getItem("token") || localStorage.getItem("token") || "";
+    const res = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
+    if (!res.ok) throw new Error('Data access error (' + res.status + ')');
+    return res.json();
+  }
+
+  // Tab 1: User list sorted by latest data audit activity
+  async function loadDataUsers(page = 0) {
+    auditDataPage = page;
+    const tbody = document.getElementById('dataTableBody');
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);">Loading...</td></tr>`;
+
+    try {
+      const data = await fetchAuditWithAuth(`/api/audit/data-users?page=${page}&size=${AUDIT_PAGE_SIZE}`);
+
+      if (!data.content || data.content.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);">No users found.</td></tr>`;
+        document.getElementById('dataPagination').innerHTML = '';
+        return;
+      }
+
+      tbody.innerHTML = '';
+      data.content.forEach(user => {
+        const initials = (user.fullName || user.username || '?').charAt(0).toUpperCase();
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
                 <td>
                     <div style="display:flex;align-items:center;gap:0.75rem;">
                         <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:1rem;flex-shrink:0;">${initials}</div>
@@ -3962,38 +4633,38 @@ async function loadDataUsers(page = 0) {
                         <svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:#2563eb;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;">
                             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
                         </svg>
-                        Xem logs
+                        View logs
                     </button>
                 </td>
             `;
-      tbody.appendChild(tr);
-    });
+        tbody.appendChild(tr);
+      });
 
-    renderAuditPagination('dataPagination', data.totalPages, auditDataPage, 'loadDataUsers');
-  } catch (error) {
-    tbody.innerHTML = `<tr><td colspan="6" style="color:#ef4444;text-align:center;">${error.message}</td></tr>`;
-  }
-}
-
-// Tab 2: Auth Logs (paginated) - fixed from old data.forEach bug
-async function loadAuthLogs(page = 0) {
-  auditAuthPage = page;
-  const tbody = document.getElementById('authTableBody');
-  tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);">Đang tải...</td></tr>`;
-
-  try {
-    const data = await fetchAuditWithAuth(`/api/audit/auth?page=${page}&size=${AUDIT_PAGE_SIZE}`);
-
-    if (!data.content || data.content.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);">Không có dữ liệu lịch sử truy cập.</td></tr>`;
-      document.getElementById('authPagination').innerHTML = '';
-      return;
+      renderAuditPagination('dataPagination', data.totalPages, auditDataPage, 'loadDataUsers');
+    } catch (error) {
+      tbody.innerHTML = `<tr><td colspan="6" style="color:#ef4444;text-align:center;">${error.message}</td></tr>`;
     }
+  }
 
-    tbody.innerHTML = '';
-    data.content.forEach(log => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
+  // Tab 2: Auth Logs (paginated) - fixed from old data.forEach bug
+  async function loadAuthLogs(page = 0) {
+    auditAuthPage = page;
+    const tbody = document.getElementById('authTableBody');
+    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);">Loading...</td></tr>`;
+
+    try {
+      const data = await fetchAuditWithAuth(`/api/audit/auth?page=${page}&size=${AUDIT_PAGE_SIZE}`);
+
+      if (!data.content || data.content.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);">No access history data.</td></tr>`;
+        document.getElementById('authPagination').innerHTML = '';
+        return;
+      }
+
+      tbody.innerHTML = '';
+      data.content.forEach(log => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
                 <td style="white-space:nowrap;color:var(--text-muted);font-size:0.8rem;">${formatAuditDate(log.createdAt)}</td>
                 <td style="font-weight:600;color:var(--text-dark);">${log.username}</td>
                 <td>
@@ -4009,123 +4680,123 @@ async function loadAuthLogs(page = 0) {
                     </div>
                 </td>
             `;
-      tbody.appendChild(tr);
-    });
+        tbody.appendChild(tr);
+      });
 
-    renderAuditPagination('authPagination', data.totalPages, auditAuthPage, 'loadAuthLogs');
-  } catch (error) {
-    tbody.innerHTML = `<tr><td colspan="5" style="color:#ef4444;text-align:center;">${error.message}</td></tr>`;
+      renderAuditPagination('authPagination', data.totalPages, auditAuthPage, 'loadAuthLogs');
+    } catch (error) {
+      tbody.innerHTML = `<tr><td colspan="5" style="color:#ef4444;text-align:center;">${error.message}</td></tr>`;
+    }
   }
-}
 
-function switchAuditTab(tabId) {
-  document.getElementById('dataTab').style.display = tabId === 'dataTab' ? 'block' : 'none';
-  document.getElementById('authTab').style.display = tabId === 'authTab' ? 'block' : 'none';
-  
-  const btnData = document.getElementById('btn-tab-data');
-  const btnAuth = document.getElementById('btn-tab-auth');
-  
-  if (tabId === 'dataTab') {
+  function switchAuditTab(tabId) {
+    document.getElementById('dataTab').style.display = tabId === 'dataTab' ? 'block' : 'none';
+    document.getElementById('authTab').style.display = tabId === 'authTab' ? 'block' : 'none';
+
+    const btnData = document.getElementById('btn-tab-data');
+    const btnAuth = document.getElementById('btn-tab-auth');
+
+    if (tabId === 'dataTab') {
       btnData.style.background = 'linear-gradient(135deg, rgba(37,99,235,0.1), rgba(79,70,229,0.1))';
       btnData.style.border = '1px solid rgba(37,99,235,0.2)';
       btnData.style.color = '#2563eb';
-      
+
       btnAuth.style.background = 'transparent';
       btnAuth.style.border = '1px solid transparent';
       btnAuth.style.color = 'var(--text-muted)';
       loadDataUsers(0);
-  } else {
+    } else {
       btnAuth.style.background = 'linear-gradient(135deg, rgba(37,99,235,0.1), rgba(79,70,229,0.1))';
       btnAuth.style.border = '1px solid rgba(37,99,235,0.2)';
       btnAuth.style.color = '#2563eb';
-      
+
       btnData.style.background = 'transparent';
       btnData.style.border = '1px solid transparent';
       btnData.style.color = 'var(--text-muted)';
       loadAuthLogs(0);
-  }
-}
-
-// Modal: Open and load user-specific data audit logs
-function openAuditModal(username) {
-  auditModalUsername = username;
-  document.getElementById('modalUsernameLabel').innerText = username;
-  const overlay = document.getElementById('auditModal');
-  overlay.classList.add('is-open');
-  loadUserAuditLogs(0);
-}
-
-function closeModal() {
-  document.getElementById('auditModal').classList.remove('is-open');
-}
-
-// Close modal on outside click
-document.addEventListener('DOMContentLoaded', () => {
-  const overlay = document.getElementById('auditModal');
-  if (overlay) {
-    overlay.addEventListener('click', function (e) {
-      if (e.target === this) closeModal();
-    });
-  }
-  const detailOverlay = document.getElementById('auditDetailModal');
-  if (detailOverlay) {
-    detailOverlay.addEventListener('click', function (e) {
-      if (e.target === this) closeDetailModal();
-    });
-  }
-  const toggle = document.getElementById('detail-only-changes-toggle');
-  if (toggle) {
-    toggle.addEventListener('change', function() {
-      renderComparisonTable();
-    });
-  }
-});
-
-async function loadUserAuditLogs(page = 0) {
-  auditModalPage = page;
-  const container = document.getElementById('modalLogContainer');
-  container.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-muted);">Đang tải dữ liệu...</div>`;
-
-  try {
-    const data = await fetchAuditWithAuth(`/api/audit/data/user/${auditModalUsername}?page=${page}&size=${AUDIT_PAGE_SIZE}`);
-
-    if (!data.content || data.content.length === 0) {
-      container.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-muted);">Người dùng này chưa có hoạt động thay đổi dữ liệu nào.</div>`;
-      document.getElementById('modalPagination').innerHTML = '';
-      return;
     }
+  }
 
-    container.innerHTML = '';
-    data.content.forEach(log => {
-      const entry = document.createElement('div');
-      entry.className = 'log-entry';
-      entry.style.display = 'flex';
-      entry.style.alignItems = 'center';
-      entry.style.padding = '0.75rem 0';
-      entry.style.borderBottom = '1px solid #e5e7eb';
-      
-      const dt = log.createdAt ? new Date(log.createdAt) : null;
-      const timeStr = dt ? dt.toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit', second:'2-digit'}) : '';
-      const dateStr = dt ? dt.toLocaleDateString('vi-VN', {day:'2-digit', month:'2-digit', year:'numeric'}) : '';
-      
-      let summaryText = 'Thay đổi dữ liệu';
-      try {
-          const clean = (log.detail || '').replace(/^\[FAILED\]\s*/,'').replace(/^[^{[]*?({|\[)/,'$1');
-          const parsed = JSON.parse(clean);
-          if (Array.isArray(parsed)) {
-              const fields = parsed.map(d => d.field).join(', ');
-              summaryText = `Cập nhật các trường: <strong style="color:#2563eb;">${fields}</strong>`;
-          } else if (typeof parsed === 'object') {
-              const fields = Object.keys(parsed).filter(k => k !== 'id' && k !== 'createdAt' && k !== 'updatedAt').join(', ');
-              summaryText = `Tạo mới với các trường: <strong style="color:#059669;">${fields}</strong>`;
-          }
-      } catch(e) {
-          summaryText = log.detail || 'Thay đổi dữ liệu';
+  // Modal: Open and load user-specific data audit logs
+  function openAuditModal(username) {
+    auditModalUsername = username;
+    document.getElementById('modalUsernameLabel').innerText = username;
+    const overlay = document.getElementById('auditModal');
+    overlay.classList.add('is-open');
+    loadUserAuditLogs(0);
+  }
+
+  function closeModal() {
+    document.getElementById('auditModal').classList.remove('is-open');
+  }
+
+  // Close modal on outside click
+  document.addEventListener('DOMContentLoaded', () => {
+    const overlay = document.getElementById('auditModal');
+    if (overlay) {
+      overlay.addEventListener('click', function (e) {
+        if (e.target === this) closeModal();
+      });
+    }
+    const detailOverlay = document.getElementById('auditDetailModal');
+    if (detailOverlay) {
+      detailOverlay.addEventListener('click', function (e) {
+        if (e.target === this) closeDetailModal();
+      });
+    }
+    const toggle = document.getElementById('detail-only-changes-toggle');
+    if (toggle) {
+      toggle.addEventListener('change', function () {
+        renderComparisonTable();
+      });
+    }
+  });
+
+  async function loadUserAuditLogs(page = 0) {
+    auditModalPage = page;
+    const container = document.getElementById('modalLogContainer');
+    container.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-muted);">Loading data...</div>`;
+
+    try {
+      const data = await fetchAuditWithAuth(`/api/audit/data/user/${auditModalUsername}?page=${page}&size=${AUDIT_PAGE_SIZE}`);
+
+      if (!data.content || data.content.length === 0) {
+        container.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-muted);">This user has no data change activities yet.</div>`;
+        document.getElementById('modalPagination').innerHTML = '';
+        return;
       }
 
-      const logJsonString = encodeURIComponent(JSON.stringify(log));
+      container.innerHTML = '';
+      data.content.forEach(log => {
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+        entry.style.display = 'flex';
+        entry.style.alignItems = 'center';
+        entry.style.padding = '0.75rem 0';
+        entry.style.borderBottom = '1px solid #e5e7eb';
 
-      entry.innerHTML = `
+        const dt = log.createdAt ? new Date(log.createdAt) : null;
+        const timeStr = dt ? dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '';
+        const dateStr = dt ? dt.toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
+
+        let summaryText = 'Data changed';
+        try {
+          const clean = (log.detail || '').replace(/^\[FAILED\]\s*/, '').replace(/^[^{[]*?({|\[)/, '$1');
+          const parsed = JSON.parse(clean);
+          if (Array.isArray(parsed)) {
+            const fields = parsed.map(d => d.field).join(', ');
+            summaryText = `Updated fields: <strong style="color:#2563eb;">${fields}</strong>`;
+          } else if (typeof parsed === 'object') {
+            const fields = Object.keys(parsed).filter(k => k !== 'id' && k !== 'createdAt' && k !== 'updatedAt').join(', ');
+            summaryText = `Created with fields: <strong style="color:#059669;">${fields}</strong>`;
+          }
+        } catch (e) {
+          summaryText = log.detail || 'Data changed';
+        }
+
+        const logJsonString = encodeURIComponent(JSON.stringify(log));
+
+        entry.innerHTML = `
           <div class="log-time" style="width: 140px; font-weight:600; flex-shrink: 0; font-family: system-ui, -apple-system, sans-serif; font-size:0.82rem;">
               ${timeStr}
               <span class="log-date" style="display:block; font-size:0.72rem; color:#6b7280; font-weight: 500;">${dateStr}</span>
@@ -4137,49 +4808,49 @@ async function loadUserAuditLogs(page = 0) {
           <div class="log-detail-col" style="flex:1; display:flex; justify-content:space-between; align-items:center; gap: 1rem; font-family: system-ui, -apple-system, sans-serif;">
               <span style="font-size:0.85rem; color:#374151;">${summaryText}</span>
               <button onclick="openDetailModal('${logJsonString}')" style="background:#eff6ff; border:1px solid #bfdbfe; color:#2563eb; padding:4px 10px; border-radius:6px; font-size:0.78rem; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:4px; transition:all 0.2s;">
-                  Xem chi tiết
+                  View details
               </button>
           </div>
       `;
-      container.appendChild(entry);
-    });
+        container.appendChild(entry);
+      });
 
-    renderAuditPagination('modalPagination', data.totalPages, auditModalPage, 'loadUserAuditLogs');
-  } catch (error) {
-    container.innerHTML = `<div style="color:#ef4444;text-align:center;padding:1rem;">${error.message}</div>`;
+      renderAuditPagination('modalPagination', data.totalPages, auditModalPage, 'loadUserAuditLogs');
+    } catch (error) {
+      container.innerHTML = `<div style="color:#ef4444;text-align:center;padding:1rem;">${error.message}</div>`;
+    }
   }
-}
 
-// Detailed Comparison Modal Logic
-let activeDetailLog = null;
+  // Detailed Comparison Modal Logic
+  let activeDetailLog = null;
 
-function openDetailModal(logJsonString) {
+  function openDetailModal(logJsonString) {
     const log = JSON.parse(decodeURIComponent(logJsonString));
     activeDetailLog = log;
 
     // Set titles & metadata
     document.getElementById('detail-user-title').innerText = log.username || 'N/A';
     document.getElementById('detail-table-title').innerText = log.tableName || 'N/A';
-    
+
     // Set action badge color & text
     const badge = document.getElementById('detail-action-badge');
     badge.innerText = (log.action || '').toUpperCase();
     if (log.action && log.action.toUpperCase().includes('UPDATE')) {
-        badge.style.background = '#eff6ff';
-        badge.style.color = '#2563eb';
-        badge.style.border = '1px solid #bfdbfe';
+      badge.style.background = '#eff6ff';
+      badge.style.color = '#2563eb';
+      badge.style.border = '1px solid #bfdbfe';
     } else if (log.action && log.action.toUpperCase().includes('CREATE')) {
-        badge.style.background = '#ecfdf5';
-        badge.style.color = '#059669';
-        badge.style.border = '1px solid #a7f3d0';
+      badge.style.background = '#ecfdf5';
+      badge.style.color = '#059669';
+      badge.style.border = '1px solid #a7f3d0';
     } else if (log.action && log.action.toUpperCase().includes('DELETE')) {
-        badge.style.background = '#fef2f2';
-        badge.style.color = '#dc2626';
-        badge.style.border = '1px solid #fca5a5';
+      badge.style.background = '#fef2f2';
+      badge.style.color = '#dc2626';
+      badge.style.border = '1px solid #fca5a5';
     } else {
-        badge.style.background = '#f3f4f6';
-        badge.style.color = '#374151';
-        badge.style.border = '1px solid #d1d5db';
+      badge.style.background = '#f3f4f6';
+      badge.style.color = '#374151';
+      badge.style.border = '1px solid #d1d5db';
     }
 
     // Set avatar initial
@@ -4189,11 +4860,11 @@ function openDetailModal(logJsonString) {
     // Format date and time
     const dt = log.createdAt ? new Date(log.createdAt) : null;
     if (dt) {
-        document.getElementById('detail-date').innerText = dt.toLocaleDateString('vi-VN', {day:'2-digit', month:'2-digit', year:'numeric'});
-        document.getElementById('detail-time').innerText = dt.toLocaleTimeString('vi-VN', {hour:'2-digit', minute:'2-digit'}) + ' (Hanoi, Vietnam time)';
+      document.getElementById('detail-date').innerText = dt.toLocaleDateString('en-US', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      document.getElementById('detail-time').innerText = dt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) + ' (Hanoi, Vietnam time)';
     } else {
-        document.getElementById('detail-date').innerText = '-';
-        document.getElementById('detail-time').innerText = '-';
+      document.getElementById('detail-date').innerText = '-';
+      document.getElementById('detail-time').innerText = '-';
     }
 
     // Footer
@@ -4202,7 +4873,7 @@ function openDetailModal(logJsonString) {
     let hash = 0;
     const uaStr = log.userAgent || '';
     for (let i = 0; i < uaStr.length; i++) {
-        hash = uaStr.charCodeAt(i) + ((hash << 5) - hash);
+      hash = uaStr.charCodeAt(i) + ((hash << 5) - hash);
     }
     document.getElementById('detail-session-id').innerText = log.userAgent ? ('SESS-' + Math.abs(hash).toString(16).toUpperCase().substring(0, 8)) : 'N/A';
 
@@ -4211,17 +4882,17 @@ function openDetailModal(logJsonString) {
 
     // Open modal
     document.getElementById('auditDetailModal').classList.add('is-open');
-}
+  }
 
-function closeDetailModal() {
+  function closeDetailModal() {
     document.getElementById('auditDetailModal').classList.remove('is-open');
-}
+  }
 
-function renderComparisonTable() {
+  function renderComparisonTable() {
     const container = document.getElementById('detail-comparison-table-container');
     if (!activeDetailLog || !activeDetailLog.detail) {
-        container.innerHTML = '<span style="color:#6b7280; font-style:italic;">Không có dữ liệu</span>';
-        return;
+      container.innerHTML = '<span style="color:#6b7280; font-style:italic;">No data</span>';
+      return;
     }
 
     const showOnlyChanges = document.getElementById('detail-only-changes-toggle').checked;
@@ -4232,23 +4903,23 @@ function renderComparisonTable() {
     let errorMessage = '';
     let jsonPart = detailStr;
     if (detailStr.startsWith('[FAILED]')) {
-        isFailed = true;
-        const separatorIdx = detailStr.indexOf(' | ');
-        if (separatorIdx !== -1) {
-            errorMessage = detailStr.substring(8, separatorIdx);
-            jsonPart = detailStr.substring(separatorIdx + 3);
-        } else {
-            errorMessage = detailStr.substring(8);
-            jsonPart = '';
-        }
+      isFailed = true;
+      const separatorIdx = detailStr.indexOf(' | ');
+      if (separatorIdx !== -1) {
+        errorMessage = detailStr.substring(8, separatorIdx);
+        jsonPart = detailStr.substring(separatorIdx + 3);
+      } else {
+        errorMessage = detailStr.substring(8);
+        jsonPart = '';
+      }
     }
 
     let html = '';
     if (isFailed) {
-        html += `
+      html += `
             <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 0.6rem 0.8rem; margin-bottom: 0.6rem; color: #dc2626; font-size: 0.8rem; font-family: system-ui, -apple-system, sans-serif;">
                 <div style="font-weight: 700; display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">
-                    Thao tác thất bại
+                    Operation failed
                 </div>
                 <div style="font-family: monospace; font-size: 0.75rem; word-break: break-all;">${errorMessage}</div>
             </div>
@@ -4256,16 +4927,16 @@ function renderComparisonTable() {
     }
 
     if (!jsonPart || jsonPart === '(no payload)') {
-        container.innerHTML = html + '<span style="color:#6b7280; font-style:italic;">Không có nội dung chi tiết</span>';
-        return;
+      container.innerHTML = html + '<span style="color:#6b7280; font-style:italic;">No detailed content</span>';
+      return;
     }
 
     try {
-        const clean = jsonPart.replace(/^\[FAILED\]\s*/,'').replace(/^[^{[]*?({|\[)/,'$1');
-        const parsed = JSON.parse(clean);
-        
-        if (Array.isArray(parsed)) {
-            let tableHtml = html + `
+      const clean = jsonPart.replace(/^\[FAILED\]\s*/, '').replace(/^[^{[]*?({|\[)/, '$1');
+      const parsed = JSON.parse(clean);
+
+      if (Array.isArray(parsed)) {
+        let tableHtml = html + `
                 <div style="overflow-x: auto; border: 1px solid #e5e7eb; border-radius: 12px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.05); font-family: system-ui, -apple-system, sans-serif;">
                     <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.82rem;">
                         <thead>
@@ -4278,54 +4949,54 @@ function renderComparisonTable() {
                         <tbody>
             `;
 
-            let rowIndex = 0;
-            let renderedCount = 0;
+        let rowIndex = 0;
+        let renderedCount = 0;
 
-            parsed.forEach((diff) => {
-                const field = diff.field || 'unknown';
-                const oldVal = diff.old !== null ? String(diff.old) : '';
-                const newVal = diff.new !== null ? String(diff.new) : '';
-                const isChanged = diff.changed !== false;
+        parsed.forEach((diff) => {
+          const field = diff.field || 'unknown';
+          const oldVal = diff.old !== null ? String(diff.old) : '';
+          const newVal = diff.new !== null ? String(diff.new) : '';
+          const isChanged = diff.changed !== false;
 
-                if (showOnlyChanges && !isChanged) {
-                    return; // Hide unchanged fields
-                }
+          if (showOnlyChanges && !isChanged) {
+            return; // Hide unchanged fields
+          }
 
-                renderedCount++;
-                rowIndex++;
+          renderedCount++;
+          rowIndex++;
 
-                let beforeContent = '';
-                let afterContent = '';
-                let cellBgBefore = '#fff';
-                let cellBgAfter = '#fff';
+          let beforeContent = '';
+          let afterContent = '';
+          let cellBgBefore = '#fff';
+          let cellBgAfter = '#fff';
 
-                if (!isChanged) {
-                    // Unchanged row
-                    cellBgBefore = '#f9fafb';
-                    cellBgAfter = '#f9fafb';
-                    beforeContent = `<span style="background: #e5e7eb; color: #4b5563; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.78rem; font-weight: 500;">${newVal || '(trống)'} (No change)</span>`;
-                    afterContent = `<span style="background: #e5e7eb; color: #4b5563; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.78rem; font-weight: 500;">${newVal || '(trống)'} (No change)</span>`;
-                } else {
-                    // Changed row
-                    cellBgBefore = '#fef2f2';
-                    cellBgAfter = '#ecfdf5';
+          if (!isChanged) {
+            // Unchanged row
+            cellBgBefore = '#f9fafb';
+            cellBgAfter = '#f9fafb';
+            beforeContent = `<span style="background: #e5e7eb; color: #4b5563; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.78rem; font-weight: 500;">${newVal || '(empty)'} (No change)</span>`;
+            afterContent = `<span style="background: #e5e7eb; color: #4b5563; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.78rem; font-weight: 500;">${newVal || '(empty)'} (No change)</span>`;
+          } else {
+            // Changed row
+            cellBgBefore = '#fef2f2';
+            cellBgAfter = '#ecfdf5';
 
-                    beforeContent = oldVal !== '' 
-                        ? `<span style="color: #dc2626; text-decoration: line-through; font-family: monospace; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 4px;">
+            beforeContent = oldVal !== ''
+              ? `<span style="color: #dc2626; text-decoration: line-through; font-family: monospace; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 4px;">
                             ~${oldVal}~
                            </span>`
-                        : `<span style="color: #9ca3af; font-style: italic; font-size: 0.78rem;">(null)</span>`;
+              : `<span style="color: #9ca3af; font-style: italic; font-size: 0.78rem;">(null)</span>`;
 
-                    afterContent = newVal !== ''
-                        ? `<span style="color: #059669; font-weight: 600; font-family: monospace; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 4px;">
+            afterContent = newVal !== ''
+              ? `<span style="color: #059669; font-weight: 600; font-family: monospace; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 4px;">
                             ✓ ${newVal}
                            </span>`
-                        : `<span style="color: #dc2626; background: #fee2e2; border: 1px solid #fca5a5; padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
-                            Đã xóa
+              : `<span style="color: #dc2626; background: #fee2e2; border: 1px solid #fca5a5; padding: 0.2rem 0.5rem; border-radius: 6px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;">
+                            Deleted
                            </span>`;
-                }
+          }
 
-                tableHtml += `
+          tableHtml += `
                     <tr style="border-bottom: 1px solid #e5e7eb;">
                         <td style="padding: 0.75rem 1rem; font-weight: 700; color: #4b5563; font-size: 0.78rem; font-family: system-ui, -apple-system, sans-serif;">
                             <span style="color: #9ca3af; margin-right: 8px; font-weight: 400; font-family: monospace;">${rowIndex}</span>
@@ -4335,27 +5006,27 @@ function renderComparisonTable() {
                         <td style="padding: 0.75rem 1rem; background: ${cellBgAfter};">${afterContent}</td>
                     </tr>
                 `;
-            });
+        });
 
-            if (renderedCount === 0) {
-                tableHtml += `
+        if (renderedCount === 0) {
+          tableHtml += `
                     <tr>
                         <td colspan="3" style="text-align: center; color: #9ca3af; padding: 2rem; font-style: italic;">
-                            Không có thay đổi nào được ghi nhận.
+                            No changes were recorded.
                         </td>
                     </tr>
                 `;
-            }
+        }
 
-            tableHtml += `
+        tableHtml += `
                         </tbody>
                     </table>
                 </div>
             `;
-            container.innerHTML = tableHtml;
-        } else if (typeof parsed === 'object') {
-            // JSON Object representing a CREATE operation
-            let tableHtml = html + `
+        container.innerHTML = tableHtml;
+      } else if (typeof parsed === 'object') {
+        // JSON Object representing a CREATE operation
+        let tableHtml = html + `
                 <div style="overflow-x: auto; border: 1px solid #e5e7eb; border-radius: 12px; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.05); font-family: system-ui, -apple-system, sans-serif;">
                     <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.82rem;">
                         <thead>
@@ -4368,24 +5039,24 @@ function renderComparisonTable() {
                         <tbody>
             `;
 
-            let rowIndex = 0;
-            const entries = Object.entries(parsed).filter(([key]) => key !== 'id' && key !== 'createdAt' && key !== 'updatedAt');
-            
-            entries.forEach(([key, val]) => {
-                rowIndex++;
-                let formattedVal = val !== null ? val.toString() : '';
-                if (formattedVal.length > 200) {
-                    formattedVal = formattedVal.substring(0, 197) + '...';
-                }
+        let rowIndex = 0;
+        const entries = Object.entries(parsed).filter(([key]) => key !== 'id' && key !== 'createdAt' && key !== 'updatedAt');
 
-                const beforeCell = `<span style="color: #9ca3af; font-style: italic; font-size: 0.78rem;">(null)</span>`;
-                const afterCell = formattedVal !== ''
-                    ? `<span style="color: #059669; font-weight: 600; font-family: monospace; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 4px;">
+        entries.forEach(([key, val]) => {
+          rowIndex++;
+          let formattedVal = val !== null ? val.toString() : '';
+          if (formattedVal.length > 200) {
+            formattedVal = formattedVal.substring(0, 197) + '...';
+          }
+
+          const beforeCell = `<span style="color: #9ca3af; font-style: italic; font-size: 0.78rem;">(null)</span>`;
+          const afterCell = formattedVal !== ''
+            ? `<span style="color: #059669; font-weight: 600; font-family: monospace; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 4px;">
                         ✓ ${formattedVal}
                        </span>`
-                    : `<span style="color: #9ca3af; font-style: italic; font-size: 0.78rem;">(null)</span>`;
+            : `<span style="color: #9ca3af; font-style: italic; font-size: 0.78rem;">(null)</span>`;
 
-                tableHtml += `
+          tableHtml += `
                     <tr style="border-bottom: 1px solid #e5e7eb;">
                         <td style="padding: 0.75rem 1rem; font-weight: 700; color: #4b5563; font-size: 0.78rem; font-family: system-ui, -apple-system, sans-serif;">
                             <span style="color: #9ca3af; margin-right: 8px; font-weight: 400; font-family: monospace;">${rowIndex}</span>
@@ -4395,80 +5066,80 @@ function renderComparisonTable() {
                         <td style="padding: 0.75rem 1rem; background: #ecfdf5;">${afterCell}</td>
                     </tr>
                 `;
-            });
+        });
 
-            tableHtml += `
+        tableHtml += `
                         </tbody>
                     </table>
                 </div>
             `;
-            container.innerHTML = tableHtml;
-        }
+        container.innerHTML = tableHtml;
+      }
     } catch (e) {
-        // Fallback to text box
-        container.innerHTML = html + `
+      // Fallback to text box
+      container.innerHTML = html + `
             <div style="font-family: monospace; font-size: 0.82rem; background: #f9fafb; padding: 1rem; border-radius: 8px; border: 1px solid #e5e7eb; word-break: break-all; white-space: pre-wrap; color: #374151;">
                 ${jsonPart}
             </div>
         `;
     }
-}
-
-// =========================================================================
-// PROJECT MILESTONE ADMIN PANEL LOGIC (UC-12)
-// =========================================================================
-
-let currentAdminProjectId = null;
-
-function openMilestoneModal(projectId) {
-  currentAdminProjectId = projectId;
-  
-  const project = _cache.projects[projectId];
-  const titleEl = document.getElementById("milestone-project-title");
-  if (titleEl && project) {
-    titleEl.textContent = `Manage Milestones: ${project.title}`;
   }
 
-  const overlay = document.getElementById("milestone-modal-overlay");
-  if (overlay) {
-    overlay.classList.add("is-open");
-  }
+  // =========================================================================
+  // PROJECT MILESTONE ADMIN PANEL LOGIC (UC-12)
+  // =========================================================================
 
-  // Clear form and audit logs panel
-  const form = document.getElementById("admin-milestone-form");
-  if (form) form.reset();
-  closeAuditTrail();
+  let currentAdminProjectId = null;
 
-  fetchAndRenderAdminMilestones(projectId);
-}
+  function openMilestoneModal(projectId) {
+    currentAdminProjectId = projectId;
 
-function closeMilestoneModal() {
-  currentAdminProjectId = null;
-  const overlay = document.getElementById("milestone-modal-overlay");
-  if (overlay) {
-    overlay.classList.remove("is-open");
-  }
-  closeAuditTrail();
-}
-
-async function fetchAndRenderAdminMilestones(projectId) {
-  const container = document.getElementById("admin-milestones-list");
-  if (!container) return;
-
-  container.innerHTML = `<p style="color: var(--text-muted); text-align:center; padding: 2rem 0; font-size:0.85rem;">Loading milestones...</p>`;
-
-  try {
-    const response = await fetch(`/api/projects/${projectId}/milestones`);
-    if (!response.ok) throw new Error("Failed to load milestones");
-    const milestones = await response.json();
-
-    if (!milestones || milestones.length === 0) {
-      container.innerHTML = `<p style="color: var(--text-muted); text-align:center; padding: 2rem 0; font-size:0.85rem;">No milestones found. Create one on the right panel!</p>`;
-      return;
+    const project = _cache.projects[projectId];
+    const titleEl = document.getElementById("milestone-project-title");
+    if (titleEl && project) {
+      titleEl.textContent = `Manage Milestones: ${project.title}`;
     }
 
-    container.innerHTML = milestones.map(m => {
-      return `
+    const overlay = document.getElementById("milestone-modal-overlay");
+    if (overlay) {
+      overlay.classList.add("is-open");
+    }
+
+    // Clear form and audit logs panel
+    const form = document.getElementById("admin-milestone-form");
+    if (form) form.reset();
+    closeAuditTrail();
+
+    fetchAndRenderAdminMilestones(projectId);
+  }
+
+  function closeMilestoneModal() {
+    currentAdminProjectId = null;
+    const overlay = document.getElementById("milestone-modal-overlay");
+    if (overlay) {
+      overlay.classList.remove("is-open");
+    }
+    closeAuditTrail();
+  }
+
+  async function fetchAndRenderAdminMilestones(projectId) {
+    const container = document.getElementById("admin-milestones-list");
+    if (!container) return;
+
+    container.innerHTML = `<p style="color: var(--text-muted); text-align:center; padding: 2rem 0; font-size:0.85rem;">Loading milestones...</p>`;
+
+    try {
+      const response = await fetch(`/api/projects/${projectId}/milestones`);
+      if (!response.ok) throw new Error("Failed to load milestones");
+      const milestones = await response.json();
+
+      if (!milestones || milestones.length === 0) {
+        container.innerHTML = `<p style="color: var(--text-muted); text-align:center; padding: 2rem 0; font-size:0.85rem;">No milestones found. Create one on the right panel!</p>`;
+        return;
+      }
+
+      container.innerHTML = milestones.map(m => {
+        return `
         <div class="milestone-row-box" id="admin-milestone-row-${m.id}">
           <div style="display:flex; justify-content:space-between; align-items:center; gap:0.5rem;">
             <div>
@@ -4479,7 +5150,7 @@ async function fetchAndRenderAdminMilestones(projectId) {
             <div style="display:flex; gap:0.35rem; align-items:center;">
               <span class="status-badge status-${m.status}" 
                     style="font-size:0.75rem; font-weight:700; padding:3px 10px; border-radius:20px; text-transform:uppercase;
-                    ${m.status==='COMPLETED'?'background:rgba(16,185,129,0.12);color:#10b981':m.status==='IN_PROGRESS'?'background:rgba(59,130,246,0.12);color:#3b82f6':m.status==='BLOCKED'?'background:rgba(239,68,68,0.12);color:#ef4444':'background:rgba(100,116,139,0.12);color:#64748b'}">
+                    ${m.status === 'COMPLETED' ? 'background:rgba(16,185,129,0.12);color:#10b981' : m.status === 'IN_PROGRESS' ? 'background:rgba(59,130,246,0.12);color:#3b82f6' : m.status === 'BLOCKED' ? 'background:rgba(239,68,68,0.12);color:#ef4444' : 'background:rgba(100,116,139,0.12);color:#64748b'}">
                 ${m.status.replace('_', ' ')}
               </span>
             </div>
@@ -4508,312 +5179,299 @@ async function fetchAndRenderAdminMilestones(projectId) {
           </div>
         </div>
       `;
-    }).join('');
-  } catch (err) {
-    console.error("fetchAndRenderAdminMilestones error:", err);
-    container.innerHTML = `<p style="color:#ef4444; text-align:center; padding: 2rem 0; font-size:0.85rem;">Could not load milestones list.</p>`;
+      }).join('');
+    } catch (err) {
+      console.error("fetchAndRenderAdminMilestones error:", err);
+      container.innerHTML = `<p style="color:#ef4444; text-align:center; padding: 2rem 0; font-size:0.85rem;">Could not load milestones list.</p>`;
+    }
   }
-}
 
 
-async function deleteAdminMilestone(milestoneId, milestoneName) {
-  if (!currentAdminProjectId) return;
-  if (!confirm(`Are you sure you want to delete milestone '${milestoneName}'?`)) return;
+  async function deleteAdminMilestone(milestoneId, milestoneName) {
+    if (!currentAdminProjectId) return;
+    showConfirmModal({
+      title: "Delete Milestone",
+      message: `Are you sure you want to delete milestone '${milestoneName}'?`,
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      onConfirm: async () => {
+        const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+        try {
+          const response = await fetch(`/api/projects/${currentAdminProjectId}/milestones/${milestoneId}`, {
+            method: "DELETE",
+            headers: {
+              "Authorization": `Bearer ${token}`
+            }
+          });
 
-  const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-  try {
-    const response = await fetch(`/api/projects/${currentAdminProjectId}/milestones/${milestoneId}`, {
-      method: "DELETE",
-      headers: {
-        "Authorization": `Bearer ${token}`
+          if (!response.ok) {
+            const data = await response.json();
+            showToast(data.message || "Failed to delete milestone.", "error");
+            return;
+          }
+
+          showToast("Milestone deleted successfully!", "success");
+          fetchAndRenderAdminMilestones(currentAdminProjectId);
+          closeAuditTrail();
+        } catch (err) {
+          console.error("deleteAdminMilestone error:", err);
+          showToast("An error occurred while deleting milestone.", "error");
+        }
       }
     });
-
-    if (!response.ok) {
-      const data = await response.json();
-      alert(data.message || "Failed to delete milestone.");
-      return;
-    }
-
-    fetchAndRenderAdminMilestones(currentAdminProjectId);
-    closeAuditTrail();
-  } catch (err) {
-    console.error("deleteAdminMilestone error:", err);
-    alert("An error occurred while deleting milestone.");
   }
-}
 
-async function openAuditTrail(milestoneId, milestoneName) {
-  if (!currentAdminProjectId) return;
+  async function openAuditTrail(milestoneId, milestoneName) {
+    if (!currentAdminProjectId) return;
 
-  const wrapper = document.getElementById("admin-milestone-audit-wrapper");
-  const nameEl = document.getElementById("audit-milestone-name");
-  const list = document.getElementById("admin-milestone-audit-list");
+    const wrapper = document.getElementById("admin-milestone-audit-wrapper");
+    const nameEl = document.getElementById("audit-milestone-name");
+    const list = document.getElementById("admin-milestone-audit-list");
 
-  if (!wrapper || !nameEl || !list) return;
+    if (!wrapper || !nameEl || !list) return;
 
-  nameEl.textContent = milestoneName;
-  wrapper.style.display = "block";
-  list.innerHTML = `<p style="color:var(--text-muted); font-size:0.8rem;">Loading mutation logs...</p>`;
+    nameEl.textContent = milestoneName;
+    wrapper.style.display = "block";
+    list.innerHTML = `<p style="color:var(--text-muted); font-size:0.8rem;">Loading mutation logs...</p>`;
 
-  try {
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-    const response = await fetch(`/api/projects/${currentAdminProjectId}/milestones/${milestoneId}/logs`, {
-      headers: {
-        "Authorization": `Bearer ${token}`
-      }
-    });
+    try {
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      const response = await fetch(`/api/projects/${currentAdminProjectId}/milestones/${milestoneId}/logs`, {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
 
-    if (!response.ok) throw new Error("Failed");
-    const logs = await response.json();
+      if (!response.ok) throw new Error("Failed");
+      const logs = await response.json();
 
-    if (!logs || logs.length === 0) {
-      list.innerHTML = `<p style="color:var(--text-muted); font-size:0.8rem; text-align:center;">No mutation history logs recorded yet.</p>`;
-      return;
-    }
-
-    list.innerHTML = logs.map(l => {
-      const date = new Date(l.performedAt).toLocaleString();
-      let detail = "";
-      let labelClass = "sync";
-
-      if (l.actionType === "CREATE") {
-        detail = `Created milestone as '${escapeHtml(l.newValue)}'`;
-        labelClass = "create";
-      } else if (l.actionType === "DELETE") {
-        detail = `Deleted milestone '${escapeHtml(l.oldValue)}'`;
-        labelClass = "delete";
-      } else {
-        detail = `Changed <b>${escapeHtml(l.fieldName)}</b> from <i>"${escapeHtml(l.oldValue)}"</i> to <i>"${escapeHtml(l.newValue)}"</i>`;
+      if (!logs || logs.length === 0) {
+        list.innerHTML = `<p style="color:var(--text-muted); font-size:0.8rem; text-align:center;">No mutation history logs recorded yet.</p>`;
+        return;
       }
 
-      return `
+      list.innerHTML = logs.map(l => {
+        const date = new Date(l.performedAt).toLocaleString();
+        let detail = "";
+        let labelClass = "sync";
+
+        if (l.actionType === "CREATE") {
+          detail = `Created milestone as '${escapeHtml(l.newValue)}'`;
+          labelClass = "create";
+        } else if (l.actionType === "DELETE") {
+          detail = `Deleted milestone '${escapeHtml(l.oldValue)}'`;
+          labelClass = "delete";
+        } else {
+          detail = `Changed <b>${escapeHtml(l.fieldName)}</b> from <i>"${escapeHtml(l.oldValue)}"</i> to <i>"${escapeHtml(l.newValue)}"</i>`;
+        }
+
+        return `
         <div class="audit-log-line ${labelClass}">
           [${date}] <b>${escapeHtml(l.performedBy)}</b>: ${detail}
         </div>
       `;
-    }).join('');
+      }).join('');
 
-  } catch (err) {
-    console.error("openAuditTrail error:", err);
-    list.innerHTML = `<p style="color:#ef4444; font-size:0.8rem;">Could not load audit logs.</p>`;
-  }
-}
-
-function closeAuditTrail() {
-  const wrapper = document.getElementById("admin-milestone-audit-wrapper");
-  if (wrapper) {
-    wrapper.style.display = "none";
-  }
-}
-
-// =============================================
-//  ASSIGNMENT MODAL — Admin-only project assignments
-// =============================================
-
-let currentAssignmentProjectId = null;
-
-async function openAssignmentModal(projectId, projectTitle) {
-  currentAssignmentProjectId = projectId;
-  document.getElementById("assignment-project-title").textContent = `👥 Assignments: ${projectTitle}`;
-  
-  const overlay = document.getElementById("assignment-modal-overlay");
-  if (overlay) {
-    overlay.classList.add("is-open");
-  }
-  await loadAssignmentData(projectId);
-}
-
-function closeAssignmentModal() {
-  const overlay = document.getElementById("assignment-modal-overlay");
-  if (overlay) {
-    overlay.classList.remove("is-open");
-  }
-  currentAssignmentProjectId = null;
-}
-
-async function loadAssignmentData(projectId) {
-  const token = localStorage.getItem("token") || localStorage.getItem("authToken");
-  const headers = { "Authorization": `Bearer ${token}` };
-
-  // Load existing assignments and clients
-  const [assignRes, clientRes, allUsersRes] = await Promise.all([
-    fetch(`/api/projects/${projectId}/assignments`, { headers }),
-    fetch(`/api/projects/${projectId}/clients`,     { headers }),
-    fetch(`/api/admin/users`,                        { headers }).catch(() => ({ ok: false }))
-  ]);
-
-  const assignments = assignRes.ok ? await assignRes.json() : [];
-  const clients     = clientRes.ok ? await clientRes.json() : [];
-  const allUsers    = allUsersRes.ok ? await allUsersRes.json() : [];
-
-  renderAssignmentList(assignments);
-  renderClientList(clients);
-  populateMemberDropdown(allUsers.filter(u => u.role === "ROLE_MEMBER"), assignments.map(a => a.userId));
-  populateClientDropdown(allUsers.filter(u => u.role === "ROLE_USER"), clients.map(c => c.userId));
-}
-
-function renderAssignmentList(assignments) {
-  const el = document.getElementById("assignment-member-list");
-  if (!assignments.length) {
-    el.innerHTML = '<p style="color:#64748b;font-size:0.85rem;">No members assigned yet.</p>';
-    return;
-  }
-  el.innerHTML = assignments.map(a => `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;">
-      <div>
-        <strong style="font-size:0.88rem;">${escapeHtml(a.fullName)}</strong>
-        <span style="font-size:0.75rem;color:#64748b;margin-left:6px;">(${escapeHtml(a.username)})</span><br/>
-        <span style="font-size:0.75rem;padding:2px 8px;border-radius:10px;font-weight:700;${a.projectRole==='PM'?'background:rgba(37,99,235,.12);color:#2563eb':'background:rgba(245,158,11,.12);color:#d97706'}">
-          ${a.projectRole === 'PM' ? '★ PM' : '⚙ STAFF'}
-        </span>
-      </div>
-      <button onclick="removeAssignment(${a.userId})" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:0.75rem;text-decoration:underline;">Remove</button>
-    </div>`).join('');
-}
-
-function renderClientList(clients) {
-  const el = document.getElementById("assignment-client-list");
-  if (!clients.length) {
-    el.innerHTML = '<p style="color:#64748b;font-size:0.85rem;">No clients linked yet.</p>';
-    return;
-  }
-  el.innerHTML = clients.map(c => `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;">
-      <div>
-        <strong style="font-size:0.88rem;">${escapeHtml(c.fullName)}</strong>
-        <span style="font-size:0.75rem;color:#64748b;margin-left:6px;">${escapeHtml(c.email)}</span>
-      </div>
-      <button onclick="removeClient(${c.userId})" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:0.75rem;text-decoration:underline;">Unlink</button>
-    </div>`).join('');
-}
-
-function populateMemberDropdown(members, alreadyAssignedIds) {
-  const sel = document.getElementById("assign-user-select");
-  sel.innerHTML = '<option value="">— Select a member —</option>';
-  members.forEach(u => {
-    if (!alreadyAssignedIds.includes(u.id)) {
-      sel.innerHTML += `<option value="${u.id}">${escapeHtml(u.fullName)} (${escapeHtml(u.username)})</option>`;
+    } catch (err) {
+      console.error("openAuditTrail error:", err);
+      list.innerHTML = `<p style="color:#ef4444; font-size:0.8rem;">Could not load audit logs.</p>`;
     }
-  });
-}
-
-function populateClientDropdown(users, alreadyLinkedIds) {
-  const sel = document.getElementById("assign-client-select");
-  sel.innerHTML = '<option value="">— Select a client —</option>';
-  users.forEach(u => {
-    if (!alreadyLinkedIds.includes(u.id)) {
-      sel.innerHTML += `<option value="${u.id}">${escapeHtml(u.fullName)} (${escapeHtml(u.email)})</option>`;
-    }
-  });
-}
-
-async function submitAssignMember() {
-  const userId = document.getElementById("assign-user-select").value;
-  const role   = document.getElementById("assign-role-select").value;
-  if (!userId) { alert("Please select a member."); return; }
-
-  const token = localStorage.getItem("token") || localStorage.getItem("authToken");
-  const res = await fetch(`/api/projects/${currentAssignmentProjectId}/assignments`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-    body: JSON.stringify({ userId: parseInt(userId), projectRole: role })
-  });
-  const data = await res.json();
-  if (res.ok) {
-    await loadAssignmentData(currentAssignmentProjectId);
-  } else {
-    alert(data.message || "Failed to assign member.");
   }
-}
 
-async function submitAssignClient() {
-  const userId = document.getElementById("assign-client-select").value;
-  if (!userId) { alert("Please select a client."); return; }
-
-  const token = localStorage.getItem("token") || localStorage.getItem("authToken");
-  const res = await fetch(`/api/projects/${currentAssignmentProjectId}/clients`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-    body: JSON.stringify({ userId: parseInt(userId) })
-  });
-  const data = await res.json();
-  if (res.ok) {
-    await loadAssignmentData(currentAssignmentProjectId);
-  } else {
-    alert(data.message || "Failed to link client.");
-  }
-}
-
-async function removeAssignment(userId) {
-  if (!confirm("Remove this member from the project?")) return;
-  const token = localStorage.getItem("token") || localStorage.getItem("authToken");
-  await fetch(`/api/projects/${currentAssignmentProjectId}/assignments/${userId}`, {
-    method: "DELETE",
-    headers: { "Authorization": `Bearer ${token}` }
-  });
-  await loadAssignmentData(currentAssignmentProjectId);
-}
-
-async function removeClient(userId) {
-  if (!confirm("Unlink this client from the project?")) return;
-  const token = localStorage.getItem("token") || localStorage.getItem("authToken");
-  await fetch(`/api/projects/${currentAssignmentProjectId}/clients/${userId}`, {
-    method: "DELETE",
-    headers: { "Authorization": `Bearer ${token}` }
-  });
-  await loadAssignmentData(currentAssignmentProjectId);
-}
-
-// Hero H1 text click animation
-function initHeroTextClick() {
-  const heroH1 = document.querySelector(".hero-content h1");
-  if (!heroH1) return;
-
-  heroH1.style.cursor = "pointer";
-  heroH1.addEventListener("click", () => {
-    if (heroH1.classList.contains("hero-text-clicked")) return;
-    heroH1.classList.add("hero-text-clicked");
-    setTimeout(() => {
-      heroH1.classList.remove("hero-text-clicked");
-    }, 800);
-  });
-}
-
-// Navbar scroll effects (detached floating and scroll-to-hide)
-function initNavbarScrollEffects() {
-  const header = document.querySelector("header");
-  if (!header) return;
-
-  let lastScrollY = window.scrollY;
-  const scrollThreshold = 10; // minimum scroll down/up before hiding/showing
-  const detachThreshold = 30; // scroll Y position where navbar detaches
-
-  window.addEventListener("scroll", () => {
-    const currentScrollY = window.scrollY;
-
-    // 1. Detach/Attach logic
-    if (currentScrollY > detachThreshold) {
-      header.classList.add("header-detached");
-    } else {
-      header.classList.remove("header-detached");
+  function closeAuditTrail() {
+    const wrapper = document.getElementById("admin-milestone-audit-wrapper");
+    if (wrapper) {
+      wrapper.style.display = "none";
     }
+  }
 
-    // 2. Hide/Show logic (Scroll-to-hide)
-    // Only trigger if we scrolled more than the threshold
-    if (Math.abs(currentScrollY - lastScrollY) > scrollThreshold) {
-      if (currentScrollY > lastScrollY && currentScrollY > 100) {
-        // Scrolling down -> hide navbar
-        header.classList.add("header-hidden");
+  // Hero H1 text click animation
+  function initHeroTextClick() {
+    const heroH1 = document.querySelector(".hero-content h1");
+    if (!heroH1) return;
+
+    heroH1.style.cursor = "pointer";
+    heroH1.addEventListener("click", () => {
+      if (heroH1.classList.contains("hero-text-clicked")) return;
+      heroH1.classList.add("hero-text-clicked");
+      setTimeout(() => {
+        heroH1.classList.remove("hero-text-clicked");
+      }, 800);
+    });
+  }
+
+  // Navbar scroll effects (detached floating and scroll-to-hide)
+  function initNavbarScrollEffects() {
+    const header = document.querySelector("header");
+    if (!header) return;
+
+    let lastScrollY = window.scrollY;
+    const scrollThreshold = 10; // minimum scroll down/up before hiding/showing
+    const detachThreshold = 30; // scroll Y position where navbar detaches
+
+    window.addEventListener("scroll", () => {
+      const currentScrollY = window.scrollY;
+
+      // 1. Detach/Attach logic
+      if (currentScrollY > detachThreshold) {
+        header.classList.add("header-detached");
+        document.body.classList.add("header-is-detached");
       } else {
-        // Scrolling up -> show navbar
-        header.classList.remove("header-hidden");
+        header.classList.remove("header-detached");
+        document.body.classList.remove("header-is-detached");
       }
-    }
+
+      // 2. Hide/Show logic (Scroll-to-hide)
+      // Only trigger if we scrolled more than the threshold
+      if (Math.abs(currentScrollY - lastScrollY) > scrollThreshold) {
+        if (currentScrollY > lastScrollY && currentScrollY > 100) {
+          // Scrolling down -> hide navbar
+          header.classList.add("header-hidden");
+        } else {
+          // Scrolling up -> show navbar
+          header.classList.remove("header-hidden");
+        }
+      }
 
     lastScrollY = currentScrollY;
+
+    });
+  }
+
+  // =============================================
+  //  Google Sign-In Logic (TikTok-style Popup Flow)
+  // =============================================
+  function initGoogleSignIn() {
+    const modalGoogleBtn = document.getElementById('modalGoogleSignInBtn');
+    if (modalGoogleBtn) {
+      modalGoogleBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        loginWithGooglePopup();
+      });
+    }
+
+    const loginGoogleBtn = document.getElementById('googleSignInBtn');
+    if (loginGoogleBtn) {
+      loginGoogleBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        loginWithGooglePopup();
+      });
+    }
+  }
+
+  function loginWithGooglePopup() {
+    const clientId = "675937212349-d7ihb1c7a0u53no9d71cdt0jcmjrbil9.apps.googleusercontent.com";
+    const modalAlert = document.getElementById("modal-login-alert") || document.getElementById("alertMessage");
+
+      if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
+        if (modalAlert) {
+          modalAlert.textContent = "Google Sign-In SDK not loaded, please reload the page.";
+          modalAlert.classList.add("alert-error");
+          modalAlert.style.display = "block";
+        } else {
+          showToast("Google Sign-In SDK not loaded.", "error");
+        }
+        return;
+      }
+
+    if (modalAlert) {
+      modalAlert.textContent = "Waiting for Google login...";
+      modalAlert.classList.remove("alert-error", "alert-success");
+      modalAlert.style.display = "block";
+    }
+
+    try {
+      const client = google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: 'email profile',
+        callback: (response) => {
+          if (response && response.access_token) {
+            processGoogleToken(response.access_token, modalAlert);
+          } else {
+            if (modalAlert) {
+              modalAlert.textContent = "Google login cancelled or failed.";
+              modalAlert.classList.add("alert-error");
+            }
+          }
+        }
+      });
+      client.requestAccessToken();
+    } catch (error) {
+      console.error("Google initTokenClient error:", error);
+      if (modalAlert) {
+        modalAlert.textContent = "Could not open Google login window.";
+        modalAlert.classList.add("alert-error");
+      }
+    }
+  }
+
+
+
+  async function processGoogleToken(accessToken, modalAlert) {
+    try {
+      if (modalAlert) modalAlert.textContent = "Authenticating with server...";
+
+      const res = await fetch("/api/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credential: accessToken })
+      });
+
+      const data = await res.json();
+      if (res.ok && data.token) {
+        sessionStorage.setItem("token", data.token);
+        sessionStorage.setItem("authToken", data.token);
+        sessionStorage.setItem("username", data.username);
+        sessionStorage.setItem("fullName", data.fullName);
+        sessionStorage.setItem("role", data.role);
+        sessionStorage.setItem("email", data.email);
+        sessionStorage.setItem("avatarUrl", data.avatarUrl || "");
+        sessionStorage.setItem("user", JSON.stringify({
+          username: data.username,
+          fullName: data.fullName,
+          email: data.email,
+          role: data.role,
+          avatarUrl: data.avatarUrl || null
+        }));
+
+        if (modalAlert) {
+          modalAlert.textContent = "Login successful! Redirecting...";
+          modalAlert.classList.add("alert-success");
+        }
+
+        setTimeout(() => {
+          if (data.role === "ROLE_ADMIN") window.location.href = "admin.html";
+          else if (data.role === "Team_Member" || data.role === "ROLE_MEMBER") window.location.href = "member-contact.html";
+          else {
+            const redirect = sessionStorage.getItem("redirectAttempt");
+            if (redirect) {
+              sessionStorage.removeItem("redirectAttempt");
+              window.location.href = redirect;
+            } else {
+              window.location.href = "index.html";
+            }
+          }
+        }, 1000);
+      } else {
+        if (modalAlert) {
+          modalAlert.textContent = "Login failed: " + (data.message || "");
+          modalAlert.classList.add("alert-error");
+        } else {
+          showToast("Login failed: " + (data.message || ""), "error");
+        }
+      }
+    } catch (error) {
+      console.error("Google login error:", error);
+      if (modalAlert) {
+        modalAlert.textContent = "Could not connect to server.";
+        modalAlert.classList.add("alert-error");
+      }
+    }
+  }
+
+  window.addEventListener('load', () => {
+    initGoogleSignIn();
   });
-}
 
 // Dynamically move footer-bottom inside footer-container for unified layout
 function initFooterMove() {
@@ -5015,278 +5673,305 @@ function initFooterMove() {
     localStorage.setItem("adminSidebarCollapsed", isCollapsed);
   }
 
-// =============================================
-//  Admin - Quotation SSE Listener
-// =============================================
-function initQuotationSSE() {
-  const eventSource = new EventSource('/api/sse/stream');
-  
-  eventSource.addEventListener('QUOTE_APPROVED', (e) => {
-    // Play a bell sound (ensure you have a valid audio URL or fallback)
-    try {
-      const audio = new Audio('https://www.soundjay.com/buttons/sounds/bell-ringing-05.mp3');
-      audio.play().catch(err => console.log('Audio play prevented by browser:', err));
-    } catch(e) {}
-    
-    // Show toast notification
-    showToast(e.data, "success");
-    
-    // Refresh table if needed
-    if (document.getElementById("panel-bookings")?.classList.contains("active")) {
-       fetchAdminBookings();
+  // =======================================================
+  // UI/UX GLOBAL SCRIPTING OVERHAUL (TOASTS & VALIDATIONS)
+  // =======================================================
+
+  // 1. Toast Notification system
+  window.showToast = function (title, message, type = "success") {
+    let container = document.getElementById("toast-notification-container");
+    if (!container) {
+      container = document.createElement("div");
+      container.id = "toast-notification-container";
+      container.className = "toast-notification-container";
+      document.body.appendChild(container);
     }
-  });
-  
-  eventSource.onerror = (err) => {
-    console.log("SSE error for quotations", err);
+
+    const toast = document.createElement("div");
+    toast.className = `toast-msg-item ${type}`;
+
+    let iconSvg = "";
+    if (type === "success") {
+      iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#24A148" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`;
+    } else if (type === "error") {
+      iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#DA1E28" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
+    } else {
+      iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0F62FE" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`;
+    }
+
+    toast.innerHTML = `
+      <div class="toast-icon">${iconSvg}</div>
+      <div class="toast-content">
+        <div class="toast-title" style="margin:0;font-weight:700;font-size:0.9rem;">${title}</div>
+        <div class="toast-message" style="margin:2px 0 0 0;font-size:0.8rem;color:var(--text-muted);">${message}</div>
+      </div>
+    `;
+
+    container.appendChild(toast);
+
+    // Auto-remove after 4 seconds
+    setTimeout(() => {
+      toast.classList.add("fade-out");
+      setTimeout(() => {
+        toast.remove();
+      }, 300);
+    }, 4000);
   };
-}
 
-// Call on admin page load if needed (can just check if admin panel exists)
-if (document.getElementById("panel-bookings")) {
-  initQuotationSSE();
-}
-
-// =============================================
-//  Admin - Quotation Logic
-// =============================================
-
-function openQuoteModal(bookingId) {
-  const booking = _cache.bookings[bookingId];
-  if (!booking) {
-    showToast("Booking data not found", "error");
-    return;
+  // 2. Form live validation
+  function getValidationMessage(input) {
+    if (input.validity.valueMissing) {
+      return "This field is required.";
+    }
+    if (input.validity.typeMismatch) {
+      if (input.type === "email") return "Please enter a valid email address.";
+      if (input.type === "url") return "Please enter a valid URL.";
+    }
+    if (input.validity.tooShort) {
+      return `Please enter at least ${input.minLength} characters.`;
+    }
+    if (input.validity.patternMismatch) {
+      return "Input format does not match requirements.";
+    }
+    return input.validationMessage || "Invalid input field value.";
   }
-  const service = _cache.services[booking.serviceId] || { title: "Unknown Service" };
-  
-  document.getElementById("quoteBookingId").value = booking.id;
-  document.getElementById("quoteTitle").value = service.title + " Package";
-  document.getElementById("quoteSubtotal").value = booking.totalPrice.toFixed(2);
-  document.getElementById("quoteItemName").value = service.title;
-  document.getElementById("quoteDiscount").value = "0";
-  document.getElementById("quoteTax").value = "0";
-  document.getElementById("quoteDeposit").value = "20";
-  document.getElementById("quoteNotes").value = "";
-  
-  calculateQuoteTotal();
-  document.getElementById("quote-modal-overlay").classList.add("is-open");
-}
 
-function closeQuoteModal() {
-  document.getElementById("quote-modal-overlay").classList.remove("is-open");
-}
+  function validateField(input) {
+    const parent = input.closest(".floating-form-group") || input.parentElement;
+    let errorSpan = parent.querySelector(".error-helper-text");
 
-function calculateQuoteTotal() {
-  const subtotal = parseFloat(document.getElementById("quoteSubtotal").value) || 0;
-  const discount = parseFloat(document.getElementById("quoteDiscount").value) || 0;
-  const tax = parseFloat(document.getElementById("quoteTax").value) || 0;
-  
-  const total = subtotal - discount + tax;
-  document.getElementById("quoteTotalAmount").value = total > 0 ? total.toFixed(2) : "0.00";
-}
-
-async function submitQuote() {
-  const title = document.getElementById("quoteTitle").value;
-  const bookingId = document.getElementById("quoteBookingId").value;
-  if (!title) {
-    showToast("Please enter a quotation title", "error");
-    return;
-  }
-  
-  const subtotal = parseFloat(document.getElementById("quoteSubtotal").value) || 0;
-  const discountAmount = parseFloat(document.getElementById("quoteDiscount").value) || 0;
-  const taxAmount = parseFloat(document.getElementById("quoteTax").value) || 0;
-  const totalAmount = parseFloat(document.getElementById("quoteTotalAmount").value) || 0;
-  const depositPercentage = parseFloat(document.getElementById("quoteDeposit").value) || 20;
-  const notes = document.getElementById("quoteNotes").value;
-  const itemName = document.getElementById("quoteItemName").value;
-  
-  const adminId = localStorage.getItem("userId") || sessionStorage.getItem("userId") || 1;
-  
-  const requestPayload = {
-    title,
-    subtotal,
-    discountAmount,
-    taxAmount,
-    totalAmount,
-    depositPercentage,
-    notes,
-    items: [
-      {
-        itemName: itemName,
-        description: "Main service package based on booking",
-        quantity: 1,
-        unitPrice: subtotal,
-        subtotal: subtotal
+    if (input.type === "select-one") {
+      if (input.value !== "") {
+        input.classList.add("has-value");
+      } else {
+        input.classList.remove("has-value");
       }
-    ]
-  };
-  
-  const btn = document.querySelector("#quote-modal-overlay .btn-save");
-  const originalText = btn.innerText;
-  btn.innerText = "Processing...";
-  btn.disabled = true;
-  
-  try {
-    // 1. Create quote
-    const createRes = await fetch(`/api/quotations/from-booking/${bookingId}?adminId=${adminId}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...adminHeaders()
-      },
-      body: JSON.stringify(requestPayload)
-    });
-    
-    if (!createRes.ok) throw new Error("Failed to create quote");
-    const createdQuote = await createRes.json();
-    
-    // 2. Send email
-    btn.innerText = "Sending Email...";
-    const emailRes = await fetch(`/api/quotations/${createdQuote.id}/send-email`, {
-      method: "POST",
-      headers: adminHeaders()
-    });
-    
-    if (!emailRes.ok) throw new Error("Failed to send quote email");
-    
-    showToast("Quotation created and sent successfully to the client!", "success");
-    closeQuoteModal();
-  } catch (err) {
-    console.error("Quote error:", err);
-    showToast(err.message || "An error occurred", "error");
-  } finally {
-    btn.innerText = originalText;
-    btn.disabled = false;
-  }
-}
-
-// =============================================
-//  Admin - Quotation SSE Listener
-// =============================================
-function initQuotationSSE() {
-  const eventSource = new EventSource('/api/sse/stream');
-  
-  eventSource.addEventListener('QUOTE_APPROVED', (e) => {
-    // Play a bell sound (ensure you have a valid audio URL or fallback)
-    try {
-      const audio = new Audio('https://www.soundjay.com/buttons/sounds/bell-ringing-05.mp3');
-      audio.play().catch(err => console.log('Audio play prevented by browser:', err));
-    } catch(e) {}
-    
-    // Show toast notification
-    showToast(e.data, "success");
-    
-    // Refresh table if needed
-    if (document.getElementById("panel-bookings")?.classList.contains("active")) {
-       fetchAdminBookings();
     }
-  });
-  
-  eventSource.onerror = (err) => {
-    console.log("SSE error for quotations", err);
-  };
-}
 
-// Call on admin page load if needed (can just check if admin panel exists)
-if (document.getElementById("panel-bookings")) {
-  initQuotationSSE();
-}
+    if (!input.checkValidity()) {
+      input.classList.add("input-error");
+      if (!errorSpan) {
+        errorSpan = document.createElement("span");
+        errorSpan.className = "error-helper-text";
+        parent.appendChild(errorSpan);
+      }
+      errorSpan.textContent = getValidationMessage(input);
+    } else {
+      input.classList.remove("input-error");
+      if (errorSpan) {
+        errorSpan.remove();
+      }
+    }
+  }
 
-// =============================================
-//  AI Chatbot Widget (Nova AI, powered by Groq)
-// =============================================
-let _chatbotInitialized = false;
+  // Setup validation events on inputs
+  function setupLiveFormValidation() {
+    const forms = document.querySelectorAll("form");
+    forms.forEach(form => {
+      const inputs = form.querySelectorAll("input, textarea, select");
+      inputs.forEach(input => {
+        if (input.tagName === "SELECT") {
+          input.addEventListener("change", () => validateField(input));
+        }
+
+        input.addEventListener("blur", () => validateField(input));
+        input.addEventListener("input", () => {
+          if (input.classList.contains("input-error")) {
+            validateField(input);
+          }
+        });
+      });
+
+      // Validate all on submit
+      form.addEventListener("submit", (e) => {
+        let isFormValid = true;
+        inputs.forEach(input => {
+          validateField(input);
+          if (!input.checkValidity()) {
+            isFormValid = false;
+          }
+        });
+
+        if (!isFormValid) {
+          e.preventDefault();
+          window.showToast("Validation Error", "Please check the highlighted fields above.", "error");
+        }
+      });
+    });
+  }
+
+  // Run on DOM loaded
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", setupLiveFormValidation);
+  } else {
+    setupLiveFormValidation();
+  }
+const CHATBOT_HISTORY_KEY = 'nova_chatbot_history';
+
+const CHATBOT_SYSTEM_PROMPT =
+    "You are Nova AI, a support assistant for NovaDigital Agency's website ONLY. " +
+    "Your knowledge is strictly limited to: NovaDigital's services "+
+    "STRICT RULE: If a question is not about NovaDigital or this website — including general knowledge, coding help, " +
+    "other companies, personal advice, math, current events, or any topic outside the list above — you MUST NOT answer it. " +
+    "Instead, reply briefly that you can only help with questions about NovaDigital's services and this website, " +
+    "and ask if they'd like help with one of those instead. Do not attempt to be helpful on off-topic requests, " +
+    "even if you know the answer. Be warm, professional, and concise.";
+
+// Cached config from backend
 let _chatbotConfig = null;
-let _chatbotHistory = [];
+
+async function getChatbotConfig() {
+    if (_chatbotConfig) return _chatbotConfig;
+    try {
+        const res = await fetch('/api/chatbot/config');
+        if (!res.ok) throw new Error('Config fetch failed');
+        _chatbotConfig = await res.json();
+        return _chatbotConfig;
+    } catch (e) {
+        console.error('[Chatbot] Could not fetch config:', e);
+        return null;
+    }
+}
+
+async function callGroqDirectly(userMessage) {
+    const config = await getChatbotConfig();
+    if (!config || !config.apiKey) throw new Error('[Debug] Could not fetch /api/chatbot/config — is the server running?');
+
+    const apiKey = config.apiKey;
+    const groqModel = config.model || 'llama-3.3-70b-versatile';
+    const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
+
+    try {
+        const res = await fetch(GROQ_URL, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                model: groqModel,
+                messages: [
+                    { role: 'system', content: CHATBOT_SYSTEM_PROMPT },
+                    { role: 'user', content: userMessage }
+                ]
+            })
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+            return data?.choices?.[0]?.message?.content || 'I received an empty response.';
+        }
+
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(`Groq HTTP ${res.status}: ${JSON.stringify(errBody)}`);
+    } catch (e) {
+        throw new Error(`[Debug] Groq failed: ${e.message}`);
+    }
+}
 
 function initChatbot() {
-  if (_chatbotInitialized) return;
-  _chatbotInitialized = true;
+    const fab             = document.getElementById('chatbot-fab');
+    const windowEl        = document.getElementById('chatbot-window');
+    const closeBtn        = document.getElementById('chatbot-close');
+    const messagesContainer = document.getElementById('chatbot-messages');
+    const inputEl         = document.getElementById('chatbot-input');
+    const sendBtn         = document.getElementById('chatbot-send');
 
-  const fab = document.getElementById("chatbot-fab");
-  const win = document.getElementById("chatbot-window");
-  const closeBtn = document.getElementById("chatbot-close");
-  const sendBtn = document.getElementById("chatbot-send");
-  const input = document.getElementById("chatbot-input");
-  const messages = document.getElementById("chatbot-messages");
+    if (!fab || !windowEl) return;
 
-  if (!fab || !win) return;
-
-  fab.addEventListener("click", () => {
-    win.classList.toggle("active");
-    if (win.classList.contains("active") && !messages.dataset.greeted) {
-      messages.dataset.greeted = "1";
-      appendChatMessage("bot", "Hi! I'm Nova AI. Ask me anything about our services, pricing, or booking a consultation.");
+    // ── History helpers (sessionStorage: survives page nav, clears on tab close / logout) ──
+    function loadHistory() {
+        try { return JSON.parse(sessionStorage.getItem(CHATBOT_HISTORY_KEY) || '[]'); }
+        catch { return []; }
     }
-  });
-
-  closeBtn?.addEventListener("click", () => win.classList.remove("active"));
-
-  const send = () => sendChatMessage(input, messages);
-  sendBtn?.addEventListener("click", send);
-  input?.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      send();
+    function saveHistory(history) {
+        try { sessionStorage.setItem(CHATBOT_HISTORY_KEY, JSON.stringify(history)); } catch {}
     }
-  });
-}
-
-function appendChatMessage(role, text) {
-  const messages = document.getElementById("chatbot-messages");
-  if (!messages) return;
-  const bubble = document.createElement("div");
-  bubble.className = `chatbot-msg chatbot-msg-${role === "user" ? "user" : "bot"}`;
-  bubble.textContent = text;
-  messages.appendChild(bubble);
-  messages.scrollTop = messages.scrollHeight;
-}
-
-async function sendChatMessage(input, messages) {
-  const text = input.value.trim();
-  if (!text) return;
-  input.value = "";
-  appendChatMessage("user", text);
-  _chatbotHistory.push({ role: "user", content: text });
-
-  const typing = document.createElement("div");
-  typing.className = "chatbot-typing";
-  typing.innerHTML = "<span></span><span></span><span></span>";
-  messages.appendChild(typing);
-  messages.scrollTop = messages.scrollHeight;
-
-  try {
-    if (!_chatbotConfig) {
-      const cfgRes = await fetch("/api/chatbot/config");
-      if (!cfgRes.ok) throw new Error("Chatbot is not configured");
-      _chatbotConfig = await cfgRes.json();
+    function addToHistory(sender, text) {
+        const h = loadHistory();
+        h.push({ sender, text, time: Date.now() });
+        if (h.length > 100) h.splice(0, h.length - 100);
+        saveHistory(h);
     }
 
-    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${_chatbotConfig.apiKey}`
-      },
-      body: JSON.stringify({
-        model: _chatbotConfig.model,
-        messages: [
-          { role: "system", content: "You are Nova AI, a helpful assistant for NovaDigital, a software services agency. Be concise and friendly. And don't talk to any topic outside of the website" },
-          ..._chatbotHistory
-        ]
-      })
+    // ── Render one bubble ──
+    function renderBubble(sender, text) {
+        const div = document.createElement('div');
+        div.className = 'chatbot-msg ' + (sender === 'user' ? 'chatbot-msg-user' : 'chatbot-msg-bot');
+        div.textContent = text;
+        messagesContainer.appendChild(div);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    // ── Restore persisted conversation ──
+    const history = loadHistory();
+    if (history.length === 0) {
+        const welcome = 'Hello! I am Nova AI. How can I help you today?';
+        renderBubble('bot', welcome);
+        addToHistory('bot', welcome);
+    } else {
+        history.forEach(m => renderBubble(m.sender, m.text));
+    }
+
+    // Prefetch config so first message is instant
+    getChatbotConfig();
+
+    // ── Toggle open/close ──
+    fab.addEventListener('click', () => {
+        windowEl.classList.toggle('active');
+        if (windowEl.classList.contains('active')) {
+            inputEl.focus();
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
     });
+    closeBtn.addEventListener('click', () => windowEl.classList.remove('active'));
 
-    if (!res.ok) throw new Error("Chatbot request failed");
-    const data = await res.json();
-    const reply = data?.choices?.[0]?.message?.content || "Sorry, I couldn't come up with a response.";
-    typing.remove();
-    appendChatMessage("bot", reply);
-    _chatbotHistory.push({ role: "assistant", content: reply });
-  } catch (err) {
-    console.error("Chatbot error:", err);
-    typing.remove();
-    appendChatMessage("bot", "Sorry, something went wrong. Please try again in a moment.");
-  }
+    // ── Send message ──
+    const sendMessage = async () => {
+        const text = inputEl.value.trim();
+        if (!text || sendBtn.disabled) return;
+
+        inputEl.value = '';
+        sendBtn.disabled = true;
+
+        renderBubble('user', text);
+        addToHistory('user', text);
+
+        // Typing indicator
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'chatbot-msg chatbot-msg-bot chatbot-typing';
+        typingDiv.innerHTML = '<span></span><span></span><span></span>';
+        messagesContainer.appendChild(typingDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+        try {
+            const reply = await callGroqDirectly(text);
+            typingDiv.remove();
+            renderBubble('bot', reply);
+            addToHistory('bot', reply);
+        } catch (err) {
+            console.error('[Chatbot] Error:', err);
+            typingDiv.remove();
+            // Show real error in chat for debugging
+            const msg = err.message || 'Sorry, I am currently unavailable. Please try again later.';
+            renderBubble('bot', msg);
+            addToHistory('bot', msg);
+        } finally {
+            sendBtn.disabled = false;
+            inputEl.focus();
+        }
+    };
+
+    sendBtn.addEventListener('click', sendMessage);
+    inputEl.addEventListener('keypress', e => {
+        if (e.key === 'Enter') { e.preventDefault(); sendMessage(); }
+    });
 }
+
+// Clear chatbot history on logout (called by logoutUser which already does sessionStorage.clear())
+function clearChatbotHistory() {
+    sessionStorage.removeItem(CHATBOT_HISTORY_KEY);
+}
+
+window.initChatbot = initChatbot;
+window.clearChatbotHistory = clearChatbotHistory;s
