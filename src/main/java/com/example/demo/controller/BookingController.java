@@ -57,6 +57,12 @@ public class BookingController {
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private com.example.demo.repository.QuotationRepository quotationRepository;
+
+    @Autowired
+    private com.example.demo.repository.QuotationItemRepository quotationItemRepository;
+
     // ── Anti-spam: generate new captcha characters ──
     @GetMapping("/captcha")
     public ResponseEntity<?> getCaptcha() {
@@ -324,23 +330,77 @@ public class BookingController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteBooking(@PathVariable Long id) {
-        return appointmentRepository.findById(id)
-                .<ResponseEntity<?>>map(a -> {
-                    List<AppointmentAddon> addons = appointmentAddonRepository.findByAppointmentId(id);
-                    appointmentAddonRepository.deleteAll(addons);
-                    appointmentRepository.delete(a);
-                    Map<String, Object> res = new HashMap<>();
-                    res.put("success", true);
-                    res.put("message", "Deleted successfully");
-                    return ResponseEntity.ok(res);
-                })
-                .orElseGet(() -> {
-                    Map<String, Object> error = new HashMap<>();
-                    error.put("message", "Appointment not found with id = " + id);
-                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+public ResponseEntity<?> deleteBooking(@PathVariable Long id) {
+    return appointmentRepository.findById(id)
+            .<ResponseEntity<?>>map(a -> {
+                // A booking that has already been quoted (PRICING -> Create Quote) has a
+                // Quotation row pointing back at it via booking_id (FK). Deleting the
+                // appointment while that row still exists violates the FK constraint and
+                // the whole delete fails with a 500 - so the linked quotation (and its
+                // items) must be cleared first.
+                quotationRepository.findByBookingId(id).ifPresent(q -> {
+                    quotationItemRepository.deleteAll(quotationItemRepository.findByQuotationId(q.getId()));
+                    quotationRepository.delete(q);
                 });
+
+                List<AppointmentAddon> addons = appointmentAddonRepository.findByAppointmentId(id);
+                appointmentAddonRepository.deleteAll(addons);
+
+                // Snapshot what we need for the notification before the row is gone.
+                User client = userRepository.findById(a.getClientId()).orElse(null);
+                String serviceTitle = serviceRepository.findById(a.getServiceId())
+                        .map(Service::getTitle)
+                        .orElse("Service #" + a.getServiceId());
+                String appointmentDate = a.getAppointmentDate() != null ? a.getAppointmentDate().toString() : "";
+                String timeSlot = a.getTimeSlot() != null ? a.getTimeSlot().toString().substring(0, 5) : "";
+
+                appointmentRepository.delete(a);
+
+                notifyClientBookingDeleted(client, serviceTitle, appointmentDate, timeSlot);
+
+                Map<String, Object> res = new HashMap<>();
+                res.put("success", true);
+                res.put("message", "Deleted successfully");
+                return ResponseEntity.ok(res);
+            })
+            .orElseGet(() -> {
+                Map<String, Object> error = new HashMap<>();
+                error.put("message", "Appointment not found with id = " + id);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+            });
+}
+
+/**
+ * Notify the client (email + in-app) that their booking was removed by an admin.
+ * Best-effort: a missing/blank email only skips the email, it never blocks the delete.
+ */
+private void notifyClientBookingDeleted(User client, String serviceTitle, String appointmentDate, String timeSlot) {
+    if (client == null) return;
+
+    String message = String.format(
+            "Your consultation booking \"%s\" scheduled for %s at %s has been cancelled and removed by our team. " +
+            "If you believe this is a mistake, please contact us or create a new booking.",
+            serviceTitle, appointmentDate, timeSlot
+    );
+
+    if (client.getEmail() != null && !client.getEmail().isBlank()) {
+        emailService.sendBookingUpdateEmail(
+                client.getEmail(),
+                client.getFullName(),
+                serviceTitle,
+                appointmentDate,
+                timeSlot,
+                message
+        );
     }
+
+    Notification noti = new Notification();
+    noti.setUserId(client.getId());
+    noti.setTitle("Booking Cancelled");
+    noti.setMessage(message);
+    noti.setLink("/my-bookings.html");
+    notificationRepository.save(noti);
+}
 
     // Admin sends a free-text update email to the client about this booking
     // (e.g. the consultation date may need to change, or another issue came up).
