@@ -83,6 +83,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/vacancies/apply").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/vacancies/applications")
                         .hasAnyRole("ADMIN", "MEMBER", "RESOURCE")
+                        .requestMatchers(HttpMethod.PATCH, "/api/vacancies/applications/*/status")
+                        .hasAnyRole("ADMIN", "MEMBER", "RESOURCE")
                         .requestMatchers("/api/bookings/my").authenticated()
                         .requestMatchers("/api/bookings/**").permitAll()
                         .requestMatchers("/api/chatbot/**").permitAll()
