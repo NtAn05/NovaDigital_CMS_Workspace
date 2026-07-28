@@ -6056,7 +6056,7 @@ function clearChatbotHistory() {
 }
 
 window.initChatbot = initChatbot;
-window.clearChatbotHistory = clearChatbotHistory;s
+window.clearChatbotHistory = clearChatbotHistory;
 
 // =============================================
 //  Admin - Quotation Logic
@@ -6205,3 +6205,4 @@ function initQuotationSSE() {
 if (document.getElementById("panel-bookings")) {
   initQuotationSSE();
 }
+window.clearChatbotHistory = clearChatbotHistory;
