@@ -1,6 +1,7 @@
 package com.example.demo.repository;
 
 import com.example.demo.entity.CandidateApplication;
+import com.example.demo.entity.enums.ApplicationStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import java.util.List;
@@ -13,4 +14,10 @@ public interface CandidateApplicationRepository extends JpaRepository<CandidateA
 
     /** HR filter by specific vacancy */
     List<CandidateApplication> findByVacancyIdOrderByAppliedAtDesc(Long vacancyId);
+
+    /** HR filter by recruitment pipeline status */
+    List<CandidateApplication> findByStatusOrderByAppliedAtDesc(ApplicationStatus status);
+
+    /** HR filter by vacancy AND status */
+    List<CandidateApplication> findByVacancyIdAndStatusOrderByAppliedAtDesc(Long vacancyId, ApplicationStatus status);
 }
