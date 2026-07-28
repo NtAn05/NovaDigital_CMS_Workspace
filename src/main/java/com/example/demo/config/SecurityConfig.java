@@ -98,7 +98,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/payments/**").authenticated()
 
                         // Milestone SSE Stream: public so Client View can subscribe without login
-                        .requestMatchers(HttpMethod.GET, "/api/milestones/stream").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/milestones/stream", "/api/sse/stream").permitAll()
 
                         // Milestone read: public (project progress visible on Client View)
                         .requestMatchers(HttpMethod.GET, "/api/projects/*/milestones").permitAll()

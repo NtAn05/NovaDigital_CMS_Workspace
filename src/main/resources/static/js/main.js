@@ -1811,54 +1811,372 @@ function initAdminDashboard() {
     }
   }
 
-  async function fetchAdminServicesTable() {
+async function fetchAdminServicesTable() {
     const tbody = document.getElementById("services-table-body");
     if (!tbody) return;
 
     try {
-      const response = await fetch("/api/services");
-      if (!response.ok) throw new Error("Failed");
-      const services = await response.json();
+        const response = await fetch("/api/services");
+        if (!response.ok) throw new Error("Failed");
+        const services = await response.json();
 
-      tbody.innerHTML = "";
+        tbody.innerHTML = "";
 
-      if (!services.length) {
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--text-muted);">No services found.</td></tr>`;
-        return;
-      }
+        if (!services.length) {
+            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--text-muted);">No services found.</td></tr>`;
+            return;
+        }
 
-      const iconLabels = {
-        web: "🌐 Web Design", design: "🎨 UI/UX", marketing: "📊 Marketing",
-        mobile: "📱 Mobile", branding: "🎯 Branding", cloud: "☁️ Cloud"
-      };
+        const iconLabels = {
+            web: "🌐 Web Design", design: "🎨 UI/UX", marketing: "📊 Marketing",
+            mobile: "📱 Mobile", branding: "🎯 Branding", cloud: "☁️ Cloud"
+        };
 
-      services.forEach(s => {
-        _cache.services[s.id] = s;
-        const tr = document.createElement("tr");
-        tr.setAttribute("data-searchable", `${s.title} ${s.description}`);
-        tr.innerHTML = `
-        <td class="text-dark-inline">${escapeHtml(s.title || "")}</td>
-        <td><span class="status-badge badge-active">${iconLabels[s.iconUrl] || escapeHtml(s.iconUrl || "—")}</span></td>
-        <td style="max-width:260px;white-space:pre-wrap;">${escapeHtml((s.description || "").substring(0, 100))}${(s.description || "").length > 100 ? "..." : ""}</td>
-        <td>
-          <div class="action-btns">
-            <button class="btn-edit"   onclick="openCrudModal('service', ${s.id})">
-              <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit
-            </button>
-            <button class="btn-delete" onclick="openDeleteConfirm('service', ${s.id}, '${escapeHtml(s.title || "")}')">
-              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>Delete
-            </button>
-          </div>
-        </td>`;
-        tbody.appendChild(tr);
-      });
+        services.forEach(s => {
+            _cache.services[s.id] = s;
+            const tr = document.createElement("tr");
+            tr.setAttribute("data-searchable", `${s.title} ${s.description}`);
+            tr.innerHTML = `
+    <td class="text-dark-inline">${escapeHtml(s.title || "")}</td>
+    <td><span class="status-badge badge-active">${iconLabels[s.iconUrl] || escapeHtml(s.iconUrl || "—")}</span></td>
+    <td style="max-width:220px;white-space:pre-wrap;">${escapeHtml((s.description || "").substring(0, 80))}${(s.description || "").length > 80 ? "..." : ""}</td>
+    <td>
+      <div style="display:flex;align-items:center;gap:4px;">
+        <span style="font-size:0.85rem;color:var(--text-muted);">$</span>
+        <input type="number" id="table-price-${s.id}" value="${Number(s.basePrice || 0)}" min="0" step="0.01"
+          style="width:70px;padding:0.25rem 0.35rem;border:1px solid var(--border-color);border-radius:5px;font-size:0.8rem;">
+        <button type="button" onclick="updateServicePriceTable(${s.id})" title="Save price"
+          style="background:none;border:none;color:#059669;cursor:pointer;font-size:0.8rem;padding:2px;">✓</button>
+      </div>
+    </td>
+    <td>
+      <button type="button" onclick="toggleAddonManage(${s.id})" id="addon-toggle-btn-${s.id}"
+        style="background:#eff6ff;border:1px solid #bfdbfe;color:#2563eb;border-radius:6px;padding:0.3rem 0.6rem;font-size:0.78rem;font-weight:600;cursor:pointer;white-space:nowrap;">
+        <span id="addon-count-${s.id}">…</span> add-ons
+      </button>
+    </td>
+    <td>
+      <div class="action-btns">
+        <button class="btn-edit"   onclick="openCrudModal('service', ${s.id})">
+          <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit
+        </button>
+        <button class="btn-delete" onclick="openDeleteConfirm('service', ${s.id}, '${escapeHtml(s.title || "")}')">
+          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>Delete
+        </button>
+      </div>
+    </td>`;
+            tbody.appendChild(tr);
+
+            // Hidden detail row for add-on management (collapsed by default)
+            const detailTr = document.createElement("tr");
+            detailTr.id = `addon-detail-row-${s.id}`;
+            detailTr.style.display = "none";
+            detailTr.innerHTML = `
+    <td colspan="6" style="background:#f8fafc;padding:0.85rem 1.25rem;">
+      <div id="table-addons-list-${s.id}" style="display:flex;flex-direction:column;gap:6px;max-width:520px;">
+        <span style="color:var(--text-muted);font-size:0.8rem;">Loading...</span>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:8px;max-width:520px;">
+        <input type="text" id="table-addon-new-name-${s.id}" placeholder="Add-on name" style="flex:1;min-width:0;padding:0.35rem 0.5rem;border:1px solid var(--border-color);border-radius:6px;font-size:0.8rem;">
+        <input type="number" id="table-addon-new-price-${s.id}" placeholder="$" min="0" step="0.01" style="width:70px;padding:0.35rem 0.5rem;border:1px solid var(--border-color);border-radius:6px;font-size:0.8rem;">
+        <button type="button" class="btn-save" style="padding:0.35rem 0.7rem;font-size:0.78rem;white-space:nowrap;" onclick="addServiceAddonTable(${s.id})">+ Add</button>
+      </div>
+    </td>`;
+            tbody.appendChild(detailTr);
+
+            loadServiceAddonsTable(s.id);
+        });
     } catch (err) {
-      console.error("fetchAdminServicesTable error:", err);
-      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:2rem;color:#ef4444;">Could not load service list.</td></tr>`;
+        console.error("fetchAdminServicesTable error:", err);
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:2rem;color:#ef4444;">Could not load service list.</td></tr>`;
     }
-  }
+}
 
-  // =============================================
+async function updateServicePriceTable(serviceId) {
+    const priceEl = document.getElementById(`table-price-${serviceId}`);
+    if (!priceEl) return;
+    
+    const price = parseFloat(priceEl.value);
+    if (isNaN(price) || price < 0) {
+      showToast("Please enter a valid non-negative price", "error");
+      return;
+    }
+    
+    try {
+      const res = await fetch(`/api/services/${serviceId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...adminHeaders() },
+        body: JSON.stringify({ basePrice: price })
+      });
+      
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || "Failed to update service price");
+      }
+      
+      showToast("Service price updated successfully", "success");
+      fetchAdminServicesTable();
+    } catch (err) {
+      showToast(err.message, "error");
+    }
+}
+
+function toggleAddonManage(serviceId) {
+    const row = document.getElementById(`addon-detail-row-${serviceId}`);
+    if (!row) return;
+    const isHidden = row.style.display === "none";
+    row.style.display = isHidden ? "table-row" : "none";
+    
+    const btn = document.getElementById(`addon-toggle-btn-${serviceId}`);
+    if (btn) {
+      if (isHidden) {
+        btn.style.background = '#2563eb';
+        btn.style.color = '#fff';
+      } else {
+        btn.style.background = '#eff6ff';
+        btn.style.color = '#2563eb';
+      }
+    }
+}
+
+function buildCrudForm(type, item) {
+    const v = item || {};
+    const fld = (id, label, type2, value, extra = "") => `
+    <div class="form-group">
+      <label for="${id}">${label}</label>
+      <input type="${type2}" id="${id}" value="${escapeHtml(String(value || ""))}" ${extra}>
+    </div>`;
+    const txt = (id, label, value, extra = "") => `
+    <div class="form-group">
+      <label for="${id}">${label}</label>
+      <textarea id="${id}" rows="3" ${extra}>${escapeHtml(String(value || ""))}</textarea>
+    </div>`;
+    const sel = (id, label, opts, selected) => `
+    <div class="form-group">
+      <label for="${id}">${label}</label>
+      <select id="${id}" class="crud-select">
+        ${opts.map(([val, lbl]) => `<option value="${val}" ${selected === val ? "selected" : ""}>${lbl}</option>`).join("")}
+      </select>
+    </div>`;
+
+    if (type === "user") return `
+    ${fld("cf-username", "Username *", "text", v.username, `placeholder="Enter username" required ${item ? 'readonly style="background:#f8fafc;cursor:not-allowed;"' : ""}`)}
+    ${fld("cf-fullName", "Full Name *", "text", v.fullName, 'placeholder="Enter full name" required')}
+    ${fld("cf-email", "Email *", "email", v.email, 'placeholder="name@domain.com" required')}
+    ${fld("cf-phone", "Phone Number", "tel", v.phone, 'placeholder="0123456789" pattern="[0-9]{10}"')}
+    ${!item ? fld("cf-password", "Password *", "password", "", 'placeholder="Min 6 characters" required minlength="6"') : ""}
+
+    ${sel("cf-role", "Role *", [["ROLE_USER", "User"], ["ROLE_ADMIN", "Admin"], ["ROLE_MEMBER", "Team Member"]], v.role || "ROLE_USER")}
+  `;
+
+    if (type === "member") return `
+    ${fld("cf-name", "Member Name *", "text", v.name, 'placeholder="Enter member name" required')}
+    ${fld("cf-role", "Position / Role *", "text", v.role, 'placeholder="e.g. Frontend Developer" required')}
+    <div class="form-group">
+      <label for="cf-avatarFile">Avatar Image *</label>
+      <input type="file" id="cf-avatarFile" accept="image/*" style="width:100%; padding:0.5rem; border:1px dashed var(--border-color); border-radius:var(--radius-sm); background:var(--bg-light); cursor:pointer;">
+      <input type="hidden" id="cf-avatarUrl" value="${escapeHtml(String(v.avatarUrl || ""))}">
+      ${v.avatarUrl ? `<img id="cf-preview" src="${escapeHtml(v.avatarUrl)}" style="margin-top: 0.75rem; max-width: 150px; height: auto; border-radius: 6px; border: 1px solid var(--border-color); display: block;">` : `<img id="cf-preview" style="margin-top: 0.75rem; max-width: 150px; height: auto; border-radius: 6px; border: 1px solid var(--border-color); display: none;">`}
+    </div>
+    ${fld("cf-facebookUrl", "Facebook URL", "url", v.facebookUrl, 'placeholder="https://facebook.com/..."')}
+    ${fld("cf-githubUrl", "GitHub URL", "url", v.githubUrl, 'placeholder="https://github.com/..."')}
+    ${fld("cf-linkedinUrl", "LinkedIn URL", "url", v.linkedinUrl, 'placeholder="https://linkedin.com/in/..."')}
+${fld("cf-skills", "Professional Skills", "text", v.skills, 'placeholder="e.g. Java, React, SQL"')}
+    ${fld("cf-projects", "Projects Worked On", "text", v.projectsWorked, 'placeholder="e.g. CMS Portal, E-Commerce App"')}
+  `;
+
+    if (type === "project") return `
+    ${fld("cf-title", "Project Title *", "text", v.title, 'placeholder="Enter project title" required')}
+    ${fld("cf-category", "Category *", "text", v.category, 'placeholder="e.g. Web Development" required')}
+    <div class="form-group">
+      <label for="cf-imageFile">Cover Image *</label>
+      <input type="file" id="cf-imageFile" accept="image/*" style="width:100%; padding:0.5rem; border:1px dashed var(--border-color); border-radius:var(--radius-sm); background:var(--bg-light); cursor:pointer;">
+      <input type="hidden" id="cf-imageUrl" value="${escapeHtml(String(v.imageUrl || ""))}">
+      ${v.imageUrl ? `<img id="cf-preview" src="${escapeHtml(v.imageUrl)}" style="margin-top: 0.75rem; max-width: 150px; height: auto; border-radius: 6px; border: 1px solid var(--border-color); display: block;">` : `<img id="cf-preview" style="margin-top: 0.75rem; max-width: 150px; height: auto; border-radius: 6px; border: 1px solid var(--border-color); display: none;">`}
+    </div>
+    ${txt("cf-description", "Description *", v.description, 'placeholder="Project description..." required')}
+    ${txt("cf-technologies", "Technologies Used", v.technologies, 'placeholder="e.g. React, Node.js, MongoDB..."')}
+  `;
+
+    if (type === "service") return `
+    ${fld("cf-title", "Service Title *", "text", v.title, 'placeholder="Enter service title" required')}
+    ${sel("cf-iconUrl", "Service Icon *",
+        [["web", "🌐 Web Design"], ["design", "🎨 UI/UX Design"], ["marketing", "📊 Marketing"],
+            ["mobile", "📱 Mobile App"], ["branding", "🎯 Branding"], ["cloud", "☁️ Cloud Solutions"]],
+        v.iconUrl || "web")}
+    ${txt("cf-description", "Description *", v.description, 'placeholder="Service description..." required')}
+  `;
+
+    return "<p>Unknown type.</p>";
+}
+
+async function loadServiceAddonsTable(serviceId) {
+    const listEl = document.getElementById(`table-addons-list-${serviceId}`);
+    if (!listEl) return;
+    try {
+        const response = await fetch(`/api/services/${serviceId}/addons`);
+        if (!response.ok) throw new Error("Failed to load add-ons");
+        const addons = await response.json();
+        addons.forEach(a => { _serviceAddonsCache[a.id] = a; });
+        renderServiceAddonsTable(serviceId, addons);
+    } catch (err) {
+        console.error("loadServiceAddonsTable error:", err);
+        listEl.innerHTML = `<span style="color:#ef4444;font-size:0.78rem;">Could not load.</span>`;
+    }
+}
+
+function renderServiceAddonsTable(serviceId, addons) {
+    const listEl = document.getElementById(`table-addons-list-${serviceId}`);
+    if (!listEl) return;
+    if (!addons.length) {
+        listEl.innerHTML = `<span style="color:var(--text-muted);font-size:0.78rem;">No add-ons yet.</span>`;
+        return;
+    }
+    listEl.innerHTML = addons.map(a => `
+    <div class="table-addon-row" data-addon-id="${a.id}" style="display:flex;align-items:center;gap:6px;font-size:0.78rem;">
+      <span class="text-dark-inline" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(a.addonName)}</span>
+      <span style="font-weight:600;color:var(--primary,#2563eb);white-space:nowrap;">$${Number(a.priceModifier).toFixed(2)}</span>
+      <button type="button" onclick="startEditServiceAddonTable(${serviceId}, ${a.id})" style="background:none;border:none;color:#2563eb;cursor:pointer;font-size:0.72rem;">Edit</button>
+      <button type="button" onclick="deleteServiceAddonTable(${serviceId}, ${a.id}, '${escapeHtml(a.addonName).replace(/'/g, "\\'")}')" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:0.72rem;">Del</button>
+    </div>
+  `).join("");
+}
+
+function startEditServiceAddonTable(serviceId, addonId) {
+    const a = _serviceAddonsCache[addonId];
+    const row = document.querySelector(`#table-addons-list-${serviceId} .table-addon-row[data-addon-id="${addonId}"]`);
+    if (!a || !row) return;
+    row.innerHTML = `
+    <input type="text" id="table-addon-edit-name-${addonId}" value="${escapeHtml(a.addonName)}" style="flex:1;min-width:0;padding:0.25rem;border:1px solid var(--border-color);border-radius:5px;font-size:0.75rem;">
+    <input type="number" id="table-addon-edit-price-${addonId}" value="${a.priceModifier}" min="0" step="0.01" style="width:55px;padding:0.25rem;border:1px solid var(--border-color);border-radius:5px;font-size:0.75rem;">
+    <button type="button" onclick="saveServiceAddonEditTable(${serviceId}, ${addonId})" style="background:none;border:none;color:#059669;cursor:pointer;font-size:0.72rem;">Save</button>
+    <button type="button" onclick="loadServiceAddonsTable(${serviceId})" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.72rem;">✕</button>
+  `;
+}
+
+async function saveServiceAddonEditTable(serviceId, addonId) {
+    const name = (document.getElementById(`table-addon-edit-name-${addonId}`)?.value || "").trim();
+    const price = parseFloat(document.getElementById(`table-addon-edit-price-${addonId}`)?.value);
+    if (!name || isNaN(price) || price < 0) {
+        showToast("Please enter a valid add-on name and non-negative price.", "warning");
+        return;
+    }
+    try {
+        const response = await fetch(`/api/service-addons/${addonId}`, {
+            method: "PUT",
+            headers: adminHeaders(),
+            body: JSON.stringify({ addonName: name, priceModifier: price })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.message || "Failed to update add-on");
+        showToast("Add-on updated successfully!", "success");
+        loadServiceAddonsTable(serviceId);
+    } catch (err) {
+        console.error(err);
+        showToast("Failed to update add-on: " + err.message, "error");
+    }
+}
+
+function deleteServiceAddonTable(serviceId, addonId, name) {
+    showConfirmModal({
+        title: "Delete Add-on",
+        message: `Are you sure you want to delete "${name}"? This action cannot be undone.`,
+        confirmText: "Delete",
+        cancelText: "Cancel",
+        onConfirm: async () => {
+            try {
+                const response = await fetch(`/api/service-addons/${addonId}`, {
+                    method: "DELETE",
+                    headers: adminHeaders()
+                });
+                if (!response.ok) throw new Error("Failed to delete add-on");
+                showToast("Add-on deleted successfully!", "success");
+                loadServiceAddonsTable(serviceId);
+            } catch (err) {
+                console.error(err);
+                showToast("Failed to delete add-on: " + err.message, "error");
+            }
+        }
+    });
+}
+
+async function addServiceAddonTable(serviceId) {
+    const nameInput = document.getElementById(`table-addon-new-name-${serviceId}`);
+    const priceInput = document.getElementById(`table-addon-new-price-${serviceId}`);
+    const name = (nameInput?.value || "").trim();
+    const price = parseFloat(priceInput?.value);
+    if (!name || isNaN(price) || price < 0) {
+        showToast("Please enter a valid add-on name and non-negative price.", "warning");
+        return;
+    }
+    try {
+        const response = await fetch(`/api/service-addons`, {
+            method: "POST",
+            headers: adminHeaders(),
+            body: JSON.stringify({ serviceId: serviceId, addonName: name, priceModifier: price })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.message || "Failed to add add-on");
+        if (nameInput) nameInput.value = "";
+        if (priceInput) priceInput.value = "";
+        showToast("Add-on added successfully!", "success");
+        loadServiceAddonsTable(serviceId);
+    } catch (err) {
+        console.error(err);
+        showToast("Failed to add add-on: " + err.message, "error");
+    }
+}
+function deleteServiceAddonInline(serviceId, addonId, name) {
+    showConfirmModal({
+        title: "Delete Add-on",
+        message: `Are you sure you want to delete "${name}"? This action cannot be undone.`,
+        confirmText: "Delete",
+        cancelText: "Cancel",
+        onConfirm: async () => {
+            try {
+                const response = await fetch(`/api/service-addons/${addonId}`, {
+                    method: "DELETE",
+                    headers: adminHeaders()
+                });
+                if (!response.ok) throw new Error("Failed to delete add-on");
+                showToast("Add-on deleted successfully!", "success");
+                loadServiceAddonsForModal(serviceId);
+            } catch (err) {
+                console.error(err);
+                showToast("Failed to delete add-on: " + err.message, "error");
+            }
+        }
+    });
+}
+
+
+async function saveServiceAddonEdit(serviceId, addonId) {
+    const name = (document.getElementById(`cf-addon-edit-name-${addonId}`)?.value || "").trim();
+    const price = parseFloat(document.getElementById(`cf-addon-edit-price-${addonId}`)?.value);
+    if (!name || isNaN(price) || price < 0) {
+        showToast("Please enter a valid add-on name and non-negative price.", "warning");
+        return;
+    }
+    try {
+        const response = await fetch(`/api/service-addons/${addonId}`, {
+            method: "PUT",
+            headers: adminHeaders(),
+            body: JSON.stringify({ addonName: name, priceModifier: price })
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.message || "Failed to update add-on");
+        showToast("Add-on updated successfully!", "success");
+        loadServiceAddonsForModal(serviceId);
+    } catch (err) {
+        console.error(err);
+        showToast("Failed to update add-on: " + err.message, "error");
+    }
+}
+
+
+
+
+// =============================================
   //  Admin – Service Add-on CRUD (per service, inside the Service edit modal)
   // =============================================
 
@@ -2283,7 +2601,6 @@ function initAdminDashboard() {
     });
   }
 
-  // Expose functions globally to onclick handlers
   window.switchAdminPanel = switchAdminPanel;
   window.loadUserMessages = loadUserMessages;
   window.applyFilters = applyFilters;
@@ -2294,6 +2611,15 @@ function initAdminDashboard() {
   window.closeReplyDialog = closeReplyDialog;
   window.submitReply = submitReply;
   window.deleteMessage = deleteMessage;
+
+  // Service Table Inline Edit & Addons Management
+  window.updateServicePriceTable = updateServicePriceTable;
+  window.toggleAddonManage = toggleAddonManage;
+  window.loadServiceAddonsTable = loadServiceAddonsTable;
+  window.startEditServiceAddonTable = startEditServiceAddonTable;
+  window.saveServiceAddonEditTable = saveServiceAddonEditTable;
+  window.deleteServiceAddonTable = deleteServiceAddonTable;
+  window.addServiceAddonTable = addServiceAddonTable;
 
 // =============================================
 //  In-App Notification Bell

@@ -8,7 +8,7 @@ import com.example.demo.repository.ProjectClientRepository;
 import com.example.demo.repository.ProjectRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.service.ProjectService;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -38,6 +38,7 @@ public class ProjectController {
 
     // ── GET ALL ──────────────────────────────────────────
     @GetMapping
+    @Transactional(readOnly = true)
     public List<ProjectResponse> getAllProjects() {
         return projectService.getAllProjects().stream()
                 .map(p -> {
@@ -56,6 +57,7 @@ public class ProjectController {
     }
 
     @GetMapping("/{id}")
+    @Transactional(readOnly = true)
     public ResponseEntity<?> getProjectById(@PathVariable Long id) {
         Optional<Project> optional = projectRepository.findById(id);
         if (optional.isEmpty()) {
