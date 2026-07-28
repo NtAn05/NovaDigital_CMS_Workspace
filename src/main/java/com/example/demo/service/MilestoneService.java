@@ -15,6 +15,7 @@ import com.example.demo.repository.MilestoneMutationLogRepository;
 import com.example.demo.repository.ProjectAssignmentRepository;
 import com.example.demo.repository.ProjectMilestoneRepository;
 import com.example.demo.repository.ProjectRepository;
+import com.example.demo.repository.ResourceAllocationRepository;
 import com.example.demo.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,6 +59,9 @@ public class MilestoneService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ResourceAllocationRepository resourceAllocationRepository;
 
     // ── READ ─────────────────────────────────────────────────────────────────
 
@@ -273,6 +277,8 @@ public class MilestoneService {
         }
 
         String milestoneName = milestone.getName();
+        // Clean up any resource allocations linked to this milestone
+        resourceAllocationRepository.deleteByMilestoneId(milestoneId);
         milestoneRepository.deleteById(milestoneId);
 
         // Log the deletion

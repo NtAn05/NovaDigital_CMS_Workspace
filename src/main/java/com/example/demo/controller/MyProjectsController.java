@@ -72,6 +72,10 @@ public class MyProjectsController {
     @GetMapping("/bookings")
     public ResponseEntity<?> getMyBookings(Authentication authentication) {
         User user = resolveUser(authentication);
+        if (user == null) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "Unauthenticated or user not found"));
+        }
 
         List<ConsultationAppointment> appointments =
                 appointmentRepository.findByExpertIdOrderByAppointmentDateDesc(user.getId());
@@ -79,37 +83,40 @@ public class MyProjectsController {
         List<Map<String, Object>> result = appointments.stream().map(a -> {
             Map<String, Object> m = new HashMap<>();
             m.put("id", a.getId());
-            m.put("status", a.getStatus().name());
+            m.put("status", a.getStatus() != null ? a.getStatus().name() : "PENDING");
             m.put("appointmentDate", a.getAppointmentDate());
             m.put("timeSlot", a.getTimeSlot());
             m.put("messageContent", a.getMessageContent());
             m.put("attachmentUrl", a.getAttachmentUrl());
-            m.put("totalPrice", a.getTotalPrice());
+            m.put("totalPrice", a.getTotalPrice() != null ? a.getTotalPrice() : 0.0);
 
             // Real customer name + email, fetched from User via clientId
-            User client = userRepository.findById(a.getClientId()).orElse(null);
-            m.put("customerName", client != null ? client.getFullName() : "Unknown");
+            User client = a.getClientId() != null ? userRepository.findById(a.getClientId()).orElse(null) : null;
+            m.put("customerName", client != null ? client.getFullName() : (a.getClientId() != null ? "Customer #" + a.getClientId() : "Unknown"));
             m.put("customerEmail", client != null ? client.getEmail() : "");
             m.put("customerPhone", client != null ? client.getPhone() : "");
 
             // Service name and base price
-            Service service = serviceRepository.findById(a.getServiceId()).orElse(null);
-            m.put("serviceTitle", service != null ? service.getTitle() : "Service #" + a.getServiceId());
-            double basePrice = a.getBasePrice() != null ? a.getBasePrice() : (service != null ? service.getBasePrice() : 0.0);
+            Service service = a.getServiceId() != null ? serviceRepository.findById(a.getServiceId()).orElse(null) : null;
+            m.put("serviceTitle", service != null ? service.getTitle() : (a.getServiceId() != null ? "Service #" + a.getServiceId() : "N/A"));
+            double basePrice = a.getBasePrice() != null ? a.getBasePrice() : (service != null && service.getBasePrice() != null ? service.getBasePrice() : 0.0);
             m.put("basePrice", basePrice);
 
             // Add-ons list and total add-ons price
-            List<AppointmentAddon> apptAddons = appointmentAddonRepository.findByAppointmentId(a.getId());
+            List<AppointmentAddon> apptAddons = a.getId() != null ? appointmentAddonRepository.findByAppointmentId(a.getId()) : java.util.Collections.emptyList();
             List<Map<String, Object>> addonsList = apptAddons.stream().map(aa -> {
-                ServiceAddon sa = serviceAddonRepository.findById(aa.getAddonId()).orElse(null);
+                ServiceAddon sa = (aa != null && aa.getAddonId() != null) ? serviceAddonRepository.findById(aa.getAddonId()).orElse(null) : null;
                 Map<String, Object> addonMap = new HashMap<>();
-                addonMap.put("id", aa.getAddonId());
-                addonMap.put("addonName", sa != null ? sa.getAddonName() : "Add-on #" + aa.getAddonId());
-                addonMap.put("priceModifier", sa != null ? sa.getPriceModifier() : 0.0);
+                addonMap.put("id", aa != null ? aa.getAddonId() : null);
+                addonMap.put("addonName", sa != null ? sa.getAddonName() : (aa != null && aa.getAddonId() != null ? "Add-on #" + aa.getAddonId() : "Unknown Add-on"));
+                addonMap.put("priceModifier", sa != null && sa.getPriceModifier() != null ? sa.getPriceModifier() : 0.0);
                 return addonMap;
             }).collect(Collectors.toList());
 
-            double addonsPrice = addonsList.stream().mapToDouble(am -> (Double) am.get("priceModifier")).sum();
+            double addonsPrice = addonsList.stream().mapToDouble(am -> {
+                Object pm = am.get("priceModifier");
+                return pm instanceof Number ? ((Number) pm).doubleValue() : 0.0;
+            }).sum();
             m.put("addonsPrice", addonsPrice);
             m.put("addons", addonsList);
 
@@ -123,6 +130,10 @@ public class MyProjectsController {
     @GetMapping("/pm-projects")
     public ResponseEntity<?> getMyPmProjects(Authentication authentication) {
         User user = resolveUser(authentication);
+        if (user == null) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "Unauthenticated or user not found"));
+        }
         List<ProjectAssignment> assignments =
                 assignmentRepository.findByUserIdAndProjectRole(user.getId(), ProjectRole.PM);
         return ResponseEntity.ok(toProjectList(assignments));
@@ -132,6 +143,10 @@ public class MyProjectsController {
     @GetMapping("/staff-projects")
     public ResponseEntity<?> getMyStaffProjects(Authentication authentication) {
         User user = resolveUser(authentication);
+        if (user == null) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "Unauthenticated or user not found"));
+        }
         List<ProjectAssignment> assignments =
                 assignmentRepository.findByUserIdAndProjectRole(user.getId(), ProjectRole.STAFF);
         return ResponseEntity.ok(toProjectList(assignments));
@@ -141,17 +156,23 @@ public class MyProjectsController {
     @GetMapping("/client-projects")
     public ResponseEntity<?> getMyClientProjects(Authentication authentication) {
         User user = resolveUser(authentication);
+        if (user == null) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "Unauthenticated or user not found"));
+        }
         List<ProjectClient> links = clientRepository.findByUserId(user.getId());
 
         List<Map<String, Object>> result = links.stream().map(link -> {
             Map<String, Object> m = new HashMap<>();
-            m.put("id", link.getProject().getId());
-            m.put("title", link.getProject().getTitle());
-            m.put("description", link.getProject().getDescription());
-            m.put("category", link.getProject().getCategory());
-            m.put("imageUrl", link.getProject().getImageUrl());
-            m.put("technologies", link.getProject().getTechnologies());
-            m.put("createdAt", link.getProject().getCreatedAt());
+            if (link.getProject() != null) {
+                m.put("id", link.getProject().getId());
+                m.put("title", link.getProject().getTitle());
+                m.put("description", link.getProject().getDescription());
+                m.put("category", link.getProject().getCategory());
+                m.put("imageUrl", link.getProject().getImageUrl());
+                m.put("technologies", link.getProject().getTechnologies());
+                m.put("createdAt", link.getProject().getCreatedAt());
+            }
             m.put("hiredAt", link.getHiredAt());
             return m;
         }).collect(Collectors.toList());
@@ -162,22 +183,28 @@ public class MyProjectsController {
     // ─── Helpers ────────────────────────────────────────────────────────────
 
     private User resolveUser(Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            return null;
+        }
         String username = authentication.getName();
-        return userRepository.findByUsernameOrEmail(username, username)
-                .orElseThrow(() -> new RuntimeException("User not found: " + username));
+        return userRepository.findByUsernameOrEmail(username, username).orElse(null);
     }
 
     private List<Map<String, Object>> toProjectList(List<ProjectAssignment> assignments) {
         return assignments.stream().map(a -> {
             Map<String, Object> m = new HashMap<>();
-            m.put("id", a.getProject().getId());
-            m.put("title", a.getProject().getTitle());
-            m.put("description", a.getProject().getDescription());
-            m.put("category", a.getProject().getCategory());
-            m.put("imageUrl", a.getProject().getImageUrl());
-            m.put("technologies", a.getProject().getTechnologies());
-            m.put("createdAt", a.getProject().getCreatedAt());
-            m.put("projectRole", a.getProjectRole().name());
+            if (a.getProject() != null) {
+                m.put("id", a.getProject().getId());
+                m.put("title", a.getProject().getTitle());
+                m.put("description", a.getProject().getDescription());
+                m.put("category", a.getProject().getCategory());
+                m.put("imageUrl", a.getProject().getImageUrl());
+                m.put("technologies", a.getProject().getTechnologies());
+                m.put("createdAt", a.getProject().getCreatedAt());
+            }
+            if (a.getProjectRole() != null) {
+                m.put("projectRole", a.getProjectRole().name());
+            }
             m.put("assignedAt", a.getAssignedAt());
             return m;
         }).collect(Collectors.toList());

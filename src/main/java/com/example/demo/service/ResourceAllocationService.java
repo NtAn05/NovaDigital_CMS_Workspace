@@ -224,6 +224,10 @@ public class ResourceAllocationService {
                                                 int percentage,
                                                 LocalDate startDate,
                                                 LocalDate endDate) {
+        if (percentage < 1 || percentage > 100) {
+            throw new IllegalArgumentException("Allocation percentage must be between 1% and 100%.");
+        }
+
         if (!consumesCapacity(status)) {
             return;
         }
@@ -335,8 +339,11 @@ public class ResourceAllocationService {
     }
 
     private void validateDates(LocalDate startDate, LocalDate endDate) {
+        if (startDate == null || endDate == null) {
+            throw new IllegalArgumentException("Start date and end date are required.");
+        }
         if (endDate.isBefore(startDate)) {
-            throw new IllegalArgumentException("End date cannot be earlier than start date.");
+            throw new IllegalArgumentException("End date (" + endDate + ") cannot be earlier than start date (" + startDate + ").");
         }
     }
 

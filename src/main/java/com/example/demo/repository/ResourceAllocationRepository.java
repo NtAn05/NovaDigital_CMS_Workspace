@@ -41,4 +41,10 @@ public interface ResourceAllocationRepository extends JpaRepository<ResourceAllo
             @Param("userIds") Collection<Long> userIds,
             @Param("focusDate") LocalDate focusDate,
             @Param("statuses") Collection<AllocationStatus> statuses);
+
+    /** Clean up allocations when a milestone is deleted. */
+    void deleteByMilestoneId(Long milestoneId);
+
+    /** Clean up allocations when a member is removed from a project. */
+    void deleteByProjectIdAndUserId(Long projectId, Long userId);
 }

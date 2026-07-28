@@ -8,6 +8,7 @@ import com.example.demo.entity.User;
 import com.example.demo.repository.ProjectAssignmentRepository;
 import com.example.demo.repository.ProjectClientRepository;
 import com.example.demo.repository.ProjectRepository;
+import com.example.demo.repository.ResourceAllocationRepository;
 import com.example.demo.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -52,6 +54,9 @@ public class ProjectAssignmentController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ResourceAllocationRepository resourceAllocationRepository;
 
     // ─────────────────────────────────────────────────────────────────────────
     // ASSIGNMENTS
@@ -97,6 +102,24 @@ public class ProjectAssignmentController {
                 return badRequest("Only users with ROLE_MEMBER can be assigned as PM or STAFF.");
             }
 
+            ProjectRole role;
+            try {
+                role = ProjectRole.valueOf(roleStr);
+            } catch (IllegalArgumentException ex) {
+                return badRequest("Invalid role. Use PM or STAFF.");
+            }
+
+            // Enforce max 1 PM per project constraint
+            if (role == ProjectRole.PM) {
+                Optional<ProjectAssignment> existingPm = assignmentRepository
+                        .findByProjectIdAndProjectRole(projectId, ProjectRole.PM);
+                if (existingPm.isPresent() && !existingPm.get().getUser().getId().equals(userId)) {
+                    User pmUser = existingPm.get().getUser();
+                    return badRequest("Project '" + project.getTitle() + "' already has a Project Manager ("
+                            + pmUser.getFullName() + "). Only 1 PM is allowed per project.");
+                }
+            }
+
             // If already assigned, update the role instead of creating a duplicate
             ProjectAssignment assignment = assignmentRepository
                     .findByProjectIdAndUserId(projectId, userId)
@@ -104,7 +127,7 @@ public class ProjectAssignmentController {
 
             assignment.setProject(project);
             assignment.setUser(user);
-            assignment.setProjectRole(ProjectRole.valueOf(roleStr));
+            assignment.setProjectRole(role);
             assignmentRepository.save(assignment);
 
             Map<String, Object> result = new HashMap<>();
@@ -114,7 +137,7 @@ public class ProjectAssignmentController {
         } catch (EntityNotFoundException e) {
             return notFound(e.getMessage());
         } catch (IllegalArgumentException e) {
-            return badRequest("Invalid role. Use PM or STAFF.");
+            return badRequest(e.getMessage());
         }
     }
 
@@ -124,14 +147,32 @@ public class ProjectAssignmentController {
                                         @PathVariable Long userId,
                                         @RequestBody Map<String, String> body) {
         try {
-            ensureProjectExists(projectId);
+            Project project = findProjectOrThrow(projectId);
             String roleStr = body.getOrDefault("projectRole", "STAFF").toUpperCase();
             ProjectAssignment assignment = assignmentRepository
                     .findByProjectIdAndUserId(projectId, userId)
                     .orElseThrow(() -> new EntityNotFoundException(
                             "No assignment found for user " + userId + " on project " + projectId));
 
-            assignment.setProjectRole(ProjectRole.valueOf(roleStr));
+            ProjectRole role;
+            try {
+                role = ProjectRole.valueOf(roleStr);
+            } catch (IllegalArgumentException ex) {
+                return badRequest("Invalid role. Use PM or STAFF.");
+            }
+
+            // Enforce max 1 PM per project constraint
+            if (role == ProjectRole.PM) {
+                Optional<ProjectAssignment> existingPm = assignmentRepository
+                        .findByProjectIdAndProjectRole(projectId, ProjectRole.PM);
+                if (existingPm.isPresent() && !existingPm.get().getUser().getId().equals(userId)) {
+                    User pmUser = existingPm.get().getUser();
+                    return badRequest("Project '" + project.getTitle() + "' already has a Project Manager ("
+                            + pmUser.getFullName() + "). Only 1 PM is allowed per project.");
+                }
+            }
+
+            assignment.setProjectRole(role);
             assignmentRepository.save(assignment);
 
             Map<String, Object> result = new HashMap<>();
@@ -141,7 +182,7 @@ public class ProjectAssignmentController {
         } catch (EntityNotFoundException e) {
             return notFound(e.getMessage());
         } catch (IllegalArgumentException e) {
-            return badRequest("Invalid role. Use PM or STAFF.");
+            return badRequest(e.getMessage());
         }
     }
 
@@ -152,6 +193,7 @@ public class ProjectAssignmentController {
                                               @PathVariable Long userId) {
         try {
             ensureProjectExists(projectId);
+            resourceAllocationRepository.deleteByProjectIdAndUserId(projectId, userId);
             assignmentRepository.deleteByProjectIdAndUserId(projectId, userId);
             Map<String, Object> result = new HashMap<>();
             result.put("success", true);
