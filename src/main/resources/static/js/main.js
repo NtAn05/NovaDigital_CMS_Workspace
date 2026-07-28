@@ -1407,6 +1407,7 @@ function initAdminDashboard() {
     ${fld("cf-title", "Project Title *", "text", v.title, 'placeholder="Enter project title" required')}
     ${fld("cf-category", "Category *", "text", v.category, 'placeholder="e.g. Web Development" required')}
     ${sel("cf-clientId", "Hired Client", clientOpts, selectedClientId)}
+    ${fld("cf-depositAmount", "Deposit Amount ($) *", "number", v.depositAmount || 0, 'placeholder="Enter deposit amount" min="0" step="0.01" required')}
     <div class="form-group">
       <label for="cf-imageFile">Cover Image *</label>
       <input type="file" id="cf-imageFile" accept="image/*" style="width:100%; padding:0.5rem; border:1px dashed var(--border-color); border-radius:var(--radius-sm); background:var(--bg-light); cursor:pointer;">
@@ -1482,7 +1483,8 @@ function initAdminDashboard() {
     if (type === "project") {
       payload = {
         title: g("cf-title"), category: g("cf-category"), imageUrl: g("cf-imageUrl"),
-        technologies: g("cf-technologies"), clientId: gv("cf-clientId") ? Number(gv("cf-clientId")) : null
+        technologies: g("cf-technologies"), clientId: gv("cf-clientId") ? Number(gv("cf-clientId")) : null,
+        depositAmount: g("cf-depositAmount") ? Number(g("cf-depositAmount")) : 0.0
       };
       if (!payload.title || !payload.category || !payload.imageUrl) valid = false;
     }
@@ -1508,6 +1510,7 @@ function initAdminDashboard() {
       const data = await response.json().catch(() => ({}));
 
       if (response.ok) {
+        if (data && data.id && type === "project") _lastUpdatedProjectTime[data.id] = Date.now();
         showCrudAlert(isEdit ? "✅ Updated successfully!" : "✅ Added successfully!", true);
         setTimeout(() => {
           closeCrudModal();
@@ -1745,6 +1748,8 @@ function initAdminDashboard() {
     }
   }
 
+  const _lastUpdatedProjectTime = {};
+
   async function fetchAdminProjectsTable() {
     const tbody = document.getElementById("projects-table-body");
     const statCount = document.getElementById("stat-projects-count");
@@ -1754,6 +1759,13 @@ function initAdminDashboard() {
       const response = await fetch("/api/projects");
       if (!response.ok) throw new Error("Failed");
       const projects = await response.json();
+
+      projects.sort((a, b) => {
+        const timeA = _lastUpdatedProjectTime[a.id] || 0;
+        const timeB = _lastUpdatedProjectTime[b.id] || 0;
+        if (timeA !== timeB) return timeB - timeA;
+        return 0;
+      });
 
       if (statCount) statCount.textContent = projects.length;
       tbody.innerHTML = "";
@@ -2648,6 +2660,14 @@ function formatNotificationTime(iso) {
       if (!response.ok) throw new Error("Failed to fetch bookings");
       const bookings = await response.json();
 
+      // Sort bookings so recently updated items appear at the very top
+      bookings.sort((a, b) => {
+        const timeA = _lastUpdatedBookingTime[a.id] || 0;
+        const timeB = _lastUpdatedBookingTime[b.id] || 0;
+        if (timeA !== timeB) return timeB - timeA;
+        return 0;
+      });
+
       // Ensure dependent caches are loaded
       if (Object.keys(_cache.services).length === 0) {
         await fetchAdminServicesTable();
@@ -2916,6 +2936,8 @@ function formatNotificationTime(iso) {
   window.closeBookingDetailModal = closeBookingDetailModal;
   window.updateBookingPriceFromModal = updateBookingPriceFromModal;
 
+  const _lastUpdatedBookingTime = {};
+
   async function updateBookingExpert(bookingId, expertId) {
     try {
       const response = await fetch(`/api/bookings/${bookingId}`, {
@@ -2924,6 +2946,7 @@ function formatNotificationTime(iso) {
         body: JSON.stringify({ expertId: expertId ? Number(expertId) : null })
       });
       if (!response.ok) throw new Error("Failed to update expert");
+      _lastUpdatedBookingTime[bookingId] = Date.now();
       showToast("Expert assigned successfully!", "success");
       fetchAdminBookings();
     } catch (err) {
@@ -2940,6 +2963,7 @@ function formatNotificationTime(iso) {
         body: JSON.stringify({ status })
       });
       if (!response.ok) throw new Error("Failed to update status");
+      _lastUpdatedBookingTime[bookingId] = Date.now();
       showToast("Booking status updated successfully!", "success");
       fetchAdminBookings();
     } catch (err) {
@@ -2965,6 +2989,7 @@ function formatNotificationTime(iso) {
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(data.message || "Failed to update price");
+      _lastUpdatedBookingTime[bookingId] = Date.now();
       showToast("Price updated — total recalculated with add-on(s)!", "success");
       fetchAdminBookings();
     } catch (err) {
@@ -2987,6 +3012,7 @@ function formatNotificationTime(iso) {
         body: JSON.stringify({ appointmentDate: dateInput.value, timeSlot: timeInput.value })
       });
       if (!response.ok) throw new Error("Failed to update schedule");
+      _lastUpdatedBookingTime[bookingId] = Date.now();
       showToast("Booking date updated — the client has been notified.", "success");
       fetchAdminBookings();
     } catch (err) {
@@ -5346,6 +5372,10 @@ function formatNotificationTime(iso) {
     // Set Client Info
     const clientInfoEl = document.getElementById("project-detail-client-info");
     if (clientInfoEl) {
+      const depositAmt = project && project.depositAmount ? project.depositAmount : 0;
+      const depositPaid = project && project.depositPaid ? "Paid" : "Unpaid";
+      const depositPaidClass = project && project.depositPaid ? "status-COMPLETED" : "status-PENDING";
+
       if (project && project.clientName) {
         clientInfoEl.innerHTML = `
           <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -5355,9 +5385,23 @@ function formatNotificationTime(iso) {
             </div>
             <span class="status-badge badge-user" style="font-size:0.75rem;">Hired Client</span>
           </div>
+          <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px dashed var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+            <div style="font-size: 0.85rem; color: var(--text-muted);">
+              <strong>Deposit Amount:</strong> $${depositAmt.toLocaleString()}
+            </div>
+            <span class="status-badge ${depositPaidClass}" style="font-size: 0.75rem;">${depositPaid}</span>
+          </div>
         `;
       } else {
-        clientInfoEl.innerHTML = `<span style="color:var(--text-muted); font-style:italic;">No client currently linked to this project.</span>`;
+        clientInfoEl.innerHTML = `
+          <span style="color:var(--text-muted); font-style:italic;">No client currently linked to this project.</span>
+          <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px dashed var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+            <div style="font-size: 0.85rem; color: var(--text-muted);">
+              <strong>Deposit Amount:</strong> $${depositAmt.toLocaleString()}
+            </div>
+            <span class="status-badge ${depositPaidClass}" style="font-size: 0.75rem;">${depositPaid}</span>
+          </div>
+        `;
       }
     }
 

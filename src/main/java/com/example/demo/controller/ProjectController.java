@@ -48,9 +48,30 @@ public class ProjectController {
                         resp.setClientName(pc.getUser().getFullName() != null && !pc.getUser().getFullName().isBlank() ? pc.getUser().getFullName() : pc.getUser().getUsername());
                         resp.setClientEmail(pc.getUser().getEmail());
                     });
+                    resp.setDepositAmount(p.getDepositAmount());
+                    resp.setDepositPaid(p.getDepositPaid());
                     return resp;
                 })
                 .collect(Collectors.toList());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getProjectById(@PathVariable Long id) {
+        Optional<Project> optional = projectRepository.findById(id);
+        if (optional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Project not found"));
+        }
+        Project p = optional.get();
+        ProjectResponse resp = new ProjectResponse(p.getId(), p.getTitle(), p.getDescription(),
+                p.getCategory(), p.getImageUrl(), p.getTechnologies());
+        clientRepository.findByProjectId(p.getId()).stream().findFirst().ifPresent(pc -> {
+            resp.setClientId(pc.getUser().getId());
+            resp.setClientName(pc.getUser().getFullName() != null && !pc.getUser().getFullName().isBlank() ? pc.getUser().getFullName() : pc.getUser().getUsername());
+            resp.setClientEmail(pc.getUser().getEmail());
+        });
+        resp.setDepositAmount(p.getDepositAmount());
+        resp.setDepositPaid(p.getDepositPaid());
+        return ResponseEntity.ok(resp);
     }
 
     // ── CREATE ───────────────────────────────────────────
@@ -79,6 +100,10 @@ public class ProjectController {
         project.setCategory(category.trim());
         project.setImageUrl(imageUrl);
         project.setTechnologies(technologies != null ? technologies.trim() : "");
+        
+        Double depositAmount = parseDouble(body.get("depositAmount"));
+        project.setDepositAmount(depositAmount != null ? depositAmount : 0.0);
+        project.setDepositPaid(false);
 
         Project saved = projectRepository.save(project);
 
@@ -100,7 +125,8 @@ public class ProjectController {
         }
 
         ProjectResponse resp = new ProjectResponse(saved.getId(), saved.getTitle(), saved.getDescription(),
-                saved.getCategory(), saved.getImageUrl(), saved.getTechnologies(), clientId, clientName, clientEmail);
+                saved.getCategory(), saved.getImageUrl(), saved.getTechnologies(), clientId, clientName, clientEmail,
+                saved.getDepositAmount(), saved.getDepositPaid());
         return ResponseEntity.status(HttpStatus.CREATED).body(resp);
     }
 
@@ -132,6 +158,12 @@ public class ProjectController {
         }
         if (body.containsKey("technologies") && body.get("technologies") != null) {
             project.setTechnologies(((String) body.get("technologies")).trim());
+        }
+        if (body.containsKey("depositAmount")) {
+            project.setDepositAmount(parseDouble(body.get("depositAmount")));
+        }
+        if (body.containsKey("depositPaid")) {
+            project.setDepositPaid(Boolean.valueOf(body.get("depositPaid").toString()));
         }
 
         Project saved = projectRepository.save(project);
@@ -167,7 +199,8 @@ public class ProjectController {
         }
 
         ProjectResponse resp = new ProjectResponse(saved.getId(), saved.getTitle(), saved.getDescription(),
-                saved.getCategory(), saved.getImageUrl(), saved.getTechnologies(), clientId, clientName, clientEmail);
+                saved.getCategory(), saved.getImageUrl(), saved.getTechnologies(), clientId, clientName, clientEmail,
+                saved.getDepositAmount(), saved.getDepositPaid());
         return ResponseEntity.ok(resp);
     }
 
@@ -195,6 +228,18 @@ public class ProjectController {
             String str = val.toString().trim();
             if (str.isEmpty()) return null;
             return Long.parseLong(str);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private Double parseDouble(Object val) {
+        if (val == null) return null;
+        if (val instanceof Number) return ((Number) val).doubleValue();
+        try {
+            String str = val.toString().trim();
+            if (str.isEmpty()) return null;
+            return Double.parseDouble(str);
         } catch (Exception e) {
             return null;
         }

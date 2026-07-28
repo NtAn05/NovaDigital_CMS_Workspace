@@ -26,6 +26,9 @@ public class PaymentTransaction {
     @Column(name = "milestone_id", nullable = true)
     private Long milestoneId;
 
+    @Column(name = "project_id", nullable = true)
+    private Long projectId;
+
     @Column(name = "amount", nullable = false)
     private Double amount;
 

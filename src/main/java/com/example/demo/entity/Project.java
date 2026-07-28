@@ -31,6 +31,11 @@ public class Project {
     @Column(name = "technologies", columnDefinition = "TEXT")
     private String technologies; // Technologies used (comma-separated or JSON)
 
+    @Column(name = "deposit_amount")
+    private Double depositAmount = 0.0;
+
+    @Column(name = "deposit_paid")
+    private Boolean depositPaid = false;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

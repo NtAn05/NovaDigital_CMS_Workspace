@@ -65,6 +65,9 @@ public class PaymentController {
     private ProjectAssignmentRepository projectAssignmentRepository;
 
     @Autowired
+    private ProjectRepository projectRepository;
+
+    @Autowired
     private org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
     @jakarta.annotation.PostConstruct
@@ -242,6 +245,85 @@ public class PaymentController {
         }
     }
 
+    @PostMapping("/create-deposit-payment-link")
+    public ResponseEntity<?> createDepositPaymentLink(@RequestBody Map<String, Long> payload) {
+        Long projectId = payload.get("projectId");
+        if (projectId == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Missing projectId"));
+        }
+
+        // 1. Get current authenticated user
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByUsername(username).orElse(null);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Please log in"));
+        }
+
+        // 2. Find project
+        com.example.demo.entity.Project project = projectRepository.findById(projectId).orElse(null);
+        if (project == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("message", "Project not found"));
+        }
+
+        // 3. Verify ownership: user must have hired the project (or be Admin)
+        boolean hasHired = projectClientRepository.findByProjectIdAndUserId(projectId, currentUser.getId()).isPresent();
+        if (!hasHired && !currentUser.getRole().equals("ROLE_ADMIN")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", "You are not authorized to pay for this project"));
+        }
+
+        // 4. Verify deposit is unpaid
+        if (Boolean.TRUE.equals(project.getDepositPaid())) {
+            return ResponseEntity.badRequest().body(Map.of("message", "The deposit for this project has already been paid"));
+        }
+
+        double depositUsd = project.getDepositAmount() != null ? project.getDepositAmount() : 0.0;
+        if (depositUsd <= 0.0) {
+            return ResponseEntity.badRequest().body(Map.of("message", "This project has no deposit amount specified"));
+        }
+
+        // 5. Convert price: USD to VND
+        long amountVnd = (long) (depositUsd * 25000);
+        if (amountVnd < 2000) {
+            amountVnd = 2000;
+        }
+
+        // 6. Generate unique orderCode
+        long orderCode = System.currentTimeMillis();
+
+        // 7. Create PaymentTransaction in DB
+        PaymentTransaction transaction = new PaymentTransaction();
+        transaction.setOrderCode(orderCode);
+        transaction.setProjectId(projectId);
+        transaction.setAmount((double) amountVnd);
+        transaction.setStatus("PENDING");
+        transactionRepository.save(transaction);
+
+        // 8. Call PayOS to create link
+        String description = "Deposit payment " + projectId;
+        if (description.length() > 25) {
+            description = description.substring(0, 25);
+        }
+
+        CreatePaymentLinkRequest request = CreatePaymentLinkRequest.builder()
+                .orderCode(orderCode)
+                .amount(amountVnd)
+                .description(description)
+                .returnUrl(returnUrl)
+                .cancelUrl(cancelUrl)
+                .build();
+
+        try {
+            CreatePaymentLinkResponse response = payOS.paymentRequests().create(request);
+            Map<String, Object> result = new HashMap<>();
+            result.put("checkoutUrl", response.getCheckoutUrl());
+            result.put("orderCode", orderCode);
+            return ResponseEntity.ok(result);
+        } catch (PayOSException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "PayOS payment gateway error: " + e.getMessage()));
+        }
+    }
+
     @GetMapping("/history")
     public ResponseEntity<?> getPaymentHistory() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -263,7 +345,8 @@ public class PaymentController {
 
         List<PaymentTransaction> transactions = transactionRepository.findAll().stream()
                 .filter(t -> (t.getAppointmentId() != null && appointmentIds.contains(t.getAppointmentId())) ||
-                             (t.getMilestoneId() != null && milestoneIds.contains(t.getMilestoneId())))
+                             (t.getMilestoneId() != null && milestoneIds.contains(t.getMilestoneId())) ||
+                             (t.getProjectId() != null && projectIds.contains(t.getProjectId())))
                 .sorted((t1, t2) -> t2.getCreatedAt().compareTo(t1.getCreatedAt()))
                 .collect(Collectors.toList());
 
@@ -294,6 +377,15 @@ public class PaymentController {
                 } else {
                     m.put("description", "Project Phase payment");
                 }
+            } else if (t.getProjectId() != null) {
+                m.put("type", "DEPOSIT");
+                m.put("referenceId", t.getProjectId());
+                com.example.demo.entity.Project project = projectRepository.findById(t.getProjectId()).orElse(null);
+                if (project != null) {
+                    m.put("description", "Deposit payment for project \"" + project.getTitle() + "\"");
+                } else {
+                    m.put("description", "Project deposit payment");
+                }
             }
             return m;
         }).collect(Collectors.toList());
@@ -309,9 +401,10 @@ public class PaymentController {
         }
 
         if ("PAID".equals(transaction.getStatus())) {
-            return ResponseEntity.ok(Map.of("status", "PAID", "appointmentId", 
-                transaction.getAppointmentId() != null ? transaction.getAppointmentId() : 0L,
-                "milestoneId", transaction.getMilestoneId() != null ? transaction.getMilestoneId() : 0L));
+            return ResponseEntity.ok(Map.of("status", "PAID", 
+                "appointmentId", transaction.getAppointmentId() != null ? transaction.getAppointmentId() : 0L,
+                "milestoneId", transaction.getMilestoneId() != null ? transaction.getMilestoneId() : 0L,
+                "projectId", transaction.getProjectId() != null ? transaction.getProjectId() : 0L));
         }
 
         try {
@@ -322,7 +415,8 @@ public class PaymentController {
                 confirmPaymentInDb(transaction);
                 return ResponseEntity.ok(Map.of("status", "PAID", 
                     "appointmentId", transaction.getAppointmentId() != null ? transaction.getAppointmentId() : 0L,
-                    "milestoneId", transaction.getMilestoneId() != null ? transaction.getMilestoneId() : 0L));
+                    "milestoneId", transaction.getMilestoneId() != null ? transaction.getMilestoneId() : 0L,
+                    "projectId", transaction.getProjectId() != null ? transaction.getProjectId() : 0L));
             } else if (PaymentLinkStatus.CANCELLED == status) {
                 transaction.setStatus("CANCELLED");
                 transactionRepository.save(transaction);
@@ -388,6 +482,19 @@ public class PaymentController {
                 System.out.println(">>> [PaymentController] Milestone NOT found for ID: " + transaction.getMilestoneId());
             }
         }
+
+        if (transaction.getProjectId() != null && transaction.getProjectId() > 0) {
+            System.out.println(">>> [PaymentController] Processing project deposit payment for projectId: " + transaction.getProjectId());
+            com.example.demo.entity.Project project = projectRepository.findById(transaction.getProjectId()).orElse(null);
+            if (project != null && !Boolean.TRUE.equals(project.getDepositPaid())) {
+                project.setDepositPaid(true);
+                projectRepository.save(project);
+                System.out.println(">>> [PaymentController] Updated project deposit paid to true and saved successfully.");
+
+                // Send notifications
+                notifyDepositPaid(project);
+            }
+        }
     }
 
     private void notifyMilestonePaid(com.example.demo.entity.ProjectMilestone milestone) {
@@ -413,6 +520,32 @@ public class PaymentController {
                 noti.setUserId(pa.getUser().getId());
                 noti.setTitle("Client Paid for Milestone");
                 noti.setMessage(String.format("Client has paid for completed phase \"%s\" of project \"%s\".", milestoneName, projectTitle));
+                noti.setLink("pm-dashboard.html");
+                notificationRepository.save(noti);
+            }
+        }
+    }
+
+    private void notifyDepositPaid(com.example.demo.entity.Project project) {
+        List<com.example.demo.entity.ProjectClient> clients = projectClientRepository.findByProjectId(project.getId());
+        String projectTitle = project.getTitle();
+
+        for (com.example.demo.entity.ProjectClient pc : clients) {
+            Notification noti = new Notification();
+            noti.setUserId(pc.getUser().getId());
+            noti.setTitle("Project Deposit Paid");
+            noti.setMessage(String.format("Your deposit payment for project \"%s\" has been received and confirmed.", projectTitle));
+            noti.setLink("transaction.html");
+            notificationRepository.save(noti);
+        }
+
+        List<com.example.demo.entity.ProjectAssignment> assignments = projectAssignmentRepository.findByProjectId(project.getId());
+        for (com.example.demo.entity.ProjectAssignment pa : assignments) {
+            if (pa.getProjectRole() == com.example.demo.entity.ProjectAssignment.ProjectRole.PM) {
+                Notification noti = new Notification();
+                noti.setUserId(pa.getUser().getId());
+                noti.setTitle("Client Paid Project Deposit");
+                noti.setMessage(String.format("Client has paid the deposit for project \"%s\".", projectTitle));
                 noti.setLink("pm-dashboard.html");
                 notificationRepository.save(noti);
             }

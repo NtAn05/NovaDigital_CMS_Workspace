@@ -26,6 +26,9 @@ public class QuotationController {
     @Autowired
     private QuotationService quotationService;
 
+    @Autowired
+    private com.example.demo.repository.UserRepository userRepository;
+
     @GetMapping("/my")
     public ResponseEntity<?> getMyQuotations() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -39,14 +42,41 @@ public class QuotationController {
         }
     }
 
-    // TODO: Ideally inject Authentication to get adminUserId. Using static/path var for simplicity if no auth context
     @PostMapping("/from-booking/{bookingId}")
-    public ResponseEntity<Quotation> createFromBooking(
+    public ResponseEntity<?> createFromBooking(
             @PathVariable Long bookingId,
             @RequestBody QuotationRequest request,
-            @RequestParam(defaultValue = "1") Long adminId) { // dummy admin ID
+            @RequestParam(required = false) Long adminId) {
         request.setBookingId(bookingId);
-        return ResponseEntity.ok(quotationService.createQuotationFromBooking(request, adminId));
+        
+        // Resolve logged in Admin
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        User admin = null;
+        if (auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken)) {
+            String username = auth.getName();
+            admin = userRepository.findByUsernameOrEmail(username, username).orElse(null);
+        }
+        
+        Long finalAdminId = (admin != null) ? admin.getId() : adminId;
+        if (finalAdminId == null) {
+            admin = userRepository.findAll().stream()
+                    .filter(u -> "ROLE_ADMIN".equals(u.getRole()) || "ADMIN".equals(u.getRole()))
+                    .findFirst()
+                    .orElse(null);
+            if (admin != null) {
+                finalAdminId = admin.getId();
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("message", "No admin user found in database."));
+            }
+        }
+        
+        try {
+            return ResponseEntity.ok(quotationService.createQuotationFromBooking(request, finalAdminId));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", e.getMessage()));
+        }
     }
 
     @PostMapping("/{id}/send-email")
