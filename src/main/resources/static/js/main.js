@@ -2642,12 +2642,37 @@ function formatNotificationTime(iso) {
         });
 
         // Status options
-        const statuses = ["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"];
+        const statuses = ["PENDING", "CONFIRMED", "PRICING", "CANCELLED", "COMPLETED"];
         let statusOptions = "";
         statuses.forEach(s => {
           const selected = (b.status === s) ? "selected" : "";
           statusOptions += `<option value="${s}" ${selected}>${s}</option>`;
         });
+
+        // Once COMPLETED, admin can no longer touch this booking
+        const isLocked = b.status === "COMPLETED";
+        // Date/time can only be edited manually while the booking is in CONFIRMED status
+        const isEditableSchedule = b.status === "CONFIRMED";
+
+        const scheduleHtml = isEditableSchedule
+          ? `<input type="date" id="bkDate-${b.id}" value="${escapeHtml(b.appointmentDate)}" class="admin-select" style="padding:0.3rem;font-size:0.78rem;margin-bottom:4px;width:100%;max-width:140px;">
+             <input type="time" id="bkTime-${b.id}" value="${escapeHtml(b.timeSlot ? b.timeSlot.substring(0, 5) : "")}" class="admin-select" style="padding:0.3rem;font-size:0.78rem;width:100%;max-width:140px;margin-bottom:4px;">
+             <button type="button" class="btn-add" onclick="saveBookingSchedule(${b.id})" style="padding:0.25rem 0.5rem;font-size:0.72rem;border-radius:6px;cursor:pointer;">Save Date</button>`
+          : `<div class="text-dark-inline">${escapeHtml(b.appointmentDate)}</div>
+             <div style="font-size:0.85rem;color:var(--text-muted);">${escapeHtml(b.timeSlot ? b.timeSlot.substring(0, 5) : "")}</div>`;
+
+        let extraActions = "";
+        if (b.status === "PRICING") {
+          extraActions += `<button type="button" class="btn-add" onclick="openQuoteModal(${b.id})" style="padding:0.35rem 0.6rem;font-size:0.8rem;gap:4px;border-radius:6px;cursor:pointer;">
+              <svg viewBox="0 0 24 24" style="width:12px;height:12px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Create Quote
+            </button>`;
+        }
+        if (b.status === "CONFIRMED") {
+          extraActions += `<button type="button" class="btn-add" onclick="openBookingEmailModal(${b.id})" style="padding:0.35rem 0.6rem;font-size:0.8rem;gap:4px;border-radius:6px;cursor:pointer;background-color:#4f46e5;">
+              <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg> Send Update Email
+            </button>`;
+        }
+
 
         tr.innerHTML = `
         <td>
@@ -2656,27 +2681,27 @@ function formatNotificationTime(iso) {
         </td>
         <td class="text-dark-inline">${escapeHtml(service.title)}</td>
         <td>
-          <div class="text-dark-inline">${escapeHtml(b.appointmentDate)}</div>
-          <div style="font-size:0.85rem;color:var(--text-muted);">${escapeHtml(b.timeSlot ? b.timeSlot.substring(0, 5) : "")}</div>
+          ${scheduleHtml}
         </td>
         <td>
-          <select class="admin-select" onchange="updateBookingExpert(${b.id}, this.value)" style="padding:0.35rem;border-radius:6px;border:1px solid var(--border-color);font-size:0.85rem;width:100%;max-width:160px;background:var(--bg-card);color:var(--text-dark);">
+          <select class="admin-select" onchange="updateBookingExpert(${b.id}, this.value)" ${isLocked ? "disabled" : ""} style="padding:0.35rem;border-radius:6px;border:1px solid var(--border-color);font-size:0.85rem;width:100%;max-width:160px;background:var(--bg-card);color:var(--text-dark);">
             ${expertOptions}
           </select>
         </td>
         <td>
-          <select class="admin-select status-select status-${b.status.toLowerCase()}" onchange="updateBookingStatus(${b.id}, this.value)" style="padding:0.35rem;border-radius:6px;border:1px solid var(--border-color);font-weight:600;font-size:0.85rem;width:100%;max-width:130px;">
+          <select class="admin-select status-select status-${b.status.toLowerCase()}" onchange="updateBookingStatus(${b.id}, this.value)" ${isLocked ? "disabled" : ""} style="padding:0.35rem;border-radius:6px;border:1px solid var(--border-color);font-weight:600;font-size:0.85rem;width:100%;max-width:130px;">
             ${statusOptions}
           </select>
         </td>
         <td>
-          <div style="display:flex;gap:6px;align-items:center;">
+          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
             <button type="button" class="btn-detail" onclick="openBookingDetailModal(${b.id})" style="padding:0.35rem 0.65rem;font-size:0.8rem;gap:4px;border-radius:6px;background:rgba(37,99,235,0.1);color:#2563eb;border:1px solid rgba(37,99,235,0.22);cursor:pointer;font-weight:600;display:inline-flex;align-items:center;transition:all 0.2s ease;">
               <svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>View Detail
             </button>
-            <button type="button" class="btn-delete" onclick="deleteBooking(${b.id})" style="padding:0.35rem 0.6rem;font-size:0.8rem;gap:4px;border-radius:6px;background-color:#ef4444;color:#fff;border:none;cursor:pointer;">
+            ${extraActions}
+            ${!isLocked ? `<button type="button" class="btn-delete" onclick="deleteBooking(${b.id})" style="padding:0.35rem 0.6rem;font-size:0.8rem;gap:4px;border-radius:6px;background-color:#ef4444;color:#fff;border:none;cursor:pointer;">
               <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>Delete
-            </button>
+            </button>` : `<span style="font-size:0.78rem;color:var(--text-muted);font-style:italic;">Done — locked</span>`}
           </div>
         </td>
       `;
@@ -2906,6 +2931,63 @@ function formatNotificationTime(iso) {
       showToast("Failed to update price: " + err.message, "error");
     }
   }
+
+  async function saveBookingSchedule(bookingId) {
+    const dateInput = document.getElementById(`bkDate-${bookingId}`);
+    const timeInput = document.getElementById(`bkTime-${bookingId}`);
+    if (!dateInput || !timeInput || !dateInput.value || !timeInput.value) {
+      showToast("Please pick both a date and a time.", "error");
+      return;
+    }
+    try {
+      const response = await fetch(`/api/bookings/${bookingId}`, {
+        method: "PUT",
+        headers: adminHeaders(),
+        body: JSON.stringify({ appointmentDate: dateInput.value, timeSlot: timeInput.value })
+      });
+      if (!response.ok) throw new Error("Failed to update schedule");
+      showToast("Booking date updated — the client has been notified.", "success");
+      fetchAdminBookings();
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to update schedule: " + err.message, "error");
+    }
+  }
+
+  function openBookingEmailModal(bookingId) {
+    const booking = _cache.bookings[bookingId];
+    if (!booking) return;
+    document.getElementById("bookingEmailId").value = booking.id;
+    document.getElementById("bookingEmailMessage").value = "";
+    document.getElementById("booking-email-modal-overlay").classList.add("is-open");
+  }
+
+  function closeBookingEmailModal() {
+    document.getElementById("booking-email-modal-overlay").classList.remove("is-open");
+  }
+
+  async function submitBookingUpdateEmail() {
+    const bookingId = document.getElementById("bookingEmailId").value;
+    const message = document.getElementById("bookingEmailMessage").value;
+    try {
+      const response = await fetch(`/api/bookings/${bookingId}/send-update-email`, {
+        method: "POST",
+        headers: adminHeaders(),
+        body: JSON.stringify({ message })
+      });
+      if (!response.ok) throw new Error("Failed to send email");
+      showToast("Update email sent to the client!", "success");
+      closeBookingEmailModal();
+    } catch (err) {
+      console.error(err);
+      showToast("Failed to send email: " + err.message, "error");
+    }
+  }
+
+  window.saveBookingSchedule = saveBookingSchedule;
+  window.openBookingEmailModal = openBookingEmailModal;
+  window.closeBookingEmailModal = closeBookingEmailModal;
+  window.submitBookingUpdateEmail = submitBookingUpdateEmail;
 
   async function deleteBooking(bookingId) {
     showConfirmModal({
@@ -5975,3 +6057,151 @@ function clearChatbotHistory() {
 
 window.initChatbot = initChatbot;
 window.clearChatbotHistory = clearChatbotHistory;s
+
+// =============================================
+//  Admin - Quotation Logic
+// =============================================
+
+function openQuoteModal(bookingId) {
+  const booking = _cache.bookings[bookingId];
+  if (!booking) {
+    showToast("Booking data not found", "error");
+    return;
+  }
+  const service = _cache.services[booking.serviceId] || { title: "Unknown Service" };
+
+  document.getElementById("quoteBookingId").value = booking.id;
+  document.getElementById("quoteTitle").value = service.title + " Package";
+  document.getElementById("quoteSubtotal").value = Number(booking.totalPrice || booking.basePrice || 0).toFixed(2);
+  document.getElementById("quoteItemName").value = service.title;
+  document.getElementById("quoteDiscount").value = "0";
+  document.getElementById("quoteTax").value = "0";
+  document.getElementById("quoteDeposit").value = "20";
+  document.getElementById("quoteNotes").value = "";
+
+  calculateQuoteTotal();
+  document.getElementById("quote-modal-overlay").classList.add("is-open");
+}
+
+function closeQuoteModal() {
+  document.getElementById("quote-modal-overlay").classList.remove("is-open");
+}
+
+function calculateQuoteTotal() {
+  const subtotal = parseFloat(document.getElementById("quoteSubtotal").value) || 0;
+  const discount = parseFloat(document.getElementById("quoteDiscount").value) || 0;
+  const tax = parseFloat(document.getElementById("quoteTax").value) || 0;
+
+  const total = subtotal - discount + tax;
+  document.getElementById("quoteTotalAmount").value = total > 0 ? total.toFixed(2) : "0.00";
+}
+
+async function submitQuote() {
+  const title = document.getElementById("quoteTitle").value;
+  const bookingId = document.getElementById("quoteBookingId").value;
+  if (!title) {
+    showToast("Please enter a quotation title", "error");
+    return;
+  }
+
+  const subtotal = parseFloat(document.getElementById("quoteSubtotal").value) || 0;
+  const discountAmount = parseFloat(document.getElementById("quoteDiscount").value) || 0;
+  const taxAmount = parseFloat(document.getElementById("quoteTax").value) || 0;
+  const totalAmount = parseFloat(document.getElementById("quoteTotalAmount").value) || 0;
+  const depositPercentage = parseFloat(document.getElementById("quoteDeposit").value) || 20;
+  const notes = document.getElementById("quoteNotes").value;
+  const itemName = document.getElementById("quoteItemName").value;
+
+  const adminId = localStorage.getItem("userId") || sessionStorage.getItem("userId") || 1;
+
+  const requestPayload = {
+    title,
+    subtotal,
+    discountAmount,
+    taxAmount,
+    totalAmount,
+    depositPercentage,
+    notes,
+    items: [
+      {
+        itemName: itemName,
+        description: "Main service package based on booking",
+        quantity: 1,
+        unitPrice: subtotal,
+        subtotal: subtotal
+      }
+    ]
+  };
+
+  const btn = document.querySelector("#quote-modal-overlay .btn-save");
+  const originalText = btn.innerText;
+  btn.innerText = "Processing...";
+  btn.disabled = true;
+
+  try {
+    // 1. Create quote
+    const createRes = await fetch(`/api/quotations/from-booking/${bookingId}?adminId=${adminId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...adminHeaders()
+      },
+      body: JSON.stringify(requestPayload)
+    });
+
+    if (!createRes.ok) throw new Error("Failed to create quote");
+    const createdQuote = await createRes.json();
+
+    // 2. Send email
+    btn.innerText = "Sending Email...";
+    const emailRes = await fetch(`/api/quotations/${createdQuote.id}/send-email`, {
+      method: "POST",
+      headers: adminHeaders()
+    });
+
+    if (!emailRes.ok) throw new Error("Failed to send quote email");
+
+    showToast("Quotation created and sent successfully to the client!", "success");
+    closeQuoteModal();
+    fetchAdminBookings();
+  } catch (err) {
+    console.error("Quote error:", err);
+    showToast(err.message || "An error occurred", "error");
+  } finally {
+    btn.innerText = originalText;
+    btn.disabled = false;
+  }
+}
+
+window.openQuoteModal = openQuoteModal;
+window.closeQuoteModal = closeQuoteModal;
+window.calculateQuoteTotal = calculateQuoteTotal;
+window.submitQuote = submitQuote;
+
+// =============================================
+//  Admin - Quotation SSE Listener
+// =============================================
+function initQuotationSSE() {
+  const eventSource = new EventSource('/api/sse/stream');
+
+  eventSource.addEventListener('QUOTE_APPROVED', (e) => {
+    try {
+      const audio = new Audio('https://www.soundjay.com/buttons/sounds/bell-ringing-05.mp3');
+      audio.play().catch(err => console.log('Audio play prevented by browser:', err));
+    } catch (e) {}
+
+    showToast(e.data, "success");
+
+    if (document.getElementById("panel-bookings")?.classList.contains("active")) {
+      fetchAdminBookings();
+    }
+  });
+
+  eventSource.onerror = (err) => {
+    console.log("SSE error for quotations", err);
+  };
+}
+
+if (document.getElementById("panel-bookings")) {
+  initQuotationSSE();
+}
