@@ -1510,7 +1510,12 @@ function initAdminDashboard() {
       const data = await response.json().catch(() => ({}));
 
       if (response.ok) {
-        if (data && data.id && type === "project") _lastUpdatedProjectTime[data.id] = Date.now();
+        if (data && data.id) {
+          if (type === "project") _lastUpdatedProjectTime[data.id] = Date.now();
+          if (type === "service") _lastUpdatedServiceTime[data.id] = Date.now();
+          if (type === "member") _lastUpdatedMemberTime[data.id] = Date.now();
+          if (type === "user") _lastUpdatedUserTime[data.id] = Date.now();
+        }
         showCrudAlert(isEdit ? "✅ Updated successfully!" : "✅ Added successfully!", true);
         setTimeout(() => {
           closeCrudModal();
@@ -1597,6 +1602,13 @@ function initAdminDashboard() {
       const response = await fetch("/api/admin/users", { headers: adminHeaders() });
       const rawUsers = await response.json();
       const users = (rawUsers || []).filter(u => u.role !== "ROLE_ADMIN" && u.role !== "ADMIN");
+
+      users.sort((a, b) => {
+        const timeA = _lastUpdatedUserTime[a.id] || 0;
+        const timeB = _lastUpdatedUserTime[b.id] || 0;
+        if (timeA !== timeB) return timeB - timeA;
+        return 0;
+      });
 
       if (statCount) statCount.textContent = users.length;
       tbody.innerHTML = "";
@@ -1702,6 +1714,13 @@ function initAdminDashboard() {
       if (!response.ok) throw new Error("Failed");
       const members = await response.json();
 
+      members.sort((a, b) => {
+        const timeA = _lastUpdatedMemberTime[a.id] || 0;
+        const timeB = _lastUpdatedMemberTime[b.id] || 0;
+        if (timeA !== timeB) return timeB - timeA;
+        return 0;
+      });
+
       if (statCount) statCount.textContent = members.length;
       tbody.innerHTML = "";
 
@@ -1749,6 +1768,9 @@ function initAdminDashboard() {
   }
 
   const _lastUpdatedProjectTime = {};
+  const _lastUpdatedServiceTime = {};
+  const _lastUpdatedMemberTime = {};
+  const _lastUpdatedUserTime = {};
 
   async function fetchAdminProjectsTable() {
     const tbody = document.getElementById("projects-table-body");
@@ -1811,6 +1833,8 @@ function initAdminDashboard() {
     }
   }
 
+let _currentlyExpandedServiceId = null;
+
 async function fetchAdminServicesTable() {
     const tbody = document.getElementById("services-table-body");
     if (!tbody) return;
@@ -1820,10 +1844,17 @@ async function fetchAdminServicesTable() {
         if (!response.ok) throw new Error("Failed");
         const services = await response.json();
 
+        services.sort((a, b) => {
+            const timeA = _lastUpdatedServiceTime[a.id] || 0;
+            const timeB = _lastUpdatedServiceTime[b.id] || 0;
+            if (timeA !== timeB) return timeB - timeA;
+            return 0;
+        });
+
         tbody.innerHTML = "";
 
         if (!services.length) {
-            tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:2rem;color:var(--text-muted);">No services found.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);">No services found.</td></tr>`;
             return;
         }
 
@@ -1841,16 +1872,19 @@ async function fetchAdminServicesTable() {
     <td><span class="status-badge badge-active">${iconLabels[s.iconUrl] || escapeHtml(s.iconUrl || "—")}</span></td>
     <td style="max-width:220px;white-space:pre-wrap;">${escapeHtml((s.description || "").substring(0, 80))}${(s.description || "").length > 80 ? "..." : ""}</td>
     <td>
-      <div style="display:flex;align-items:center;gap:4px;">
-        <span style="font-size:0.85rem;color:var(--text-muted);">$</span>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="font-size:0.85rem;color:var(--text-muted); font-weight:600;">$</span>
         <input type="number" id="table-price-${s.id}" value="${Number(s.basePrice || 0)}" min="0" step="0.01"
-          style="width:70px;padding:0.25rem 0.35rem;border:1px solid var(--border-color);border-radius:5px;font-size:0.8rem;">
+          style="width:75px;padding:0.35rem 0.5rem;border:1px solid var(--border-color);border-radius:6px;font-size:0.8rem;font-weight:600;">
         <button type="button" onclick="updateServicePriceTable(${s.id})" title="Save price"
-          style="background:none;border:none;color:#059669;cursor:pointer;font-size:0.8rem;padding:2px;">✓</button>
+          style="background:#10b981;border:none;color:#fff;border-radius:6px;padding:0.35rem 0.6rem;font-size:0.75rem;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:3px;box-shadow:0 2px 6px rgba(16,185,129,0.15);line-height:1.2;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+          Save
+        </button>
       </div>
     </td>
     <td>
-      <button type="button" onclick="toggleAddonManage(${s.id})" id="addon-toggle-btn-${s.id}"
+      <button type="button" onclick="openAddonModal(${s.id}, '${escapeHtml(s.title).replace(/'/g, "\\'")}')" id="addon-toggle-btn-${s.id}"
         style="background:#eff6ff;border:1px solid #bfdbfe;color:#2563eb;border-radius:6px;padding:0.3rem 0.6rem;font-size:0.78rem;font-weight:600;cursor:pointer;white-space:nowrap;">
         <span id="addon-count-${s.id}">…</span> add-ons
       </button>
@@ -1867,28 +1901,12 @@ async function fetchAdminServicesTable() {
     </td>`;
             tbody.appendChild(tr);
 
-            // Hidden detail row for add-on management (collapsed by default)
-            const detailTr = document.createElement("tr");
-            detailTr.id = `addon-detail-row-${s.id}`;
-            detailTr.style.display = "none";
-            detailTr.innerHTML = `
-    <td colspan="6" style="background:#f8fafc;padding:0.85rem 1.25rem;">
-      <div id="table-addons-list-${s.id}" style="display:flex;flex-direction:column;gap:6px;max-width:520px;">
-        <span style="color:var(--text-muted);font-size:0.8rem;">Loading...</span>
-      </div>
-      <div style="display:flex;gap:6px;margin-top:8px;max-width:520px;">
-        <input type="text" id="table-addon-new-name-${s.id}" placeholder="Add-on name" style="flex:1;min-width:0;padding:0.35rem 0.5rem;border:1px solid var(--border-color);border-radius:6px;font-size:0.8rem;">
-        <input type="number" id="table-addon-new-price-${s.id}" placeholder="$" min="0" step="0.01" style="width:70px;padding:0.35rem 0.5rem;border:1px solid var(--border-color);border-radius:6px;font-size:0.8rem;">
-        <button type="button" class="btn-save" style="padding:0.35rem 0.7rem;font-size:0.78rem;white-space:nowrap;" onclick="addServiceAddonTable(${s.id})">+ Add</button>
-      </div>
-    </td>`;
-            tbody.appendChild(detailTr);
-
             loadServiceAddonsTable(s.id);
         });
+
     } catch (err) {
         console.error("fetchAdminServicesTable error:", err);
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;padding:2rem;color:#ef4444;">Could not load service list.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:#ef4444;">Could not load service list.</td></tr>`;
     }
 }
 
@@ -1915,6 +1933,7 @@ async function updateServicePriceTable(serviceId) {
       }
       
       showToast("Service price updated successfully", "success");
+      _lastUpdatedServiceTime[serviceId] = Date.now();
       fetchAdminServicesTable();
     } catch (err) {
       showToast(err.message, "error");
@@ -1926,6 +1945,12 @@ function toggleAddonManage(serviceId) {
     if (!row) return;
     const isHidden = row.style.display === "none";
     row.style.display = isHidden ? "table-row" : "none";
+    
+    if (isHidden) {
+        _currentlyExpandedServiceId = serviceId;
+    } else if (_currentlyExpandedServiceId === serviceId) {
+        _currentlyExpandedServiceId = null;
+    }
     
     const btn = document.getElementById(`addon-toggle-btn-${serviceId}`);
     if (btn) {
@@ -2011,17 +2036,26 @@ ${fld("cf-skills", "Professional Skills", "text", v.skills, 'placeholder="e.g. J
 }
 
 async function loadServiceAddonsTable(serviceId) {
-    const listEl = document.getElementById(`table-addons-list-${serviceId}`);
-    if (!listEl) return;
     try {
         const response = await fetch(`/api/services/${serviceId}/addons`);
         if (!response.ok) throw new Error("Failed to load add-ons");
         const addons = await response.json();
+        
+        const countEl = document.getElementById(`addon-count-${serviceId}`);
+        if (countEl) {
+            countEl.textContent = addons.length;
+        }
+        
         addons.forEach(a => { _serviceAddonsCache[a.id] = a; });
-        renderServiceAddonsTable(serviceId, addons);
+        
+        const listEl = document.getElementById(`table-addons-list-${serviceId}`);
+        if (listEl) {
+            renderServiceAddonsTable(serviceId, addons);
+        }
     } catch (err) {
         console.error("loadServiceAddonsTable error:", err);
-        listEl.innerHTML = `<span style="color:#ef4444;font-size:0.78rem;">Could not load.</span>`;
+        const countEl = document.getElementById(`addon-count-${serviceId}`);
+        if (countEl) countEl.textContent = "0";
     }
 }
 
@@ -2042,88 +2076,176 @@ function renderServiceAddonsTable(serviceId, addons) {
   `).join("");
 }
 
-function startEditServiceAddonTable(serviceId, addonId) {
-    const a = _serviceAddonsCache[addonId];
-    const row = document.querySelector(`#table-addons-list-${serviceId} .table-addon-row[data-addon-id="${addonId}"]`);
-    if (!a || !row) return;
-    row.innerHTML = `
-    <input type="text" id="table-addon-edit-name-${addonId}" value="${escapeHtml(a.addonName)}" style="flex:1;min-width:0;padding:0.25rem;border:1px solid var(--border-color);border-radius:5px;font-size:0.75rem;">
-    <input type="number" id="table-addon-edit-price-${addonId}" value="${a.priceModifier}" min="0" step="0.01" style="width:55px;padding:0.25rem;border:1px solid var(--border-color);border-radius:5px;font-size:0.75rem;">
-    <button type="button" onclick="saveServiceAddonEditTable(${serviceId}, ${addonId})" style="background:none;border:none;color:#059669;cursor:pointer;font-size:0.72rem;">Save</button>
-    <button type="button" onclick="loadServiceAddonsTable(${serviceId})" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.72rem;">✕</button>
-  `;
+let _currentAddonServiceId = null;
+
+async function openAddonModal(serviceId, serviceTitle) {
+    _currentAddonServiceId = serviceId;
+    
+    const titleEl = document.getElementById("addon-modal-title");
+    const subtitleEl = document.getElementById("addon-modal-subtitle");
+    if (titleEl) titleEl.textContent = `Manage Add-ons`;
+    if (subtitleEl) subtitleEl.textContent = serviceTitle;
+    
+    // Clear add new form
+    const nameInput = document.getElementById("modal-addon-new-name");
+    const priceInput = document.getElementById("modal-addon-new-price");
+    if (nameInput) nameInput.value = "";
+    if (priceInput) priceInput.value = "";
+    
+    const overlay = document.getElementById("addon-modal-overlay");
+    if (overlay) overlay.classList.add("is-open");
+    
+    await loadServiceAddonsModalList(serviceId);
 }
 
-async function saveServiceAddonEditTable(serviceId, addonId) {
-    const name = (document.getElementById(`table-addon-edit-name-${addonId}`)?.value || "").trim();
-    const price = parseFloat(document.getElementById(`table-addon-edit-price-${addonId}`)?.value);
-    if (!name || isNaN(price) || price < 0) {
-        showToast("Please enter a valid add-on name and non-negative price.", "warning");
-        return;
-    }
+function closeAddonModal() {
+    const overlay = document.getElementById("addon-modal-overlay");
+    if (overlay) overlay.classList.remove("is-open");
+    _currentAddonServiceId = null;
+    fetchAdminServicesTable(); // Refresh the main table to update addon counts!
+}
+
+async function loadServiceAddonsModalList(serviceId) {
+    const listEl = document.getElementById("modal-addons-list");
+    const countEl = document.getElementById("modal-addon-count");
+    if (!listEl) return;
+    
+    listEl.innerHTML = `<div style="padding:1.5rem;text-align:center;color:var(--text-muted);font-size:0.9rem;">Loading add-ons...</div>`;
+    
     try {
-        const response = await fetch(`/api/service-addons/${addonId}`, {
-            method: "PUT",
-            headers: adminHeaders(),
-            body: JSON.stringify({ addonName: name, priceModifier: price })
-        });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(data.message || "Failed to update add-on");
-        showToast("Add-on updated successfully!", "success");
-        loadServiceAddonsTable(serviceId);
+      const res = await fetch(`/api/services/${serviceId}/addons`);
+      if (!res.ok) throw new Error("Failed to load add-ons");
+      const addons = await res.json();
+      
+      if (countEl) countEl.textContent = addons.length;
+      
+      addons.forEach(a => { _serviceAddonsCache[a.id] = a; });
+      
+      if (addons.length === 0) {
+        listEl.innerHTML = `
+          <div style="text-align:center;padding:2rem;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:12px;color:var(--text-muted);font-size:0.88rem;">
+            No add-ons for this service yet. Add one above!
+          </div>`;
+        return;
+      }
+      
+      listEl.innerHTML = addons.map(a => `
+        <div class="table-addon-row" data-addon-id="${a.id}" style="display:flex; justify-content:space-between; align-items:center; padding:0.85rem 1.25rem; background:#fff; border:1px solid #e2e8f0; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.02); transition: all 0.2s ease;">
+          <div style="display:flex; flex-direction:column; gap:2px; flex:1; min-width:0; padding-right:12px;">
+            <strong style="color:var(--text-dark, #0f172a); font-size:0.9rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(a.addonName)}</strong>
+            <span style="color:#2563eb; font-weight:700; font-size:0.85rem;">$${Number(a.priceModifier || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <button type="button" onclick="startEditServiceAddonModalList(${serviceId}, ${a.id})" class="btn-edit" style="padding:0.4rem 0.75rem; font-size:0.78rem; font-weight:600; border-radius:6px; display:inline-flex; align-items:center; gap:4px; height:32px;">
+              Edit
+            </button>
+            <button type="button" onclick="deleteServiceAddonModalList(${serviceId}, ${a.id}, '${escapeHtml(a.addonName).replace(/'/g, "\\'")}')" class="btn-delete" style="padding:0.4rem 0.75rem; font-size:0.78rem; font-weight:600; border-radius:6px; display:inline-flex; align-items:center; gap:4px; height:32px;">
+              Delete
+            </button>
+          </div>
+        </div>
+      `).join('');
     } catch (err) {
-        console.error(err);
-        showToast("Failed to update add-on: " + err.message, "error");
+      console.error(err);
+      listEl.innerHTML = `<div style="color:#ef4444;text-align:center;padding:1.5rem;font-size:0.9rem;">Error loading add-ons: ${err.message}</div>`;
     }
 }
 
-function deleteServiceAddonTable(serviceId, addonId, name) {
+function startEditServiceAddonModalList(serviceId, addonId) {
+    const a = _serviceAddonsCache[addonId];
+    const row = document.querySelector(`#modal-addons-list .table-addon-row[data-addon-id="${addonId}"]`);
+    if (!a || !row) return;
+    
+    row.innerHTML = `
+      <div style="display:flex; gap:8px; width:100%; align-items:center;">
+        <input type="text" id="modal-addon-edit-name-${addonId}" value="${escapeHtml(a.addonName)}" style="flex: 1; padding: 0.5rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.85rem;">
+        <div style="position: relative; display: flex; align-items: center;">
+          <span style="position: absolute; left: 8px; font-size: 0.85rem; color: var(--text-muted);">$</span>
+          <input type="number" id="modal-addon-edit-price-${addonId}" value="${a.priceModifier}" min="0" step="0.01" style="width: 80px; padding: 0.5rem 0.5rem 0.5rem 1.5rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.85rem; font-weight: 600;">
+        </div>
+        <button type="button" onclick="saveServiceAddonEditModalList(${serviceId}, ${addonId})" class="btn-save" style="padding:0.5rem 0.85rem; font-size:0.78rem; font-weight:600; border-radius:6px; height:32px; border:none; background:#059669; color:#fff; cursor:pointer;">Save</button>
+        <button type="button" onclick="loadServiceAddonsModalList(${serviceId})" class="btn-cancel" style="padding:0.5rem 0.85rem; font-size:0.78rem; font-weight:600; border-radius:6px; height:32px; border:1px solid #cbd5e1; background:#fff; color:var(--text-muted); cursor:pointer;">Cancel</button>
+      </div>
+    `;
+}
+
+async function saveServiceAddonEditModalList(serviceId, addonId) {
+    const name = (document.getElementById(`modal-addon-edit-name-${addonId}`)?.value || "").trim();
+    const price = parseFloat(document.getElementById(`modal-addon-edit-price-${addonId}`)?.value);
+    
+    if (!name || isNaN(price) || price < 0) {
+      showToast("Please enter a valid add-on name and non-negative price.", "warning");
+      return;
+    }
+    
+    try {
+      const res = await fetch(`/api/service-addons/${addonId}`, {
+        method: "PUT",
+        headers: adminHeaders(),
+        body: JSON.stringify({ addonName: name, priceModifier: price })
+      });
+      
+      if (!res.ok) throw new Error("Failed to update add-on");
+      showToast("Add-on updated successfully", "success");
+      _lastUpdatedServiceTime[serviceId] = Date.now();
+      await loadServiceAddonsModalList(serviceId);
+    } catch (err) {
+      showToast(err.message, "error");
+    }
+}
+
+function deleteServiceAddonModalList(serviceId, addonId, name) {
     showConfirmModal({
-        title: "Delete Add-on",
-        message: `Are you sure you want to delete "${name}"? This action cannot be undone.`,
-        confirmText: "Delete",
-        cancelText: "Cancel",
-        onConfirm: async () => {
-            try {
-                const response = await fetch(`/api/service-addons/${addonId}`, {
-                    method: "DELETE",
-                    headers: adminHeaders()
-                });
-                if (!response.ok) throw new Error("Failed to delete add-on");
-                showToast("Add-on deleted successfully!", "success");
-                loadServiceAddonsTable(serviceId);
-            } catch (err) {
-                console.error(err);
-                showToast("Failed to delete add-on: " + err.message, "error");
-            }
+      title: "Delete Add-on",
+      message: `Are you sure you want to delete "${name}"? This action cannot be undone.`,
+      confirmText: "Delete",
+      cancelText: "Cancel",
+      onConfirm: async () => {
+        try {
+          const res = await fetch(`/api/service-addons/${addonId}`, {
+            method: "DELETE",
+            headers: adminHeaders()
+          });
+          if (!res.ok) throw new Error("Failed to delete add-on");
+          showToast("Add-on deleted successfully", "success");
+          _lastUpdatedServiceTime[serviceId] = Date.now();
+          await loadServiceAddonsModalList(serviceId);
+        } catch (err) {
+          showToast(err.message, "error");
         }
+      }
     });
 }
 
-async function addServiceAddonTable(serviceId) {
-    const nameInput = document.getElementById(`table-addon-new-name-${serviceId}`);
-    const priceInput = document.getElementById(`table-addon-new-price-${serviceId}`);
+async function addServiceAddonModal() {
+    const serviceId = _currentAddonServiceId;
+    if (!serviceId) return;
+    
+    const nameInput = document.getElementById("modal-addon-new-name");
+    const priceInput = document.getElementById("modal-addon-new-price");
     const name = (nameInput?.value || "").trim();
     const price = parseFloat(priceInput?.value);
+    
     if (!name || isNaN(price) || price < 0) {
-        showToast("Please enter a valid add-on name and non-negative price.", "warning");
-        return;
+      showToast("Please enter a valid add-on name and non-negative price.", "warning");
+      return;
     }
+    
     try {
-        const response = await fetch(`/api/service-addons`, {
-            method: "POST",
-            headers: adminHeaders(),
-            body: JSON.stringify({ serviceId: serviceId, addonName: name, priceModifier: price })
-        });
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(data.message || "Failed to add add-on");
-        if (nameInput) nameInput.value = "";
-        if (priceInput) priceInput.value = "";
-        showToast("Add-on added successfully!", "success");
-        loadServiceAddonsTable(serviceId);
+      const res = await fetch(`/api/service-addons`, {
+        method: "POST",
+        headers: adminHeaders(),
+        body: JSON.stringify({ serviceId: serviceId, addonName: name, priceModifier: price })
+      });
+      
+      if (!res.ok) throw new Error("Failed to add add-on");
+      if (nameInput) nameInput.value = "";
+      if (priceInput) priceInput.value = "";
+      showToast("Add-on added successfully!", "success");
+      _lastUpdatedServiceTime[serviceId] = Date.now();
+      await loadServiceAddonsModalList(serviceId);
     } catch (err) {
-        console.error(err);
-        showToast("Failed to add add-on: " + err.message, "error");
+      showToast(err.message, "error");
     }
 }
 function deleteServiceAddonInline(serviceId, addonId, name) {
@@ -2614,12 +2736,14 @@ async function saveServiceAddonEdit(serviceId, addonId) {
 
   // Service Table Inline Edit & Addons Management
   window.updateServicePriceTable = updateServicePriceTable;
-  window.toggleAddonManage = toggleAddonManage;
   window.loadServiceAddonsTable = loadServiceAddonsTable;
-  window.startEditServiceAddonTable = startEditServiceAddonTable;
-  window.saveServiceAddonEditTable = saveServiceAddonEditTable;
-  window.deleteServiceAddonTable = deleteServiceAddonTable;
-  window.addServiceAddonTable = addServiceAddonTable;
+  window.openAddonModal = openAddonModal;
+  window.closeAddonModal = closeAddonModal;
+  window.addServiceAddonModal = addServiceAddonModal;
+  window.startEditServiceAddonModalList = startEditServiceAddonModalList;
+  window.saveServiceAddonEditModalList = saveServiceAddonEditModalList;
+  window.deleteServiceAddonModalList = deleteServiceAddonModalList;
+  window.loadServiceAddonsModalList = loadServiceAddonsModalList;
 
 // =============================================
 //  In-App Notification Bell

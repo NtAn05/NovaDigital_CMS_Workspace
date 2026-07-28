@@ -1504,12 +1504,14 @@
                 <th>Title</th>
                 <th>Icon Type</th>
                 <th>Description</th>
+                <th>Price</th>
+                <th>Add-ons</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody id="services-table-body">
               <tr>
-                <td colspan="4" style="text-align:center;padding:2rem;color:var(--text-muted);">Loading...</td>
+                <td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);">Loading...</td>
               </tr>
             </tbody>
           </table>
@@ -2048,6 +2050,53 @@
       <div class="crud-modal-footer">
         <button class="btn-cancel" onclick="closeBookingEmailModal()">Cancel</button>
         <button class="btn-save" onclick="submitBookingUpdateEmail()">Send Email</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== ADD-ON MANAGEMENT MODAL ===== -->
+  <div id="addon-modal-overlay" class="crud-modal-overlay">
+    <div class="crud-modal" style="max-width: 550px; width: 95%; max-height: 90vh; overflow-y: auto;">
+      <div class="crud-modal-header" style="border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1.25rem;">
+        <div>
+          <h3 id="addon-modal-title" style="margin: 0; font-size: 1.25rem; font-weight: 800; color: var(--text-dark);">Manage Add-ons</h3>
+          <span id="addon-modal-subtitle" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem; display: block;"></span>
+        </div>
+        <button class="crud-modal-close" onclick="closeAddonModal()">&times;</button>
+      </div>
+      <div class="crud-modal-body" style="display: flex; flex-direction: column; gap: 1.25rem;">
+        
+        <!-- Add New Add-on Banner Box -->
+        <div style="background: rgba(37, 99, 235, 0.04); border: 1px solid rgba(37, 99, 235, 0.15); border-radius: 12px; padding: 1.25rem;">
+          <h4 style="margin-top: 0; margin-bottom: 0.75rem; font-size: 0.95rem; color: #1e3a8a; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Add New Add-on
+          </h4>
+          <div style="display: flex; gap: 8px; align-items: center;">
+            <input type="text" id="modal-addon-new-name" placeholder="e.g. Multi-language Support" style="flex: 1; padding: 0.65rem 0.85rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.85rem;">
+            <div style="position: relative; display: flex; align-items: center;">
+              <span style="position: absolute; left: 10px; font-size: 0.85rem; color: var(--text-muted); font-weight: 600;">$</span>
+              <input type="number" id="modal-addon-new-price" placeholder="Price" min="0" step="0.01" style="width: 100px; padding: 0.65rem 0.85rem 0.65rem 1.75rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.85rem; font-weight: 600;">
+            </div>
+            <button type="button" onclick="addServiceAddonModal()" class="btn-save" style="padding: 0.65rem 1.25rem; font-size: 0.85rem; font-weight: 700; border-radius: 8px; background: #2563eb; color: #fff; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 4px 12px rgba(37,99,235,0.15); line-height: 1.2;">
+              Add
+            </button>
+          </div>
+        </div>
+
+        <!-- Existing Add-ons Section -->
+        <div>
+          <h4 style="margin-top: 0; margin-bottom: 0.75rem; font-size: 0.95rem; color: var(--text-dark, #0f172a); font-weight: 700;">
+            Existing Add-ons (<span id="modal-addon-count">0</span>)
+          </h4>
+          <div id="modal-addons-list" style="display: flex; flex-direction: column; gap: 10px; max-height: 300px; overflow-y: auto; padding-right: 4px;">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
+      </div>
+      <div class="crud-modal-footer" style="margin-top: 1.25rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+        <button class="btn-cancel" onclick="closeAddonModal()">Close</button>
       </div>
     </div>
   </div>
