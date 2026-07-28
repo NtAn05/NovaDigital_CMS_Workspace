@@ -831,7 +831,22 @@ function updateNavbarAuth() {
 }
 
 // User Logout Logic
-function logoutUser() {
+async function logoutUser() {
+  const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+  if (token) {
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        headers: {
+          "Authorization": "Bearer " + token,
+          "Content-Type": "application/json"
+        }
+      });
+    } catch (e) {
+      console.warn("Logout API call failed:", e);
+    }
+  }
+
   // Purge storage
   localStorage.clear();
   sessionStorage.clear();
@@ -4645,13 +4660,21 @@ function formatNotificationTime(iso) {
   }
 
   function getRoleBadge(role) {
-    if (role === 'ROLE_ADMIN' || role === 'ADMIN') {
-      return `<span class="status-badge badge-admin" style="background:#f3f0ff;color:#7c3aed;border:1px solid #ddd6fe;">ADMIN</span>`;
+    if (!role) return `<span class="status-badge" style="background:#f1f5f9;color:#64748b;border:1px solid #e2e8f0;font-weight:700;">USER</span>`;
+    const r = role.toUpperCase().replace('ROLE_', '');
+    if (r === 'ADMIN') {
+      return `<span class="status-badge badge-admin" style="background:#f3f0ff;color:#7c3aed;border:1px solid #ddd6fe;font-weight:700;">ADMIN</span>`;
     }
-    if (role === 'ROLE_TEAM_MEMBER' || role === 'TEAM_MEMBER') {
-      return `<span class="status-badge badge-user" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;">TEAM MEMBER</span>`;
+    if (r === 'RESOURCE' || r === 'RESOURCE_MANAGER' || r === 'RESOURCE_MGR') {
+      return `<span class="status-badge" style="background:#fff7ed;color:#ea580c;border:1px solid #ffedd5;font-weight:700;">RESOURCE MANAGER</span>`;
     }
-    return `<span class="status-badge" style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;">USER</span>`;
+    if (r === 'MEMBER' || r === 'TEAM_MEMBER') {
+      return `<span class="status-badge badge-user" style="background:#eff6ff;color:#2563eb;border:1px solid #bfdbfe;font-weight:700;">TEAM MEMBER</span>`;
+    }
+    if (r === 'CLIENT') {
+      return `<span class="status-badge" style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;font-weight:700;">CLIENT</span>`;
+    }
+    return `<span class="status-badge" style="background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;font-weight:700;">${r}</span>`;
   }
 
   function renderAuditPagination(containerId, totalPages, currentPage, callbackName) {
@@ -4704,53 +4727,150 @@ function formatNotificationTime(iso) {
     return res.json();
   }
 
-  // Tab 1: User list sorted by latest data audit activity
+  function formatJsonObjectToText(obj) {
+    if (!obj || typeof obj !== 'object') return String(obj);
+    const parts = [];
+    Object.entries(obj).forEach(([k, v]) => {
+      if (k !== 'id' && k !== 'password' && v !== null && v !== undefined && v !== '') {
+        parts.push(`<span style="color:#4f46e5;font-weight:600;">${k}</span>: "${v}"`);
+      }
+    });
+    return parts.slice(0, 6).join(', ');
+  }
+
+  function formatAuditDetailToHumanText(log) {
+    let roleText = log.role ? log.role.replace('ROLE_', '').replace(/_/g, ' ') : 'User';
+    const rUpper = roleText.toUpperCase().trim();
+    if (rUpper === 'RESOURCE' || rUpper === 'RESOURCE MANAGER' || rUpper === 'RESOURCE MGR') {
+      roleText = 'Resource Manager';
+    } else if (rUpper === 'ADMIN') {
+      roleText = 'Admin';
+    } else if (rUpper === 'MEMBER' || rUpper === 'TEAM MEMBER') {
+      roleText = 'Team Member';
+    } else if (rUpper === 'CLIENT') {
+      roleText = 'Client';
+    }
+    
+    const userText = log.username ? log.username : 'User';
+    const actionLower = (log.action || 'UPDATE').toLowerCase();
+    let tableText = (log.tableName || 'record').replace(/_/g, ' ');
+    if (tableText.endsWith('s') && tableText !== 'status' && tableText !== 'contacts') {
+      tableText = tableText.substring(0, tableText.length - 1);
+    }
+
+    let verb = 'updated';
+    if (actionLower.includes('create')) verb = 'created';
+    if (actionLower.includes('delete')) verb = 'deleted';
+
+    let detailStr = log.detail || '';
+
+    // Extract JSON part if detailStr has a text prefix (e.g. "ROLE_RESOURCE resource_manager updated...")
+    let jsonPart = detailStr;
+    const jsonMatch = detailStr.match(/^[^{[]*?({|\[)/);
+    if (jsonMatch && jsonMatch.index !== undefined) {
+      jsonPart = detailStr.substring(jsonMatch.index + jsonMatch[0].length - 1);
+    }
+
+    // Try parsing as JSON array (diff array) or JSON object to extract summary values
+    try {
+      const clean = jsonPart.replace(/^\[FAILED\]\s*/, '').replace(/^[^{[]*?({|\[)/, '$1');
+      const parsed = JSON.parse(clean);
+
+      if (Array.isArray(parsed)) {
+        let projectTitle = '';
+        let memberName = '';
+        let percentage = '';
+
+        parsed.forEach(diff => {
+          if (diff.field === 'projectTitle' && diff.new) projectTitle = diff.new;
+          if ((diff.field === 'fullName' || diff.field === 'username') && diff.new) memberName = diff.new;
+          if (diff.field === 'allocationPercentage' && diff.new) percentage = diff.new + '%';
+        });
+
+        if (log.tableName === 'resource_allocations' || tableText.includes('resource allocation')) {
+          let msg = `<span style="font-weight:700;color:var(--text-dark);">${roleText}</span> (${userText}) ${verb} resource allocation`;
+          if (projectTitle) msg += ` for project <strong style="color:#2563eb;">"${projectTitle}"</strong>`;
+          if (memberName) msg += ` assigned to <strong style="color:#059669;">"${memberName}"</strong>`;
+          if (percentage) msg += ` (${percentage})`;
+          return msg;
+        }
+
+        if (log.tableName === 'project_milestones' || tableText.includes('milestone')) {
+          let milestoneName = '';
+          parsed.forEach(diff => {
+            if ((diff.field === 'name' || diff.field === 'title' || diff.field === 'milestoneName') && diff.new) {
+              milestoneName = diff.new;
+            }
+          });
+          let msg = `<span style="font-weight:700;color:var(--text-dark);">${roleText}</span> (${userText}) ${verb} milestone`;
+          if (milestoneName) msg += ` <strong style="color:#2563eb;">"${milestoneName}"</strong>`;
+          return msg;
+        }
+
+        return `<span style="font-weight:700;color:var(--text-dark);">${roleText}</span> (${userText}) ${verb} <strong style="color:#2563eb;">${tableText}</strong>`;
+      }
+
+      if (typeof parsed === 'object' && parsed !== null) {
+        let nameVal = parsed.name || parsed.title || parsed.projectTitle || parsed.fullName || '';
+        let msg = `<span style="font-weight:700;color:var(--text-dark);">${roleText}</span> (${userText}) ${verb} <strong style="color:#2563eb;">${tableText}</strong>`;
+        if (nameVal) msg += ` <strong style="color:#059669;">"${nameVal}"</strong>`;
+        return msg;
+      }
+    } catch (e) {
+      // String format fallback
+    }
+
+    return `<span style="font-weight:700;color:var(--text-dark);">${roleText}</span> (${userText}) ${verb} <strong style="color:#2563eb;">${tableText}</strong>`;
+  }
+
+  // Tab 1: Data Changes Logs (Flat list)
   async function loadDataUsers(page = 0) {
     auditDataPage = page;
     const tbody = document.getElementById('dataTableBody');
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);">Loading...</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;padding:2rem;color:var(--text-muted);">Loading...</td></tr>`;
 
     try {
-      const data = await fetchAuditWithAuth(`/api/audit/data-users?page=${page}&size=${AUDIT_PAGE_SIZE}`);
+      const data = await fetchAuditWithAuth(`/api/audit/data?page=${page}&size=${AUDIT_PAGE_SIZE}`);
 
       if (!data.content || data.content.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);">No users found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="3" style="text-align:center;padding:2rem;color:var(--text-muted);">No data changes found.</td></tr>`;
         document.getElementById('dataPagination').innerHTML = '';
         return;
       }
 
       tbody.innerHTML = '';
-      data.content.forEach(user => {
-        const initials = (user.fullName || user.username || '?').charAt(0).toUpperCase();
+      data.content.forEach(log => {
         const tr = document.createElement('tr');
+        const formattedDetail = formatAuditDetailToHumanText(log);
+        const logJsonString = encodeURIComponent(JSON.stringify(log));
+
         tr.innerHTML = `
-                <td>
-                    <div style="display:flex;align-items:center;gap:0.75rem;">
-                        <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#8b5cf6);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:1rem;flex-shrink:0;">${initials}</div>
-                        <span style="font-weight:600;color:var(--text-dark);">${user.fullName || '-'}</span>
+                <td style="padding: 0.9rem 1.2rem;">
+                    <div style="color:var(--text-dark);font-size:0.88rem;line-height:1.5;">
+                        ${formattedDetail}
+                    </div>
+                    <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.4rem;display:flex;align-items:center;justify-content:space-between;gap:0.4rem;">
+                        <span style="display:inline-flex;align-items:center;gap:0.3rem;">
+                            <svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            ${formatAuditDate(log.createdAt)}
+                        </span>
+                        <button onclick="openDetailModal('${logJsonString}')" 
+                            style="background:#eff6ff;border:1px solid #bfdbfe;color:#2563eb;padding:3px 10px;border-radius:6px;font-size:0.75rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:4px;transition:all 0.2s;"
+                            onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'">
+                            <svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            View details
+                        </button>
                     </div>
                 </td>
-                <td style="color:var(--text-muted);font-size:0.88rem;">${user.username}</td>
-                <td style="color:var(--text-muted);font-size:0.88rem;">${user.email}</td>
-                <td style="color:var(--text-muted);font-size:0.88rem;">${user.phone || '-'}</td>
-                <td>${getRoleBadge(user.role)}</td>
-                <td>
-                    <button onclick="openAuditModal('${user.username}')"
-                        style="background:none;border:1px solid #bfdbfe;border-radius:8px;padding:0.4rem 0.9rem;color:#2563eb;font-size:0.83rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:0.4rem;transition:all 0.2s;"
-                        onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='none'">
-                        <svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:#2563eb;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
-                        </svg>
-                        View logs
-                    </button>
-                </td>
+                <td style="color:var(--text-dark);font-weight:600;font-size:0.88rem;white-space:nowrap;">${log.username || '-'}</td>
+                <td style="white-space:nowrap;">${getRoleBadge(log.role)}</td>
             `;
         tbody.appendChild(tr);
       });
 
       renderAuditPagination('dataPagination', data.totalPages, auditDataPage, 'loadDataUsers');
     } catch (error) {
-      tbody.innerHTML = `<tr><td colspan="6" style="color:#ef4444;text-align:center;">${error.message}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="3" style="color:#ef4444;text-align:center;">${error.message}</td></tr>`;
     }
   }
 
@@ -4824,6 +4944,11 @@ function formatNotificationTime(iso) {
       loadAuthLogs(0);
     }
   }
+
+  window.loadDataUsers = loadDataUsers;
+  window.loadAuthLogs = loadAuthLogs;
+  window.switchAuditTab = switchAuditTab;
+  window.openDetailModal = openDetailModal;
 
   // Modal: Open and load user-specific data audit logs
   function openAuditModal(username) {
@@ -4943,7 +5068,8 @@ function formatNotificationTime(iso) {
     activeDetailLog = log;
 
     // Set titles & metadata
-    document.getElementById('detail-user-title').innerText = log.username || 'N/A';
+    const userTitleEl = document.getElementById('detail-user-title');
+    if (userTitleEl) userTitleEl.innerText = log.username || 'N/A';
     document.getElementById('detail-table-title').innerText = log.tableName || 'N/A';
 
     // Set action badge color & text
@@ -5568,20 +5694,69 @@ function formatNotificationTime(iso) {
     }
   }
 
+  function loadGoogleSDKAndLogin() {
+    return new Promise((resolve, reject) => {
+      // Nếu SDK đã sẵn sàng → resolve ngay
+      if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
+        resolve();
+        return;
+      }
+      // Nếu script chưa được inject → inject mới
+      const GSI_SRC = 'https://accounts.google.com/gsi/client';
+      let script = document.querySelector(`script[src="${GSI_SRC}"]`);
+      if (!script) {
+        script = document.createElement('script');
+        script.src = GSI_SRC;
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+      }
+      // Polling tối đa 10 giây
+      let attempts = 0;
+      const maxAttempts = 100; // 100 × 100ms = 10s
+      const interval = setInterval(() => {
+        attempts++;
+        if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
+          clearInterval(interval);
+          resolve();
+        } else if (attempts >= maxAttempts) {
+          clearInterval(interval);
+          reject(new Error('Google Sign-In SDK failed to load.'));
+        }
+      }, 100);
+    });
+  }
+
   function loginWithGooglePopup() {
     const clientId = "675937212349-d7ihb1c7a0u53no9d71cdt0jcmjrbil9.apps.googleusercontent.com";
     const modalAlert = document.getElementById("modal-login-alert") || document.getElementById("alertMessage");
 
-      if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
+    // Hiển thị trạng thái đang tải SDK nếu cần
+    if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
+      if (modalAlert) {
+        modalAlert.textContent = "Loading Google Sign-In...";
+        modalAlert.classList.remove("alert-error", "alert-success");
+        modalAlert.style.display = "block";
+      }
+    }
+
+    loadGoogleSDKAndLogin()
+      .then(() => {
+        _doGooglePopup(clientId, modalAlert);
+      })
+      .catch((err) => {
+        console.error(err);
         if (modalAlert) {
-          modalAlert.textContent = "Google Sign-In SDK not loaded, please reload the page.";
+          modalAlert.textContent = "Could not load Google Sign-In. Please check your internet connection and try again.";
           modalAlert.classList.add("alert-error");
           modalAlert.style.display = "block";
         } else {
           showToast("Google Sign-In SDK not loaded.", "error");
         }
-        return;
-      }
+      });
+  }
+
+  function _doGooglePopup(clientId, modalAlert) {
 
     if (modalAlert) {
       modalAlert.textContent = "Waiting for Google login...";
@@ -5589,27 +5764,57 @@ function formatNotificationTime(iso) {
       modalAlert.style.display = "block";
     }
 
+    // Helper: ẩn thông báo "Waiting..." khi user hủy
+    function clearWaitingMessage() {
+      if (modalAlert && modalAlert.textContent === "Waiting for Google login...") {
+        modalAlert.style.display = "none";
+        modalAlert.textContent = "";
+      }
+    }
+
     try {
       const client = google.accounts.oauth2.initTokenClient({
         client_id: clientId,
         scope: 'email profile',
+        // Gọi khi user chọn tài khoản thành công hoặc có lỗi từ Google
         callback: (response) => {
           if (response && response.access_token) {
             processGoogleToken(response.access_token, modalAlert);
           } else {
+            // Có response nhưng không có access_token → lỗi khác
             if (modalAlert) {
-              modalAlert.textContent = "Google login cancelled or failed.";
+              modalAlert.textContent = "Google login failed. Please try again.";
               modalAlert.classList.add("alert-error");
+              modalAlert.style.display = "block";
             }
+          }
+        },
+        // Gọi khi user đóng popup (bấm X) hoặc có lỗi OAuth
+        error_callback: (err) => {
+          if (err && err.type === 'popup_closed') {
+            // User tự đóng popup → ẩn thông báo, không hiện lỗi
+            clearWaitingMessage();
+          } else if (err && err.type === 'popup_failed_to_open') {
+            if (modalAlert) {
+              modalAlert.textContent = "Could not open Google login. Please allow popups for this site.";
+              modalAlert.classList.add("alert-error");
+              modalAlert.style.display = "block";
+            }
+          } else {
+            // Lỗi khác → ẩn thông báo waiting
+            clearWaitingMessage();
+            console.warn("Google OAuth error:", err);
           }
         }
       });
       client.requestAccessToken();
     } catch (error) {
       console.error("Google initTokenClient error:", error);
+      clearWaitingMessage();
       if (modalAlert) {
         modalAlert.textContent = "Could not open Google login window.";
         modalAlert.classList.add("alert-error");
+        modalAlert.style.display = "block";
       }
     }
   }

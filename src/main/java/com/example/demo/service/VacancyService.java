@@ -2,6 +2,7 @@ package com.example.demo.service;
 
 import com.example.demo.entity.CandidateApplication;
 import com.example.demo.repository.CandidateApplicationRepository;
+import com.example.demo.annotation.Auditable;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +17,7 @@ public class VacancyService {
     // ── F_38: Apply & HR Dashboard ────────────────────────────────────────────
 
     /** Save candidate application */
+    @Auditable(action = "CREATE", table = "candidate_applications")
     public CandidateApplication submitApplication(CandidateApplication application) {
         return applicationRepository.save(application);
     }

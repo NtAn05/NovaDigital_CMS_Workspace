@@ -36,11 +36,14 @@ public class AuditLogListener {
 
     private final DataAuditLogRepository dataAuditLogRepository;
     private final AuthLogRepository      authLogRepository;
+    private final com.example.demo.repository.UserRepository userRepository;
 
     public AuditLogListener(DataAuditLogRepository dataAuditLogRepository,
-                            AuthLogRepository authLogRepository) {
+                            AuthLogRepository authLogRepository,
+                            com.example.demo.repository.UserRepository userRepository) {
         this.dataAuditLogRepository = dataAuditLogRepository;
         this.authLogRepository      = authLogRepository;
+        this.userRepository         = userRepository;
     }
 
     /**
@@ -69,8 +72,6 @@ public class AuditLogListener {
             }
         } catch (Exception e) {
             // DO NOT re-throw Exception — prevent crashing Async Thread
-            // In production should be replaced with Logger:
-            // log.error("[AuditLogListener] Failed to save audit log", e);
             e.printStackTrace();
         }
     }
@@ -88,10 +89,10 @@ public class AuditLogListener {
     }
 
     private void saveDataLogFromPayload(DataPayloadEvent event) {
-        // Build detail content from JSON payload
-        // Format: "isSuccess=true | Create new: {name: ...}" or "isSuccess=false | Error: ..."
-        String detail = buildDetailFromPayload(event);
-
+        String detail = event.getRequestPayload() != null ? event.getRequestPayload() : "[]";
+        if (!event.isSuccess() && event.getErrorMessage() != null) {
+            detail = "[FAILED] " + event.getErrorMessage() + " | " + detail;
+        }
         DataAuditLog log = new DataAuditLog(
                 event.getUsername(),
                 event.getAction(),
@@ -102,21 +103,37 @@ public class AuditLogListener {
     }
 
     private void saveDataLogFromDiff(DataAuditEvent event) {
+        String detail = event.getDetail() != null ? event.getDetail() : "[]";
         DataAuditLog log = new DataAuditLog(
                 event.getUsername(),
                 event.getAction(),
                 event.getTableName(),
-                event.getDetail()
+                detail
         );
         dataAuditLogRepository.save(log);
     }
 
+    private String getRole(String username) {
+        if (username == null || username.isBlank() || "SYSTEM".equalsIgnoreCase(username) || "UNKNOWN".equalsIgnoreCase(username)) {
+            return "System";
+        }
+        return userRepository.findByUsername(username)
+                .map(com.example.demo.entity.User::getRole)
+                .orElse("User");
+    }
+
+    private String mapActionToVerb(String action) {
+        if (action == null) return "modified";
+        return switch (action.toUpperCase()) {
+            case "CREATE" -> "created";
+            case "UPDATE" -> "updated";
+            case "DELETE" -> "deleted";
+            default -> "modified";
+        };
+    }
+
     /**
      * Builds a concise description string to save into the "detail" column in the DB.
-     *
-     * Example format:
-     *   ✅ Success → "Create new: {name: 'A', email: 'a@b.com'}"
-     *   ❌ Failure → "[FAILED] BadCredentialsException: Invalid password | {email: 'a@b.com'}"
      */
     private String buildDetailFromPayload(DataPayloadEvent event) {
         String prefix = event.isSuccess() ? "" : "[FAILED] ";
@@ -127,7 +144,11 @@ public class AuditLogListener {
                          ? event.getRequestPayload()
                          : "(no payload)";
 
-        String detail = prefix + error + payload;
+        String role = getRole(event.getUsername());
+        String actionVerb = mapActionToVerb(event.getAction());
+
+        String detail = String.format("%s%s %s %s a %s record with content: %s%s", 
+                prefix, role, event.getUsername(), actionVerb, event.getTableName(), error, payload);
 
         // Truncate length to avoid overflowing TEXT column
         return detail.length() > 2000 ? detail.substring(0, 1997) + "..." : detail;

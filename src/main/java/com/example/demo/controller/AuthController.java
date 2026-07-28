@@ -252,6 +252,34 @@ public class AuthController {
         }
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<?> logoutUser(HttpServletRequest httpRequest) {
+        try {
+            String username = auditService.getCurrentUsername();
+            
+            // Fallback: If SecurityContext was cleared or ignored on permitAll endpoint, extract manually
+            if (username == null || "UNKNOWN".equals(username) || "anonymousUser".equals(username)) {
+                String bearerToken = httpRequest.getHeader("Authorization");
+                if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+                    String jwt = bearerToken.substring(7);
+                    if (tokenProvider.validateToken(jwt)) {
+                        username = tokenProvider.getUsernameFromJWT(jwt);
+                    }
+                }
+            }
+
+            if (username != null && !"UNKNOWN".equals(username) && !"anonymousUser".equals(username)) {
+                auditService.logAuthAction("LOGOUT", username);
+            }
+        } catch (Exception ignored) {}
+
+        SecurityContextHolder.clearContext();
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "User logged out successfully");
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> body) {
         String email = body.get("email");

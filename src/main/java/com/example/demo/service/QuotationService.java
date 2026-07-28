@@ -17,6 +17,8 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.example.demo.annotation.Auditable;
+
 @Service
 public class QuotationService {
 
@@ -30,6 +32,7 @@ public class QuotationService {
     @Autowired private NotificationRepository notificationRepository;
 
     @Transactional
+    @Auditable(action = "CREATE", table = "quotations")
     public Quotation createQuotationFromBooking(QuotationRequest request, Long adminUserId) {
         ConsultationAppointment booking = appointmentRepository.findById(request.getBookingId())
                 .orElseThrow(() -> new RuntimeException("Booking not found"));

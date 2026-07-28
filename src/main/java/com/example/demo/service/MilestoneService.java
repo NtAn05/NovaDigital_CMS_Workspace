@@ -20,6 +20,7 @@ import com.example.demo.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
+import com.example.demo.annotation.Auditable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -102,6 +103,7 @@ public class MilestoneService {
      * @throws IllegalArgumentException if a milestone with the same name already exists in the project
      */
     @Transactional
+    @Auditable(action = "CREATE", table = "project_milestones")
     public MilestoneResponse createMilestone(Long projectId,
                                              MilestoneCreateRequest request,
                                              String performedBy) {
@@ -267,6 +269,7 @@ public class MilestoneService {
      * @throws IllegalArgumentException if milestone does not belong to the specified project
      */
     @Transactional
+    @Auditable(action = "DELETE", table = "project_milestones")
     public void deleteMilestone(Long projectId, Long milestoneId, String performedBy) {
         ensureProjectExists(projectId);
         ProjectMilestone milestone = findMilestoneOrThrow(milestoneId);

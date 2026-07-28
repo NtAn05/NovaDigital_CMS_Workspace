@@ -10,6 +10,7 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
+import com.example.demo.annotation.Auditable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -144,6 +145,7 @@ public class ResourceAllocationService {
     }
 
     @Transactional
+    @Auditable(action = "CREATE", table = "resource_allocations")
     public ResourceAllocationResponse create(ResourceAllocationRequest request,
                                              Authentication authentication) {
         User actor = resolveActor(authentication);
@@ -166,6 +168,7 @@ public class ResourceAllocationService {
     }
 
     @Transactional
+    @Auditable(action = "UPDATE", table = "resource_allocations")
     public ResourceAllocationResponse update(Long id,
                                              ResourceAllocationRequest request,
                                              Authentication authentication) {
@@ -192,6 +195,7 @@ public class ResourceAllocationService {
     }
 
     @Transactional
+    @Auditable(action = "DELETE", table = "resource_allocations")
     public void delete(Long id, Authentication authentication) {
         User actor = resolveActor(authentication);
         ResourceAllocation allocation = allocationRepository.findById(id)

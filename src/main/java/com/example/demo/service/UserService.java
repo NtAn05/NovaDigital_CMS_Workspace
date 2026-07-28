@@ -7,6 +7,7 @@ import com.example.demo.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.example.demo.annotation.Auditable;
 import java.time.LocalDateTime;
 
 @Service
@@ -15,6 +16,7 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
+    @Auditable(action = "CREATE", table = "users")
     public User registerUser(RegisterRequest request) {
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new RuntimeException("Username already exists");
