@@ -6,6 +6,10 @@ import com.example.demo.entity.ProjectClient;
 import com.example.demo.entity.User;
 import com.example.demo.entity.ConsultationAppointment;
 import com.example.demo.entity.Service;
+import com.example.demo.entity.AppointmentAddon;
+import com.example.demo.entity.ServiceAddon;
+import com.example.demo.repository.AppointmentAddonRepository;
+import com.example.demo.repository.ServiceAddonRepository;
 import com.example.demo.repository.ProjectAssignmentRepository;
 import com.example.demo.repository.ProjectClientRepository;
 import com.example.demo.repository.UserRepository;
@@ -51,6 +55,12 @@ public class MyProjectsController {
     @Autowired
     private ServiceRepository serviceRepository;
 
+    @Autowired
+    private AppointmentAddonRepository appointmentAddonRepository;
+
+    @Autowired
+    private ServiceAddonRepository serviceAddonRepository;
+
     /**
      * Returns consultation bookings assigned to the logged-in member
      * (expertId = User.id of current user, this user has role ROLE_MEMBER), including real customer name.
@@ -82,9 +92,26 @@ public class MyProjectsController {
             m.put("customerEmail", client != null ? client.getEmail() : "");
             m.put("customerPhone", client != null ? client.getPhone() : "");
 
-            // Service name
+            // Service name and base price
             Service service = serviceRepository.findById(a.getServiceId()).orElse(null);
             m.put("serviceTitle", service != null ? service.getTitle() : "Service #" + a.getServiceId());
+            double basePrice = a.getBasePrice() != null ? a.getBasePrice() : (service != null ? service.getBasePrice() : 0.0);
+            m.put("basePrice", basePrice);
+
+            // Add-ons list and total add-ons price
+            List<AppointmentAddon> apptAddons = appointmentAddonRepository.findByAppointmentId(a.getId());
+            List<Map<String, Object>> addonsList = apptAddons.stream().map(aa -> {
+                ServiceAddon sa = serviceAddonRepository.findById(aa.getAddonId()).orElse(null);
+                Map<String, Object> addonMap = new HashMap<>();
+                addonMap.put("id", aa.getAddonId());
+                addonMap.put("addonName", sa != null ? sa.getAddonName() : "Add-on #" + aa.getAddonId());
+                addonMap.put("priceModifier", sa != null ? sa.getPriceModifier() : 0.0);
+                return addonMap;
+            }).collect(Collectors.toList());
+
+            double addonsPrice = addonsList.stream().mapToDouble(am -> (Double) am.get("priceModifier")).sum();
+            m.put("addonsPrice", addonsPrice);
+            m.put("addons", addonsList);
 
             return m;
         }).collect(Collectors.toList());
