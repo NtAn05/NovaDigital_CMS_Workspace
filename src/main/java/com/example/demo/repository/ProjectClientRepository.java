@@ -19,6 +19,11 @@ public interface ProjectClientRepository extends JpaRepository<ProjectClient, Lo
     /** Find specific client-project link. */
     Optional<ProjectClient> findByProjectIdAndUserId(Long projectId, Long userId);
 
+    /** Remove all client links from a project. */
+    @jakarta.transaction.Transactional
+    void deleteByProjectId(Long projectId);
+
     /** Remove a client from a project. */
     void deleteByProjectIdAndUserId(Long projectId, Long userId);
 }
+

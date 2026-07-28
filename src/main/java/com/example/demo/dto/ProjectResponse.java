@@ -14,4 +14,17 @@ public class ProjectResponse {
     private String category;
     private String imageUrl;
     private String technologies;
+    private Long clientId;
+    private String clientName;
+    private String clientEmail;
+
+    public ProjectResponse(Long id, String title, String description, String category, String imageUrl, String technologies) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.category = category;
+        this.imageUrl = imageUrl;
+        this.technologies = technologies;
+    }
 }
+
