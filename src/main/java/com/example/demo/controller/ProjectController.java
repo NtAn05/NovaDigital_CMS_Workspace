@@ -176,18 +176,34 @@ public class ProjectController {
 
         if (body.containsKey("clientId")) {
             clientId = parseLong(body.get("clientId"));
-            clientRepository.deleteByProjectId(saved.getId());
-            if (clientId != null && clientId > 0) {
-                Optional<User> clientUserOpt = userRepository.findById(clientId);
-                if (clientUserOpt.isPresent()) {
-                    User clientUser = clientUserOpt.get();
-                    ProjectClient link = new ProjectClient();
-                    link.setProject(saved);
-                    link.setUser(clientUser);
-                    clientRepository.save(link);
-
+            
+            Optional<ProjectClient> existing = clientRepository.findByProjectId(saved.getId()).stream().findFirst();
+            boolean needsUpdate = true;
+            if (existing.isPresent()) {
+                if (existing.get().getUser().getId().equals(clientId)) {
+                    needsUpdate = false;
+                    User clientUser = existing.get().getUser();
                     clientName = clientUser.getFullName() != null && !clientUser.getFullName().isBlank() ? clientUser.getFullName() : clientUser.getUsername();
                     clientEmail = clientUser.getEmail();
+                }
+            }
+            
+            if (needsUpdate) {
+                clientRepository.deleteByProjectId(saved.getId());
+                clientRepository.flush();
+                if (clientId != null && clientId > 0) {
+                    Optional<User> clientUserOpt = userRepository.findById(clientId);
+                    if (clientUserOpt.isPresent()) {
+                        User clientUser = clientUserOpt.get();
+                        ProjectClient link = new ProjectClient();
+                        link.setProject(saved);
+                        link.setUser(clientUser);
+                        clientRepository.save(link);
+                        clientRepository.flush();
+
+                        clientName = clientUser.getFullName() != null && !clientUser.getFullName().isBlank() ? clientUser.getFullName() : clientUser.getUsername();
+                        clientEmail = clientUser.getEmail();
+                    }
                 }
             }
         } else {

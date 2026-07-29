@@ -2835,6 +2835,7 @@ footer {
   --input-text: #0f172a;
   --text-dark-rgb: 15, 23, 42;
   --bg-white-rgb: 255, 255, 255;
+  --bg-card: #ffffff;
 }
 
 /* Smooth global transitions during theme switching */
@@ -2867,6 +2868,7 @@ html.dark-theme {
   --input-text: #f8fafc;
   --text-dark-rgb: 248, 250, 252;
   --bg-white-rgb: 22, 27, 43;
+  --bg-card: #161b2b;
 }
 
 /* Base style overrides */
@@ -2990,11 +2992,18 @@ html.dark-theme input[type="email"],
 html.dark-theme input[type="password"],
 html.dark-theme input[type="tel"],
 html.dark-theme input[type="url"],
+html.dark-theme input[type="date"],
+html.dark-theme input[type="time"],
+html.dark-theme input[type="number"],
 html.dark-theme textarea,
 html.dark-theme select {
   background-color: var(--input-bg) !important;
   border-color: var(--input-border) !important;
   color: var(--input-text) !important;
+}
+
+html.dark-theme input::-webkit-calendar-picker-indicator {
+  filter: invert(1) !important;
 }
 
 html.dark-theme input::placeholder,

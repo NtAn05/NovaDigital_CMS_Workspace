@@ -315,9 +315,15 @@
           if (data.milestoneId && data.milestoneId > 0) {
             document.getElementById('id-label').textContent = 'Phase (Milestone) ID:';
             document.getElementById('booking-id-val').textContent = '#' + data.milestoneId;
-          } else {
+          } else if (data.projectId && data.projectId > 0) {
+            document.getElementById('id-label').textContent = 'Project (Deposit) ID:';
+            document.getElementById('booking-id-val').textContent = '#' + data.projectId;
+          } else if (data.appointmentId && data.appointmentId > 0) {
             document.getElementById('id-label').textContent = 'Booking ID:';
-            document.getElementById('booking-id-val').textContent = '#' + (data.appointmentId || '-');
+            document.getElementById('booking-id-val').textContent = '#' + data.appointmentId;
+          } else {
+            document.getElementById('id-label').textContent = 'Reference:';
+            document.getElementById('booking-id-val').textContent = orderCode;
           }
           successState.style.display = 'block';
         } else {

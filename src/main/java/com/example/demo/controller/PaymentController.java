@@ -8,6 +8,7 @@ import com.example.demo.repository.*;
 import com.example.demo.entity.AppointmentAddon;
 import com.example.demo.entity.Notification;
 import com.example.demo.entity.Service;
+import com.example.demo.service.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -66,6 +67,9 @@ public class PaymentController {
 
     @Autowired
     private ProjectRepository projectRepository;
+
+    @Autowired
+    private EmailService emailService;
 
     @Autowired
     private org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
@@ -462,6 +466,20 @@ public class PaymentController {
 
                 // Send notifications
                 notifyParties(appointment, statusBefore);
+
+                // Send receipt email to client
+                User client = userRepository.findById(appointment.getClientId()).orElse(null);
+                if (client != null && client.getEmail() != null) {
+                    long amountVnd = transaction.getAmount() != null ? transaction.getAmount().longValue() : 0L;
+                    emailService.sendPaymentReceiptEmail(
+                            client.getEmail(),
+                            client.getFullName(),
+                            "Consultation Booking",
+                            "Booking #" + appointment.getId(),
+                            amountVnd,
+                            transaction.getOrderCode()
+                    );
+                }
             }
         }
         
@@ -477,6 +495,24 @@ public class PaymentController {
 
                     // Send notifications
                     notifyMilestonePaid(milestone);
+
+                    // Send receipt email to each project client
+                    List<com.example.demo.entity.ProjectClient> pClients =
+                            projectClientRepository.findByProjectId(milestone.getProject().getId());
+                    for (com.example.demo.entity.ProjectClient pc : pClients) {
+                        User u = pc.getUser();
+                        if (u != null && u.getEmail() != null) {
+                            long amountVnd = transaction.getAmount() != null ? transaction.getAmount().longValue() : 0L;
+                            emailService.sendPaymentReceiptEmail(
+                                    u.getEmail(),
+                                    u.getFullName(),
+                                    "Project Phase — " + milestone.getName(),
+                                    "Milestone #" + milestone.getId(),
+                                    amountVnd,
+                                    transaction.getOrderCode()
+                            );
+                        }
+                    }
                 }
             } else {
                 System.out.println(">>> [PaymentController] Milestone NOT found for ID: " + transaction.getMilestoneId());
@@ -493,6 +529,24 @@ public class PaymentController {
 
                 // Send notifications
                 notifyDepositPaid(project);
+
+                // Send receipt email to each project client
+                List<com.example.demo.entity.ProjectClient> pClients =
+                        projectClientRepository.findByProjectId(project.getId());
+                for (com.example.demo.entity.ProjectClient pc : pClients) {
+                    User u = pc.getUser();
+                    if (u != null && u.getEmail() != null) {
+                        long amountVnd = transaction.getAmount() != null ? transaction.getAmount().longValue() : 0L;
+                        emailService.sendPaymentReceiptEmail(
+                                u.getEmail(),
+                                u.getFullName(),
+                                "Project Deposit — " + project.getTitle(),
+                                "Project #" + project.getId(),
+                                amountVnd,
+                                transaction.getOrderCode()
+                        );
+                    }
+                }
             }
         }
     }
