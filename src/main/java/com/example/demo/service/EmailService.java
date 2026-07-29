@@ -15,18 +15,54 @@ public class EmailService {
     private JavaMailSender mailSender;
 
     public void sendOtpEmail(String toEmail, String otp) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom("studyhub123vn@gmail.com");
-        message.setTo(toEmail);
-        message.setSubject("NovaDigital - OTP Password Reset Verification Code");
-        message.setText("Hello,\n\n"
-                + "You have requested to reset your password at NovaDigital.\n"
-                + "Your OTP verification code is: " + otp + "\n"
-                + "This code is valid for 5 minutes.\n\n"
-                + "If you did not make this request, please ignore this email.\n\n"
-                + "Best regards,\n"
-                + "NovaDigital Team");
-        mailSender.send(message);
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom("studyhub123vn@gmail.com");
+            helper.setTo(toEmail);
+            helper.setSubject("Password Reset Verification Code - NovaDigital");
+
+            String htmlMsg = "<div style=\"font-family: 'Segoe UI', Helvetica, Arial, sans-serif; max-width: 600px; border: 1px solid #e2e8f0; border-radius: 16px; margin: 20px auto; background: #ffffff; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08); overflow: hidden;\">"
+                    + "  <!-- Header with Brand Logo -->"
+                    + "  <div style=\"background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 28px 30px; text-align: center; border-bottom: 3px solid #2563eb;\">"
+                    + "    <div style=\"display: inline-flex; align-items: center; justify-content: center;\">"
+                    + "      <img src=\"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=100&h=100&q=80\" alt=\"NovaDigital Logo\" style=\"width: 44px; height: 44px; border-radius: 50%; vertical-align: middle; margin-right: 12px; border: 2px solid #2563eb; object-fit: cover;\">"
+                    + "      <span style=\"font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: 0.5px; vertical-align: middle;\">NOVA<span style=\"color: #38bdf8;\">DIGITAL</span></span>"
+                    + "    </div>"
+                    + "  </div>"
+                    + "  <!-- Main Body -->"
+                    + "  <div style=\"padding: 36px 32px; line-height: 1.6; color: #334155;\">"
+                    + "    <h2 style=\"color: #0f172a; font-size: 20px; font-weight: 700; margin-top: 0; margin-bottom: 12px; text-align: center;\">Password Reset Verification</h2>"
+                    + "    <p style=\"margin-top: 0; margin-bottom: 24px; font-size: 15px; color: #475569; text-align: center;\">We received a request to reset your password for your <strong>NovaDigital</strong> account. Use the verification code below to complete the process:</p>"
+                    + "    "
+                    + "    <!-- OTP Display Box -->"
+                    + "    <div style=\"background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 1px solid #bae6fd; border-radius: 12px; padding: 20px; text-align: center; margin: 28px 0;\">"
+                    + "      <span style=\"font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #0284c7; display: block; margin-bottom: 8px;\">Your Security Code</span>"
+                    + "      <div style=\"font-family: 'Courier New', Consolas, monospace; font-size: 36px; font-weight: 800; letter-spacing: 10px; color: #0369a1;\">" + otp + "</div>"
+                    + "      <span style=\"font-size: 13px; color: #64748b; margin-top: 8px; display: block;\">⏱️ Valid for <strong>5 minutes</strong></span>"
+                    + "    </div>"
+                    + "    "
+                    + "    <!-- Warning Notice -->"
+                    + "    <div style=\"background-color: #f8fafc; border-left: 4px solid #f59e0b; padding: 14px 18px; border-radius: 4px; margin-bottom: 24px;\">"
+                    + "      <p style=\"margin: 0; font-size: 13px; color: #78350f; line-height: 1.5;\">"
+                    + "        <strong>Security Notice:</strong> If you did not request a password reset, please ignore this email or contact support if you suspect unauthorized activity."
+                    + "      </p>"
+                    + "    </div>"
+                    + "    "
+                    + "    <p style=\"margin-top: 0; margin-bottom: 0; font-size: 14px; color: #64748b; text-align: center;\">Need help? Contact our support team at <a href=\"mailto:contact@novadigital.com\" style=\"color: #2563eb; text-decoration: none; font-weight: 600;\">contact@novadigital.com</a></p>"
+                    + "  </div>"
+                    + "  <!-- Footer -->"
+                    + "  <div style=\"background-color: #f8fafc; padding: 22px 30px; border-top: 1px solid #e2e8f0; text-align: center;\">"
+                    + "    <p style=\"margin: 0; font-size: 12px; color: #94a3b8;\">This is an automated security notification. Please do not reply directly to this email.</p>"
+                    + "    <p style=\"margin: 6px 0 0 0; font-size: 12px; color: #94a3b8; font-weight: 600;\">© 2026 NovaDigital Co., Ltd. All rights reserved.</p>"
+                    + "  </div>"
+                    + "</div>";
+
+            helper.setText(htmlMsg, true);
+            mailSender.send(message);
+        } catch (Exception e) {
+            System.err.println("[EmailService] Could not send OTP email: " + e.getMessage());
+        }
     }
 
     public void sendFeedbackConfirmationEmail(String toEmail, String name, String userMessage) {
@@ -82,6 +118,150 @@ public class EmailService {
             mailSender.send(message);
         } catch (Exception e) {
             System.err.println("[EmailService] Could not send feedback email: " + e.getMessage());
+        }
+    }
+
+    public void sendBookingUpdateEmail(String toEmail, String name, String serviceTitle,
+                                        String appointmentDate, String timeSlot, String adminMessage) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom("studyhub123vn@gmail.com");
+            helper.setTo(toEmail);
+
+            String safeName = (name != null && !name.isBlank()) ? name : "Valued Client";
+            helper.setSubject("Update on Your Consultation Booking — " + safeName);
+
+            String safeMsg = (adminMessage != null && !adminMessage.isBlank())
+                    ? adminMessage.replace("\n", "<br>")
+                    : "Our team would like to follow up regarding your consultation booking. Please see the details below.";
+
+            String htmlMsg = "<div style=\"font-family: 'Segoe UI', Helvetica, Arial, sans-serif; max-width: 600px; border: 1px solid #e2e8f0; border-radius: 12px; margin: 20px auto; background: #ffffff; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); overflow: hidden;\">"
+                    + "  <!-- Header -->"
+                    + "  <div style=\"background-color: #0b0f19; padding: 25px; text-align: center; border-bottom: 3px solid #4f46e5;\">"
+                    + "    <img src=\"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=80&h=80&q=80\" alt=\"NovaDigital Logo\" style=\"width: 48px; height: 48px; border-radius: 50%; vertical-align: middle; margin-right: 12px; border: 2px solid #4f46e5; object-fit: cover;\">"
+                    + "    <span style=\"font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: 0.5px; vertical-align: middle;\">NOVA<span style=\"color: #4f46e5;\">DIGITAL</span></span>"
+                    + "  </div>"
+                    + "  <!-- Body -->"
+                    + "  <div style=\"padding: 30px; line-height: 1.6; color: #334155;\">"
+                    + "    <h2 style=\"color: #0f172a; font-size: 20px; font-weight: 700; margin-top: 0; margin-bottom: 16px;\">Hello " + safeName + ",</h2>"
+                    + "    <p style=\"margin-top: 0; margin-bottom: 24px; font-size: 15px; color: #475569;\">" + safeMsg + "</p>"
+                    + "    <!-- Booking Box -->"
+                    + "    <div style=\"background-color: #f8fafc; padding: 24px; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 24px;\">"
+                    + "      <h4 style=\"margin-top: 0; margin-bottom: 16px; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #64748b;\">Booking Details</h4>"
+                    + "      <table style=\"width: 100%; border-collapse: collapse; font-size: 15px;\">"
+                    + "        <tr>"
+                    + "          <td style=\"padding: 6px 0; font-weight: 600; color: #1e293b; width: 110px; vertical-align: top;\">Service:</td>"
+                    + "          <td style=\"padding: 6px 0; color: #475569; vertical-align: top;\">" + (serviceTitle != null ? serviceTitle : "") + "</td>"
+                    + "        </tr>"
+                    + "        <tr>"
+                    + "          <td style=\"padding: 6px 0; font-weight: 600; color: #1e293b; width: 110px; vertical-align: top;\">Date:</td>"
+                    + "          <td style=\"padding: 6px 0; color: #475569; vertical-align: top;\">" + (appointmentDate != null ? appointmentDate : "") + "</td>"
+                    + "        </tr>"
+                    + "        <tr>"
+                    + "          <td style=\"padding: 6px 0; font-weight: 600; color: #1e293b; width: 110px; vertical-align: top;\">Time:</td>"
+                    + "          <td style=\"padding: 6px 0; color: #475569; vertical-align: top;\">" + (timeSlot != null ? timeSlot : "") + "</td>"
+                    + "        </tr>"
+                    + "      </table>"
+                    + "    </div>"
+                    + "    <p style=\"margin-top: 0; margin-bottom: 0; font-size: 15px; color: #475569;\">If you have any questions or need to discuss this further, please reply to this email or reach out to us directly.</p>"
+                    + "  </div>"
+                    + "  <!-- Footer -->"
+                    + "  <div style=\"background-color: #f8fafc; padding: 20px 30px; border-top: 1px solid #e2e8f0; text-align: center;\">"
+                    + "    <p style=\"margin: 0; font-size: 12px; color: #94a3b8;\">This is an automated operational notification message. Please do not reply directly to this email.</p>"
+                    + "    <p style=\"margin: 8px 0 0 0; font-size: 12px; color: #94a3b8; font-weight: 600;\">© 2026 NovaDigital Co., Ltd. All rights reserved.</p>"
+                    + "  </div>"
+                    + "</div>";
+
+            helper.setText(htmlMsg, true);
+            mailSender.send(message);
+        } catch (Exception e) {
+            System.err.println("[EmailService] Could not send booking update email: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Sends a payment receipt email to the user after a successful transaction.
+     *
+     * @param toEmail       Recipient's email address
+     * @param name          Recipient's full name
+     * @param paymentType   Type label, e.g. "Consultation Booking", "Project Phase", "Project Deposit"
+     * @param referenceId   The booking/milestone/project ID
+     * @param amountVnd     Amount paid in VND (Long)
+     * @param orderCode     The PayOS order code
+     */
+    public void sendPaymentReceiptEmail(String toEmail, String name, String paymentType,
+                                        String referenceId, long amountVnd, long orderCode) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom("studyhub123vn@gmail.com");
+            helper.setTo(toEmail);
+
+            String safeName = (name != null && !name.isBlank()) ? name : "Valued Client";
+            helper.setSubject("Payment Receipt Confirmed — NovaDigital");
+
+            // Format amount with commas
+            String formattedAmount = String.format("%,d VND", amountVnd);
+            // Format current date
+            String paidDate = java.time.LocalDateTime.now()
+                    .format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+
+            String htmlMsg = "<div style=\"font-family: 'Segoe UI', Helvetica, Arial, sans-serif; max-width: 600px; border: 1px solid #e2e8f0; border-radius: 16px; margin: 20px auto; background: #ffffff; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.08); overflow: hidden;\">"
+                    + "  <!-- Header -->"
+                    + "  <div style=\"background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 28px 30px; text-align: center; border-bottom: 3px solid #10b981;\">"
+                    + "    <div style=\"display: inline-flex; align-items: center; justify-content: center;\">"
+                    + "      <img src=\"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=100&h=100&q=80\" alt=\"NovaDigital Logo\" style=\"width: 44px; height: 44px; border-radius: 50%; vertical-align: middle; margin-right: 12px; border: 2px solid #10b981; object-fit: cover;\">"
+                    + "      <span style=\"font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: 0.5px; vertical-align: middle;\">NOVA<span style=\"color: #38bdf8;\">DIGITAL</span></span>"
+                    + "    </div>"
+                    + "    <p style=\"margin: 10px 0 0 0; font-size: 13px; color: #94a3b8; letter-spacing: 1px; text-transform: uppercase;\">Official Payment Receipt</p>"
+                    + "  </div>"
+
+                    + "  <!-- Success badge -->"
+                    + "  <div style=\"background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); padding: 20px; text-align: center; border-bottom: 1px solid #a7f3d0;\">"
+                    + "    <div style=\"display: inline-flex; align-items: center; gap: 8px; background: #10b981; color: #fff; padding: 6px 18px; border-radius: 20px; font-size: 13px; font-weight: 700;\">"
+                    + "      ✓ &nbsp;PAYMENT CONFIRMED"
+                    + "    </div>"
+                    + "  </div>"
+
+                    + "  <!-- Body -->"
+                    + "  <div style=\"padding: 32px; line-height: 1.6; color: #334155;\">"
+                    + "    <h2 style=\"color: #0f172a; font-size: 20px; font-weight: 700; margin-top: 0; margin-bottom: 8px;\">Hello " + safeName + ",</h2>"
+                    + "    <p style=\"margin-top: 0; margin-bottom: 24px; font-size: 15px; color: #475569;\">Your payment has been successfully received and processed. Here is your official receipt for your records.</p>"
+
+                    + "    <!-- Receipt Box -->"
+                    + "    <div style=\"background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin-bottom: 24px;\">"
+                    + "      <h4 style=\"margin: 0 0 16px 0; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #64748b;\">Receipt Details</h4>"
+                    + "      <table style=\"width: 100%; border-collapse: collapse; font-size: 14px;\">"
+                    + "        <tr><td style=\"padding: 8px 0; font-weight: 600; color: #1e293b; width: 140px;\">Order Code:</td>"
+                    + "            <td style=\"padding: 8px 0; color: #475569; font-family: 'Courier New', monospace;\">#" + orderCode + "</td></tr>"
+                    + "        <tr><td style=\"padding: 8px 0; font-weight: 600; color: #1e293b;\">Payment For:</td>"
+                    + "            <td style=\"padding: 8px 0; color: #475569;\">" + paymentType + "</td></tr>"
+                    + "        <tr><td style=\"padding: 8px 0; font-weight: 600; color: #1e293b;\">Reference ID:</td>"
+                    + "            <td style=\"padding: 8px 0; color: #475569;\">" + referenceId + "</td></tr>"
+                    + "        <tr><td style=\"padding: 8px 0; font-weight: 600; color: #1e293b;\">Date Paid:</td>"
+                    + "            <td style=\"padding: 8px 0; color: #475569;\">" + paidDate + "</td></tr>"
+                    + "        <tr style=\"border-top: 2px dashed #e2e8f0;\">"
+                    + "            <td style=\"padding: 14px 0 6px 0; font-weight: 700; font-size: 15px; color: #0f172a;\">Amount Paid:</td>"
+                    + "            <td style=\"padding: 14px 0 6px 0; font-weight: 800; font-size: 16px; color: #10b981;\">" + formattedAmount + "</td></tr>"
+                    + "      </table>"
+                    + "    </div>"
+
+                    + "    <p style=\"font-size: 14px; color: #475569; margin-bottom: 0;\">If you have any questions about this payment or your services, please do not hesitate to contact our support team at <a href=\"mailto:contact@novadigital.com\" style=\"color: #2563eb; text-decoration: none; font-weight: 600;\">contact@novadigital.com</a>.</p>"
+                    + "  </div>"
+
+                    + "  <!-- Footer -->"
+                    + "  <div style=\"background-color: #f8fafc; padding: 20px 30px; border-top: 1px solid #e2e8f0; text-align: center;\">"
+                    + "    <p style=\"margin: 0; font-size: 12px; color: #94a3b8;\">This is an automated payment receipt. Please do not reply directly to this email.</p>"
+                    + "    <p style=\"margin: 6px 0 0 0; font-size: 12px; color: #94a3b8; font-weight: 600;\">© 2026 NovaDigital Co., Ltd. All rights reserved.</p>"
+                    + "  </div>"
+                    + "</div>";
+
+            helper.setText(htmlMsg, true);
+            mailSender.send(message);
+            System.out.println("[EmailService] Payment receipt email sent to: " + toEmail);
+        } catch (Exception e) {
+            System.err.println("[EmailService] Could not send payment receipt email: " + e.getMessage());
         }
     }
 }

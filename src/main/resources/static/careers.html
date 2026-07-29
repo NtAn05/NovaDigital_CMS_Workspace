@@ -946,6 +946,168 @@
       transform: none;
     }
 
+    /* ── JOB DETAIL MODAL STYLES ───────────────────────────────── */
+    .cr-detail-modal {
+      max-width: 740px;
+    }
+
+    .cr-detail-header-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.6rem;
+    }
+
+    .cr-detail-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 99px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+
+    .cr-detail-tag-sal {
+      background: #ecfdf5;
+      color: #047857;
+      border: 1px solid #a7f3d0;
+    }
+
+    .cr-detail-tag-loc {
+      background: #f0f9ff;
+      color: #0369a1;
+      border: 1px solid #bae6fd;
+    }
+
+    .cr-detail-tag-dept {
+      background: #f5f3ff;
+      color: #6d28d9;
+      border: 1px solid #ddd6fe;
+    }
+
+    .cr-detail-section {
+      margin-bottom: 1.75rem;
+    }
+
+    .cr-detail-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .cr-detail-section-title {
+      font-family: var(--font-heading);
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 0 0 0.75rem 0;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .cr-detail-section-title svg {
+      width: 18px;
+      height: 18px;
+      color: #2563eb;
+      flex-shrink: 0;
+    }
+
+    .cr-detail-text {
+      font-size: 0.9rem;
+      color: #475569;
+      line-height: 1.65;
+      margin: 0;
+    }
+
+    .cr-detail-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+    }
+
+    .cr-detail-list li {
+      position: relative;
+      padding-left: 1.5rem;
+      font-size: 0.88rem;
+      color: #334155;
+      line-height: 1.55;
+    }
+
+    .cr-detail-list li::before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      top: 1px;
+      color: #2563eb;
+      font-weight: 800;
+      font-size: 0.85rem;
+    }
+
+    .cr-detail-benefits-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .cr-benefit-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: #1e293b;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .cr-benefit-card:hover {
+      border-color: #cbd5e1;
+      background: #f1f5f9;
+    }
+
+    .cr-benefit-card-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: rgba(37, 99, 235, 0.1);
+      color: #2563eb;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+      font-size: 0.95rem;
+    }
+
+    .cr-btn-apply-primary {
+      background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+      color: #fff;
+      border: none;
+      padding: 0.75rem 1.75rem;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.92rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+      transition: all 0.25s ease;
+      font-family: var(--font-body);
+    }
+
+    .cr-btn-apply-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
+    }
+
     #cr-form-message {
       padding: .85rem 1rem;
       border-radius: 8px;
@@ -1212,10 +1374,10 @@
         <li><a href="services.html">Services</a></li>
         <li><a href="portfolio.html">Project</a></li>
         <li><a href="careers.html">Careers</a></li>
-        <li><a href="contact.html">Contact</a></li>
         <li><a href="feedback.html">Feedback</a></li>
+        <li><a href="contact.html">Contact</a></li>
         <li><a href="booking.html" class="nav-btn-booking">Book a Consultation</a></li>
-        <li><a href="#" class="nav-btn" id="default-get-started">Get Started Now</a></li>
+        <li><a href="#" class="nav-btn" id="default-get-started">Start Project</a></li>
       </ul>
     </nav>
   </header>
@@ -1445,6 +1607,36 @@
     </div>
   </div>
 
+  <!-- JOB DETAIL MODAL -->
+  <div class="cr-modal-backdrop" id="job-detail-modal" role="dialog" aria-modal="true" aria-labelledby="detail-modal-title">
+    <div class="cr-modal cr-detail-modal">
+      <div class="cr-modal-header">
+        <div>
+          <h2 class="cr-modal-title" id="detail-modal-title">Position Details</h2>
+          <div class="cr-detail-header-meta" id="detail-header-meta">
+            <!-- Dynamic tags injected by JS -->
+          </div>
+        </div>
+        <button class="cr-modal-close" onclick="closeJobDetailModal()" aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+      <div class="cr-modal-body" id="detail-modal-body">
+        <!-- Dynamic detail content injected by JS -->
+      </div>
+      <div class="cr-modal-footer">
+        <button class="cr-btn-cancel" type="button" onclick="closeJobDetailModal()">Close</button>
+        <button class="cr-btn-apply-primary" type="button" id="detail-apply-btn" onclick="triggerApplyFromDetail()">
+          <span>Apply Now / Ứng tuyển ngay</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- LOGIN REQUIRED → dùng auth modal từ main.js (cùng UX với Get Started) -->
   <!-- giữ lại div này để JS tham chiếu không bị lỗi, nhưng ẩn hoàn toàn -->
   <div class="cr-login-alert" id="cr-login-alert" style="display:none;"></div>
@@ -1635,20 +1827,301 @@
 
     /* ─── VACANCY DATA ───────────────────────────────────────── */
     var VACANCY_DATA = [
-      { id: 1, ws: 'Engineering', jt: 'FULL_TIME', title: 'Senior Java Backend Developer', sal: '$2,500 – $4,500 / month', loc: 'Hanoi (Hybrid)', reqs: ['4+ yrs Java / Spring Boot', 'RESTful API, Docker, Kubernetes', 'MySQL, PostgreSQL, Redis, Kafka', 'CI/CD Pipeline (GitLab CI)'] },
-      { id: 2, ws: 'Engineering', jt: 'FULL_TIME', title: 'ReactJS / NextJS Frontend Developer', sal: '$1,800 – $3,500 / month', loc: 'Ho Chi Minh (Onsite)', reqs: ['3+ yrs React.js or Next.js', 'TypeScript, Tailwind CSS', 'REST API / GraphQL integration', 'Web Performance Optimization'] },
-      { id: 3, ws: 'Engineering', jt: 'REMOTE', title: 'DevOps / Cloud Infrastructure Engineer', sal: '$3,000 – $5,000 / month', loc: 'Remote', reqs: ['3+ yrs AWS / GCP / Azure', 'Terraform, Ansible, Helm', 'Kubernetes cluster production', 'Prometheus, Grafana, ELK Stack'] },
-      { id: 4, ws: 'Engineering', jt: 'FULL_TIME', title: 'Mobile Developer (Flutter)', sal: '$2,000 – $3,800 / month', loc: 'Da Nang (Hybrid)', reqs: ['2+ yrs Flutter / Dart', 'App Store & Play Store published', 'Firebase, REST API, Payment SDK', 'State management: Bloc / Riverpod'] },
-      { id: 5, ws: 'Design', jt: 'FULL_TIME', title: 'Senior UI/UX Designer', sal: '$2,000 – $3,500 / month', loc: 'Ho Chi Minh (Hybrid)', reqs: ['4+ yrs digital product design', 'Figma, Principle, Framer', 'Design system & component library', 'User research, usability testing'] },
-      { id: 6, ws: 'Design', jt: 'CONTRACT', title: 'Motion Designer / Video Creator', sal: '$1,500 – $2,800 / month', loc: 'Remote', reqs: ['2+ yrs After Effects, Premiere', 'Lottie, GSAP web animation', 'Social media motion graphics', 'Product video portfolio'] },
-      { id: 7, ws: 'Marketing', jt: 'FULL_TIME', title: 'Digital Marketing Manager', sal: '$1,800 – $3,200 / month', loc: 'Hanoi (Onsite)', reqs: ['4+ yrs B2B Digital Marketing', 'Google Ads, Meta Ads, LinkedIn', 'SEO technical & content strategy', 'GA4, Looker Studio, Hotjar'] },
-      { id: 8, ws: 'Marketing', jt: 'FULL_TIME', title: 'Content Marketing Specialist', sal: '$1,000 – $1,800 / month', loc: 'Ho Chi Minh (Hybrid)', reqs: ['Blog & case study writing', 'SEO On-page, keyword research', 'WordPress, HubSpot or equivalent', 'Multi-platform content'] },
-      { id: 9, ws: 'Marketing', jt: 'PART_TIME', title: 'Social Media & Community Intern', sal: '$200 – $350 / month', loc: 'HCM or Remote', reqs: ['Junior yr 3-4 Marketing major', 'LinkedIn, Facebook, TikTok B2B', 'Canva design proficiency', 'Commit 20+ hrs / week'] },
-      { id: 10, ws: 'Sales', jt: 'FULL_TIME', title: 'Business Development Manager', sal: 'Base $2,000 + Uncapped Commission', loc: 'Hanoi / Ho Chi Minh', reqs: ['3+ yrs B2B IT / SaaS / Agency', 'C-level executive negotiation', 'HubSpot / Salesforce CRM', 'Fluent English'] },
-      { id: 11, ws: 'Sales', jt: 'FULL_TIME', title: 'Account Manager (Client Success)', sal: '$1,500 – $2,500 / month', loc: 'Ho Chi Minh (Hybrid)', reqs: ['2+ yrs enterprise client management', 'Technical requirements understanding', 'NPS, renewal rate, upsell KPIs', 'Notion, Jira or equivalent'] },
-      { id: 12, ws: 'HR', jt: 'FULL_TIME', title: 'HR Business Partner / Talent Acquisition', sal: '$1,200 – $2,200 / month', loc: 'Hanoi (Onsite)', reqs: ['3+ yrs IT recruitment', 'LinkedIn, GitHub, TopDev sourcing', 'Employer branding & culture', 'BambooHR, Workable, Greenhouse'] },
-      { id: 13, ws: 'Product', jt: 'FULL_TIME', title: 'Product Manager (SaaS Platform)', sal: '$2,500 – $4,000 / month', loc: 'Hanoi (Hybrid)', reqs: ['4+ yrs SaaS Product Management', 'PRD, User Story, Acceptance Criteria', 'Agile / Scrum methodology', 'Mixpanel, Amplitude analytics'] },
-      { id: 14, ws: 'Product', jt: 'FULL_TIME', title: 'Business Analyst (BA)', sal: '$1,500 – $2,800 / month', loc: 'Da Nang / Remote', reqs: ['2+ yrs software BA', 'BRD, Use Case, BPMN diagram', 'Jira, Confluence, Miro', 'Strong English documentation'] }
+      {
+        id: 1, ws: 'Engineering', jt: 'FULL_TIME', title: 'Senior Java Backend Developer', sal: '$2,500 – $4,500 / month', loc: 'Hanoi (Hybrid)',
+        overview: 'We are seeking an experienced Senior Java Backend Developer to architect and build high-throughput, microservice-based backend systems driving NovaDigital enterprise applications.',
+        responsibilities: [
+          'Design, implement, and maintain high-performance RESTful APIs & Microservices with Spring Boot.',
+          'Optimize database queries & schema design for MySQL, PostgreSQL, and Redis caching layers.',
+          'Implement event-driven architecture using Apache Kafka for real-time data streaming.',
+          'Set up and maintain CI/CD automated deployment pipelines with Docker & Kubernetes on cloud infrastructure.',
+          'Conduct code reviews, mentor mid/junior software engineers, and champion engineering best practices.'
+        ],
+        reqs: [
+          '4+ yrs experience developing backend enterprise systems with Java 17+, Spring Boot, Spring Security, and Spring Data JPA.',
+          'Solid understanding of Microservices design patterns, RESTful APIs, gRPC, and distributed caching (Redis).',
+          'Proficiency with relational databases (MySQL, PostgreSQL) and messaging queues (Kafka / RabbitMQ).',
+          'Hands-on experience with Docker, Kubernetes, and CI/CD tools (GitLab CI / GitHub Actions).',
+          'Strong problem-solving skills, system design acumen, and unit/integration testing experience (JUnit, Mockito).'
+        ],
+        benefits: [
+          'Competitive monthly salary $2,500 – $4,500 + semi-annual performance bonuses.',
+          'Premium PVI Health Insurance for employee & dependents.',
+          'Latest MacBook Pro M3 Max / high-spec laptop provided.',
+          'Flexible Hybrid work policy (2 days remote per week).',
+          'Annual company retreat & $500 yearly learning allowance.'
+        ]
+      },
+      {
+        id: 2, ws: 'Engineering', jt: 'FULL_TIME', title: 'ReactJS / NextJS Frontend Developer', sal: '$1,800 – $3,500 / month', loc: 'Ho Chi Minh (Onsite)',
+        overview: 'Join our dynamic frontend team to craft pixel-perfect, lightning-fast web applications using React 18+, Next.js App Router, TypeScript, and modern CSS design systems.',
+        responsibilities: [
+          'Develop dynamic, accessible, and responsive client-side web interfaces with Next.js & React.',
+          'Collaborate with UI/UX designers to translate Figma mockups into reusable component libraries.',
+          'Optimize web performance, Core Web Vitals, SSR/SSG caching, and SEO optimization.',
+          'Integrate RESTful and GraphQL APIs with robust state management (Zustand / Redux Toolkit).'
+        ],
+        reqs: [
+          '3+ yrs professional experience in web development using React.js, Next.js, and TypeScript.',
+          'Proficient with modern CSS Frameworks (Tailwind CSS, Styled Components, CSS Modules).',
+          'Solid understanding of Web Vitals, browser DOM rendering performance, and bundle optimization.',
+          'Experience with Git version control, client-side testing (Jest, React Testing Library), and REST/GraphQL.'
+        ],
+        benefits: [
+          'Salary range $1,800 – $3,500 with clear 6-month career review.',
+          'Comprehensive health insurance & annual health checkups.',
+          'Modern workstation equipped with dual 4K monitors & ergonomics.',
+          'Fun team culture with weekly tea-breaks and sports clubs.'
+        ]
+      },
+      {
+        id: 3, ws: 'Engineering', jt: 'REMOTE', title: 'DevOps / Cloud Infrastructure Engineer', sal: '$3,000 – $5,000 / month', loc: 'Remote',
+        overview: 'Drive our cloud infrastructure scalability, reliability, and security across AWS and GCP cloud environments.',
+        responsibilities: [
+          'Provision infrastructure as code (IaC) using Terraform, Ansible, and CloudFormation.',
+          'Manage multi-cluster Kubernetes deployments (EKS / GKE) with Helm and ArgoCD.',
+          'Build end-to-end telemetry, monitoring, and alerting dashboards using Prometheus, Grafana, and ELK Stack.',
+          'Implement zero-downtime deployment strategies and conduct periodic disaster recovery drills.'
+        ],
+        reqs: [
+          '3+ yrs experience managing production cloud infrastructure (AWS / GCP / Azure).',
+          'Deep expertise in Docker, Kubernetes, Terraform, Linux system administration, and shell scripting.',
+          'Hands-on experience with GitOps pipelines (ArgoCD / GitLab CI) and security compliance.',
+          'Ability to work independently in a 100% remote asynchronous team environment.'
+        ],
+        benefits: [
+          '100% Remote flexibility from anywhere in Vietnam or Asia.',
+          'Top tier remote salary $3,000 – $5,000 paid punctually.',
+          '$1,000 home office setup allowance upon passing probation.',
+          'Unlimited PTO policy & paid mental health recharge days.'
+        ]
+      },
+      {
+        id: 4, ws: 'Engineering', jt: 'FULL_TIME', title: 'Mobile Developer (Flutter)', sal: '$2,000 – $3,800 / month', loc: 'Da Nang (Hybrid)',
+        overview: 'Lead cross-platform mobile application development for iOS & Android targeting hundreds of thousands of active users using Flutter & Dart.',
+        responsibilities: [
+          'Build smooth, high-performance mobile applications using Flutter and Dart.',
+          'Implement robust app architectures using BLoC or Riverpod state management.',
+          'Integrate native iOS/Android features, Push Notifications, Payment Gateways, and Map SDKs.',
+          'Manage App Store Connect and Google Play Console release cycles.'
+        ],
+        reqs: [
+          '2+ yrs experience in Flutter & Dart development with published apps on App Store / Play Store.',
+          'Solid understanding of mobile UI/UX guidelines, animations, and responsive layout scaling.',
+          'Experience integrating REST APIs, WebSockets, Firebase, and local storage (Hive / SQLite).',
+          'Familiarity with native iOS (Swift) or Android (Kotlin) development is a plus.'
+        ],
+        benefits: [
+          'Salary range $2,000 – $3,800 with performance bonuses.',
+          'Relocation support for candidates moving to Da Nang.',
+          'Flexible hybrid work environment near the beach.',
+          'Full social insurance coverage according to VN Labor Law.'
+        ]
+      },
+      {
+        id: 5, ws: 'Design', jt: 'FULL_TIME', title: 'Senior UI/UX Designer', sal: '$2,000 – $3,500 / month', loc: 'Ho Chi Minh (Hybrid)',
+        overview: 'We are seeking a visionary Senior UI/UX Designer to craft intuitive, beautiful, and world-class web & mobile product experiences.',
+        responsibilities: [
+          'Lead product design from initial wireframing & user research to high-fidelity interactive prototypes.',
+          'Build, scale, and maintain comprehensive design systems and component libraries in Figma.',
+          'Conduct usability testing, user interviews, and analyze heatmaps/analytics to refine user flows.',
+          'Collaborate closely with product managers and engineers to ensure high-quality design execution.'
+        ],
+        reqs: [
+          '4+ yrs experience designing web and mobile digital products (SaaS, E-commerce, or Agency).',
+          'Mastery of Figma, Auto-layout, Variants, Principle, or Framer interactive prototyping.',
+          'Strong understanding of design tokens, accessibility (WCAG), and responsive design principles.',
+          'Outstanding portfolio demonstrating user-centered design process and visual aesthetic excellence.'
+        ],
+        benefits: [
+          'Competitive compensation package $2,000 – $3,500 + project performance bonus.',
+          'MacBook Pro + 4K Design Monitor provided.',
+          'Creative, open-office studio workspace in District 1, HCMC.',
+          'Design conference sponsorship & annual skill development budget.'
+        ]
+      },
+      {
+        id: 6, ws: 'Design', jt: 'CONTRACT', title: 'Motion Designer / Video Creator', sal: '$1,500 – $2,800 / month', loc: 'Remote',
+        overview: 'Create high-impact motion graphics, product promotional videos, and web micro-animations that captivate our digital audience.',
+        responsibilities: [
+          'Produce high-quality 2D/3D motion graphics, promo videos, and product explainer animations.',
+          'Design Lottie and SVG micro-animations for website and mobile app interactions.',
+          'Edit video content for social media channels (YouTube, LinkedIn, TikTok B2B campaigns).'
+        ],
+        reqs: [
+          '2+ yrs experience in Motion Graphics using Adobe After Effects, Premiere Pro, and Illustrator.',
+          'Proficiency with LottieFiles, Rive, or GSAP web animations is a major advantage.',
+          'Strong sense of timing, typography, visual storytelling, and sound design.',
+          'Impressive video reel / portfolio showcasing commercial or SaaS product motion design.'
+        ],
+        benefits: [
+          'Flexible project-based contract or full-time contract options.',
+          'Competitive remote salary $1,500 – $2,800 / month.',
+          'Flexible working hours & project autonomy.'
+        ]
+      },
+      {
+        id: 7, ws: 'Marketing', jt: 'FULL_TIME', title: 'Digital Marketing Manager', sal: '$1,800 – $3,200 / month', loc: 'Hanoi (Onsite)',
+        overview: 'Drive growth, customer acquisition, and brand visibility through data-driven digital marketing campaigns.',
+        responsibilities: [
+          'Plan and execute performance marketing campaigns across Google Ads, Meta, and LinkedIn Ads.',
+          'Manage SEO content strategy, technical SEO, and conversion rate optimization (CRO).',
+          'Track ROI, customer acquisition cost (CAC), and LTV using GA4, Looker Studio, and Hotjar.',
+          'Lead a team of content writers, media buyers, and designers to achieve growth KPIs.'
+        ],
+        reqs: [
+          '4+ yrs experience in B2B or Technology Digital Marketing management.',
+          'Deep hands-on experience with ad platforms (Google PPC, LinkedIn B2B, Meta Ads).',
+          'Analytical mindset with proficiency in Google Analytics 4, Tag Manager, and Looker Studio.',
+          'Strong leadership, budget management, and communication skills.'
+        ],
+        benefits: [
+          'Attractive base salary $1,800 – $3,200 + KPI performance bonuses.',
+          'Annual salary review & clear executive growth path.',
+          'Full healthcare insurance + annual health checkups.',
+          'Company trips and quarterly team building events.'
+        ]
+      },
+      {
+        id: 8, ws: 'Marketing', jt: 'FULL_TIME', title: 'Content Marketing Specialist', sal: '$1,000 – $1,800 / month', loc: 'Ho Chi Minh (Hybrid)',
+        overview: 'Craft compelling stories, technical case studies, blog posts, and whitepapers that position NovaDigital as an industry leader.',
+        responsibilities: [
+          'Write engaging blog posts, customer case studies, landing page copy, and email newsletters.',
+          'Conduct keyword research and optimize articles for search engine ranking (SEO).',
+          'Collaborate with design team to produce infographics, eBooks, and social media carousels.'
+        ],
+        reqs: [
+          '2+ yrs experience in content marketing, copywriting, or Tech journalism.',
+          'Proficiency with SEO tools (Ahrefs, SEMrush, Google Search Console) and CMS (WordPress/HubSpot).',
+          'Excellent written English & Vietnamese with attention to detail and tone of voice.',
+          'Ability to translate complex tech concepts into engaging content.'
+        ],
+        benefits: [
+          'Salary range $1,000 – $1,800 with performance bonuses.',
+          'Flexible hybrid working schedule (2 days work from home).',
+          'Creative freedom and supportive editorial team environment.'
+        ]
+      },
+      {
+        id: 9, ws: 'Marketing', jt: 'PART_TIME', title: 'Social Media & Community Intern', sal: '$200 – $350 / month', loc: 'HCM or Remote',
+        overview: 'Kickstart your marketing career by building and engaging our tech community across social media platforms.',
+        responsibilities: [
+          'Create weekly content schedules and posts for LinkedIn, Facebook, and tech communities.',
+          'Design basic visual assets using Canva or Figma templates.',
+          'Monitor social comments, engage with followers, and track weekly growth statistics.'
+        ],
+        reqs: [
+          '3rd or 4th year university student majoring in Marketing, Business, or Communications.',
+          'Passionate about technology, social media trends, and community building.',
+          'Basic design skills (Canva/Photoshop) and good writing ability.',
+          'Can commit at least 20–25 hours per week.'
+        ],
+        benefits: [
+          'Monthly allowance $200 – $350 + certificate of completion.',
+          'Mentorship from senior marketing managers.',
+          'Opportunity to convert to full-time position upon graduation.'
+        ]
+      },
+      {
+        id: 10, ws: 'Sales', jt: 'FULL_TIME', title: 'Business Development Manager', sal: 'Base $2,000 + Uncapped Commission', loc: 'Hanoi / Ho Chi Minh',
+        overview: 'Expand our market share by identifying key corporate accounts, building strategic relationships, and closing enterprise IT solution contracts.',
+        responsibilities: [
+          'Identify, prospect, and pitch software agency services to C-level executives.',
+          'Lead contract negotiations, proposal presentations, and client deal closing.',
+          'Manage deal pipeline and client communication inside HubSpot / Salesforce CRM.',
+          'Work with technical pre-sales team to craft custom enterprise software solutions.'
+        ],
+        reqs: [
+          '3+ yrs successful B2B sales experience in IT outsourcing, SaaS, or Digital Agency.',
+          'Proven track record of meeting or exceeding $200k+ annual revenue targets.',
+          'Strong consultative selling, negotiation, and presentation skills.',
+          'Fluent in professional English & Vietnamese.'
+        ],
+        benefits: [
+          'High base salary $2,000 + Uncapped sales commissions (OTE $4,000+ / month).',
+          'Client entertainment budget & company business trips allowance.',
+          'Executive healthcare package & premium perks.'
+        ]
+      },
+      {
+        id: 11, ws: 'Sales', jt: 'FULL_TIME', title: 'Account Manager (Client Success)', sal: '$1,500 – $2,500 / month', loc: 'Ho Chi Minh (Hybrid)',
+        overview: 'Nurture enterprise client relationships, ensure project satisfaction, and drive contract renewals and upsell opportunities.',
+        responsibilities: [
+          'Serve as the primary liaison between key corporate clients and internal software development teams.',
+          'Monitor client satisfaction (NPS), project milestones, and SLA compliance.',
+          'Identify upsell and cross-sell opportunities for additional digital products or services.'
+        ],
+        reqs: [
+          '2+ yrs experience in IT account management, client success, or project coordination.',
+          'Good understanding of software development lifecycle (SDLC) and Agile principles.',
+          'Excellent problem-solving, active listening, and relationship management skills.'
+        ],
+        benefits: [
+          'Salary range $1,500 – $2,500 + account performance commission.',
+          'Hybrid flexible working mode.',
+          'Full insurance coverage and healthcare plan.'
+        ]
+      },
+      {
+        id: 12, ws: 'HR', jt: 'FULL_TIME', title: 'HR Business Partner / Talent Acquisition', sal: '$1,200 – $2,200 / month', loc: 'Hanoi (Onsite)',
+        overview: 'Attract top tech talent, build strong employer branding, and champion our collaborative company culture.',
+        responsibilities: [
+          'Manage end-to-end recruitment pipelines for IT roles (Developers, DevOps, Product, UI/UX).',
+          'Source active and passive tech candidates via LinkedIn Recruiter, GitHub, TopDev, and tech networks.',
+          'Organize internal employee engagement programs, team building, and developer workshops.'
+        ],
+        reqs: [
+          '3+ yrs IT recruitment experience in headhunting firm or tech company.',
+          'Strong network among software engineers and tech professionals in Vietnam.',
+          'Proficiency with Applicant Tracking Systems (Workable, Greenhouse, BambooHR).',
+          'Warm, approachable personality with strong interpersonal skills.'
+        ],
+        benefits: [
+          'Competitive salary $1,200 – $2,200 + placement bonuses.',
+          'MacBook / Laptop provided.',
+          'Comprehensive health insurance & energetic work environment.'
+        ]
+      },
+      {
+        id: 13, ws: 'Product', jt: 'FULL_TIME', title: 'Product Manager (SaaS Platform)', sal: '$2,500 – $4,000 / month', loc: 'Hanoi (Hybrid)',
+        overview: 'Define product roadmap, prioritize features, and lead cross-functional engineering teams to ship high-impact SaaS products.',
+        responsibilities: [
+          'Own the product vision, roadmap, and sprint backlog for core SaaS modules.',
+          'Write detailed Product Requirement Documents (PRDs), user stories, and acceptance criteria.',
+          'Analyze product telemetry, funnel conversion rates, and user feedback (Mixpanel / Amplitude).',
+          'Lead daily standups, sprint planning, and retrospective meetings with engineering squads.'
+        ],
+        reqs: [
+          '4+ yrs experience as a Product Manager in SaaS, FinTech, or Enterprise Software.',
+          'Solid technical understanding of APIs, web architecture, and database concepts.',
+          'Proven ability to prioritize features using RICE / Kano frameworks.',
+          'Strong analytical skills with hands-on product analytics experience.'
+        ],
+        benefits: [
+          'Top-of-market salary $2,500 – $4,000 + ESOP stock options for key contributors.',
+          'Premium PVI Health Insurance & flexible hybrid schedule.',
+          'MacBook Pro & 4K monitor setup.'
+        ]
+      },
+      {
+        id: 14, ws: 'Product', jt: 'FULL_TIME', title: 'Business Analyst (BA)', sal: '$1,500 – $2,800 / month', loc: 'Da Nang / Remote',
+        overview: 'Bridge business needs and technical implementation by gathering requirements, modeling business processes, and defining system specifications.',
+        responsibilities: [
+          'Elicit and document business requirements into BRDs, Use Cases, and BPMN process flowcharts.',
+          'Work closely with client stakeholders and dev teams to ensure clear requirements comprehension.',
+          'Participate in UAT (User Acceptance Testing) and review deliverable compliance.'
+        ],
+        reqs: [
+          '2+ yrs experience as a Business Analyst in software development projects.',
+          'Proficiency in modeling tools (Visio, Draw.io, Miro) and issue trackers (Jira, Confluence).',
+          'Strong logical thinking, analytical skills, and fluent technical English documentation.'
+        ],
+        benefits: [
+          'Salary range $1,500 – $2,800 with 13th month bonus.',
+          'Remote work flexibility.',
+          'Full social insurance + private healthcare plan.'
+        ]
+      }
     ];
     var WS_META = {
       Engineering: { icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>', desc: 'Backend · Frontend · Mobile · DevOps' },
@@ -1687,13 +2160,13 @@
 
     function buildCard(v) {
       var jt = JT_MAP[v.jt] || { cls: '', label: v.jt };
-      return '<article class="cr-job-row" onclick="openApplyModal(' + v.id + ')">' +
+      return '<article class="cr-job-row" onclick="openJobDetailModal(' + v.id + ')">' +
         '<div class="cr-row-main">' +
         '<span class="cr-job-type ' + jt.cls + '">' + jt.label + '</span>' +
         '<h4 class="cr-job-title">' + v.title + '</h4>' +
         '</div>' +
         '<div class="cr-job-salary">' +
-        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M9 9h4.5a1.5 1.5 0 0 1 0 3H9m0 0h5a1.5 1.5 0 0 1 0 3H9"/></svg>' +
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg>' +
         v.sal +
         '</div>' +
         '<div class="cr-job-location">' +
@@ -1701,6 +2174,96 @@
         v.loc +
         '</div>' +
         '</article>';
+    }
+
+    /* ─── JOB DETAIL POPUP MODAL LOGIC ───────────────────────── */
+    var activeDetailJobId = null;
+
+    function openJobDetailModal(id) {
+      var v = VACANCY_DATA.find(function (item) { return item.id === id; });
+      if (!v) return;
+      activeDetailJobId = id;
+
+      var jt = JT_MAP[v.jt] || { cls: '', label: v.jt };
+
+      // Render Header Meta
+      document.getElementById('detail-modal-title').textContent = v.title;
+      var metaHtml =
+        '<span class="cr-detail-tag cr-detail-tag-dept">' + v.ws + '</span>' +
+        '<span class="cr-job-type ' + jt.cls + '">' + jt.label + '</span>' +
+        '<span class="cr-detail-tag cr-detail-tag-sal">💰 ' + v.sal + '</span>' +
+        '<span class="cr-detail-tag cr-detail-tag-loc">📍 ' + v.loc + '</span>';
+      document.getElementById('detail-header-meta').innerHTML = metaHtml;
+
+      // Responsibilities fallback if needed
+      var responsibilities = v.responsibilities || [
+        'Collaborate with cross-functional teams to design, implement, and deliver features.',
+        'Ensure high quality, maintainable code through unit testing and code reviews.',
+        'Monitor system performance and troubleshoot production issues promptly.',
+        'Contribute to technical strategy and continuous process improvements.'
+      ];
+
+      // Benefits fallback if needed
+      var benefits = v.benefits || [
+        'Competitive salary package with semi-annual review',
+        'Premium Health Insurance for employee & family',
+        'Modern high-spec hardware setup (MacBook Pro / Dell XPS)',
+        'Flexible working hours & hybrid remote work options',
+        'Annual company retreat & department bonding budgets',
+        'Continuous learning budget ($500/year for courses & certifications)'
+      ];
+
+      var html = '';
+
+      // Overview section
+      if (v.overview) {
+        html += '<div class="cr-detail-section">' +
+          '<h4 class="cr-detail-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>Job Overview / Tổng quan vị trí</h4>' +
+          '<p class="cr-detail-text">' + v.overview + '</p>' +
+          '</div>';
+      }
+
+      // Responsibilities section
+      html += '<div class="cr-detail-section">' +
+        '<h4 class="cr-detail-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Key Responsibilities / Nhiệm vụ chính</h4>' +
+        '<ul class="cr-detail-list">' + responsibilities.map(function (r) { return '<li>' + r + '</li>'; }).join('') + '</ul>' +
+        '</div>';
+
+      // Requirements section
+      html += '<div class="cr-detail-section">' +
+        '<h4 class="cr-detail-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Requirements & Qualifications / Yêu cầu ứng viên</h4>' +
+        '<ul class="cr-detail-list">' + v.reqs.map(function (rq) { return '<li>' + rq + '</li>'; }).join('') + '</ul>' +
+        '</div>';
+
+      // Benefits section
+      html += '<div class="cr-detail-section">' +
+        '<h4 class="cr-detail-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>Benefits & Perks / Quyền lợi được hưởng</h4>' +
+        '<div class="cr-detail-benefits-grid">' +
+        benefits.map(function (b) {
+          return '<div class="cr-benefit-card">' +
+            '<div class="cr-benefit-card-icon">⚡</div>' +
+            '<span>' + b + '</span>' +
+            '</div>';
+        }).join('') +
+        '</div></div>';
+
+      document.getElementById('detail-modal-body').innerHTML = html;
+
+      var detailModal = document.getElementById('job-detail-modal');
+      if (detailModal) detailModal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeJobDetailModal() {
+      var detailModal = document.getElementById('job-detail-modal');
+      if (detailModal) detailModal.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    function triggerApplyFromDetail() {
+      var id = activeDetailJobId;
+      closeJobDetailModal();
+      openApplyModal(id);
     }
 
     /* ─── DROPDOWN ───────────────────────────────────────────── */
@@ -1737,7 +2300,7 @@
         sessionStorage.setItem('crAutoApply', 'true');
         if (preId) sessionStorage.setItem('crAutoApplyId', preId);
 
-        // Dùng auth modal từ main.js (cùng UX với nút "Get Started Now")
+        // Dùng auth modal từ main.js (cùng UX với nút "Start Project")
         if (typeof openAuthModal === 'function') {
           openAuthModal('login');
         } else {
@@ -1764,10 +2327,14 @@
       window.location.href = 'login.html?redirect=' + encodeURIComponent('careers.html');
     }
 
+    var detailModalBackdrop = document.getElementById('job-detail-modal');
+    if (detailModalBackdrop) {
+      detailModalBackdrop.addEventListener('click', function (e) { if (e.target === this) closeJobDetailModal(); });
+    }
     document.getElementById('apply-modal').addEventListener('click', function (e) { if (e.target === this) closeApplyModal(); });
     document.getElementById('cr-login-alert').addEventListener('click', function (e) { if (e.target === this) closeLoginAlert(); });
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') { closeApplyModal(); closeLoginAlert(); }
+      if (e.key === 'Escape') { closeApplyModal(); closeJobDetailModal(); closeLoginAlert(); }
     });
 
     /* ─── FILE UPLOAD ────────────────────────────────────────── */
@@ -1888,7 +2455,7 @@
       setTimeout(function () { openApplyModal(vacId || null); }, 400);
     }
   </script>
-  <!-- main.js provides auth modal, navbar session sync & "Get Started Now" button logic -->
+  <!-- main.js provides auth modal, navbar session sync & "Start Project" button logic -->
   <script src="/js/main.js"></script>
 </body>
 

@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="NovaDigital - View and manage your job applications.">
+  <title>My Applications | NovaDigital</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .apps-page {
+      min-height: 100vh;
+      padding: 7rem 1.5rem 5rem;
+    }
+    .apps-container {
+      max-width: 980px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+    .apps-header {
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
+    .apps-header .hero-pill {
+      display: inline-block;
+      background: rgba(37, 99, 235, 0.08);
+      color: var(--primary);
+      border: 1px solid rgba(37, 99, 235, 0.18);
+      padding: 0.35rem 1.1rem;
+      border-radius: 50px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 0.9rem;
+    }
+    .apps-header h1 {
+      font-family: var(--font-heading);
+      font-size: 2.6rem;
+      font-weight: 800;
+      color: var(--text-dark);
+      line-height: 1.2;
+      margin-bottom: 0.5rem;
+    }
+    .apps-header p {
+      color: var(--text-muted);
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+    .apps-card {
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.55);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 10px 40px rgba(37, 99, 235, 0.07), 0 2px 8px rgba(0,0,0,0.04);
+      overflow: hidden;
+      padding: 2rem;
+    }
+    html.dark-theme .apps-card {
+      background: rgba(15, 23, 42, 0.6);
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+    
+    /* Table styles */
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+    th, td {
+      padding: 1rem;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+    html.dark-theme th, html.dark-theme td {
+      border-color: rgba(255,255,255,0.08);
+    }
+    th {
+      font-weight: 700;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: rgba(0,0,0,0.02);
+    }
+    html.dark-theme th {
+      background: rgba(255,255,255,0.02);
+    }
+    td {
+      font-size: 0.92rem;
+      color: var(--text-dark);
+    }
+    
+    /* Status Badges */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.3rem 0.8rem;
+      border-radius: 50px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: rgba(0,0,0,0.04);
+      color: var(--text-muted);
+    }
+    .status-badge .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .status-PENDING { background: rgba(245,158,11,0.1); color: #d97706; }
+    .status-INTERVIEW { background: rgba(59,130,246,0.1); color: #2563eb; }
+    .status-APPROVED { background: rgba(16,185,129,0.1); color: #059669; }
+    .status-REJECTED { background: rgba(239,68,68,0.1); color: #dc2626; }
+    
+    html.dark-theme .status-PENDING { color: #fbbf24; }
+    html.dark-theme .status-INTERVIEW { color: #60a5fa; }
+    html.dark-theme .status-APPROVED { color: #34d399; }
+    html.dark-theme .status-REJECTED { color: #f87171; }
+
+    .btn-view-cv {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.45rem 0.85rem;
+      background: transparent;
+      border: 1px solid rgba(0, 0, 0, 0.15);
+      color: var(--text-dark);
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.8rem;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-view-cv:hover {
+      background: rgba(0, 0, 0, 0.04);
+      border-color: rgba(0, 0, 0, 0.3);
+    }
+    html.dark-theme .btn-view-cv {
+      border-color: rgba(255, 255, 255, 0.2);
+      color: #f3f4f6;
+    }
+    html.dark-theme .btn-view-cv:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+
+    #loading-state, #empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-muted);
+    }
+    #empty-state { display: none; }
+
+    /* Action Buttons */
+    .action-group {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .btn-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: rgba(0,0,0,0.05);
+      color: var(--text-muted);
+    }
+    .btn-icon:hover { background: rgba(0,0,0,0.06); }
+    .btn-icon.edit { color: var(--primary); }
+    .btn-icon.delete { color: #dc2626; }
+    
+    /* Tags */
+    .job-type-tag {
+      display: inline-flex;
+      padding: .18rem .6rem;
+      border-radius: 99px;
+      font-size: .65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      width: fit-content;
+    }
+    .jt-full {
+      background: rgba(16, 185, 129, .08);
+      color: #059669;
+      border: 1px solid rgba(16, 185, 129, .2);
+    }
+    .jt-remote {
+      background: rgba(37, 99, 235, .08);
+      color: #2563eb;
+      border: 1px solid rgba(37, 99, 235, .2);
+    }
+
+    .btn-icon.edit:hover { background: rgba(59,130,246,0.15); color: #2563eb; }
+    .btn-icon.delete:hover { background: rgba(239,68,68,0.15); color: #dc2626; }
+    
+    html.dark-theme .btn-icon { background: rgba(255,255,255,0.05); }
+    html.dark-theme .btn-icon:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+    /* Job Details */
+    .job-details {
+      margin-top: 0.4rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .job-details p { margin: 0.1rem 0; }
+    .cover-letter-preview {
+      font-style: italic;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-top: 0.3rem !important;
+      opacity: 0.8;
+    }
+
+    /* Modals */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .modal-overlay.active { display: flex; opacity: 1; }
+    
+    .modal-box {
+      background: var(--bg-white, #ffffff);
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: var(--radius-lg);
+      width: 90%;
+      max-width: 500px;
+      padding: 2rem;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+      transform: translateY(20px);
+      transition: transform 0.3s;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-overlay.active .modal-box { transform: translateY(0); }
+    html.dark-theme .modal-box { border-color: rgba(255,255,255,0.1); }
+    
+    .modal-box.large { max-width: 900px; height: 85vh; display: flex; flex-direction: column; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .modal-header h2 { font-size: 1.5rem; margin: 0; color: var(--text-dark); }
+    .close-modal { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-muted); }
+    
+    .form-group { margin-bottom: 1.2rem; }
+    .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-dark); font-size: 0.9rem; }
+    .form-group input, .form-group textarea {
+      width: 100%; padding: 0.75rem 1rem; border: 1px solid rgba(0,0,0,0.15);
+      border-radius: 8px; font-family: inherit; font-size: 0.95rem;
+      background: rgba(255,255,255,0.8); color: var(--text-dark);
+    }
+    html.dark-theme .form-group input, html.dark-theme .form-group textarea {
+      background: rgba(15,23,42,0.5); border-color: rgba(255,255,255,0.15);
+    }
+    
+    #cv-frame { width: 100%; flex: 1; border: none; border-radius: 8px; background: #e5e7eb; }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <nav class="navbar">
+      <a href="index.html" class="logo" id="header-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+        <span>NovaDigital</span>
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="about.html">Introduce</a></li>
+        <li><a href="services.html">Services</a></li>
+        <li><a href="portfolio.html">Project</a></li>
+        <li><a href="careers.html">Careers</a></li>
+        <li><a href="feedback.html">Feedback</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        <li><a href="booking.html" class="nav-btn-booking">Book a Consultation</a></li>
+        <li><a href="#" class="nav-btn" id="default-get-started">Start Project</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main class="apps-page">
+    <div class="apps-container">
+      <div class="apps-header">
+        <span class="hero-pill">Career Portal</span>
+        <h1>My Applications</h1>
+        <p>Review the job positions you have applied for and view your submitted resumes.</p>
+      </div>
+
+      <div class="apps-card">
+        <div id="loading-state">Loading your applications...</div>
+        
+        <div id="empty-state">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity:0.5;">
+            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+          </svg>
+          <p>You haven't applied for any jobs yet.</p>
+          <a href="careers.html" class="btn btn-primary" style="margin-top: 1rem; display:inline-block; text-decoration:none;">Browse Jobs</a>
+        </div>
+
+        <div class="table-responsive" id="table-container" style="display:none;">
+          <table id="apps-table">
+            <thead>
+              <tr>
+                <th>Job Title</th>
+                <th>Applied Date</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="apps-tbody">
+              <!-- Rows injected via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- CV Viewer Modal -->
+  <div class="modal-overlay" id="cv-modal">
+    <div class="modal-box large">
+      <div class="modal-header">
+        <h2 id="cv-modal-title">View CV</h2>
+        <button class="close-modal" id="close-cv-modal">&times;</button>
+      </div>
+      <iframe id="cv-frame" src="" title="CV Viewer"></iframe>
+    </div>
+  </div>
+
+  <!-- Edit Application Modal -->
+  <div class="modal-overlay" id="edit-modal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2>Edit Application</h2>
+        <button class="close-modal" id="close-edit-modal">&times;</button>
+      </div>
+      <form id="edit-form">
+        <input type="hidden" id="edit-id">
+        <div class="form-group">
+          <label>Full Name *</label>
+          <input type="text" id="edit-name" required>
+        </div>
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input type="text" id="edit-phone">
+        </div>
+        <div class="form-group">
+          <label>Cover Letter</label>
+          <textarea id="edit-cover" rows="4"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Upload New CV (PDF only) - <em>Leave blank to keep current CV</em></label>
+          <input type="file" id="edit-cv-file" accept="application/pdf">
+        </div>
+        <div id="edit-error" style="color:#dc2626; font-size:0.85rem; margin-bottom:1rem; display:none;"></div>
+        <button type="submit" class="btn btn-primary" style="width:100%">Save Changes</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Confirm Delete Modal -->
+  <div class="modal-overlay" id="confirm-modal">
+    <div class="modal-box" style="max-width: 400px; text-align: center; padding: 2.5rem 2rem;">
+      <div style="margin-bottom: 1rem; color: #dc2626; display: flex; justify-content: center;">
+        <div style="width: 60px; height: 60px; background: rgba(239,68,68,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+        </div>
+      </div>
+      <h2 style="font-size: 1.4rem; margin-bottom: 0.5rem; color: var(--text-dark);">Withdraw Application?</h2>
+      <p style="color: var(--text-muted); margin-bottom: 1.8rem; font-size: 0.95rem; line-height: 1.5;">Are you sure you want to withdraw this application? This action cannot be undone.</p>
+      <div style="display: flex; gap: 1rem; justify-content: center;">
+        <button id="cancel-delete-btn" style="flex:1; background: rgba(0,0,0,0.05); color: var(--text-dark); border:none; border-radius:8px; padding: 0.75rem 1rem; font-weight:600; cursor:pointer; font-family: inherit; font-size:0.95rem; transition: background 0.2s;">Cancel</button>
+        <button id="confirm-delete-btn" style="flex:1; background: #dc2626; color: #fff; border:none; border-radius:8px; padding: 0.75rem 1rem; font-weight:600; cursor:pointer; font-family: inherit; font-size:0.95rem; transition: background 0.2s; box-shadow: 0 4px 6px -1px rgba(239,68,68,0.2);">Withdraw</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer Section -->
+  <footer>
+    <div class="footer-container">
+      <div class="footer-col">
+        <a href="index.html" class="footer-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+          <span>NovaDigital</span>
+        </a>
+        <p>Bring your business closer to millions of customers through comprehensive UI/UX design and technology solutions.</p>
+        <div class="social-icons-footer" style="margin-top: 1.5rem;">
+          <a href="#" aria-label="Facebook">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z"/></svg>
+          </a>
+          <a href="#" aria-label="Github">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          </a>
+          <a href="#" aria-label="LinkedIn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.779-1.75-1.75s.784-1.75 1.75-1.75 1.75.779 1.75 1.75-.784 1.75-1.75 1.75zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
+          </a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h3>Quick Links</h3>
+        <ul class="footer-links">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="about.html">About Us</a></li>
+          <li><a href="services.html">Services</a></li>
+          <li><a href="portfolio.html">Projects</a></li>
+          <li><a href="contact.html">Contact</a></li>
+          <li><a href="booking.html">Book Consultation</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h3>Contact Us</h3>
+        <div class="footer-info">
+          <div class="footer-info-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+              <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+            <span>Ho Chi Minh City, Vietnam</span>
+          </div>
+          <div class="footer-info-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+            <a href="mailto:contact@novadigital.com">contact@novadigital.com</a>
+          </div>
+          <div class="footer-info-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8 19.79 19.79 0 01.02 1.18 2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"></path>
+            </svg>
+            <span>+84 (0) 123 456 789</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 NovaDigital Creative Agency. All rights reserved.</p>
+      <p style="opacity: 0.5; font-size: 0.82rem;">Crafted with ♥ in Vietnam</p>
+    </div>
+  </footer>
+
+  <script src="/js/main.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      if (!token) {
+        window.location.href = 'login.html?redirect=' + encodeURIComponent(window.location.pathname);
+        return;
+      }
+
+      const tbody = document.getElementById('apps-tbody');
+      const loading = document.getElementById('loading-state');
+      const empty = document.getElementById('empty-state');
+      const tableContainer = document.getElementById('table-container');
+
+      try {
+        const res = await fetch('/api/vacancies/applications/my', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (res.status === 401 || res.status === 403) {
+          localStorage.removeItem('token');
+          sessionStorage.removeItem('token');
+          window.location.href = 'login.html';
+          return;
+        }
+
+        const apps = await res.json();
+        loading.style.display = 'none';
+
+        if (!apps || apps.length === 0) {
+          empty.style.display = 'block';
+          return;
+        }
+
+        tableContainer.style.display = 'block';
+        window.myAppsData = apps; // Store globally for edit access
+        
+        apps.forEach((app, index) => {
+          const tr = document.createElement('tr');
+          
+          const dateStr = new Date(app.appliedAt).toLocaleDateString('en-US', {
+            year: 'numeric', month: 'short', day: 'numeric'
+          });
+
+          const statusMap = {
+            PENDING: 'Pending',
+            INTERVIEW: 'Interviewing',
+            APPROVED: 'Approved',
+            REJECTED: 'Rejected'
+          };
+          const label = statusMap[app.status] || app.status;
+
+          // Action buttons logic
+          let actionHtml = `
+            <div class="action-group">
+              <button class="btn-view-cv" onclick="openCvModal('${app.resumeUrl}')" title="View CV">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                View CV
+              </button>
+          `;
+          
+          if (app.status === 'PENDING') {
+            actionHtml += `
+              <button class="btn-icon edit" onclick="openEditModal(${index})" title="Edit Application">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+              </button>
+              <button class="btn-icon delete" onclick="deleteApplication(${app.id})" title="Withdraw Application">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+              </button>
+            `;
+          }
+          actionHtml += `</div>`;
+
+          tr.innerHTML = `
+            <td>
+              <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <div style="width: 40px; height: 40px; border-radius: 8px; background: rgba(37,99,235,0.08); color: var(--primary); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                </div>
+                <div>
+                  <strong style="font-size: 1.05rem; color: var(--text-dark);">${app.vacancyTitle}</strong>
+                  <div style="margin-top: 0.35rem; display: flex; gap: 0.4rem;">
+                    ${app.id % 2 === 0 
+                      ? '<span class="job-type-tag jt-remote">Remote</span>' 
+                      : '<span class="job-type-tag jt-full">Full-time</span>'}
+                  </div>
+                </div>
+              </div>
+            </td>
+            <td style="vertical-align:middle;">${dateStr}</td>
+            <td style="vertical-align:middle;">
+              <span class="status-badge status-${app.status}">
+                <span class="dot"></span> ${label}
+              </span>
+            </td>
+            <td style="vertical-align:middle;">
+              ${actionHtml}
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+      } catch (err) {
+        loading.textContent = 'Failed to load applications. Please try again.';
+      }
+    });
+
+    // ── Modal Logic ──
+    
+    // CV Modal
+    const cvModal = document.getElementById('cv-modal');
+    const cvFrame = document.getElementById('cv-frame');
+    document.getElementById('close-cv-modal').onclick = () => { cvModal.classList.remove('active'); cvFrame.src = ""; };
+    window.openCvModal = function(url) {
+      cvFrame.src = url;
+      cvModal.classList.add('active');
+    };
+
+    // Edit Modal
+    const editModal = document.getElementById('edit-modal');
+    document.getElementById('close-edit-modal').onclick = () => { editModal.classList.remove('active'); };
+    
+    window.openEditModal = function(index) {
+      const app = window.myAppsData[index];
+      document.getElementById('edit-id').value = app.id;
+      document.getElementById('edit-name').value = app.applicantName;
+      document.getElementById('edit-phone').value = app.applicantPhone || '';
+      document.getElementById('edit-cover').value = app.coverLetter || '';
+      document.getElementById('edit-cv-file').value = '';
+      document.getElementById('edit-error').style.display = 'none';
+      editModal.classList.add('active');
+    };
+
+    document.getElementById('edit-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('edit-id').value;
+      const btn = e.target.querySelector('button[type="submit"]');
+      const errorDiv = document.getElementById('edit-error');
+      
+      const fileInput = document.getElementById('edit-cv-file');
+      let newResumeUrl = null;
+
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
+      errorDiv.style.display = 'none';
+
+      try {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        
+        // 1. Upload new CV if selected
+        if (fileInput.files.length > 0) {
+          const formData = new FormData();
+          formData.append('file', fileInput.files[0]);
+          const uploadRes = await fetch('/api/upload', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            body: formData
+          });
+          const uploadData = await uploadRes.json();
+          if (!uploadRes.ok) throw new Error(uploadData.message || 'CV Upload failed');
+          newResumeUrl = uploadData.url;
+        }
+
+        // 2. Update Application
+        const updateData = {
+          applicantName: document.getElementById('edit-name').value,
+          applicantPhone: document.getElementById('edit-phone').value,
+          coverLetter: document.getElementById('edit-cover').value
+        };
+        if (newResumeUrl) updateData.resumeUrl = newResumeUrl;
+
+        const res = await fetch(`/api/vacancies/applications/my/${id}`, {
+          method: 'PUT',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` 
+          },
+          body: JSON.stringify(updateData)
+        });
+        
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Update failed');
+        
+        // Reload page to reflect changes
+        window.location.reload();
+      } catch (err) {
+        errorDiv.textContent = err.message;
+        errorDiv.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Save Changes';
+      }
+    });
+
+    // Delete Modal Logic
+    let applicationToDeleteId = null;
+    const confirmModal = document.getElementById('confirm-modal');
+    
+    document.getElementById('cancel-delete-btn').onclick = () => {
+      confirmModal.classList.remove('active');
+      applicationToDeleteId = null;
+    };
+
+    window.deleteApplication = function(id) {
+      applicationToDeleteId = id;
+      confirmModal.classList.add('active');
+    };
+
+    document.getElementById('confirm-delete-btn').addEventListener('click', async () => {
+      if (!applicationToDeleteId) return;
+      const btn = document.getElementById('confirm-delete-btn');
+      btn.disabled = true;
+      btn.textContent = 'Withdrawing...';
+      
+      try {
+        const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+        const res = await fetch(`/api/vacancies/applications/my/${applicationToDeleteId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message || 'Deletion failed');
+        
+        window.location.reload();
+      } catch (err) {
+        alert(err.message);
+        btn.disabled = false;
+        btn.textContent = 'Withdraw';
+      }
+    });
+  </script>
+</body>
+</html>

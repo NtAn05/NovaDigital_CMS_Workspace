@@ -13,4 +13,5 @@ public interface DataAuditLogRepository extends JpaRepository<DataAuditLog, Long
     List<DataAuditLog> findAllByOrderByCreatedAtDesc();
     Page<DataAuditLog> findAllByOrderByCreatedAtDesc(Pageable pageable);
     Page<DataAuditLog> findByUsernameOrderByCreatedAtDesc(String username, Pageable pageable);
+    Page<DataAuditLog> findByTableNameContainingIgnoreCaseAndActionContainingIgnoreCaseOrderByCreatedAtDesc(String tableName, String action, Pageable pageable);
 }

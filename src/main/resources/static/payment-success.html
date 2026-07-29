@@ -160,10 +160,10 @@
         <li><a href="services.html">Services</a></li>
         <li><a href="portfolio.html">Project</a></li>
         <li><a href="careers.html">Careers</a></li>
-        <li><a href="contact.html">Contact</a></li>
         <li><a href="feedback.html">Feedback</a></li>
+        <li><a href="contact.html">Contact</a></li>
         <li><a href="booking.html" class="nav-btn-booking">Book a Consultation</a></li>
-        <li><a href="#" class="nav-btn" id="default-get-started">Get Started Now</a></li>
+        <li><a href="#" class="nav-btn" id="default-get-started">Start Project</a></li>
       </ul>
     </nav>
   </header>
@@ -315,9 +315,15 @@
           if (data.milestoneId && data.milestoneId > 0) {
             document.getElementById('id-label').textContent = 'Phase (Milestone) ID:';
             document.getElementById('booking-id-val').textContent = '#' + data.milestoneId;
-          } else {
+          } else if (data.projectId && data.projectId > 0) {
+            document.getElementById('id-label').textContent = 'Project (Deposit) ID:';
+            document.getElementById('booking-id-val').textContent = '#' + data.projectId;
+          } else if (data.appointmentId && data.appointmentId > 0) {
             document.getElementById('id-label').textContent = 'Booking ID:';
-            document.getElementById('booking-id-val').textContent = '#' + (data.appointmentId || '-');
+            document.getElementById('booking-id-val').textContent = '#' + data.appointmentId;
+          } else {
+            document.getElementById('id-label').textContent = 'Reference:';
+            document.getElementById('booking-id-val').textContent = orderCode;
           }
           successState.style.display = 'block';
         } else {
@@ -329,9 +335,6 @@
         verifyingState.style.display = 'none';
         errorState.style.display = 'block';
         errorDesc.textContent = err.message || 'Network error, failed to connect to the server.';
-      }
-    });
-  </script>�ng, khÃ´ng thá»ƒ káº¿t ná»‘i tá»›i mÃ¡y chá»§.';
       }
     });
   </script>

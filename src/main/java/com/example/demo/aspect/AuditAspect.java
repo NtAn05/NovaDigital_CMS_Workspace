@@ -114,6 +114,17 @@ public class AuditAspect {
             errorMessage = ex.getClass().getSimpleName() + ": " + ex.getMessage();
             throw ex; // Re-throw for caller to handle as normal
         } finally {
+            // Fallback for tableName if left empty in @Auditable annotation
+            if (tableName == null || tableName.isBlank()) {
+                if (result != null) {
+                    tableName = result.getClass().getSimpleName().toLowerCase();
+                } else if (args != null && args.length > 0 && args[0] != null) {
+                    tableName = args[0].getClass().getSimpleName().toLowerCase();
+                } else {
+                    tableName = "system";
+                }
+            }
+
             // ═══════════════════════════════════════════════
             // STEP 4: PUBLISH EVENT (ALWAYS RUNS, WHETHER SUCCESS OR FAIL)
             // ═══════════════════════════════════════════════
@@ -126,7 +137,7 @@ public class AuditAspect {
                     if ("CREATE".equalsIgnoreCase(action)) {
                         diffDetail = com.example.demo.utils.JsonDiffUtils.getDiff(null, newState);
                     } else if ("DELETE".equalsIgnoreCase(action)) {
-                        diffDetail = com.example.demo.utils.JsonDiffUtils.getDiff(oldState, null);
+                        diffDetail = oldState != null ? com.example.demo.utils.JsonDiffUtils.getDiff(oldState, null) : requestPayload;
                     } else {
                         diffDetail = com.example.demo.utils.JsonDiffUtils.getDiff(oldState, newState);
                     }

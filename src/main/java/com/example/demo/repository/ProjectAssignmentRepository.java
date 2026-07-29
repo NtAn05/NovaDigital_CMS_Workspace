@@ -20,6 +20,9 @@ public interface ProjectAssignmentRepository extends JpaRepository<ProjectAssign
     /** All projects a user is assigned to with a specific role. */
     List<ProjectAssignment> findByUserIdAndProjectRole(Long userId, ProjectRole role);
 
+    /** Find an assignment on a project with a specific role (e.g. PM). */
+    Optional<ProjectAssignment> findByProjectIdAndProjectRole(Long projectId, ProjectRole role);
+
     /** Find a specific assignment (user on project). */
     Optional<ProjectAssignment> findByProjectIdAndUserId(Long projectId, Long userId);
 

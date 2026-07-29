@@ -51,6 +51,13 @@ public class ConsultationAppointment {
     @Column(name = "total_price", nullable = false)
     private Double totalPrice;
 
+    // Admin-editable price for THIS specific booking only (snapshot of Service.base_price at
+    // creation time). Admin can later adjust it from the Bookings panel; when updated, the
+    // total_price is recalculated as base_price + sum of the addons the client selected for
+    // this appointment. Does NOT affect the global Service.base_price or other bookings.
+    @Column(name = "base_price")
+    private Double basePrice;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 

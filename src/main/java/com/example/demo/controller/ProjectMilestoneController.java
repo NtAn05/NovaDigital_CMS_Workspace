@@ -45,6 +45,14 @@ public class ProjectMilestoneController {
     @Autowired
     private SseBroadcastService sseBroadcastService;
 
+    @Autowired
+    private com.example.demo.service.SseEmitterService sseEmitterService;
+
+    @GetMapping(value = "/api/sse/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter streamQuotations() {
+        return sseEmitterService.createEmitter();
+    }
+
     // ── GET ALL ──────────────────────────────────────────────────────────────
 
     /**

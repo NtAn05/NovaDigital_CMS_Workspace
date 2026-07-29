@@ -190,7 +190,7 @@
       <ul class="nav-links">
         <li><a href="index.html">Home</a></li>
         <li><a href="careers.html" class="active">Careers</a></li>
-        <li><a href="#" class="nav-btn" id="default-get-started">Get Started Now</a></li>
+        <li><a href="#" class="nav-btn" id="default-get-started">Start Project</a></li>
       </ul>
     </nav>
   </header>
@@ -269,8 +269,9 @@
 
   <script>
     // ── Auth guard: login required ────────────────────────
-    const token    = localStorage.getItem('token');
-    const userData = JSON.parse(localStorage.getItem('user') || '{}');
+    const token    = localStorage.getItem('token') || sessionStorage.getItem('token');
+    const userDataStr = localStorage.getItem('user') || sessionStorage.getItem('user');
+    const userData = JSON.parse(userDataStr || '{}');
 
     if (!token) {
       const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);

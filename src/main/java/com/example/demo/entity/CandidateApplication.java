@@ -1,5 +1,6 @@
 package com.example.demo.entity;
 
+import com.example.demo.entity.enums.ApplicationStatus;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -46,8 +47,21 @@ public class CandidateApplication {
     @Column(name = "applied_at")
     private LocalDateTime appliedAt;
 
+    // ── HR Recruitment Pipeline Status ──
+    /**
+     * Current stage in the recruitment workflow.
+     * Default: PENDING (set automatically on creation).
+     * HR can advance to: INTERVIEW → APPROVED / REJECTED.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private ApplicationStatus status = ApplicationStatus.PENDING;
+
     @PrePersist
     protected void onCreate() {
         this.appliedAt = LocalDateTime.now();
+        if (this.status == null) {
+            this.status = ApplicationStatus.PENDING;
+        }
     }
 }

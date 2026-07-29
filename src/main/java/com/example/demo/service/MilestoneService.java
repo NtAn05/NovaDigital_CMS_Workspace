@@ -15,10 +15,12 @@ import com.example.demo.repository.MilestoneMutationLogRepository;
 import com.example.demo.repository.ProjectAssignmentRepository;
 import com.example.demo.repository.ProjectMilestoneRepository;
 import com.example.demo.repository.ProjectRepository;
+import com.example.demo.repository.ResourceAllocationRepository;
 import com.example.demo.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
+import com.example.demo.annotation.Auditable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -59,6 +61,9 @@ public class MilestoneService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private ResourceAllocationRepository resourceAllocationRepository;
+
     // ── READ ─────────────────────────────────────────────────────────────────
 
     /**
@@ -98,6 +103,7 @@ public class MilestoneService {
      * @throws IllegalArgumentException if a milestone with the same name already exists in the project
      */
     @Transactional
+    @Auditable(action = "CREATE", table = "project_milestones")
     public MilestoneResponse createMilestone(Long projectId,
                                              MilestoneCreateRequest request,
                                              String performedBy) {
@@ -263,6 +269,7 @@ public class MilestoneService {
      * @throws IllegalArgumentException if milestone does not belong to the specified project
      */
     @Transactional
+    @Auditable(action = "DELETE", table = "project_milestones")
     public void deleteMilestone(Long projectId, Long milestoneId, String performedBy) {
         ensureProjectExists(projectId);
         ProjectMilestone milestone = findMilestoneOrThrow(milestoneId);
@@ -273,6 +280,8 @@ public class MilestoneService {
         }
 
         String milestoneName = milestone.getName();
+        // Clean up any resource allocations linked to this milestone
+        resourceAllocationRepository.deleteByMilestoneId(milestoneId);
         milestoneRepository.deleteById(milestoneId);
 
         // Log the deletion

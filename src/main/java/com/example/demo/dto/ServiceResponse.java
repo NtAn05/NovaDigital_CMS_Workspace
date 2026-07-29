@@ -10,5 +10,5 @@ public class ServiceResponse {
     private String title;
     private String description;
     private String iconUrl;
+    private Double basePrice;
 }
-

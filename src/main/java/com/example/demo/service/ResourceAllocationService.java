@@ -10,6 +10,7 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.Authentication;
+import com.example.demo.annotation.Auditable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -144,6 +145,7 @@ public class ResourceAllocationService {
     }
 
     @Transactional
+    @Auditable(action = "CREATE", table = "resource_allocations")
     public ResourceAllocationResponse create(ResourceAllocationRequest request,
                                              Authentication authentication) {
         User actor = resolveActor(authentication);
@@ -166,6 +168,7 @@ public class ResourceAllocationService {
     }
 
     @Transactional
+    @Auditable(action = "UPDATE", table = "resource_allocations")
     public ResourceAllocationResponse update(Long id,
                                              ResourceAllocationRequest request,
                                              Authentication authentication) {
@@ -192,6 +195,7 @@ public class ResourceAllocationService {
     }
 
     @Transactional
+    @Auditable(action = "DELETE", table = "resource_allocations")
     public void delete(Long id, Authentication authentication) {
         User actor = resolveActor(authentication);
         ResourceAllocation allocation = allocationRepository.findById(id)
@@ -224,6 +228,10 @@ public class ResourceAllocationService {
                                                 int percentage,
                                                 LocalDate startDate,
                                                 LocalDate endDate) {
+        if (percentage < 1 || percentage > 100) {
+            throw new IllegalArgumentException("Allocation percentage must be between 1% and 100%.");
+        }
+
         if (!consumesCapacity(status)) {
             return;
         }
@@ -243,12 +251,14 @@ public class ResourceAllocationService {
                     staff.getFullName() + " already has an overlapping allocation for " + target + ".");
         }
 
+        // Bước kiểm tra giới hạn công việc: Gọi WorkloadCapacityCalculator để kiểm tra tổng % phân bổ
+        // trong tất cả các dự án của nhân sự đó không vượt quá 100% ở bất kỳ ngày nào
         WorkloadCapacityCalculator.findConflict(overlapping, startDate, endDate, percentage)
                 .ifPresent(conflict -> {
                     throw new IllegalArgumentException(
-                            "Workload limit exceeded: " + staff.getFullName() + " would reach "
-                                    + conflict.workloadPercentage() + "% on " + conflict.date()
-                                    + ". Maximum allowed workload is 100%.");
+                            "Vượt quá giới hạn công việc: Nhân sự " + staff.getFullName() + " sẽ chạm mốc "
+                                    + conflict.workloadPercentage() + "% vào ngày " + conflict.date()
+                                    + ". Khối lượng công việc tối đa cho phép là 100%.");
                 });
     }
 
@@ -335,8 +345,11 @@ public class ResourceAllocationService {
     }
 
     private void validateDates(LocalDate startDate, LocalDate endDate) {
+        if (startDate == null || endDate == null) {
+            throw new IllegalArgumentException("Start date and end date are required.");
+        }
         if (endDate.isBefore(startDate)) {
-            throw new IllegalArgumentException("End date cannot be earlier than start date.");
+            throw new IllegalArgumentException("End date (" + endDate + ") cannot be earlier than start date (" + startDate + ").");
         }
     }
 

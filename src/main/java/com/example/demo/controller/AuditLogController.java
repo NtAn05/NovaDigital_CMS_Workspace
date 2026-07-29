@@ -32,11 +32,36 @@ public class AuditLogController {
         this.userRepository = userRepository;
     }
 
-    // Old unpaginated endpoint (kept for compatibility or remove it, but better replace with paginated if needed, or leave it)
     @GetMapping("/data")
-    public ResponseEntity<List<DataAuditLog>> getDataLogs() {
-        List<DataAuditLog> logs = dataAuditLogRepository.findAllByOrderByCreatedAtDesc();
-        return ResponseEntity.ok(logs);
+    public ResponseEntity<Page<com.example.demo.dto.DataAuditLogDTO>> getDataLogs(
+            @RequestParam(required = false, defaultValue = "") String tableName,
+            @RequestParam(required = false, defaultValue = "") String action,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<DataAuditLog> logs = dataAuditLogRepository
+                .findByTableNameContainingIgnoreCaseAndActionContainingIgnoreCaseOrderByCreatedAtDesc(tableName, action, pageable);
+        
+        Page<com.example.demo.dto.DataAuditLogDTO> dtoPage = logs.map(log -> {
+            String role = "Unknown";
+            if (log.getUsername() != null && !log.getUsername().isEmpty()) {
+                java.util.Optional<User> userOpt = userRepository.findByUsername(log.getUsername());
+                if (userOpt.isPresent()) {
+                    role = userOpt.get().getRole();
+                }
+            }
+            return new com.example.demo.dto.DataAuditLogDTO(
+                    log.getId(),
+                    log.getUsername(),
+                    role,
+                    log.getAction(),
+                    log.getTableName(),
+                    log.getDetail(),
+                    log.getCreatedAt()
+            );
+        });
+
+        return ResponseEntity.ok(dtoPage);
     }
 
     @GetMapping("/data-users")

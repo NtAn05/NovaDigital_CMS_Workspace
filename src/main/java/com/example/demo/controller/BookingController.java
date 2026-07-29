@@ -15,6 +15,7 @@ import com.example.demo.repository.NotificationRepository;
 import com.example.demo.repository.ServiceRepository;
 import com.example.demo.service.BookingService;
 import com.example.demo.service.CaptchaService;
+import com.example.demo.service.EmailService;
 import com.example.demo.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -53,7 +54,18 @@ public class BookingController {
     @Autowired
     private CaptchaService captchaService;
 
-    // ── Anti-spam: generate new captcha characters ──
+    @Autowired
+    private EmailService emailService;
+
+    @Autowired
+    private com.example.demo.repository.QuotationRepository quotationRepository;
+
+    @Autowired
+    private com.example.demo.repository.QuotationItemRepository quotationItemRepository;
+
+    /**
+     * API Sinh mã Captcha ngẫu nhiên chống Spam cho Form Đặt lịch tư vấn
+     */
     @GetMapping("/captcha")
     public ResponseEntity<?> getCaptcha() {
         return ResponseEntity.ok(captchaService.generateCaptcha());
@@ -158,6 +170,9 @@ public class BookingController {
         appointment.setMessageContent(request.getMessageContent());
         appointment.setAttachmentUrl(request.getAttachmentUrl());
         appointment.setTotalPrice(totalPrice);
+        // Snapshot the service base price on this appointment so admins can later adjust it
+        // per-booking (e.g. custom quote) without affecting the global Service.base_price.
+        appointment.setBasePrice(basePrice);
 
         ConsultationAppointment saved = appointmentRepository.save(appointment);
 
@@ -189,11 +204,8 @@ public class BookingController {
         List<BookingResponse> responses = appointments.stream().map(a -> {
             List<Long> addonIds = appointmentAddonRepository.findByAppointmentId(a.getId())
                     .stream().map(AppointmentAddon::getAddonId).collect(Collectors.toList());
-            double basePrice = 0;
-            try {
-                basePrice = bookingService.resolveBasePrice(a.getServiceId());
-            } catch (Exception e) {}
-            double addonsPrice = a.getTotalPrice() - basePrice;
+            double basePrice = resolveAppointmentBasePrice(a);
+            double addonsPrice = bookingService.calculateAddonsPriceForAppointment(a.getId());
             return toResponse(a, basePrice, addonsPrice, addonIds);
         }).collect(Collectors.toList());
         return ResponseEntity.ok(responses);
@@ -205,11 +217,8 @@ public class BookingController {
         List<BookingResponse> responses = appointments.stream().map(a -> {
             List<Long> addonIds = appointmentAddonRepository.findByAppointmentId(a.getId())
                     .stream().map(AppointmentAddon::getAddonId).collect(Collectors.toList());
-            double basePrice = 0;
-            try {
-                basePrice = bookingService.resolveBasePrice(a.getServiceId());
-            } catch (Exception e) {}
-            double addonsPrice = a.getTotalPrice() - basePrice;
+            double basePrice = resolveAppointmentBasePrice(a);
+            double addonsPrice = bookingService.calculateAddonsPriceForAppointment(a.getId());
             return toResponse(a, basePrice, addonsPrice, addonIds);
         }).collect(Collectors.toList());
         return ResponseEntity.ok(responses);
@@ -232,7 +241,54 @@ public class BookingController {
                     if (body.containsKey("status")) {
                         a.setStatus(AppointmentStatus.valueOf(body.get("status").toString()));
                     }
+
+                    // Admin edits the price of the service for THIS booking (Bookings panel,
+                    // "Price" column). The final total = new service price + the add-on(s) the
+                    // client had already picked for this appointment.
+                    if (body.containsKey("basePrice")) {
+                        Object rawPrice = body.get("basePrice");
+                        if (rawPrice == null || rawPrice.toString().isBlank()) {
+                            return ResponseEntity.badRequest().body(Map.of("message", "Price cannot be empty"));
+                        }
+                        double newBasePrice;
+                        try {
+                            newBasePrice = Double.parseDouble(rawPrice.toString());
+                        } catch (NumberFormatException e) {
+                            return ResponseEntity.badRequest().body(Map.of("message", "Price must be a valid number"));
+                        }
+                        if (newBasePrice < 0) {
+                            return ResponseEntity.badRequest().body(Map.of("message", "Price cannot be negative"));
+                        }
+                        a.setBasePrice(newBasePrice);
+                        double addonsPrice = bookingService.calculateAddonsPriceForAppointment(a.getId());
+                        a.setTotalPrice(newBasePrice + addonsPrice);
+                    }
+
+                    // Admin can reschedule the appointment date/time manually from the
+                    // Bookings panel. If it actually changes, notify the client.
+                    boolean dateChanged = false;
+                    if (body.containsKey("appointmentDate") && body.get("appointmentDate") != null
+                            && !body.get("appointmentDate").toString().isBlank()) {
+                        LocalDate newDate = LocalDate.parse(body.get("appointmentDate").toString());
+                        if (!newDate.equals(a.getAppointmentDate())) {
+                            a.setAppointmentDate(newDate);
+                            dateChanged = true;
+                        }
+                    }
+                    if (body.containsKey("timeSlot") && body.get("timeSlot") != null
+                            && !body.get("timeSlot").toString().isBlank()) {
+                        LocalTime newTime = LocalTime.parse(body.get("timeSlot").toString());
+                        if (!newTime.equals(a.getTimeSlot())) {
+                            a.setTimeSlot(newTime);
+                            dateChanged = true;
+                        }
+                    }
+
                     ConsultationAppointment saved = appointmentRepository.save(a);
+
+                    if (dateChanged) {
+                        notifyClientBookingRescheduled(saved);
+                    }
 
                     // Just transitioned to CONFIRMED (not confirmed before) and expert assigned
                     // -> notify assigned member with actual customer name
@@ -247,11 +303,8 @@ public class BookingController {
 
                     List<Long> addonIds = appointmentAddonRepository.findByAppointmentId(saved.getId())
                             .stream().map(AppointmentAddon::getAddonId).collect(Collectors.toList());
-                    double basePrice = 0;
-                    try {
-                        basePrice = bookingService.resolveBasePrice(saved.getServiceId());
-                    } catch (Exception e) {}
-                    double addonsPrice = saved.getTotalPrice() - basePrice;
+                    double basePrice = resolveAppointmentBasePrice(saved);
+                    double addonsPrice = bookingService.calculateAddonsPriceForAppointment(saved.getId());
                     return ResponseEntity.ok(toResponse(saved, basePrice, addonsPrice, addonIds));
                 })
                 .orElseGet(() -> {
@@ -267,8 +320,8 @@ public class BookingController {
                 .<ResponseEntity<?>>map(a -> {
                     List<Long> addonIds = appointmentAddonRepository.findByAppointmentId(a.getId())
                             .stream().map(AppointmentAddon::getAddonId).collect(Collectors.toList());
-                    double basePrice = bookingService.resolveBasePrice(a.getServiceId());
-                    double addonsPrice = a.getTotalPrice() - basePrice;
+                    double basePrice = resolveAppointmentBasePrice(a);
+                    double addonsPrice = bookingService.calculateAddonsPriceForAppointment(a.getId());
                     return ResponseEntity.ok(toResponse(a, basePrice, addonsPrice, addonIds));
                 })
                 .orElseGet(() -> {
@@ -279,15 +332,108 @@ public class BookingController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteBooking(@PathVariable Long id) {
+public ResponseEntity<?> deleteBooking(@PathVariable Long id) {
+    return appointmentRepository.findById(id)
+            .<ResponseEntity<?>>map(a -> {
+                // A booking that has already been quoted (PRICING -> Create Quote) has a
+                // Quotation row pointing back at it via booking_id (FK). Deleting the
+                // appointment while that row still exists violates the FK constraint and
+                // the whole delete fails with a 500 - so the linked quotation (and its
+                // items) must be cleared first.
+                quotationRepository.findByBookingId(id).ifPresent(q -> {
+                    quotationItemRepository.deleteAll(quotationItemRepository.findByQuotationId(q.getId()));
+                    quotationRepository.delete(q);
+                });
+
+                List<AppointmentAddon> addons = appointmentAddonRepository.findByAppointmentId(id);
+                appointmentAddonRepository.deleteAll(addons);
+
+                // Snapshot what we need for the notification before the row is gone.
+                User client = userRepository.findById(a.getClientId()).orElse(null);
+                String serviceTitle = serviceRepository.findById(a.getServiceId())
+                        .map(Service::getTitle)
+                        .orElse("Service #" + a.getServiceId());
+                String appointmentDate = a.getAppointmentDate() != null ? a.getAppointmentDate().toString() : "";
+                String timeSlot = a.getTimeSlot() != null ? a.getTimeSlot().toString().substring(0, 5) : "";
+
+                appointmentRepository.delete(a);
+
+                notifyClientBookingDeleted(client, serviceTitle, appointmentDate, timeSlot);
+
+                Map<String, Object> res = new HashMap<>();
+                res.put("success", true);
+                res.put("message", "Deleted successfully");
+                return ResponseEntity.ok(res);
+            })
+            .orElseGet(() -> {
+                Map<String, Object> error = new HashMap<>();
+                error.put("message", "Appointment not found with id = " + id);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+            });
+}
+
+/**
+ * Notify the client (email + in-app) that their booking was removed by an admin.
+ * Best-effort: a missing/blank email only skips the email, it never blocks the delete.
+ */
+private void notifyClientBookingDeleted(User client, String serviceTitle, String appointmentDate, String timeSlot) {
+    if (client == null) return;
+
+    String message = String.format(
+            "Your consultation booking \"%s\" scheduled for %s at %s has been cancelled and removed by our team. " +
+            "If you believe this is a mistake, please contact us or create a new booking.",
+            serviceTitle, appointmentDate, timeSlot
+    );
+
+    if (client.getEmail() != null && !client.getEmail().isBlank()) {
+        emailService.sendBookingUpdateEmail(
+                client.getEmail(),
+                client.getFullName(),
+                serviceTitle,
+                appointmentDate,
+                timeSlot,
+                message
+        );
+    }
+
+    Notification noti = new Notification();
+    noti.setUserId(client.getId());
+    noti.setTitle("Booking Cancelled");
+    noti.setMessage(message);
+    noti.setLink("/my-bookings.html");
+    notificationRepository.save(noti);
+}
+
+    // Admin sends a free-text update email to the client about this booking
+    // (e.g. the consultation date may need to change, or another issue came up).
+    @PostMapping("/{id}/send-update-email")
+    public ResponseEntity<?> sendBookingUpdateEmail(@PathVariable Long id, @RequestBody Map<String, Object> body) {
         return appointmentRepository.findById(id)
                 .<ResponseEntity<?>>map(a -> {
-                    List<AppointmentAddon> addons = appointmentAddonRepository.findByAppointmentId(id);
-                    appointmentAddonRepository.deleteAll(addons);
-                    appointmentRepository.delete(a);
+                    User client = userRepository.findById(a.getClientId()).orElse(null);
+                    if (client == null || client.getEmail() == null || client.getEmail().isBlank()) {
+                        Map<String, Object> error = new HashMap<>();
+                        error.put("message", "This client has no email on file");
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+                    }
+
+                    String adminMessage = body.get("message") != null ? body.get("message").toString() : "";
+                    String serviceTitle = serviceRepository.findById(a.getServiceId())
+                            .map(Service::getTitle)
+                            .orElse("Service #" + a.getServiceId());
+
+                    emailService.sendBookingUpdateEmail(
+                            client.getEmail(),
+                            client.getFullName(),
+                            serviceTitle,
+                            a.getAppointmentDate().toString(),
+                            a.getTimeSlot().toString().substring(0, 5),
+                            adminMessage
+                    );
+
                     Map<String, Object> res = new HashMap<>();
                     res.put("success", true);
-                    res.put("message", "Deleted successfully");
+                    res.put("message", "Email sent to " + client.getEmail());
                     return ResponseEntity.ok(res);
                 })
                 .orElseGet(() -> {
@@ -295,6 +441,29 @@ public class BookingController {
                     error.put("message", "Appointment not found with id = " + id);
                     return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
                 });
+    }
+
+    /**
+     * Create in-app notification for client when the admin manually reschedules
+     * their consultation date/time.
+     */
+    private void notifyClientBookingRescheduled(ConsultationAppointment appointment) {
+        Long clientUserId = appointment.getClientId();
+        if (clientUserId == null) return;
+
+        String serviceTitle = serviceRepository.findById(appointment.getServiceId())
+                .map(Service::getTitle)
+                .orElse("service #" + appointment.getServiceId());
+
+        Notification noti = new Notification();
+        noti.setUserId(clientUserId);
+        noti.setTitle("Your consultation date has been updated");
+        noti.setMessage(String.format(
+                "Your consultation \"%s\" has been rescheduled to %s at %s. Please check your booking for details.",
+                serviceTitle, appointment.getAppointmentDate(),
+                appointment.getTimeSlot().toString().substring(0, 5)
+        ));
+        notificationRepository.save(noti);
     }
 
     /**
@@ -356,6 +525,17 @@ public class BookingController {
                 expertName != null ? " — your expert will be " + expertName : ""
         ));
         notificationRepository.save(noti);
+    }
+
+    // Per-booking price if the admin has set/edited one; otherwise falls back to the service's
+    // global base price (covers bookings created before this field existed).
+    private double resolveAppointmentBasePrice(ConsultationAppointment a) {
+        if (a.getBasePrice() != null) return a.getBasePrice();
+        try {
+            return bookingService.resolveBasePrice(a.getServiceId());
+        } catch (Exception e) {
+            return 0.0;
+        }
     }
 
     private BookingResponse toResponse(ConsultationAppointment a, double basePrice, double addonsPrice, List<Long> addonIds) {
