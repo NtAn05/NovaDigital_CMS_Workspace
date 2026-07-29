@@ -20,4 +20,10 @@ public interface CandidateApplicationRepository extends JpaRepository<CandidateA
 
     /** HR filter by vacancy AND status */
     List<CandidateApplication> findByVacancyIdAndStatusOrderByAppliedAtDesc(Long vacancyId, ApplicationStatus status);
+
+    /** Candidate fetches their own applications */
+    List<CandidateApplication> findByApplicantEmailOrderByAppliedAtDesc(String applicantEmail);
+
+    /** Security check: find application by ID and owner's email */
+    java.util.Optional<CandidateApplication> findByIdAndApplicantEmail(Long id, String applicantEmail);
 }

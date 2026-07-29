@@ -84,6 +84,56 @@ public class VacancyController {
         return ResponseEntity.ok(result);
     }
 
+    /**
+     * GET /api/vacancies/applications/my — Fetches applications for the logged-in candidate
+     */
+    @GetMapping("/applications/my")
+    public ResponseEntity<?> getMyApplications(Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            return ResponseEntity.status(401).body(Map.of("success", false, "message", "Unauthorized"));
+        }
+        String email = authentication.getName();
+        List<CandidateApplication> result = vacancyService.getApplicationsByEmail(email);
+        return ResponseEntity.ok(result);
+    }
+
+    /**
+     * PUT /api/vacancies/applications/my/{id} — Candidate updates their own application
+     */
+    @PutMapping("/applications/my/{id}")
+    public ResponseEntity<?> updateMyApplication(
+            @PathVariable Long id,
+            @RequestBody CandidateApplication updatedData,
+            Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            return ResponseEntity.status(401).body(Map.of("success", false, "message", "Unauthorized"));
+        }
+        try {
+            CandidateApplication saved = vacancyService.updateMyApplication(id, authentication.getName(), updatedData);
+            return ResponseEntity.ok(Map.of("success", true, "message", "Application updated successfully"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
+    /**
+     * DELETE /api/vacancies/applications/my/{id} — Candidate deletes their own application
+     */
+    @DeleteMapping("/applications/my/{id}")
+    public ResponseEntity<?> deleteMyApplication(
+            @PathVariable Long id,
+            Authentication authentication) {
+        if (authentication == null || authentication.getName() == null) {
+            return ResponseEntity.status(401).body(Map.of("success", false, "message", "Unauthorized"));
+        }
+        try {
+            vacancyService.deleteMyApplication(id, authentication.getName());
+            return ResponseEntity.ok(Map.of("success", true, "message", "Application withdrawn successfully"));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", e.getMessage()));
+        }
+    }
+
     // ── HR Dashboard: Status Pipeline ──────────────────────────────────────────
 
     /**
