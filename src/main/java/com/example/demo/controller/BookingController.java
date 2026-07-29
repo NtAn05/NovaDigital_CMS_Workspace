@@ -185,6 +185,8 @@ public class BookingController {
             }
         }
 
+        notifyClientBookingReceived(saved);
+
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(saved, basePrice, addonsPrice, request.getAddonIds()));
     }
 
@@ -447,6 +449,29 @@ private void notifyClientBookingDeleted(User client, String serviceTitle, String
      * Create in-app notification for client when the admin manually reschedules
      * their consultation date/time.
      */
+    /**
+     * In-app notification for the client immediately after they submit a booking
+     * (status = PENDING) - keeps the notification bell in sync with what the customer
+     * sees on the booking page, instead of waiting until admin confirms later.
+     */
+    private void notifyClientBookingReceived(ConsultationAppointment appointment) {
+        Long clientUserId = appointment.getClientId();
+        if (clientUserId == null) return;
+
+        String serviceTitle = serviceRepository.findById(appointment.getServiceId())
+                .map(Service::getTitle)
+                .orElse("service #" + appointment.getServiceId());
+
+        Notification noti = new Notification();
+        noti.setUserId(clientUserId);
+        noti.setTitle("Booking request received");
+        noti.setMessage(String.format(
+                "We received your consultation request for \"%s\" on %s at %s. Our team will review it and reach out soon.",
+                serviceTitle, appointment.getAppointmentDate(),
+                appointment.getTimeSlot().toString().substring(0, 5)
+        ));
+        notificationRepository.save(noti);
+    }
     private void notifyClientBookingRescheduled(ConsultationAppointment appointment) {
         Long clientUserId = appointment.getClientId();
         if (clientUserId == null) return;
