@@ -468,6 +468,9 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private void savePaymentTransaction(Long orderCode, Long appointmentId, Long milestoneId, Double amount, String status) {
+        if (paymentTransactionRepository.findByOrderCode(orderCode).isPresent()) {
+            return;
+        }
         PaymentTransaction pt = new PaymentTransaction();
         pt.setOrderCode(orderCode);
         pt.setAppointmentId(appointmentId);
