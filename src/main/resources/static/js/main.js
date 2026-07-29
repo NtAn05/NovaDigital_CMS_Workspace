@@ -1412,7 +1412,7 @@ function initAdminDashboard() {
     ${fld("cf-phone", "Phone Number", "tel", v.phone, 'placeholder="0123456789" pattern="[0-9]{10}"')}
     ${!item ? fld("cf-password", "Password *", "password", "", 'placeholder="Min 6 characters" required minlength="6"') : ""}
 
-    ${sel("cf-role", "Role *", [["ROLE_USER", "User"], ["ROLE_ADMIN", "Admin"], ["ROLE_MEMBER", "Team Member"]], v.role || "ROLE_USER")}
+    ${sel("cf-role", "Role *", [["ROLE_USER", "User"], ["ROLE_MEMBER", "Team Member"]], v.role || "ROLE_USER")}
 
     <div class="form-group" style="width: 100%;">
       <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; justify-content: flex-start;">
@@ -2299,14 +2299,14 @@ async function loadServiceAddonsModalList(serviceId) {
       
       if (addons.length === 0) {
         listEl.innerHTML = `
-          <div style="text-align:center;padding:2rem;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:12px;color:var(--text-muted);font-size:0.88rem;">
+          <div style="text-align:center;padding:2rem;background:var(--bg-card,#f8fafc);border:1px dashed var(--border-color,#cbd5e1);border-radius:12px;color:var(--text-muted);font-size:0.88rem;">
             No add-ons for this service yet. Add one above!
           </div>`;
         return;
       }
       
       listEl.innerHTML = addons.map(a => `
-        <div class="table-addon-row" data-addon-id="${a.id}" style="display:flex; justify-content:space-between; align-items:center; padding:0.85rem 1.25rem; background:#fff; border:1px solid #e2e8f0; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.02); transition: all 0.2s ease;">
+        <div class="table-addon-row" data-addon-id="${a.id}" style="display:flex; justify-content:space-between; align-items:center; padding:0.85rem 1.25rem; background:var(--bg-card,#fff); border:1px solid var(--border-color,#e2e8f0); border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.02); transition: all 0.2s ease;">
           <div style="display:flex; flex-direction:column; gap:2px; flex:1; min-width:0; padding-right:12px;">
             <strong style="color:var(--text-dark, #0f172a); font-size:0.9rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(a.addonName)}</strong>
             <span style="color:#2563eb; font-weight:700; font-size:0.85rem;">$${Number(a.priceModifier || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
@@ -2334,13 +2334,13 @@ function startEditServiceAddonModalList(serviceId, addonId) {
     
     row.innerHTML = `
       <div style="display:flex; gap:8px; width:100%; align-items:center;">
-        <input type="text" id="modal-addon-edit-name-${addonId}" value="${escapeHtml(a.addonName)}" style="flex: 1; padding: 0.5rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.85rem;">
+        <input type="text" id="modal-addon-edit-name-${addonId}" value="${escapeHtml(a.addonName)}" style="flex: 1; padding: 0.5rem 0.75rem; border: 1px solid var(--border-color,#cbd5e1); border-radius: 8px; font-size: 0.85rem; background:var(--bg-card,#fff); color:var(--text-dark,#0f172a);">
         <div style="position: relative; display: flex; align-items: center;">
           <span style="position: absolute; left: 8px; font-size: 0.85rem; color: var(--text-muted);">$</span>
-          <input type="number" id="modal-addon-edit-price-${addonId}" value="${a.priceModifier}" min="0" step="0.01" style="width: 80px; padding: 0.5rem 0.5rem 0.5rem 1.5rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.85rem; font-weight: 600;">
+          <input type="number" id="modal-addon-edit-price-${addonId}" value="${a.priceModifier}" min="0" step="0.01" style="width: 80px; padding: 0.5rem 0.5rem 0.5rem 1.5rem; border: 1px solid var(--border-color,#cbd5e1); border-radius: 8px; font-size: 0.85rem; font-weight: 600; background:var(--bg-card,#fff); color:var(--text-dark,#0f172a);">
         </div>
         <button type="button" onclick="saveServiceAddonEditModalList(${serviceId}, ${addonId})" class="btn-save" style="padding:0.5rem 0.85rem; font-size:0.78rem; font-weight:600; border-radius:6px; height:32px; border:none; background:#059669; color:#fff; cursor:pointer;">Save</button>
-        <button type="button" onclick="loadServiceAddonsModalList(${serviceId})" class="btn-cancel" style="padding:0.5rem 0.85rem; font-size:0.78rem; font-weight:600; border-radius:6px; height:32px; border:1px solid #cbd5e1; background:#fff; color:var(--text-muted); cursor:pointer;">Cancel</button>
+        <button type="button" onclick="loadServiceAddonsModalList(${serviceId})" class="btn-cancel" style="padding:0.5rem 0.85rem; font-size:0.78rem; font-weight:600; border-radius:6px; height:32px; border:1px solid var(--border-color,#cbd5e1); background:var(--bg-card,#fff); color:var(--text-muted); cursor:pointer;">Cancel</button>
       </div>
     `;
 }
