@@ -1084,7 +1084,7 @@
           return;
         }
 
-        msg.textContent = `Booking confirmed! Total: $${data.totalPrice.toFixed(0)} on ${data.appointmentDate} at ${data.timeSlot.slice(0,5)}.`;
+        msg.textContent = `Booking confirmed! on ${data.appointmentDate} at ${data.timeSlot.slice(0,5)}.`;
         msg.className = 'success';
         submitBtn.textContent = 'Booked \u2713';
       } catch (err) {
