@@ -236,7 +236,7 @@ body.hr-recruitment-page .resource-table-toolbar {
 }
 
 body.hr-recruitment-page .resource-table-toolbar h2 {
-  font-family: var(--font-heading);
+  font-family: var(--font-heading, 'Outfit', sans-serif);
   font-size: 0.94rem !important;
   font-weight: 700;
 }

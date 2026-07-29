@@ -433,18 +433,32 @@ public class PaymentController {
         }
     }
 
+    /**
+     * ============================================================
+     * Webhook Endpoint hứng dữ liệu thanh toán tự động từ PayOS Server
+     * ============================================================
+     * URL: POST /api/payments/payos-webhook
+     * Cơ chế: Khi người dùng quét mã VietQR thành công trên App Ngân Hàng,
+     * Server của PayOS sẽ tự động POST thông tin giao dịch tới API này.
+     */
     @PostMapping("/payos-webhook")
     public ResponseEntity<?> handleWebhook(@RequestBody Webhook body) {
         try {
+            // Bước 1: KIỂM TRA CHỮ KÝ SỐ (Checksum Signature Verification)
+            // Phương thức verify() sẽ tính toán chữ ký HMAC-SHA256 để đảm bảo dữ liệu đúng từ PayOS gửi sang
             WebhookData data = payOS.webhooks().verify(body);
             Long orderCode = data.getOrderCode();
             
+            // Bước 2: Tìm giao dịch trong DB theo orderCode
             PaymentTransaction transaction = transactionRepository.findByOrderCode(orderCode).orElse(null);
+            
+            // Bước 3: Nếu giao dịch chưa cập nhật trạng thái PAID thì xác nhận thanh toán thành công
             if (transaction != null && !"PAID".equals(transaction.getStatus())) {
                 confirmPaymentInDb(transaction);
             }
             return ResponseEntity.ok(Map.of("success", true));
         } catch (Exception e) {
+            // Nếu chữ ký số bị sai hoặc bị hacker giả mạo request -> Trả lỗi HTTP 400 Bad Request
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "Invalid signature: " + e.getMessage()));
         }
     }

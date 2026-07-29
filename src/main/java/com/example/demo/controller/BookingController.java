@@ -63,7 +63,9 @@ public class BookingController {
     @Autowired
     private com.example.demo.repository.QuotationItemRepository quotationItemRepository;
 
-    // ── Anti-spam: generate new captcha characters ──
+    /**
+     * API Sinh mã Captcha ngẫu nhiên chống Spam cho Form Đặt lịch tư vấn
+     */
     @GetMapping("/captcha")
     public ResponseEntity<?> getCaptcha() {
         return ResponseEntity.ok(captchaService.generateCaptcha());

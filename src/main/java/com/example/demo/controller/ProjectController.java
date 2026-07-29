@@ -107,7 +107,17 @@ public class ProjectController {
         project.setDepositAmount(depositAmount != null ? depositAmount : 0.0);
         project.setDepositPaid(false);
 
-        Project saved = projectRepository.save(project);
+        Project saved;
+        try {
+            saved = projectRepository.save(project);
+        } catch (Exception e) {
+            if (imageUrl != null && imageUrl.length() > 255) {
+                project.setImageUrl(imageUrl.substring(0, 255));
+                saved = projectRepository.save(project);
+            } else {
+                throw e;
+            }
+        }
 
         Long clientId = parseLong(body.get("clientId"));
         String clientName = null;

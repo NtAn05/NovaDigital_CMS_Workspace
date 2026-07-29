@@ -48,32 +48,34 @@ public class SseBroadcastService {
     }
 
     /**
-     * Registers a new SSE connection from a Layout Node.
-     * Called by the Controller when a client hits GET /api/milestones/stream.
-     *
-     * @return a new SseEmitter bound to this client connection
+     * ============================================================
+     * Đăng ký kết nối SSE (Server-Sent Events) mới từ Client Trình Duyệt
+     * ============================================================
+     * Được gọi khi Client kết nối tới API GET /api/milestones/stream hoặc /api/sse/stream.
+     * 
+     * @return Đối tượng SseEmitter duy trì kết nối HTTP Stream với trình duyệt
      */
     public SseEmitter subscribe() {
         SseEmitter emitter = new SseEmitter(SSE_TIMEOUT_MS);
 
-        // Remove this emitter from active list when it finishes/times out/errors
+        // BƯỚC DỌN DẸP BỘ NHỚ: Tự động loại bỏ Emitter hỏng/timeout khỏi RAM để tránh tràn bộ nhớ (Memory Leak)
         emitter.onCompletion(() -> {
             emitters.remove(emitter);
-            log.debug("SSE emitter completed and removed. Active connections: {}", emitters.size());
+            log.debug("Kết nối SSE hoàn tất và đã được xóa khỏi danh sách. Số kết nối active: {}", emitters.size());
         });
         emitter.onTimeout(() -> {
             emitters.remove(emitter);
-            log.debug("SSE emitter timed out and removed. Active connections: {}", emitters.size());
+            log.debug("Kết nối SSE bị Hết Hạn Timeout (5 phút) và đã được xóa. Số kết nối active: {}", emitters.size());
         });
         emitter.onError(e -> {
             emitters.remove(emitter);
-            log.warn("SSE emitter error, removed. Active connections: {}", emitters.size(), e);
+            log.warn("Lỗi kết nối SSE, đã xóa emitter. Số kết nối active: {}", emitters.size(), e);
         });
 
         emitters.add(emitter);
-        log.info("New SSE subscriber connected. Total active connections: {}", emitters.size());
+        log.info("Client mới kết nối SSE thành công. Tổng số kết nối active: {}", emitters.size());
 
-        // Send an initial "connected" ping so the client knows the stream is live
+        // Bắn sự kiện "connected" chào mừng ban đầu để Client xác nhận Stream đã sẵn sàng
         try {
             emitter.send(SseEmitter.event()
                     .name("connected")

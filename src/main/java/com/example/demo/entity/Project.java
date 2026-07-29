@@ -25,7 +25,7 @@ public class Project {
     @Column(nullable = false, length = 100)
     private String category; // Examples: "E-Commerce Website", "Mobile Application"
 
-    @Column(name = "image_url", length = 255)
+    @Column(name = "image_url", columnDefinition = "LONGTEXT")
     private String imageUrl; // Path to the project's banner/thumbnail image
 
     @Column(name = "technologies", columnDefinition = "TEXT")

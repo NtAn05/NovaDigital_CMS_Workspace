@@ -1659,6 +1659,38 @@
             </tbody>
           </table>
         </div>
+
+        <!-- Project Quotations Table -->
+        <div class="table-container" style="margin-top: 2rem;">
+          <div class="table-toolbar">
+            <h2>Project Quotations</h2>
+            <div class="table-search">
+              <svg viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <input type="text" placeholder="Search quotations..."
+                oninput="filterTable('quotations-table-body', this.value)">
+            </div>
+          </div>
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Quote Code / Title</th>
+                <th>Client</th>
+                <th>Total Amount</th>
+                <th>Deposit Required</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="quotations-table-body">
+              <tr>
+                <td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);">Loading quotations...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <!-- ========== MESSAGES PANEL ========== -->

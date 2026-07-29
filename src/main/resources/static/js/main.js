@@ -1223,11 +1223,11 @@ function initAdminDashboard() {
   //  Admin – CRUD Modal State
   // =============================================
 
-  let _crudState = { type: null, item: null };
+  let _crudState = { type: null, item: null, convertingQuoteId: null };
   let _deleteState = { type: null, id: null };
 
   // Cache for loaded data (used to pass objects to modal)
-  const _cache = { users: {}, members: {}, projects: {}, services: {}, bookings: {} };
+  const _cache = { users: {}, members: {}, projects: {}, services: {}, bookings: {}, quotations: {} };
 
   async function openCrudModal(type, id) {
     if (type === "project") {
@@ -1335,7 +1335,7 @@ function initAdminDashboard() {
     const overlay = document.getElementById("crud-modal-overlay");
     if (overlay) overlay.classList.remove("is-open");
     document.body.style.overflow = "";
-    _crudState = { type: null, item: null };
+    _crudState = { type: null, item: null, convertingQuoteId: null };
   }
 
   // =============================================
@@ -1509,8 +1509,13 @@ function initAdminDashboard() {
       project: "/api/projects", service: "/api/services"
     };
 
-    const url = isEdit ? `${eps[type]}/${item.id}` : eps[type];
-    const method = isEdit ? "PUT" : "POST";
+    let url = isEdit ? `${eps[type]}/${item.id}` : eps[type];
+    let method = isEdit ? "PUT" : "POST";
+
+    if (_crudState.convertingQuoteId) {
+      url = `/api/quotations/${_crudState.convertingQuoteId}/convert-to-project`;
+      method = "POST";
+    }
 
     try {
       showCrudAlert("Processing...", null);
@@ -1518,6 +1523,17 @@ function initAdminDashboard() {
       const data = await response.json().catch(() => ({}));
 
       if (response.ok) {
+        if (_crudState.convertingQuoteId) {
+          _crudState.convertingQuoteId = null;
+          showCrudAlert("✅ Project created & Quotation converted successfully!", true);
+          setTimeout(() => {
+            closeCrudModal();
+            fetchAdminProjectsTable();
+            if (typeof fetchAdminQuotationsTable === "function") fetchAdminQuotationsTable();
+          }, 700);
+          return;
+        }
+
         if (data && data.id) {
           if (type === "project") _lastUpdatedProjectTime[data.id] = Date.now();
           if (type === "service") _lastUpdatedServiceTime[data.id] = Date.now();
@@ -3231,6 +3247,7 @@ function formatNotificationTime(iso) {
   };
 
   async function fetchAdminBookings() {
+    fetchAdminQuotationsTable();
     const tbody = document.getElementById("bookings-table-body");
     if (!tbody) return;
 
@@ -7155,6 +7172,154 @@ window.openQuoteModal = openQuoteModal;
 window.closeQuoteModal = closeQuoteModal;
 window.calculateQuoteTotal = calculateQuoteTotal;
 window.submitQuote = submitQuote;
+
+// =============================================
+//  Admin - Quotations Table & 1-Click Convert Modal
+// =============================================
+async function fetchAdminQuotationsTable() {
+  const tbody = document.getElementById("quotations-table-body");
+  if (!tbody) return;
+
+  try {
+    const response = await fetch("/api/quotations", {
+      headers: adminHeaders()
+    });
+    if (!response.ok) throw new Error("Failed to fetch quotations");
+    const quotations = await response.json();
+
+    if (Object.keys(_cache.users).length === 0) {
+      await fetchAdminUsers();
+    }
+
+    tbody.innerHTML = "";
+
+    if (!quotations.length) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);">No quotations found.</td></tr>`;
+      return;
+    }
+
+    quotations.forEach(q => {
+      _cache.quotations[q.id] = q;
+
+      const client = q.client || _cache.users[q.clientId] || { fullName: `User #${q.clientId || ''}`, email: "" };
+      const clientName = client.fullName || client.username || "Client";
+      const totalAmt = q.totalAmount ? Number(q.totalAmount).toFixed(2) : "0.00";
+      const depositPct = q.depositPercentage != null ? q.depositPercentage : 20;
+      const depositVal = (Number(totalAmt) * depositPct / 100).toFixed(2);
+
+      let statusBadge = `<span class="badge badge-secondary" style="padding:0.3rem 0.6rem;border-radius:6px;font-weight:600;font-size:0.75rem;background:#94a3b8;color:#fff;">${escapeHtml(q.status)}</span>`;
+      let actionBtn = "";
+
+      if (q.status === "APPROVED") {
+        statusBadge = `<span class="badge badge-success" style="padding:0.3rem 0.6rem;border-radius:6px;font-weight:600;font-size:0.75rem;background:#10b981;color:#fff;">APPROVED BY CLIENT</span>`;
+        actionBtn = `<button type="button" class="btn-add" onclick="openConvertQuoteModal(${q.id})" style="padding:0.35rem 0.75rem;font-size:0.8rem;gap:6px;border-radius:6px;cursor:pointer;background:#059669;color:#fff;font-weight:600;display:inline-flex;align-items:center;">
+            <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg> Convert to Project
+          </button>`;
+      } else if (q.status === "CONVERTED") {
+        statusBadge = `<span class="badge badge-purple" style="padding:0.3rem 0.6rem;border-radius:6px;font-weight:600;font-size:0.75rem;background:#8b5cf6;color:#fff;">CONVERTED</span>`;
+        actionBtn = `<span style="font-size:0.78rem;color:var(--text-muted);font-style:italic;">Project Active</span>`;
+      } else if (q.status === "PROPOSED") {
+        statusBadge = `<span class="badge badge-info" style="padding:0.3rem 0.6rem;border-radius:6px;font-weight:600;font-size:0.75rem;background:#3b82f6;color:#fff;">PROPOSED (SENT)</span>`;
+      }
+
+      const tr = document.createElement("tr");
+      tr.setAttribute("data-searchable", `${q.quoteCode} ${q.title} ${clientName} ${q.status}`);
+
+      tr.innerHTML = `
+        <td>
+          <div class="text-dark-inline" style="font-weight:600;color:var(--text-dark);">${escapeHtml(q.quoteCode || '')}</div>
+          <div style="font-size:0.82rem;color:var(--text-muted);">${escapeHtml(q.title || '')}</div>
+        </td>
+        <td>
+          <div class="text-dark-inline">${escapeHtml(clientName)}</div>
+          <div style="font-size:0.8rem;color:var(--text-muted);">${escapeHtml(client.email || '')}</div>
+        </td>
+        <td style="font-weight:600;color:#10b981;">$${totalAmt}</td>
+        <td>
+          <div style="font-weight:600;">$${depositVal}</div>
+          <div style="font-size:0.78rem;color:var(--text-muted);">${depositPct}% Deposit</div>
+        </td>
+        <td>${statusBadge}</td>
+        <td>${actionBtn}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (err) {
+    console.error("fetchAdminQuotationsTable error:", err);
+  }
+}
+
+async function openConvertQuoteModal(quoteId) {
+  let quote = _cache.quotations ? _cache.quotations[quoteId] : null;
+  if (!quote) {
+    try {
+      const res = await fetch(`/api/quotations/${quoteId}`, { headers: adminHeaders() });
+      if (res.ok) quote = await res.json();
+    } catch (e) { console.error("Error fetching quote:", e); }
+  }
+
+  if (!quote) {
+    showToast("Quote data not found", "error");
+    return;
+  }
+
+  if (Object.keys(_cache.users).length === 0) {
+    await fetchAdminUsers();
+  }
+
+  const clientId = quote.client ? quote.client.id : (quote.clientId || "");
+  const totalAmt = quote.totalAmount || 0;
+  const depPct = quote.depositPercentage != null ? quote.depositPercentage : 20;
+  const depVal = (totalAmt * depPct / 100).toFixed(2);
+  const serviceName = quote.booking && quote.booking.serviceName ? quote.booking.serviceName : "Web Development";
+
+  const prefilledItem = {
+    title: quote.title,
+    category: serviceName,
+    clientId: clientId,
+    depositAmount: depVal,
+    imageUrl: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&h=400",
+    description: quote.notes || ("Project converted automatically from quotation " + quote.quoteCode),
+    technologies: "Java, Spring Boot, HTML, CSS, JavaScript"
+  };
+
+  _crudState = { type: "project", item: null, convertingQuoteId: quoteId };
+
+  const overlay = document.getElementById("crud-modal-overlay");
+  const titleEl = document.getElementById("crud-modal-title");
+  const bodyEl = document.getElementById("crud-modal-body");
+  const alertEl = document.getElementById("crud-alert");
+
+  if (!overlay) return;
+  if (alertEl) { alertEl.style.display = "none"; alertEl.textContent = ""; alertEl.className = "crud-alert alert-message"; }
+
+  titleEl.textContent = `Convert Quotation (${quote.quoteCode}) to Project`;
+  bodyEl.innerHTML = buildCrudForm("project", prefilledItem);
+
+  const fileInput = document.getElementById("cf-imageFile");
+  if (fileInput) {
+    fileInput.addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const preview = document.getElementById("cf-preview");
+      const urlInput = document.getElementById("cf-imageUrl");
+      try {
+        const reader = new FileReader();
+        reader.onload = () => {
+          urlInput.value = reader.result;
+          if (preview) { preview.src = reader.result; preview.style.display = "block"; }
+        };
+        reader.readAsDataURL(file);
+      } catch (err) {}
+    });
+  }
+
+  overlay.classList.add("is-open");
+  document.body.style.overflow = "hidden";
+}
+
+window.fetchAdminQuotationsTable = fetchAdminQuotationsTable;
+window.openConvertQuoteModal = openConvertQuoteModal;
 
 // =============================================
 //  Admin - Quotation SSE Listener
