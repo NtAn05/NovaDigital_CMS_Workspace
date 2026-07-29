@@ -38,6 +38,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // 0. Initialize scroll animations
   initScrollAnimations();
 
+  // 0b. Initialize Mobile Hamburger Menu
+  initMobileMenuToggle();
+
   // 1. Inject the Auth Modal into every page
   injectAuthModal();
 
@@ -629,6 +632,38 @@ function highlightActiveLink() {
       link.classList.add("active");
     } else {
       link.classList.remove("active");
+    }
+  });
+}
+
+function initMobileMenuToggle() {
+  const navbar = document.querySelector(".navbar");
+  const navLinks = document.querySelector(".nav-links");
+  if (!navbar || !navLinks) return;
+
+  let toggleBtn = navbar.querySelector(".mobile-menu-toggle");
+  if (!toggleBtn) {
+    toggleBtn = document.createElement("button");
+    toggleBtn.className = "mobile-menu-toggle";
+    toggleBtn.setAttribute("aria-label", "Toggle Navigation Menu");
+    toggleBtn.innerHTML = `<svg viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>`;
+    navbar.appendChild(toggleBtn);
+  }
+
+  toggleBtn.onclick = (e) => {
+    e.stopPropagation();
+    navLinks.classList.toggle("mobile-open");
+  };
+
+  navLinks.querySelectorAll("a").forEach(link => {
+    link.addEventListener("click", () => {
+      navLinks.classList.remove("mobile-open");
+    });
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!navbar.contains(e.target)) {
+      navLinks.classList.remove("mobile-open");
     }
   });
 }
