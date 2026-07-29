@@ -1230,11 +1230,12 @@ function initAdminDashboard() {
   const _cache = { users: {}, members: {}, projects: {}, services: {}, bookings: {} };
 
   async function openCrudModal(type, id) {
-    if (type === "project" && Object.keys(_cache.users).length === 0) {
+    if (type === "project") {
       try {
         const res = await fetch("/api/admin/users", { headers: adminHeaders() });
         if (res.ok) {
           const users = await res.json();
+          _cache.users = {}; // Reset cache to get fresh list
           users.forEach(u => _cache.users[u.id] = u);
         }
       } catch (e) { console.warn("Could not pre-fetch users:", e); }
@@ -1398,7 +1399,7 @@ function initAdminDashboard() {
         const r = String(u.role).trim().toUpperCase();
         return r === "ROLE_USER" || r === "USER";
       });
-      const clientOpts = [["", "-- Select Client (Optional) --"]].concat(
+      const clientOpts = [["", "-- Select User (Client) * --"]].concat(
         userList.map(u => [String(u.id), `${u.fullName || u.username} (${u.email})`])
       );
       const selectedClientId = v.clientId ? String(v.clientId) : "";
@@ -1406,7 +1407,7 @@ function initAdminDashboard() {
       return `
     ${fld("cf-title", "Project Title *", "text", v.title, 'placeholder="Enter project title" required')}
     ${fld("cf-category", "Category *", "text", v.category, 'placeholder="e.g. Web Development" required')}
-    ${sel("cf-clientId", "Hired Client", clientOpts, selectedClientId)}
+    ${sel("cf-clientId", "Link User (Client) *", clientOpts, selectedClientId)}
     ${fld("cf-depositAmount", "Deposit Amount ($) *", "number", v.depositAmount || 0, 'placeholder="Enter deposit amount" min="0" step="0.01" required')}
     <div class="form-group">
       <label for="cf-imageFile">Cover Image *</label>
@@ -1414,6 +1415,7 @@ function initAdminDashboard() {
       <input type="hidden" id="cf-imageUrl" value="${escapeHtml(String(v.imageUrl || ""))}">
       ${v.imageUrl ? `<img id="cf-preview" src="${escapeHtml(v.imageUrl)}" style="margin-top: 0.75rem; max-width: 150px; height: auto; border-radius: 6px; border: 1px solid var(--border-color); display: block;">` : `<img id="cf-preview" style="margin-top: 0.75rem; max-width: 150px; height: auto; border-radius: 6px; border: 1px solid var(--border-color); display: none;">`}
     </div>
+    ${txt("cf-description", "Description *", v.description, 'placeholder="Project description..." required')}
     ${txt("cf-technologies", "Technologies Used", v.technologies, 'placeholder="e.g. React, Node.js, MongoDB..."')}
   `;
     }
@@ -1482,11 +1484,15 @@ function initAdminDashboard() {
 
     if (type === "project") {
       payload = {
-        title: g("cf-title"), category: g("cf-category"), imageUrl: g("cf-imageUrl"),
-        technologies: g("cf-technologies"), clientId: gv("cf-clientId") ? Number(gv("cf-clientId")) : null,
+        title: g("cf-title"),
+        category: g("cf-category"),
+        imageUrl: g("cf-imageUrl"),
+        description: g("cf-description"),
+        technologies: g("cf-technologies"),
+        clientId: gv("cf-clientId") ? Number(gv("cf-clientId")) : null,
         depositAmount: g("cf-depositAmount") ? Number(g("cf-depositAmount")) : 0.0
       };
-      if (!payload.title || !payload.category || !payload.imageUrl) valid = false;
+      if (!payload.title || !payload.category || !payload.imageUrl || !payload.description || !payload.clientId) valid = false;
     }
 
     if (type === "service") {
@@ -1964,76 +1970,7 @@ function toggleAddonManage(serviceId) {
     }
 }
 
-function buildCrudForm(type, item) {
-    const v = item || {};
-    const fld = (id, label, type2, value, extra = "") => `
-    <div class="form-group">
-      <label for="${id}">${label}</label>
-      <input type="${type2}" id="${id}" value="${escapeHtml(String(value || ""))}" ${extra}>
-    </div>`;
-    const txt = (id, label, value, extra = "") => `
-    <div class="form-group">
-      <label for="${id}">${label}</label>
-      <textarea id="${id}" rows="3" ${extra}>${escapeHtml(String(value || ""))}</textarea>
-    </div>`;
-    const sel = (id, label, opts, selected) => `
-    <div class="form-group">
-      <label for="${id}">${label}</label>
-      <select id="${id}" class="crud-select">
-        ${opts.map(([val, lbl]) => `<option value="${val}" ${selected === val ? "selected" : ""}>${lbl}</option>`).join("")}
-      </select>
-    </div>`;
 
-    if (type === "user") return `
-    ${fld("cf-username", "Username *", "text", v.username, `placeholder="Enter username" required ${item ? 'readonly style="background:#f8fafc;cursor:not-allowed;"' : ""}`)}
-    ${fld("cf-fullName", "Full Name *", "text", v.fullName, 'placeholder="Enter full name" required')}
-    ${fld("cf-email", "Email *", "email", v.email, 'placeholder="name@domain.com" required')}
-    ${fld("cf-phone", "Phone Number", "tel", v.phone, 'placeholder="0123456789" pattern="[0-9]{10}"')}
-    ${!item ? fld("cf-password", "Password *", "password", "", 'placeholder="Min 6 characters" required minlength="6"') : ""}
-
-    ${sel("cf-role", "Role *", [["ROLE_USER", "User"], ["ROLE_ADMIN", "Admin"], ["ROLE_MEMBER", "Team Member"]], v.role || "ROLE_USER")}
-  `;
-
-    if (type === "member") return `
-    ${fld("cf-name", "Member Name *", "text", v.name, 'placeholder="Enter member name" required')}
-    ${fld("cf-role", "Position / Role *", "text", v.role, 'placeholder="e.g. Frontend Developer" required')}
-    <div class="form-group">
-      <label for="cf-avatarFile">Avatar Image *</label>
-      <input type="file" id="cf-avatarFile" accept="image/*" style="width:100%; padding:0.5rem; border:1px dashed var(--border-color); border-radius:var(--radius-sm); background:var(--bg-light); cursor:pointer;">
-      <input type="hidden" id="cf-avatarUrl" value="${escapeHtml(String(v.avatarUrl || ""))}">
-      ${v.avatarUrl ? `<img id="cf-preview" src="${escapeHtml(v.avatarUrl)}" style="margin-top: 0.75rem; max-width: 150px; height: auto; border-radius: 6px; border: 1px solid var(--border-color); display: block;">` : `<img id="cf-preview" style="margin-top: 0.75rem; max-width: 150px; height: auto; border-radius: 6px; border: 1px solid var(--border-color); display: none;">`}
-    </div>
-    ${fld("cf-facebookUrl", "Facebook URL", "url", v.facebookUrl, 'placeholder="https://facebook.com/..."')}
-    ${fld("cf-githubUrl", "GitHub URL", "url", v.githubUrl, 'placeholder="https://github.com/..."')}
-    ${fld("cf-linkedinUrl", "LinkedIn URL", "url", v.linkedinUrl, 'placeholder="https://linkedin.com/in/..."')}
-${fld("cf-skills", "Professional Skills", "text", v.skills, 'placeholder="e.g. Java, React, SQL"')}
-    ${fld("cf-projects", "Projects Worked On", "text", v.projectsWorked, 'placeholder="e.g. CMS Portal, E-Commerce App"')}
-  `;
-
-    if (type === "project") return `
-    ${fld("cf-title", "Project Title *", "text", v.title, 'placeholder="Enter project title" required')}
-    ${fld("cf-category", "Category *", "text", v.category, 'placeholder="e.g. Web Development" required')}
-    <div class="form-group">
-      <label for="cf-imageFile">Cover Image *</label>
-      <input type="file" id="cf-imageFile" accept="image/*" style="width:100%; padding:0.5rem; border:1px dashed var(--border-color); border-radius:var(--radius-sm); background:var(--bg-light); cursor:pointer;">
-      <input type="hidden" id="cf-imageUrl" value="${escapeHtml(String(v.imageUrl || ""))}">
-      ${v.imageUrl ? `<img id="cf-preview" src="${escapeHtml(v.imageUrl)}" style="margin-top: 0.75rem; max-width: 150px; height: auto; border-radius: 6px; border: 1px solid var(--border-color); display: block;">` : `<img id="cf-preview" style="margin-top: 0.75rem; max-width: 150px; height: auto; border-radius: 6px; border: 1px solid var(--border-color); display: none;">`}
-    </div>
-    ${txt("cf-description", "Description *", v.description, 'placeholder="Project description..." required')}
-    ${txt("cf-technologies", "Technologies Used", v.technologies, 'placeholder="e.g. React, Node.js, MongoDB..."')}
-  `;
-
-    if (type === "service") return `
-    ${fld("cf-title", "Service Title *", "text", v.title, 'placeholder="Enter service title" required')}
-    ${sel("cf-iconUrl", "Service Icon *",
-        [["web", "🌐 Web Design"], ["design", "🎨 UI/UX Design"], ["marketing", "📊 Marketing"],
-            ["mobile", "📱 Mobile App"], ["branding", "🎯 Branding"], ["cloud", "☁️ Cloud Solutions"]],
-        v.iconUrl || "web")}
-    ${txt("cf-description", "Description *", v.description, 'placeholder="Service description..." required')}
-  `;
-
-    return "<p>Unknown type.</p>";
-}
 
 async function loadServiceAddonsTable(serviceId) {
     try {
