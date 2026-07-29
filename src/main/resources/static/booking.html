@@ -20,7 +20,6 @@
       .booking-sidebar { order: -1; }
     }
     .booking-grid { display: grid; grid-template-columns: 1fr; gap: 28px; }
-    .price-summary { display: none !important; }
 
     /* ── Sidebar Cards ── */
     .sidebar-section {
@@ -284,6 +283,24 @@
     html.dark-theme .testimonial-info strong { color: rgba(255,255,255,0.9); }
     html.dark-theme .contact-strip-item { color: rgba(255,255,255,0.6); }
     html.dark-theme .sidebar-card-title { color: rgba(255,255,255,0.9); }
+
+    .base-price-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      background: var(--primary-light, rgba(15, 98, 254, 0.08));
+      border: 1px solid var(--primary, #0F62FE);
+      color: var(--primary, #0F62FE);
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .base-price-badge .label {
+      font-weight: 500;
+      color: var(--text-muted, #888);
+    }
   </style>
 </head>
 <body>
@@ -450,6 +467,7 @@
                 <option value="">Loading services...</option>
               </select>
               <label for="serviceSelect">Service *</label>
+               <small id="basePriceHint" style="display:block;margin-top:6px;color:var(--text-muted,#888);font-size:12.5px;"></small>
             </div>
 
             <!-- UC-06: Dynamic Pricing Module -->
@@ -504,8 +522,8 @@
             <button type="submit" class="btn-primary" id="submitBtn" disabled>Confirm Booking</button>
             <div id="formMsg"></div>
 
-            <!-- Hidden price summary (kept for JS logic) -->
-            <div class="card price-summary" aria-hidden="true">
+            <!-- Price summary: shows base price + selected add-ons + total -->
+            <div class="card price-summary">
               <div class="price-row"><span>Base price</span><span id="basePriceValue">$0</span></div>
               <div id="addonsBreakdown"></div>
               <div class="price-row total"><span>Total</span><span id="totalPriceValue">$0</span></div>
@@ -817,18 +835,21 @@
       }
     }
 
-    // Consultant field removed â€” admin assigns consultant later
+    // Consultant field removed admin assigns consultant later
 
-    // â”€â”€ UC-06: Dynamic Pricing Module (Service.base_price + Service_Addon) â”€â”€
+    // UC-06: Dynamic Pricing Module (Service.base_price + Service_Addon) 
     async function loadPricingForService(serviceId) {
       const list = document.getElementById('addonList');
+      const hintEl = document.getElementById('basePriceHint');
       if (!serviceId) {
         pricingTable = { basePrice: 0, addons: [] };
         list.innerHTML = '<p style="color:#999;font-size:13px;">Select a service to see add-ons.</p>';
+        if (hintEl) hintEl.innerHTML = '';
         updateTotal();
         return;
       }
       list.innerHTML = '<p style="color:#999;font-size:13px;">Loading pricing...</p>';
+      if (hintEl) hintEl.innerHTML = '<span style="color:var(--text-muted,#888);font-size:12.5px;">Loading price...</span>';
       try {
         const res = await fetch(`${API}/api/bookings/pricing?serviceId=${serviceId}`);
         if (!res.ok) throw new Error('failed');
@@ -836,11 +857,12 @@
         selectedAddonIds.clear();
         renderAddons();
         updateTotal();
+        if (hintEl) hintEl.innerHTML = `<span class="base-price-badge"><span class="label">Base price:</span> $${Number(pricingTable.basePrice || 0).toFixed(0)}</span>`;
       } catch (e) {
         list.innerHTML = '<p style="color:#d63031;font-size:13px;">Failed to load pricing table.</p>';
+        if (hintEl) hintEl.innerHTML = '';
       }
     }
-
     function renderAddons() {
       const list = document.getElementById('addonList');
       const addons = pricingTable.addons || [];
@@ -1084,9 +1106,9 @@
           return;
         }
 
-        msg.textContent = `Booking confirmed! on ${data.appointmentDate} at ${data.timeSlot.slice(0,5)}.`;
-        msg.className = 'success';
+        
         submitBtn.textContent = 'Booked \u2713';
+        if (typeof showToast === 'function') showToast('Booking request sent successfully! We will contact you soon.', 'success');
       } catch (err) {
         msg.textContent = 'Network error, please try again.';
         msg.className = 'error';
