@@ -7,7 +7,7 @@
   <title>User Profile | NovaDigital</title>
   <link rel="stylesheet" href="/css/style.css">
   <style>
-    /* â”€â”€â”€ Page Layout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ─── Page Layout ───────────────────────────────── */
     .profile-page {
       min-height: 100vh;
       padding: 7rem 1.5rem 5rem;
@@ -21,7 +21,7 @@
       gap: 2rem;
     }
 
-    /* â”€â”€â”€ Page Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ─── Page Header ───────────────────────────────── */
     .profile-page-header {
       text-align: center;
       margin-bottom: 0.5rem;
@@ -56,7 +56,7 @@
       line-height: 1.6;
     }
 
-    /* â”€â”€â”€ Main Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ─── Main Card ─────────────────────────────────── */
     .profile-main-card {
       background: rgba(255, 255, 255, 0.72);
       backdrop-filter: blur(20px);
@@ -76,20 +76,20 @@
       pointer-events: none;
     }
 
-    /* â”€â”€â”€ Top accent bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ─── Top accent bar ────────────────────────────── */
     .profile-accent-bar {
       height: 4px;
       background: linear-gradient(90deg, var(--primary) 0%, var(--primary-purple) 50%, var(--primary-cyan) 100%);
     }
 
-    /* â”€â”€â”€ Card Body â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ─── Card Body ─────────────────────────────────── */
     .profile-card-body {
       display: grid;
       grid-template-columns: 260px 1fr;
       gap: 0;
     }
 
-    /* â”€â”€â”€ Left Sidebar (Avatar) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ─── Left Sidebar (Avatar) ─────────────────────── */
     .profile-sidebar {
       padding: 2.5rem 2rem;
       border-right: 1px solid rgba(0,0,0,0.06);
@@ -327,7 +327,7 @@
       border-color: var(--primary);
     }
 
-    /* â”€â”€â”€ Right Form Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ─── Right Form Section ─────────────────────────── */
     .profile-form-section {
       padding: 2.5rem 2.5rem;
     }
@@ -552,7 +552,7 @@
     html.dark-theme .profile-alert.success { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.3); color: #34d399; }
     html.dark-theme .profile-alert.error { background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.3); color: #f87171; }
 
-    /* â”€â”€â”€ Responsive â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ─── Responsive ────────────────────────────────── */
     @media (max-width: 768px) {
       .profile-card-body {
         grid-template-columns: 1fr;
@@ -574,7 +574,7 @@
 </head>
 <body class="dashboard-page">
 
-  <!-- Header â€“ identical to homepage -->
+  <!-- Header – identical to homepage -->
   <header>
     <nav class="navbar">
       <a href="index.html" class="logo" id="header-logo">
@@ -618,7 +618,7 @@
 
         <div class="profile-card-body">
 
-          <!-- â”€â”€ Left: Avatar & Identity â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+          <!-- ── Left: Avatar & Identity ──────────────────── -->
           <div class="profile-sidebar">
 
             <!-- Avatar -->
@@ -635,8 +635,8 @@
 
             <!-- User identity -->
             <div class="avatar-user-info">
-              <div class="display-name" id="sidebar-fullname">â€”</div>
-              <div class="display-username" id="sidebar-username">@â€”</div>
+              <div class="display-name" id="sidebar-fullname">—</div>
+              <div class="display-username" id="sidebar-username">@—</div>
             </div>
 
             <!-- Role badge -->
@@ -668,7 +668,7 @@
             <input type="hidden" id="profile-avatar-url">
           </div>
 
-          <!-- â”€â”€ Right: Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+          <!-- ── Right: Form ──────────────────────────────── -->
           <div class="profile-form-section">
 
             <div class="form-section-title">
@@ -700,7 +700,7 @@
                 <!-- Divider -->
                 <hr class="form-divider">
 
-                <!-- Username â€“ read-only -->
+                <!-- Username – read-only -->
                 <div class="input-group">
                   <label for="profile-username">Username</label>
                   <div class="input-wrap">
@@ -713,7 +713,7 @@
                   </span>
                 </div>
 
-                <!-- Email â€“ read-only -->
+                <!-- Email – read-only -->
                 <div class="input-group">
                   <label for="profile-email">Email Address</label>
                   <div class="input-wrap">
@@ -768,7 +768,7 @@
     </div>
   </main>
 
-  <!-- Footer â€“ identical to homepage -->
+  <!-- Footer – identical to homepage -->
   <footer>
     <div class="footer-container">
       <div class="footer-col">
@@ -844,7 +844,7 @@
         return;
       }
 
-      /* â”€â”€ DOM refs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+      /* ── DOM refs ────────────────────────────────── */
       const alertBox        = document.getElementById("profile-alert-box");
       const avatarInner     = document.getElementById("avatar-inner");
       const avatarFileInput = document.getElementById("avatar-file-hidden");
@@ -854,7 +854,7 @@
       const profileForm     = document.getElementById("user-profile-form");
       const saveBtn         = document.getElementById("profile-save-btn");
 
-      /* â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+      /* ── Helpers ─────────────────────────────────── */
       function showAlert(text, isSuccess) {
         window.showFormAlert(alertBox, text, isSuccess);
         window.scrollTo({ top: 0, behavior: "smooth" });
@@ -901,7 +901,7 @@
         }
       }
 
-      /* â”€â”€ Load Profile â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+      /* ── Load Profile ────────────────────────────── */
       async function fetchProfileData() {
         try {
           const res = await fetch("/api/profile", {
@@ -918,8 +918,8 @@
           avatarHidden.value                                 = data.avatarUrl || "";
 
           // Sidebar
-          document.getElementById("sidebar-fullname").textContent  = data.fullName || data.username || "â€”";
-          document.getElementById("sidebar-username").textContent  = "@" + (data.username || "â€”");
+          document.getElementById("sidebar-fullname").textContent  = data.fullName || data.username || "—";
+          document.getElementById("sidebar-username").textContent  = "@" + (data.username || "—");
 
           // Avatar
           renderAvatar(data.avatarUrl, data.fullName || data.username);
@@ -945,7 +945,7 @@
 
       fetchProfileData();
 
-      /* â”€â”€ File Upload â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+      /* ── File Upload ─────────────────────────────── */
       avatarFileInput.addEventListener("change", async (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -970,7 +970,7 @@
             avatarHidden.value     = data.url;
             avatarUrlInput.value   = data.url;
             renderAvatar(data.url, document.getElementById("profile-fullname").value);
-            showAlert("âœ… Avatar uploaded! Click Save Changes to apply.", true);
+            showAlert("✅ Avatar uploaded! Click Save Changes to apply.", true);
           } else {
             showAlert(data.message || "âŒ Upload failed. Please try again.", false);
           }
@@ -979,16 +979,16 @@
         }
       });
 
-      /* â”€â”€ Apply URL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+      /* ── Apply URL ───────────────────────────────── */
       btnApplyUrl.addEventListener("click", () => {
         const url = avatarUrlInput.value.trim();
         if (!url) { showAlert("Please paste a valid image URL.", false); return; }
         avatarHidden.value = url;
         renderAvatar(url, document.getElementById("profile-fullname").value);
-        showAlert("âœ… Avatar preview updated. Click Save Changes to apply.", true);
+        showAlert("✅ Avatar preview updated. Click Save Changes to apply.", true);
       });
 
-      /* â”€â”€ Save Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+      /* ── Save Form ───────────────────────────────── */
       profileForm.addEventListener("submit", async (e) => {
         e.preventDefault();
         hideAlert();
@@ -1005,7 +1005,7 @@
         }
 
         saveBtn.disabled = true;
-        saveBtn.textContent = "Savingâ€¦";
+        saveBtn.textContent = "Saving…";
 
         try {
           const res = await fetch("/api/profile", {
@@ -1034,7 +1034,7 @@
             document.getElementById("sidebar-fullname").textContent = data.fullName || fullName;
             renderAvatar(data.avatarUrl || avatarUrl, data.fullName || fullName);
 
-            showAlert("âœ… Profile updated successfully!", true);
+            showAlert("✅ Profile updated successfully!", true);
 
             // Refresh navbar
             if (window.updateNavbarAuth) updateNavbarAuth();
@@ -1059,10 +1059,10 @@
         }
       });
 
-      /* â”€â”€ Live sidebar update while typing â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+      /* ── Live sidebar update while typing ───────── */
       document.getElementById("profile-fullname").addEventListener("input", (e) => {
         const name = e.target.value.trim();
-        document.getElementById("sidebar-fullname").textContent = name || "â€”";
+        document.getElementById("sidebar-fullname").textContent = name || "—";
         // Update initials if no custom avatar
         if (!avatarHidden.value) {
           renderAvatar(null, name);

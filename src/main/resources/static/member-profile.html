@@ -9,7 +9,7 @@
   <title>Member Profile | NovaDigital</title>
   <link rel="stylesheet" href="/css/style.css">
   <style>
-    /* â”€â”€â”€ Page Layout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ─── Page Layout ───────────────────────────────── */
     .profile-page {
       min-height: 100vh;
       padding: 7rem 1.5rem 5rem;
@@ -23,7 +23,7 @@
       gap: 2rem;
     }
 
-    /* â”€â”€â”€ Page Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ─── Page Header ───────────────────────────────── */
     .profile-page-header {
       text-align: center;
       margin-bottom: 0.5rem;
@@ -58,7 +58,7 @@
       line-height: 1.6;
     }
 
-    /* â”€â”€â”€ Main Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ─── Main Card ─────────────────────────────────── */
     .profile-main-card {
       background: rgba(255, 255, 255, 0.72);
       backdrop-filter: blur(20px);
@@ -89,7 +89,7 @@
       gap: 0;
     }
 
-    /* â”€â”€â”€ Left Sidebar (Avatar) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ─── Left Sidebar (Avatar) ─────────────────────── */
     .profile-sidebar {
       padding: 2.5rem 2rem;
       border-right: 1px solid rgba(0, 0, 0, 0.06);
@@ -305,7 +305,7 @@
       opacity: 0.9;
     }
 
-    /* â”€â”€â”€ Right: Form Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ─── Right: Form Section ───────────────────────── */
     .profile-form-section {
       padding: 2.5rem 3rem;
       background: white;
@@ -409,7 +409,7 @@
       font-weight: 600;
     }
 
-    /* â”€â”€â”€ Tags Manager (Skills & Projects) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ─── Tags Manager (Skills & Projects) ─────────── */
     .tags-manager-container {
       display: flex;
       flex-wrap: wrap;
@@ -507,7 +507,7 @@
       box-shadow: 0 6px 16px rgba(37, 99, 235, 0.28);
     }
 
-    /* â”€â”€â”€ Profile Alert â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* ─── Profile Alert ────────────────────────────── */
     .profile-alert {
       padding: 1rem 1.25rem;
       border-radius: var(--radius-sm);
@@ -672,7 +672,7 @@
 
 <body class="dashboard-page">
 
-  <!-- Header â€“ identical to homepage / portals -->
+  <!-- Header – identical to homepage / portals -->
   <header>
     <nav class="navbar">
       <a href="index.html" class="logo" id="header-logo">
@@ -716,7 +716,7 @@
 
         <div class="profile-card-body">
 
-          <!-- â”€â”€ Left: Avatar & Identity â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+          <!-- ── Left: Avatar & Identity ──────────────────── -->
           <div class="profile-sidebar">
 
             <!-- Avatar -->
@@ -739,8 +739,8 @@
 
             <!-- User identity -->
             <div class="avatar-user-info">
-              <div class="display-name" id="sidebar-fullname">â€”</div>
-              <div class="display-username" id="sidebar-username">@â€”</div>
+              <div class="display-name" id="sidebar-fullname">—</div>
+              <div class="display-username" id="sidebar-username">@—</div>
             </div>
 
             <!-- Role badge -->
@@ -777,7 +777,7 @@
             <input type="hidden" id="profile-avatar-url">
           </div>
 
-          <!-- â”€â”€ Right: Form â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+          <!-- ── Right: Form ──────────────────────────────── -->
           <div class="profile-form-section">
 
             <div class="form-section-title">
@@ -1141,7 +1141,7 @@
         }
       }
 
-      /* â”€â”€â”€ Tag rendering functions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+      /* ─── Tag rendering functions ─────────────────── */
       function renderSkills() {
         skillsContainer.innerHTML = "";
         if (skillsList.length === 0) {
@@ -1189,7 +1189,7 @@
         return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
       }
 
-      /* â”€â”€â”€ Add tag handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+      /* ─── Add tag handlers ───────────────────────── */
       btnAddSkill.addEventListener("click", () => {
         const val = skillInput.value.trim();
         if (val) {
@@ -1229,7 +1229,7 @@
         }
       });
 
-      /* â”€â”€â”€ Load Profile â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+      /* ─── Load Profile ────────────────────────────── */
       async function fetchProfileData() {
         try {
           const res = await fetch("/api/profile", {
@@ -1300,7 +1300,7 @@
 
       fetchProfileData();
 
-      /* â”€â”€â”€ Apply Avatar URL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+      /* ─── Apply Avatar URL ────────────────────────── */
       btnApplyUrl.addEventListener("click", () => {
         const url = avatarUrlInput.value.trim();
         if (!url) { showAlert("Please paste a valid image URL.", false); return; }
@@ -1309,7 +1309,7 @@
         showAlert("Avatar preview updated. Click Save Changes to apply.", true);
       });
 
-      /* â”€â”€â”€ File Upload â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+      /* ─── File Upload ─────────────────────────────── */
       avatarFileInput.addEventListener("change", async (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -1343,7 +1343,7 @@
         }
       });
 
-      /* â”€â”€â”€ Save Changes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+      /* ─── Save Changes ────────────────────────────── */
       profileForm.addEventListener("submit", async (e) => {
         e.preventDefault();
         hideAlert();
@@ -1403,7 +1403,7 @@
             document.getElementById("sidebar-fullname").textContent = data.fullName || fullName;
             renderAvatar(data.avatarUrl || avatarUrl, data.fullName || fullName);
 
-            showAlert("âœ… Profile updated successfully!", true);
+            showAlert("✅ Profile updated successfully!", true);
 
             if (window.updateNavbarAuth) updateNavbarAuth();
 
@@ -1429,7 +1429,7 @@
       // Live sidebar name update
       document.getElementById("profile-fullname").addEventListener("input", (e) => {
         const name = e.target.value.trim();
-        document.getElementById("sidebar-fullname").textContent = name || "â€”";
+        document.getElementById("sidebar-fullname").textContent = name || "—";
         if (!avatarHidden.value) {
           renderAvatar(null, name);
         }

@@ -8,6 +8,7 @@ import com.example.demo.repository.*;
 import com.example.demo.entity.AppointmentAddon;
 import com.example.demo.entity.Notification;
 import com.example.demo.entity.Service;
+import com.example.demo.service.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -66,6 +67,9 @@ public class PaymentController {
 
     @Autowired
     private ProjectRepository projectRepository;
+
+    @Autowired
+    private EmailService emailService;
 
     @Autowired
     private org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
@@ -429,18 +433,32 @@ public class PaymentController {
         }
     }
 
+    /**
+     * ============================================================
+     * Webhook Endpoint hứng dữ liệu thanh toán tự động từ PayOS Server
+     * ============================================================
+     * URL: POST /api/payments/payos-webhook
+     * Cơ chế: Khi người dùng quét mã VietQR thành công trên App Ngân Hàng,
+     * Server của PayOS sẽ tự động POST thông tin giao dịch tới API này.
+     */
     @PostMapping("/payos-webhook")
     public ResponseEntity<?> handleWebhook(@RequestBody Webhook body) {
         try {
+            // Bước 1: KIỂM TRA CHỮ KÝ SỐ (Checksum Signature Verification)
+            // Phương thức verify() sẽ tính toán chữ ký HMAC-SHA256 để đảm bảo dữ liệu đúng từ PayOS gửi sang
             WebhookData data = payOS.webhooks().verify(body);
             Long orderCode = data.getOrderCode();
             
+            // Bước 2: Tìm giao dịch trong DB theo orderCode
             PaymentTransaction transaction = transactionRepository.findByOrderCode(orderCode).orElse(null);
+            
+            // Bước 3: Nếu giao dịch chưa cập nhật trạng thái PAID thì xác nhận thanh toán thành công
             if (transaction != null && !"PAID".equals(transaction.getStatus())) {
                 confirmPaymentInDb(transaction);
             }
             return ResponseEntity.ok(Map.of("success", true));
         } catch (Exception e) {
+            // Nếu chữ ký số bị sai hoặc bị hacker giả mạo request -> Trả lỗi HTTP 400 Bad Request
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", "Invalid signature: " + e.getMessage()));
         }
     }
@@ -462,6 +480,20 @@ public class PaymentController {
 
                 // Send notifications
                 notifyParties(appointment, statusBefore);
+
+                // Send receipt email to client
+                User client = userRepository.findById(appointment.getClientId()).orElse(null);
+                if (client != null && client.getEmail() != null) {
+                    long amountVnd = transaction.getAmount() != null ? transaction.getAmount().longValue() : 0L;
+                    emailService.sendPaymentReceiptEmail(
+                            client.getEmail(),
+                            client.getFullName(),
+                            "Consultation Booking",
+                            "Booking #" + appointment.getId(),
+                            amountVnd,
+                            transaction.getOrderCode()
+                    );
+                }
             }
         }
         
@@ -477,6 +509,24 @@ public class PaymentController {
 
                     // Send notifications
                     notifyMilestonePaid(milestone);
+
+                    // Send receipt email to each project client
+                    List<com.example.demo.entity.ProjectClient> pClients =
+                            projectClientRepository.findByProjectId(milestone.getProject().getId());
+                    for (com.example.demo.entity.ProjectClient pc : pClients) {
+                        User u = pc.getUser();
+                        if (u != null && u.getEmail() != null) {
+                            long amountVnd = transaction.getAmount() != null ? transaction.getAmount().longValue() : 0L;
+                            emailService.sendPaymentReceiptEmail(
+                                    u.getEmail(),
+                                    u.getFullName(),
+                                    "Project Phase — " + milestone.getName(),
+                                    "Milestone #" + milestone.getId(),
+                                    amountVnd,
+                                    transaction.getOrderCode()
+                            );
+                        }
+                    }
                 }
             } else {
                 System.out.println(">>> [PaymentController] Milestone NOT found for ID: " + transaction.getMilestoneId());
@@ -493,6 +543,24 @@ public class PaymentController {
 
                 // Send notifications
                 notifyDepositPaid(project);
+
+                // Send receipt email to each project client
+                List<com.example.demo.entity.ProjectClient> pClients =
+                        projectClientRepository.findByProjectId(project.getId());
+                for (com.example.demo.entity.ProjectClient pc : pClients) {
+                    User u = pc.getUser();
+                    if (u != null && u.getEmail() != null) {
+                        long amountVnd = transaction.getAmount() != null ? transaction.getAmount().longValue() : 0L;
+                        emailService.sendPaymentReceiptEmail(
+                                u.getEmail(),
+                                u.getFullName(),
+                                "Project Deposit — " + project.getTitle(),
+                                "Project #" + project.getId(),
+                                amountVnd,
+                                transaction.getOrderCode()
+                        );
+                    }
+                }
             }
         }
     }

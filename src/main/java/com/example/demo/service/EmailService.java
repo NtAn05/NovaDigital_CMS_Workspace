@@ -179,4 +179,89 @@ public class EmailService {
             System.err.println("[EmailService] Could not send booking update email: " + e.getMessage());
         }
     }
+
+    /**
+     * Sends a payment receipt email to the user after a successful transaction.
+     *
+     * @param toEmail       Recipient's email address
+     * @param name          Recipient's full name
+     * @param paymentType   Type label, e.g. "Consultation Booking", "Project Phase", "Project Deposit"
+     * @param referenceId   The booking/milestone/project ID
+     * @param amountVnd     Amount paid in VND (Long)
+     * @param orderCode     The PayOS order code
+     */
+    public void sendPaymentReceiptEmail(String toEmail, String name, String paymentType,
+                                        String referenceId, long amountVnd, long orderCode) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom("studyhub123vn@gmail.com");
+            helper.setTo(toEmail);
+
+            String safeName = (name != null && !name.isBlank()) ? name : "Valued Client";
+            helper.setSubject("Payment Receipt Confirmed — NovaDigital");
+
+            // Format amount with commas
+            String formattedAmount = String.format("%,d VND", amountVnd);
+            // Format current date
+            String paidDate = java.time.LocalDateTime.now()
+                    .format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+
+            String htmlMsg = "<div style=\"font-family: 'Segoe UI', Helvetica, Arial, sans-serif; max-width: 600px; border: 1px solid #e2e8f0; border-radius: 16px; margin: 20px auto; background: #ffffff; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.08); overflow: hidden;\">"
+                    + "  <!-- Header -->"
+                    + "  <div style=\"background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 28px 30px; text-align: center; border-bottom: 3px solid #10b981;\">"
+                    + "    <div style=\"display: inline-flex; align-items: center; justify-content: center;\">"
+                    + "      <img src=\"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=100&h=100&q=80\" alt=\"NovaDigital Logo\" style=\"width: 44px; height: 44px; border-radius: 50%; vertical-align: middle; margin-right: 12px; border: 2px solid #10b981; object-fit: cover;\">"
+                    + "      <span style=\"font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: 0.5px; vertical-align: middle;\">NOVA<span style=\"color: #38bdf8;\">DIGITAL</span></span>"
+                    + "    </div>"
+                    + "    <p style=\"margin: 10px 0 0 0; font-size: 13px; color: #94a3b8; letter-spacing: 1px; text-transform: uppercase;\">Official Payment Receipt</p>"
+                    + "  </div>"
+
+                    + "  <!-- Success badge -->"
+                    + "  <div style=\"background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); padding: 20px; text-align: center; border-bottom: 1px solid #a7f3d0;\">"
+                    + "    <div style=\"display: inline-flex; align-items: center; gap: 8px; background: #10b981; color: #fff; padding: 6px 18px; border-radius: 20px; font-size: 13px; font-weight: 700;\">"
+                    + "      ✓ &nbsp;PAYMENT CONFIRMED"
+                    + "    </div>"
+                    + "  </div>"
+
+                    + "  <!-- Body -->"
+                    + "  <div style=\"padding: 32px; line-height: 1.6; color: #334155;\">"
+                    + "    <h2 style=\"color: #0f172a; font-size: 20px; font-weight: 700; margin-top: 0; margin-bottom: 8px;\">Hello " + safeName + ",</h2>"
+                    + "    <p style=\"margin-top: 0; margin-bottom: 24px; font-size: 15px; color: #475569;\">Your payment has been successfully received and processed. Here is your official receipt for your records.</p>"
+
+                    + "    <!-- Receipt Box -->"
+                    + "    <div style=\"background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin-bottom: 24px;\">"
+                    + "      <h4 style=\"margin: 0 0 16px 0; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #64748b;\">Receipt Details</h4>"
+                    + "      <table style=\"width: 100%; border-collapse: collapse; font-size: 14px;\">"
+                    + "        <tr><td style=\"padding: 8px 0; font-weight: 600; color: #1e293b; width: 140px;\">Order Code:</td>"
+                    + "            <td style=\"padding: 8px 0; color: #475569; font-family: 'Courier New', monospace;\">#" + orderCode + "</td></tr>"
+                    + "        <tr><td style=\"padding: 8px 0; font-weight: 600; color: #1e293b;\">Payment For:</td>"
+                    + "            <td style=\"padding: 8px 0; color: #475569;\">" + paymentType + "</td></tr>"
+                    + "        <tr><td style=\"padding: 8px 0; font-weight: 600; color: #1e293b;\">Reference ID:</td>"
+                    + "            <td style=\"padding: 8px 0; color: #475569;\">" + referenceId + "</td></tr>"
+                    + "        <tr><td style=\"padding: 8px 0; font-weight: 600; color: #1e293b;\">Date Paid:</td>"
+                    + "            <td style=\"padding: 8px 0; color: #475569;\">" + paidDate + "</td></tr>"
+                    + "        <tr style=\"border-top: 2px dashed #e2e8f0;\">"
+                    + "            <td style=\"padding: 14px 0 6px 0; font-weight: 700; font-size: 15px; color: #0f172a;\">Amount Paid:</td>"
+                    + "            <td style=\"padding: 14px 0 6px 0; font-weight: 800; font-size: 16px; color: #10b981;\">" + formattedAmount + "</td></tr>"
+                    + "      </table>"
+                    + "    </div>"
+
+                    + "    <p style=\"font-size: 14px; color: #475569; margin-bottom: 0;\">If you have any questions about this payment or your services, please do not hesitate to contact our support team at <a href=\"mailto:contact@novadigital.com\" style=\"color: #2563eb; text-decoration: none; font-weight: 600;\">contact@novadigital.com</a>.</p>"
+                    + "  </div>"
+
+                    + "  <!-- Footer -->"
+                    + "  <div style=\"background-color: #f8fafc; padding: 20px 30px; border-top: 1px solid #e2e8f0; text-align: center;\">"
+                    + "    <p style=\"margin: 0; font-size: 12px; color: #94a3b8;\">This is an automated payment receipt. Please do not reply directly to this email.</p>"
+                    + "    <p style=\"margin: 6px 0 0 0; font-size: 12px; color: #94a3b8; font-weight: 600;\">© 2026 NovaDigital Co., Ltd. All rights reserved.</p>"
+                    + "  </div>"
+                    + "</div>";
+
+            helper.setText(htmlMsg, true);
+            mailSender.send(message);
+            System.out.println("[EmailService] Payment receipt email sent to: " + toEmail);
+        } catch (Exception e) {
+            System.err.println("[EmailService] Could not send payment receipt email: " + e.getMessage());
+        }
+    }
 }

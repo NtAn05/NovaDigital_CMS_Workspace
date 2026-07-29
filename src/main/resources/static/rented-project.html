@@ -7,7 +7,7 @@
   <title>My Rented Projects | NovaDigital</title>
   <link rel="stylesheet" href="/css/style.css">
   <style>
-    /* â”€â”€ Main Layout â”€â”€ */
+    /* ── Main Layout ── */
     .rented-page-wrapper {
       min-height: 80vh;
       padding: 8rem 2rem 4rem 2rem;
@@ -60,7 +60,7 @@
       50% { opacity: .4; transform: scale(1.5); }
     }
 
-    /* â”€â”€ Project Cards Grid â”€â”€ */
+    /* ── Project Cards Grid ── */
     .project-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
@@ -168,7 +168,7 @@
       box-shadow: 0 5px 16px rgba(37,99,235,.36);
     }
 
-    /* â”€â”€ Milestone Slide Panel â”€â”€ */
+    /* ── Milestone Slide Panel ── */
     .panel-overlay {
       position: fixed; inset: 0; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); z-index: 9000;
       display: flex; align-items: center; justify-content: center; padding: 20px;
@@ -224,13 +224,13 @@
     .log-entry .log-field { color: #2563eb; font-weight: 600; }
     .log-entry .log-val { color: var(--text-dark, #0f172a); }
 
-    /* â”€â”€ Empty State & Spinner â”€â”€ */
+    /* ── Empty State & Spinner ── */
     .empty-state { text-align: center; padding: 60px 24px; color: var(--text-muted, #64748b); }
     .empty-state .emoji { font-size: 48px; display: block; margin-bottom: 12px; }
     .spinner { width: 28px; height: 28px; border: 3px solid #e2e8f0; border-top-color: #2563eb; border-radius: 50%; animation: spin .6s linear infinite; margin: 48px auto; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* â”€â”€ Dark Theme Support â”€â”€ */
+    /* ── Dark Theme Support ── */
     html.dark-theme .project-card {
       background: #1e1b4b;
       border-color: #312e81;
@@ -351,7 +351,7 @@
     </div>
   </main>
 
-  <!-- â”€â”€ Milestone Slide Panel â”€â”€ -->
+  <!-- ── Milestone Slide Panel ── -->
   <div class="panel-overlay" id="milestonePanel">
     <div class="panel">
       <div class="panel-head">
@@ -446,7 +446,7 @@
       bindPanelEvents();
     });
 
-    // â”€â”€ Load Projects â”€â”€
+    // ── Load Projects ──
     async function loadClientProjects() {
       const grid = document.getElementById('projectGrid');
       const headers = { 'Authorization': `Bearer ${clientToken}` };
@@ -513,7 +513,7 @@
       return Math.round(sum / milestones.length);
     }
 
-    // â”€â”€ Slide Panel controls â”€â”€
+    // ── Slide Panel controls ──
     function bindPanelEvents() {
       document.getElementById('panelClose').addEventListener('click', closeMilestonesPanel);
       document.getElementById('milestonePanel').addEventListener('click', e => {
@@ -576,7 +576,7 @@
       `).join('');
     }
 
-    // â”€â”€ Audit Logs â”€â”€
+    // ── Audit Logs ──
     async function toggleLogs(milestoneId) {
       const drawer = document.getElementById(`logs-${milestoneId}`);
       if (!drawer) return;
@@ -612,7 +612,7 @@
       }
     }
 
-    // â”€â”€ Realtime SSE updates â”€â”€
+    // ── Realtime SSE updates ──
     function initClientSSE() {
       sseSource = new EventSource('/api/milestones/stream');
       sseSource.addEventListener('milestone-update', async (e) => {

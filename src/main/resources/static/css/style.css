@@ -2835,6 +2835,7 @@ footer {
   --input-text: #0f172a;
   --text-dark-rgb: 15, 23, 42;
   --bg-white-rgb: 255, 255, 255;
+  --bg-card: #ffffff;
 }
 
 /* Smooth global transitions during theme switching */
@@ -2867,6 +2868,7 @@ html.dark-theme {
   --input-text: #f8fafc;
   --text-dark-rgb: 248, 250, 252;
   --bg-white-rgb: 22, 27, 43;
+  --bg-card: #161b2b;
 }
 
 /* Base style overrides */
@@ -2990,11 +2992,18 @@ html.dark-theme input[type="email"],
 html.dark-theme input[type="password"],
 html.dark-theme input[type="tel"],
 html.dark-theme input[type="url"],
+html.dark-theme input[type="date"],
+html.dark-theme input[type="time"],
+html.dark-theme input[type="number"],
 html.dark-theme textarea,
 html.dark-theme select {
   background-color: var(--input-bg) !important;
   border-color: var(--input-border) !important;
   color: var(--input-text) !important;
+}
+
+html.dark-theme input::-webkit-calendar-picker-indicator {
+  filter: invert(1) !important;
 }
 
 html.dark-theme input::placeholder,
@@ -5852,4 +5861,223 @@ html.dark-theme .notification-item:hover {
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+/* ================================================
+   COMPREHENSIVE MOBILE RESPONSIVE OPTIMIZATION
+   (Supports Tablets, 480px & 360px Phones like Galaxy S8+)
+================================================ */
+
+/* Mobile Hamburger Toggle Button */
+.mobile-menu-toggle {
+  display: none;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  cursor: pointer;
+  padding: 0.45rem 0.55rem;
+  color: var(--primary);
+  transition: all 0.2s ease;
+  z-index: 10001;
+}
+
+.mobile-menu-toggle:hover {
+  background: rgba(37, 99, 235, 0.15);
+}
+
+.mobile-menu-toggle svg {
+  width: 22px;
+  height: 22px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
+@media (max-width: 880px) {
+  .mobile-menu-toggle {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .navbar {
+    padding: 0.65rem 1rem !important;
+    position: relative !important;
+  }
+
+  .logo {
+    font-size: 1.25rem !important;
+    gap: 0.4rem !important;
+  }
+
+  .logo svg {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  /* Sleek Glassmorphism Mobile Navigation Drawer */
+  .nav-links {
+    position: fixed !important;
+    top: 72px !important;
+    left: 1rem !important;
+    right: 1rem !important;
+    background: rgba(15, 23, 42, 0.96) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    border-radius: 20px !important;
+    padding: 1.25rem 1rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.5rem !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    transform: translateY(-15px) scale(0.97) !important;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    z-index: 10000 !important;
+    max-height: 80vh !important;
+    overflow-y: auto !important;
+  }
+
+  .nav-links.mobile-open {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: translateY(0) scale(1) !important;
+  }
+
+  .nav-links li {
+    width: 100% !important;
+    text-align: center !important;
+  }
+
+  .nav-links a {
+    display: block !important;
+    padding: 0.65rem 1rem !important;
+    font-size: 0.95rem !important;
+    color: #e2e8f0 !important;
+    border-radius: 12px !important;
+    transition: all 0.2s ease !important;
+  }
+
+  .nav-links a:hover, 
+  .nav-links a.active {
+    background: rgba(37, 99, 235, 0.25) !important;
+    color: #38bdf8 !important;
+  }
+
+  .nav-btn-booking, .nav-btn {
+    margin-top: 0.25rem !important;
+    width: 100% !important;
+    text-align: center !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Header Floating positioning on small mobile screens */
+  header.header-detached {
+    left: 0.5rem !important;
+    right: 0.5rem !important;
+    width: calc(100% - 1rem) !important;
+    top: 0.5rem !important;
+    border-radius: 24px !important;
+  }
+
+  /* Hero & Container Spacing */
+  .hero-container {
+    padding-top: 110px !important;
+    padding-bottom: 40px !important;
+  }
+
+  .hero-content h1, 
+  .about-hero h1, 
+  .portfolio-hero-text h1 {
+    font-size: 1.7rem !important;
+    line-height: 1.28 !important;
+  }
+
+  .hero-content p, 
+  .about-hero p, 
+  .portfolio-hero-text p {
+    font-size: 0.92rem !important;
+  }
+
+  /* Responsive Grid Layouts */
+  .stats-grid, 
+  .values-grid, 
+  .services-grid, 
+  .team-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+
+  /* Admin & Public CRUD Modals on Mobile */
+  .crud-modal {
+    width: 95% !important;
+    max-width: 95% !important;
+    padding: 1.2rem !important;
+    max-height: 88vh !important;
+    overflow-y: auto !important;
+    margin: 1rem auto !important;
+    border-radius: 16px !important;
+  }
+
+  .crud-modal .form-group {
+    margin-bottom: 0.85rem !important;
+  }
+
+  /* Tables horizontal scroll wrapper */
+  .table-container {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 12px !important;
+  }
+
+  .admin-table {
+    min-width: 580px !important;
+  }
+
+  .admin-panel {
+    padding: 1rem !important;
+  }
+
+  .table-toolbar {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 0.75rem !important;
+  }
+
+  .table-search {
+    width: 100% !important;
+  }
+
+  .table-search input {
+    width: 100% !important;
+  }
+
+  /* Floating Chatbot Toggle on Mobile */
+  .chatbot-toggle {
+    right: 0.75rem !important;
+    bottom: 0.75rem !important;
+    width: 46px !important;
+    height: 46px !important;
+  }
+}
+
+@media (max-width: 380px) {
+  /* Ultra-compact Mobile Screens (Galaxy S8+ 360px, iPhone SE) */
+  .logo span {
+    font-size: 1.1rem !important;
+  }
+
+  .nav-links a {
+    padding: 0.3rem 0.5rem !important;
+    font-size: 0.76rem !important;
+  }
+
+  .hero-content h1 {
+    font-size: 1.5rem !important;
+  }
 }

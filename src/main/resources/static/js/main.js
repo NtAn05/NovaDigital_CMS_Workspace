@@ -38,6 +38,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // 0. Initialize scroll animations
   initScrollAnimations();
 
+  // 0b. Initialize Mobile Hamburger Menu
+  initMobileMenuToggle();
+
   // 1. Inject the Auth Modal into every page
   injectAuthModal();
 
@@ -633,6 +636,38 @@ function highlightActiveLink() {
   });
 }
 
+function initMobileMenuToggle() {
+  const navbar = document.querySelector(".navbar");
+  const navLinks = document.querySelector(".nav-links");
+  if (!navbar || !navLinks) return;
+
+  let toggleBtn = navbar.querySelector(".mobile-menu-toggle");
+  if (!toggleBtn) {
+    toggleBtn = document.createElement("button");
+    toggleBtn.className = "mobile-menu-toggle";
+    toggleBtn.setAttribute("aria-label", "Toggle Navigation Menu");
+    toggleBtn.innerHTML = `<svg viewBox="0 0 24 24"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>`;
+    navbar.appendChild(toggleBtn);
+  }
+
+  toggleBtn.onclick = (e) => {
+    e.stopPropagation();
+    navLinks.classList.toggle("mobile-open");
+  };
+
+  navLinks.querySelectorAll("a").forEach(link => {
+    link.addEventListener("click", () => {
+      navLinks.classList.remove("mobile-open");
+    });
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!navbar.contains(e.target)) {
+      navLinks.classList.remove("mobile-open");
+    }
+  });
+}
+
 // Dynamic Navbar authentication update
 function updateNavbarAuth() {
   const navLinksContainer = document.querySelector(".nav-links");
@@ -728,6 +763,10 @@ function updateNavbarAuth() {
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           Profile
         </a>
+        <a href="my-applications.html" class="dropdown-item">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+          My Applications
+        </a>
       `;
     } else {
       menuItemsHtml = `
@@ -742,6 +781,10 @@ function updateNavbarAuth() {
         <a href="my-bookings.html" class="dropdown-item">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           My Bookings
+        </a>
+        <a href="my-applications.html" class="dropdown-item">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+          My Applications
         </a>
         <a href="transaction.html" class="dropdown-item">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
@@ -1223,11 +1266,11 @@ function initAdminDashboard() {
   //  Admin – CRUD Modal State
   // =============================================
 
-  let _crudState = { type: null, item: null };
+  let _crudState = { type: null, item: null, convertingQuoteId: null };
   let _deleteState = { type: null, id: null };
 
   // Cache for loaded data (used to pass objects to modal)
-  const _cache = { users: {}, members: {}, projects: {}, services: {}, bookings: {} };
+  const _cache = { users: {}, members: {}, projects: {}, services: {}, bookings: {}, quotations: {} };
 
   async function openCrudModal(type, id) {
     if (type === "project") {
@@ -1255,6 +1298,8 @@ function initAdminDashboard() {
     const labels = { user: "User", member: "Member", project: "Project", service: "Service" };
     title.textContent = item ? `Edit ${labels[type]}` : `Add New ${labels[type]}`;
     body.innerHTML = buildCrudForm(type, item);
+
+
 
     // Load add-on list for an existing service being edited
     if (type === "service" && item) {
@@ -1333,7 +1378,7 @@ function initAdminDashboard() {
     const overlay = document.getElementById("crud-modal-overlay");
     if (overlay) overlay.classList.remove("is-open");
     document.body.style.overflow = "";
-    _crudState = { type: null, item: null };
+    _crudState = { type: null, item: null, convertingQuoteId: null };
   }
 
   // =============================================
@@ -1507,8 +1552,13 @@ function initAdminDashboard() {
       project: "/api/projects", service: "/api/services"
     };
 
-    const url = isEdit ? `${eps[type]}/${item.id}` : eps[type];
-    const method = isEdit ? "PUT" : "POST";
+    let url = isEdit ? `${eps[type]}/${item.id}` : eps[type];
+    let method = isEdit ? "PUT" : "POST";
+
+    if (_crudState.convertingQuoteId) {
+      url = `/api/quotations/${_crudState.convertingQuoteId}/convert-to-project`;
+      method = "POST";
+    }
 
     try {
       showCrudAlert("Processing...", null);
@@ -1516,6 +1566,17 @@ function initAdminDashboard() {
       const data = await response.json().catch(() => ({}));
 
       if (response.ok) {
+        if (_crudState.convertingQuoteId) {
+          _crudState.convertingQuoteId = null;
+          showCrudAlert("✅ Project created & Quotation converted successfully!", true);
+          setTimeout(() => {
+            closeCrudModal();
+            fetchAdminProjectsTable();
+            if (typeof fetchAdminQuotationsTable === "function") fetchAdminQuotationsTable();
+          }, 700);
+          return;
+        }
+
         if (data && data.id) {
           if (type === "project") _lastUpdatedProjectTime[data.id] = Date.now();
           if (type === "service") _lastUpdatedServiceTime[data.id] = Date.now();
@@ -1613,35 +1674,59 @@ function initAdminDashboard() {
         const timeA = _lastUpdatedUserTime[a.id] || 0;
         const timeB = _lastUpdatedUserTime[b.id] || 0;
         if (timeA !== timeB) return timeB - timeA;
-        return 0;
+        return b.id - a.id;
       });
 
       if (statCount) statCount.textContent = users.length;
-      tbody.innerHTML = "";
-
-      if (!users.length) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text-muted);">No users found.</td></tr>`;
-        return;
+      
+      _paginationState.user.items = users;
+      const totalPages = Math.ceil(users.length / PAGE_SIZE);
+      if (_paginationState.user.currentPage > totalPages) {
+        _paginationState.user.currentPage = Math.max(1, totalPages);
       }
 
-      users.forEach(u => {
-        _cache.users[u.id] = u;
-        const tr = document.createElement("tr");
-        tr.setAttribute("data-searchable", `${u.fullName} ${u.username} ${u.email}`);
-        const initials = (u.fullName || "?")[0].toUpperCase();
+      renderUserTablePage();
+    } catch (err) {
+      console.error("fetchAdminUsers error:", err);
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:2rem;color:#ef4444;">Could not load user list.</td></tr>`;
+    }
+  }
 
-        // Check if user is online (last login within last 5 minutes)
-        let isOnline = false;
-        let lastLoginHtml = "";
-        if (u.lastLogin) {
-          const lastLogin = new Date(u.lastLogin);
-          const now = new Date();
-          const diffMinutes = (now - lastLogin) / (1000 * 60);
-          isOnline = diffMinutes < 5;
-          lastLoginHtml = `<br><small style="color: #64748b; font-size: 11px; white-space: nowrap;">${lastLogin.toLocaleString("en-US")}</small>`;
-        }
+  function renderUserTablePage() {
+    const tbody = document.getElementById("users-table-body");
+    if (!tbody) return;
+    setupPaginationContainer(tbody, "user");
 
-        tr.innerHTML = `
+    const users = _paginationState.user.items;
+    const currentPage = _paginationState.user.currentPage;
+    const startIndex = (currentPage - 1) * PAGE_SIZE;
+    const pageUsers = users.slice(startIndex, startIndex + PAGE_SIZE);
+
+    tbody.innerHTML = "";
+    if (!pageUsers.length) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text-muted);">No users found.</td></tr>`;
+      renderPaginationControls("user", users.length);
+      return;
+    }
+
+    pageUsers.forEach(u => {
+      _cache.users[u.id] = u;
+      const tr = document.createElement("tr");
+      tr.setAttribute("data-searchable", `${u.fullName} ${u.username} ${u.email}`);
+      const initials = (u.fullName || "?")[0].toUpperCase();
+
+      // Check if user is online (last login within last 5 minutes)
+      let isOnline = false;
+      let lastLoginHtml = "";
+      if (u.lastLogin) {
+        const lastLogin = new Date(u.lastLogin);
+        const now = new Date();
+        const diffMinutes = (now - lastLogin) / (1000 * 60);
+        isOnline = diffMinutes < 5;
+        lastLoginHtml = `<br><small style="color: #64748b; font-size: 11px; white-space: nowrap;">${lastLogin.toLocaleString("en-US")}</small>`;
+      }
+
+      tr.innerHTML = `
         <td>
           <div class="table-user-cell">
             <div class="user-initials">${initials}</div>
@@ -1673,12 +1758,10 @@ function initAdminDashboard() {
             </button>
           </div>
         </td>`;
-        tbody.appendChild(tr);
-      });
-    } catch (err) {
-      console.error("fetchAdminUsers error:", err);
-      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:2rem;color:#ef4444;">Could not load user list.</td></tr>`;
-    }
+      tbody.appendChild(tr);
+    });
+
+    renderPaginationControls("user", users.length);
   }
 
   async function toggleUserStatus(userId) {
@@ -1724,59 +1807,173 @@ function initAdminDashboard() {
         const timeA = _lastUpdatedMemberTime[a.id] || 0;
         const timeB = _lastUpdatedMemberTime[b.id] || 0;
         if (timeA !== timeB) return timeB - timeA;
-        return 0;
+        return b.id - a.id;
       });
 
       if (statCount) statCount.textContent = members.length;
-      tbody.innerHTML = "";
-
-      if (!members.length) {
-        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted);">No members found.</td></tr>`;
-        return;
+      
+      _paginationState.member.items = members;
+      const totalPages = Math.ceil(members.length / PAGE_SIZE);
+      if (_paginationState.member.currentPage > totalPages) {
+        _paginationState.member.currentPage = Math.max(1, totalPages);
       }
 
-      members.forEach(m => {
-        _cache.members[m.id] = m;
-        const tr = document.createElement("tr");
-        tr.setAttribute("data-searchable", `${m.name} ${m.role}`);
-        const fbSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="#1877F2" viewBox="0 0 24 24" style="vertical-align:middle;"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>`;
-        const ghSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 24 24" style="vertical-align:middle;color:var(--text-dark);"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>`;
-        const liSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="#0A66C2" viewBox="0 0 24 24" style="vertical-align:middle;"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.779-1.75-1.75s.784-1.75 1.75-1.75 1.75.779 1.75 1.75-.784 1.75-1.75 1.75zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>`;
-
-        const mkFbLink = url => url ? `<a href="${escapeHtml(url)}" target="_blank" title="Facebook">${fbSvg}</a>` : "—";
-        const mkGhLink = url => url ? `<a href="${escapeHtml(url)}" target="_blank" title="GitHub">${ghSvg}</a>` : "—";
-        const mkLiLink = url => url ? `<a href="${escapeHtml(url)}" target="_blank" title="LinkedIn">${liSvg}</a>` : "—";
-
-        tr.innerHTML = `
-        <td><img src="${escapeHtml(m.avatarUrl || "")}" alt="${escapeHtml(m.name || "")}" class="table-avatar"
-              onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=60&h=60'"></td>
-        <td class="text-dark-inline">${escapeHtml(m.name || "")}</td>
-        <td><span class="status-badge badge-active">${escapeHtml(m.role || "")}</span></td>
-        <td>${mkFbLink(m.facebookUrl)}</td>
-        <td>${mkGhLink(m.githubUrl)}</td>
-        <td>${mkLiLink(m.linkedinUrl)}</td>
-        <td>
-          <div class="action-btns">
-            <button class="btn-edit"   onclick="openCrudModal('member', ${m.id})">
-              <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit
-            </button>
-            <button class="btn-delete" onclick="openDeleteConfirm('member', ${m.id}, '${escapeHtml(m.name || "")}')">
-              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>Delete
-            </button>
-          </div>
-        </td>`;
-        tbody.appendChild(tr);
-      });
+      renderMemberTablePage();
     } catch (err) {
       console.error("fetchAdminMembersTable error:", err);
       tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:#ef4444;">Could not load member list.</td></tr>`;
     }
   }
 
+  function renderMemberTablePage() {
+    const tbody = document.getElementById("members-table-body");
+    if (!tbody) return;
+    setupPaginationContainer(tbody, "member");
+
+    const members = _paginationState.member.items;
+    const currentPage = _paginationState.member.currentPage;
+    const startIndex = (currentPage - 1) * PAGE_SIZE;
+    const pageMembers = members.slice(startIndex, startIndex + PAGE_SIZE);
+
+    tbody.innerHTML = "";
+    if (!pageMembers.length) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted);">No members found.</td></tr>`;
+      renderPaginationControls("member", members.length);
+      return;
+    }
+
+    pageMembers.forEach(m => {
+      _cache.members[m.id] = m;
+      const tr = document.createElement("tr");
+      tr.setAttribute("data-searchable", `${m.name} ${m.role}`);
+      const fbSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="#1877F2" viewBox="0 0 24 24" style="vertical-align:middle;"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>`;
+      const ghSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 24 24" style="vertical-align:middle;color:var(--text-dark);"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>`;
+      const liSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="#0A66C2" viewBox="0 0 24 24" style="vertical-align:middle;"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.779-1.75-1.75s.784-1.75 1.75-1.75 1.75.779 1.75 1.75-.784 1.75-1.75 1.75zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>`;
+
+      const mkFbLink = url => url ? `<a href="${escapeHtml(url)}" target="_blank" title="Facebook">${fbSvg}</a>` : "—";
+      const mkGhLink = url => url ? `<a href="${escapeHtml(url)}" target="_blank" title="GitHub">${ghSvg}</a>` : "—";
+      const mkLiLink = url => url ? `<a href="${escapeHtml(url)}" target="_blank" title="LinkedIn">${liSvg}</a>` : "—";
+
+      tr.innerHTML = `
+      <td><img src="${escapeHtml(m.avatarUrl || "")}" alt="${escapeHtml(m.name || "")}" class="table-avatar"
+            onerror="this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=60&h=60'"></td>
+      <td class="text-dark-inline">${escapeHtml(m.name || "")}</td>
+      <td><span class="status-badge badge-active">${escapeHtml(m.role || "")}</span></td>
+      <td>${mkFbLink(m.facebookUrl)}</td>
+      <td>${mkGhLink(m.githubUrl)}</td>
+      <td>${mkLiLink(m.linkedinUrl)}</td>
+      <td>
+        <div class="action-btns">
+          <button class="btn-edit"   onclick="openCrudModal('member', ${m.id})">
+            <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit
+          </button>
+          <button class="btn-delete" onclick="openDeleteConfirm('member', ${m.id}, '${escapeHtml(m.name || "")}')">
+            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>Delete
+          </button>
+        </div>
+      </td>`;
+      tbody.appendChild(tr);
+    });
+
+    renderPaginationControls("member", members.length);
+  }
+
   const _lastUpdatedProjectTime = {};
   const _lastUpdatedServiceTime = {};
   const _lastUpdatedMemberTime = {};
   const _lastUpdatedUserTime = {};
+
+  const _paginationState = {
+    user: { currentPage: 1, items: [] },
+    member: { currentPage: 1, items: [] },
+    project: { currentPage: 1, items: [] },
+    service: { currentPage: 1, items: [] },
+    booking: { currentPage: 1, items: [] },
+    message: { currentPage: 1, items: [] }
+  };
+  const PAGE_SIZE = 8;
+
+  function setupPaginationContainer(tbody, type) {
+    if (!tbody) return null;
+    const container = tbody.closest(".table-container");
+    if (!container) return null;
+    
+    let bar = container.querySelector(`.pagination-bar`);
+    if (!bar) {
+      bar = document.createElement("div");
+      bar.className = "pagination-bar";
+      bar.id = `pagination-bar-${type}`;
+      container.appendChild(bar);
+    }
+    return bar;
+  }
+
+  function renderPaginationControls(type, totalItems) {
+    const container = document.getElementById(`pagination-bar-${type}`);
+    if (!container) return;
+    
+    const state = _paginationState[type];
+    const totalPages = Math.ceil(totalItems / PAGE_SIZE);
+    
+    if (totalPages <= 1) {
+      container.innerHTML = "";
+      return;
+    }
+    
+    const startEntry = (state.currentPage - 1) * PAGE_SIZE + 1;
+    const endEntry = Math.min(state.currentPage * PAGE_SIZE, totalItems);
+    
+    let buttonsHtml = "";
+    
+    // Previous button
+    buttonsHtml += `
+      <button type="button" class="page-btn" ${state.currentPage === 1 ? "disabled" : ""} onclick="changeTablePage('${type}', ${state.currentPage - 1})">
+        &laquo; Prev
+      </button>
+    `;
+    
+    // Page number buttons
+    for (let i = 1; i <= totalPages; i++) {
+      buttonsHtml += `
+        <button type="button" class="page-btn ${state.currentPage === i ? "active" : ""}" onclick="changeTablePage('${type}', ${i})">
+          ${i}
+        </button>
+      `;
+    }
+    
+    // Next button
+    buttonsHtml += `
+      <button type="button" class="page-btn" ${state.currentPage === totalPages ? "disabled" : ""} onclick="changeTablePage('${type}', ${state.currentPage + 1})">
+        Next &raquo;
+      </button>
+    `;
+    
+    container.innerHTML = `
+      <div class="pagination-wrapper" style="display:flex; justify-content:space-between; align-items:center; padding:1rem; border-top:1px solid var(--border-color, #e2e8f0); font-size:0.85rem; color:var(--text-muted, #64748b);">
+        <div>
+          Showing <strong>${startEntry}</strong> to <strong>${endEntry}</strong> of <strong>${totalItems}</strong> entries
+        </div>
+        <div style="display:flex; gap:5px;">
+          ${buttonsHtml}
+        </div>
+      </div>
+    `;
+  }
+
+  function changeTablePage(type, page) {
+    if (!_paginationState[type]) return;
+    const totalPages = Math.ceil(_paginationState[type].items.length / PAGE_SIZE);
+    if (page < 1 || page > totalPages) return;
+    _paginationState[type].currentPage = page;
+    
+    if (type === "user") renderUserTablePage();
+    if (type === "member") renderMemberTablePage();
+    if (type === "project") renderProjectTablePage();
+    if (type === "service") renderServiceTablePage();
+    if (type === "booking") renderBookingTablePage();
+    if (type === "message") renderMessageTablePage();
+  }
+  window.changeTablePage = changeTablePage;
 
   async function fetchAdminProjectsTable() {
     const tbody = document.getElementById("projects-table-body");
@@ -1792,51 +1989,73 @@ function initAdminDashboard() {
         const timeA = _lastUpdatedProjectTime[a.id] || 0;
         const timeB = _lastUpdatedProjectTime[b.id] || 0;
         if (timeA !== timeB) return timeB - timeA;
-        return 0;
+        return b.id - a.id;
       });
 
       if (statCount) statCount.textContent = projects.length;
-      tbody.innerHTML = "";
-
-      if (!projects.length) {
-        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);">No projects found.</td></tr>`;
-        return;
+      
+      _paginationState.project.items = projects;
+      const totalPages = Math.ceil(projects.length / PAGE_SIZE);
+      if (_paginationState.project.currentPage > totalPages) {
+        _paginationState.project.currentPage = Math.max(1, totalPages);
       }
 
-      projects.forEach(p => {
-        _cache.projects[p.id] = p;
-        const tr = document.createElement("tr");
-        tr.setAttribute("data-searchable", `${p.title} ${p.category} ${p.clientName || ""}`);
-        const clientHtml = p.clientName
-          ? `<div style="font-weight:600; color:var(--text-dark);">${escapeHtml(p.clientName)}</div><div style="font-size:0.78rem; color:var(--text-muted);">${escapeHtml(p.clientEmail || "")}</div>`
-          : `<span style="color:var(--text-muted); font-style:italic;">Unassigned</span>`;
-
-        tr.innerHTML = `
-        <td><img src="${escapeHtml(p.imageUrl || "")}" alt="${escapeHtml(p.title || "")}"
-              style="width:78px;height:48px;object-fit:cover;border-radius:6px;border:1px solid var(--border-color);"
-              onerror="this.src='https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=78&h=48'"></td>
-        <td class="text-dark-inline">${escapeHtml(p.title || "")}</td>
-        <td><span class="status-badge badge-category">${escapeHtml(p.category || "")}</span></td>
-        <td>${clientHtml}</td>
-        <td>
-          <div class="action-btns">
-            <button class="btn-edit" style="background:#0284c7; color:#fff; border-color:#0284c7;" onclick="openProjectDetailModal(${p.id})">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;margin-right:2px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View Detail
-            </button>
-            <button class="btn-edit"   onclick="openCrudModal('project', ${p.id})">
-              <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit
-            </button>
-            <button class="btn-delete" onclick="openDeleteConfirm('project', ${p.id}, '${escapeHtml(p.title || "")}')">
-              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>Delete
-            </button>
-          </div>
-        </td>`;
-        tbody.appendChild(tr);
-      });
+      renderProjectTablePage();
     } catch (err) {
       console.error("fetchAdminProjectsTable error:", err);
       tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:#ef4444;">Could not load project list.</td></tr>`;
     }
+  }
+
+  function renderProjectTablePage() {
+    const tbody = document.getElementById("projects-table-body");
+    if (!tbody) return;
+    setupPaginationContainer(tbody, "project");
+
+    const projects = _paginationState.project.items;
+    const currentPage = _paginationState.project.currentPage;
+    const startIndex = (currentPage - 1) * PAGE_SIZE;
+    const pageProjects = projects.slice(startIndex, startIndex + PAGE_SIZE);
+
+    tbody.innerHTML = "";
+    if (!pageProjects.length) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:var(--text-muted);">No projects found.</td></tr>`;
+      renderPaginationControls("project", projects.length);
+      return;
+    }
+
+    pageProjects.forEach(p => {
+      _cache.projects[p.id] = p;
+      const tr = document.createElement("tr");
+      tr.setAttribute("data-searchable", `${p.title} ${p.category} ${p.clientName || ""}`);
+      const clientHtml = p.clientName
+        ? `<div style="font-weight:600; color:var(--text-dark);">${escapeHtml(p.clientName)}</div><div style="font-size:0.78rem; color:var(--text-muted);">${escapeHtml(p.clientEmail || "")}</div>`
+        : `<span style="color:var(--text-muted); font-style:italic;">Unassigned</span>`;
+
+      tr.innerHTML = `
+      <td><img src="${escapeHtml(p.imageUrl || "")}" alt="${escapeHtml(p.title || "")}"
+            style="width:78px;height:48px;object-fit:cover;border-radius:6px;border:1px solid var(--border-color);"
+            onerror="this.src='https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=78&h=48'"></td>
+      <td class="text-dark-inline">${escapeHtml(p.title || "")}</td>
+      <td><span class="status-badge badge-category">${escapeHtml(p.category || "")}</span></td>
+      <td>${clientHtml}</td>
+      <td>
+        <div class="action-btns">
+          <button class="btn-edit" style="background:#0284c7; color:#fff; border-color:#0284c7;" onclick="openProjectDetailModal(${p.id})">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;margin-right:2px;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>View Detail
+          </button>
+          <button class="btn-edit"   onclick="openCrudModal('project', ${p.id})">
+            <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Edit
+          </button>
+          <button class="btn-delete" onclick="openDeleteConfirm('project', ${p.id}, '${escapeHtml(p.title || "")}')">
+            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>Delete
+          </button>
+        </div>
+      </td>`;
+      tbody.appendChild(tr);
+    });
+
+    renderPaginationControls("project", projects.length);
   }
 
 let _currentlyExpandedServiceId = null;
@@ -1854,26 +2073,49 @@ async function fetchAdminServicesTable() {
             const timeA = _lastUpdatedServiceTime[a.id] || 0;
             const timeB = _lastUpdatedServiceTime[b.id] || 0;
             if (timeA !== timeB) return timeB - timeA;
-            return 0;
+            return b.id - a.id;
         });
 
-        tbody.innerHTML = "";
-
-        if (!services.length) {
-            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);">No services found.</td></tr>`;
-            return;
+        _paginationState.service.items = services;
+        const totalPages = Math.ceil(services.length / PAGE_SIZE);
+        if (_paginationState.service.currentPage > totalPages) {
+            _paginationState.service.currentPage = Math.max(1, totalPages);
         }
 
-        const iconLabels = {
-            web: "🌐 Web Design", design: "🎨 UI/UX", marketing: "📊 Marketing",
-            mobile: "📱 Mobile", branding: "🎯 Branding", cloud: "☁️ Cloud"
-        };
+        renderServiceTablePage();
+    } catch (err) {
+        console.error("fetchAdminServicesTable error:", err);
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:#ef4444;">Could not load service list.</td></tr>`;
+    }
+}
 
-        services.forEach(s => {
-            _cache.services[s.id] = s;
-            const tr = document.createElement("tr");
-            tr.setAttribute("data-searchable", `${s.title} ${s.description}`);
-            tr.innerHTML = `
+function renderServiceTablePage() {
+    const tbody = document.getElementById("services-table-body");
+    if (!tbody) return;
+    setupPaginationContainer(tbody, "service");
+
+    const services = _paginationState.service.items;
+    const currentPage = _paginationState.service.currentPage;
+    const startIndex = (currentPage - 1) * PAGE_SIZE;
+    const pageServices = services.slice(startIndex, startIndex + PAGE_SIZE);
+
+    tbody.innerHTML = "";
+    if (!pageServices.length) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);">No services found.</td></tr>`;
+        renderPaginationControls("service", services.length);
+        return;
+    }
+
+    const iconLabels = {
+        web: "🌐 Web Design", design: "🎨 UI/UX", marketing: "📊 Marketing",
+        mobile: "📱 Mobile", branding: "🎯 Branding", cloud: "☁️ Cloud"
+    };
+
+    pageServices.forEach(s => {
+        _cache.services[s.id] = s;
+        const tr = document.createElement("tr");
+        tr.setAttribute("data-searchable", `${s.title} ${s.description}`);
+        tr.innerHTML = `
     <td class="text-dark-inline">${escapeHtml(s.title || "")}</td>
     <td><span class="status-badge badge-active">${iconLabels[s.iconUrl] || escapeHtml(s.iconUrl || "—")}</span></td>
     <td style="max-width:220px;white-space:pre-wrap;">${escapeHtml((s.description || "").substring(0, 80))}${(s.description || "").length > 80 ? "..." : ""}</td>
@@ -1905,15 +2147,12 @@ async function fetchAdminServicesTable() {
         </button>
       </div>
     </td>`;
-            tbody.appendChild(tr);
+        tbody.appendChild(tr);
 
-            loadServiceAddonsTable(s.id);
-        });
+        loadServiceAddonsTable(s.id);
+    });
 
-    } catch (err) {
-        console.error("fetchAdminServicesTable error:", err);
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:#ef4444;">Could not load service list.</td></tr>`;
-    }
+    renderPaginationControls("service", services.length);
 }
 
 async function updateServicePriceTable(serviceId) {
@@ -2433,6 +2672,7 @@ async function saveServiceAddonEdit(serviceId, addonId) {
         throw new Error("Failed to fetch messages");
       }
       allMessages = await response.json();
+      allMessages.sort((a, b) => b.id - a.id);
       
       // Update Overview stats count dynamically if the element is present
       const statsCount = document.getElementById("stat-messages-count");
@@ -2484,10 +2724,25 @@ async function saveServiceAddonEdit(serviceId, addonId) {
   }
 
   function renderTable() {
+    _paginationState.message.items = filteredMessages;
+    const totalPages = Math.ceil(filteredMessages.length / PAGE_SIZE);
+    if (_paginationState.message.currentPage > totalPages) {
+      _paginationState.message.currentPage = Math.max(1, totalPages);
+    }
+    renderMessageTablePage();
+  }
+
+  function renderMessageTablePage() {
     const tbody = document.getElementById("messages-table-body");
     if (!tbody) return;
+    setupPaginationContainer(tbody, "message");
 
-    if (filteredMessages.length === 0) {
+    const messages = _paginationState.message.items;
+    const currentPage = _paginationState.message.currentPage;
+    const startIndex = (currentPage - 1) * PAGE_SIZE;
+    const pageMessages = messages.slice(startIndex, startIndex + PAGE_SIZE);
+
+    if (pageMessages.length === 0) {
       tbody.innerHTML = `
         <tr>
           <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">
@@ -2495,11 +2750,12 @@ async function saveServiceAddonEdit(serviceId, addonId) {
           </td>
         </tr>
       `;
+      renderPaginationControls("message", messages.length);
       return;
     }
 
     const role = localStorage.getItem("role") || sessionStorage.getItem("role");
-    tbody.innerHTML = filteredMessages.map(msg => {
+    tbody.innerHTML = pageMessages.map(msg => {
       const dateStr = new Date(msg.createdAt).toLocaleString("en-US", {
         hour: "2-digit", minute: "2-digit",
         day: "2-digit", month: "2-digit", year: "numeric"
@@ -2559,6 +2815,8 @@ async function saveServiceAddonEdit(serviceId, addonId) {
         </tr>
       `;
     }).join('');
+
+    renderPaginationControls("message", messages.length);
   }
 
   function handleSearch() {
@@ -3031,11 +3289,8 @@ function formatNotificationTime(iso) {
     box.style.transform = "translateY(0)";
   };
 
-  // =============================================
-  //  Admin – Consultation Bookings
-  // =============================================
-
   async function fetchAdminBookings() {
+    fetchAdminQuotationsTable();
     const tbody = document.getElementById("bookings-table-body");
     if (!tbody) return;
 
@@ -3047,15 +3302,13 @@ function formatNotificationTime(iso) {
       if (!response.ok) throw new Error("Failed to fetch bookings");
       const bookings = await response.json();
 
-      // Sort bookings so recently updated items appear at the very top
       bookings.sort((a, b) => {
         const timeA = _lastUpdatedBookingTime[a.id] || 0;
         const timeB = _lastUpdatedBookingTime[b.id] || 0;
         if (timeA !== timeB) return timeB - timeA;
-        return 0;
+        return b.id - a.id;
       });
 
-      // Ensure dependent caches are loaded
       if (Object.keys(_cache.services).length === 0) {
         await fetchAdminServicesTable();
       }
@@ -3063,103 +3316,121 @@ function formatNotificationTime(iso) {
         await fetchAdminUsers();
       }
 
-      // Expert (consultant) = User with role ROLE_MEMBER
-      const memberUsers = Object.values(_cache.users).filter(u => u.role === "ROLE_MEMBER");
-
-      tbody.innerHTML = "";
-
-      if (!bookings.length) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);">No bookings found.</td></tr>`;
-        return;
+      _paginationState.booking.items = bookings;
+      const totalPages = Math.ceil(bookings.length / PAGE_SIZE);
+      if (_paginationState.booking.currentPage > totalPages) {
+        _paginationState.booking.currentPage = Math.max(1, totalPages);
       }
 
-      bookings.forEach(b => {
-        _cache.bookings[b.id] = b;
-
-        const tr = document.createElement("tr");
-        const client = _cache.users[b.clientId] || { fullName: `User #${b.clientId}`, email: "" };
-        const service = _cache.services[b.serviceId] || { title: `Service #${b.serviceId}` };
-
-        tr.setAttribute("data-searchable", `${client.fullName} ${service.title} ${b.appointmentDate} ${b.status}`);
-
-        // Expert select options
-        let expertOptions = `<option value="">-- Assign Expert --</option>`;
-        memberUsers.forEach(u => {
-          const selected = (b.expertId && String(b.expertId) === String(u.id)) ? "selected" : "";
-          expertOptions += `<option value="${u.id}" ${selected}>${escapeHtml(u.fullName)}</option>`;
-        });
-
-        // Status options
-        const statuses = ["PENDING", "CONFIRMED", "PRICING", "CANCELLED", "COMPLETED"];
-        let statusOptions = "";
-        statuses.forEach(s => {
-          const selected = (b.status === s) ? "selected" : "";
-          statusOptions += `<option value="${s}" ${selected}>${s}</option>`;
-        });
-
-        // Once COMPLETED, admin can no longer touch this booking
-        const isLocked = b.status === "COMPLETED";
-        // Date/time can only be edited manually while the booking is in CONFIRMED status
-        const isEditableSchedule = b.status === "CONFIRMED";
-
-        const scheduleHtml = isEditableSchedule
-          ? `<input type="date" id="bkDate-${b.id}" value="${escapeHtml(b.appointmentDate)}" class="admin-select" style="padding:0.3rem;font-size:0.78rem;margin-bottom:4px;width:100%;max-width:140px;">
-             <input type="time" id="bkTime-${b.id}" value="${escapeHtml(b.timeSlot ? b.timeSlot.substring(0, 5) : "")}" class="admin-select" style="padding:0.3rem;font-size:0.78rem;width:100%;max-width:140px;margin-bottom:4px;">
-             <button type="button" class="btn-add" onclick="saveBookingSchedule(${b.id})" style="padding:0.25rem 0.5rem;font-size:0.72rem;border-radius:6px;cursor:pointer;">Save Date</button>`
-          : `<div class="text-dark-inline">${escapeHtml(b.appointmentDate)}</div>
-             <div style="font-size:0.85rem;color:var(--text-muted);">${escapeHtml(b.timeSlot ? b.timeSlot.substring(0, 5) : "")}</div>`;
-
-        let extraActions = "";
-        if (b.status === "PRICING") {
-          extraActions += `<button type="button" class="btn-add" onclick="openQuoteModal(${b.id})" style="padding:0.35rem 0.6rem;font-size:0.8rem;gap:4px;border-radius:6px;cursor:pointer;">
-              <svg viewBox="0 0 24 24" style="width:12px;height:12px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Create Quote
-            </button>`;
-        }
-        if (b.status === "CONFIRMED") {
-          extraActions += `<button type="button" class="btn-add" onclick="openBookingEmailModal(${b.id})" style="padding:0.35rem 0.6rem;font-size:0.8rem;gap:4px;border-radius:6px;cursor:pointer;background-color:#4f46e5;">
-              <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg> Send Update Email
-            </button>`;
-        }
-
-
-        tr.innerHTML = `
-        <td>
-          <div class="text-dark-inline">${escapeHtml(client.fullName)}</div>
-          <div style="font-size:0.8rem;color:var(--text-muted);">${escapeHtml(client.email)}</div>
-        </td>
-        <td class="text-dark-inline">${escapeHtml(service.title)}</td>
-        <td>
-          ${scheduleHtml}
-        </td>
-        <td>
-          <select class="admin-select" onchange="updateBookingExpert(${b.id}, this.value)" ${isLocked ? "disabled" : ""} style="padding:0.35rem;border-radius:6px;border:1px solid var(--border-color);font-size:0.85rem;width:100%;max-width:160px;background:var(--bg-card);color:var(--text-dark);">
-            ${expertOptions}
-          </select>
-        </td>
-        <td>
-          <select class="admin-select status-select status-${b.status.toLowerCase()}" onchange="updateBookingStatus(${b.id}, this.value)" ${isLocked ? "disabled" : ""} style="padding:0.35rem;border-radius:6px;border:1px solid var(--border-color);font-weight:600;font-size:0.85rem;width:100%;max-width:130px;">
-            ${statusOptions}
-          </select>
-        </td>
-        <td>
-          <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-            <button type="button" class="btn-detail" onclick="openBookingDetailModal(${b.id})" style="padding:0.35rem 0.65rem;font-size:0.8rem;gap:4px;border-radius:6px;background:rgba(37,99,235,0.1);color:#2563eb;border:1px solid rgba(37,99,235,0.22);cursor:pointer;font-weight:600;display:inline-flex;align-items:center;transition:all 0.2s ease;">
-              <svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>View Detail
-            </button>
-            ${extraActions}
-            ${!isLocked ? `<button type="button" class="btn-delete" onclick="deleteBooking(${b.id})" style="padding:0.35rem 0.6rem;font-size:0.8rem;gap:4px;border-radius:6px;background-color:#ef4444;color:#fff;border:none;cursor:pointer;">
-              <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>Delete
-            </button>` : `<span style="font-size:0.78rem;color:var(--text-muted);font-style:italic;">Done — locked</span>`}
-          </div>
-        </td>
-      `;
-        tbody.appendChild(tr);
-      });
-
+      renderBookingTablePage();
     } catch (err) {
       console.error("fetchAdminBookings error:", err);
       tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:#ef4444;">Could not load bookings.</td></tr>`;
     }
+  }
+
+  function renderBookingTablePage() {
+    const tbody = document.getElementById("bookings-table-body");
+    if (!tbody) return;
+    setupPaginationContainer(tbody, "booking");
+
+    const bookings = _paginationState.booking.items;
+    const currentPage = _paginationState.booking.currentPage;
+    const startIndex = (currentPage - 1) * PAGE_SIZE;
+    const pageBookings = bookings.slice(startIndex, startIndex + PAGE_SIZE);
+
+    tbody.innerHTML = "";
+    if (!pageBookings.length) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);">No bookings found.</td></tr>`;
+      renderPaginationControls("booking", bookings.length);
+      return;
+    }
+
+    const memberUsers = Object.values(_cache.users).filter(u => u.role === "ROLE_MEMBER");
+
+    pageBookings.forEach(b => {
+      _cache.bookings[b.id] = b;
+
+      const tr = document.createElement("tr");
+      const client = _cache.users[b.clientId] || { fullName: `User #${b.clientId}`, email: "" };
+      const service = _cache.services[b.serviceId] || { title: `Service #${b.serviceId}` };
+
+      tr.setAttribute("data-searchable", `${client.fullName} ${service.title} ${b.appointmentDate} ${b.status}`);
+
+      // Expert select options
+      let expertOptions = `<option value="">-- Assign Expert --</option>`;
+      memberUsers.forEach(u => {
+        const selected = (b.expertId && String(b.expertId) === String(u.id)) ? "selected" : "";
+        expertOptions += `<option value="${u.id}" ${selected}>${escapeHtml(u.fullName)}</option>`;
+      });
+
+      // Status options
+      const statuses = ["PENDING", "CONFIRMED", "PRICING", "CANCELLED", "COMPLETED"];
+      let statusOptions = "";
+      statuses.forEach(s => {
+        const selected = (b.status === s) ? "selected" : "";
+        statusOptions += `<option value="${s}" ${selected}>${s}</option>`;
+      });
+
+      // Once COMPLETED, admin can no longer touch this booking
+      const isLocked = b.status === "COMPLETED";
+      // Date/time can only be edited manually while the booking is in CONFIRMED status
+      const isEditableSchedule = b.status === "CONFIRMED";
+
+      const scheduleHtml = isEditableSchedule
+        ? `<input type="date" id="bkDate-${b.id}" value="${escapeHtml(b.appointmentDate)}" class="admin-select" style="padding:0.3rem;font-size:0.78rem;margin-bottom:4px;width:100%;max-width:140px;">
+           <input type="time" id="bkTime-${b.id}" value="${escapeHtml(b.timeSlot ? b.timeSlot.substring(0, 5) : "")}" class="admin-select" style="padding:0.3rem;font-size:0.78rem;width:100%;max-width:140px;margin-bottom:4px;">
+           <button type="button" class="btn-add" onclick="saveBookingSchedule(${b.id})" style="padding:0.25rem 0.5rem;font-size:0.72rem;border-radius:6px;cursor:pointer;">Save Date</button>`
+        : `<div class="text-dark-inline">${escapeHtml(b.appointmentDate)}</div>
+           <div style="font-size:0.85rem;color:var(--text-muted);">${escapeHtml(b.timeSlot ? b.timeSlot.substring(0, 5) : "")}</div>`;
+
+      let extraActions = "";
+      if (b.status === "PRICING") {
+        extraActions += `<button type="button" class="btn-add" onclick="openQuoteModal(${b.id})" style="padding:0.35rem 0.6rem;font-size:0.8rem;gap:4px;border-radius:6px;cursor:pointer;">
+            <svg viewBox="0 0 24 24" style="width:12px;height:12px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Create Quote
+          </button>`;
+      }
+      if (b.status === "CONFIRMED") {
+        extraActions += `<button type="button" class="btn-add" onclick="openBookingEmailModal(${b.id})" style="padding:0.35rem 0.6rem;font-size:0.8rem;gap:4px;border-radius:6px;cursor:pointer;background-color:#4f46e5;">
+            <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg> Send Update Email
+          </button>`;
+      }
+
+      tr.innerHTML = `
+      <td>
+        <div class="text-dark-inline">${escapeHtml(client.fullName)}</div>
+        <div style="font-size:0.8rem;color:var(--text-muted);">${escapeHtml(client.email)}</div>
+      </td>
+      <td class="text-dark-inline">${escapeHtml(service.title)}</td>
+      <td>
+        ${scheduleHtml}
+      </td>
+      <td>
+        <select class="admin-select" onchange="updateBookingExpert(${b.id}, this.value)" ${isLocked ? "disabled" : ""} style="padding:0.35rem;border-radius:6px;border:1px solid var(--border-color);font-size:0.85rem;width:100%;max-width:160px;background:var(--bg-card);color:var(--text-dark);">
+          ${expertOptions}
+        </select>
+      </td>
+      <td>
+        <select class="admin-select status-select status-${b.status.toLowerCase()}" onchange="updateBookingStatus(${b.id}, this.value)" ${isLocked ? "disabled" : ""} style="padding:0.35rem;border-radius:6px;border:1px solid var(--border-color);font-weight:600;font-size:0.85rem;width:100%;max-width:130px;">
+          ${statusOptions}
+        </select>
+      </td>
+      <td>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+          <button type="button" class="btn-detail" onclick="openBookingDetailModal(${b.id})" style="padding:0.35rem 0.65rem;font-size:0.8rem;gap:4px;border-radius:6px;background:rgba(37,99,235,0.1);color:#2563eb;border:1px solid rgba(37,99,235,0.22);cursor:pointer;font-weight:600;display:inline-flex;align-items:center;transition:all 0.2s ease;">
+            <svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>View Detail
+          </button>
+          ${extraActions}
+          ${!isLocked ? `<button type="button" class="btn-delete" onclick="deleteBooking(${b.id})" style="padding:0.35rem 0.6rem;font-size:0.8rem;gap:4px;border-radius:6px;background-color:#ef4444;color:#fff;border:none;cursor:pointer;">
+            <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>Delete
+          </button>` : `<span style="font-size:0.78rem;color:var(--text-muted);font-style:italic;">Done — locked</span>`}
+        </div>
+      </td>
+    `;
+      tbody.appendChild(tr);
+    });
+
+    renderPaginationControls("booking", bookings.length);
   }
 
   // =============================================
@@ -6838,7 +7109,7 @@ function openQuoteModal(bookingId) {
   document.getElementById("quoteSubtotal").value = Number(booking.totalPrice || booking.basePrice || 0).toFixed(2);
   document.getElementById("quoteItemName").value = service.title;
   document.getElementById("quoteDiscount").value = "0";
-  document.getElementById("quoteTax").value = "0";
+  document.getElementById("quoteTax").value = "10";
   document.getElementById("quoteDeposit").value = "20";
   document.getElementById("quoteNotes").value = "";
 
@@ -6852,10 +7123,13 @@ function closeQuoteModal() {
 
 function calculateQuoteTotal() {
   const subtotal = parseFloat(document.getElementById("quoteSubtotal").value) || 0;
-  const discount = parseFloat(document.getElementById("quoteDiscount").value) || 0;
-  const tax = parseFloat(document.getElementById("quoteTax").value) || 0;
+  const discountPercent = parseFloat(document.getElementById("quoteDiscount").value) || 0;
+  const taxPercent = 10.0; // Fixed 10%
 
-  const total = subtotal - discount + tax;
+  const discountAmount = subtotal * (discountPercent / 100);
+  const taxAmount = (subtotal - discountAmount) * (taxPercent / 100);
+  const total = subtotal - discountAmount + taxAmount;
+  
   document.getElementById("quoteTotalAmount").value = total > 0 ? total.toFixed(2) : "0.00";
 }
 
@@ -6868,8 +7142,9 @@ async function submitQuote() {
   }
 
   const subtotal = parseFloat(document.getElementById("quoteSubtotal").value) || 0;
-  const discountAmount = parseFloat(document.getElementById("quoteDiscount").value) || 0;
-  const taxAmount = parseFloat(document.getElementById("quoteTax").value) || 0;
+  const discountPercent = parseFloat(document.getElementById("quoteDiscount").value) || 0;
+  const discountAmount = subtotal * (discountPercent / 100);
+  const taxAmount = (subtotal - discountAmount) * 0.10; // 10% fixed
   const totalAmount = parseFloat(document.getElementById("quoteTotalAmount").value) || 0;
   const depositPercentage = parseFloat(document.getElementById("quoteDeposit").value) || 20;
   const notes = document.getElementById("quoteNotes").value;
@@ -6940,6 +7215,154 @@ window.openQuoteModal = openQuoteModal;
 window.closeQuoteModal = closeQuoteModal;
 window.calculateQuoteTotal = calculateQuoteTotal;
 window.submitQuote = submitQuote;
+
+// =============================================
+//  Admin - Quotations Table & 1-Click Convert Modal
+// =============================================
+async function fetchAdminQuotationsTable() {
+  const tbody = document.getElementById("quotations-table-body");
+  if (!tbody) return;
+
+  try {
+    const response = await fetch("/api/quotations", {
+      headers: adminHeaders()
+    });
+    if (!response.ok) throw new Error("Failed to fetch quotations");
+    const quotations = await response.json();
+
+    if (Object.keys(_cache.users).length === 0) {
+      await fetchAdminUsers();
+    }
+
+    tbody.innerHTML = "";
+
+    if (!quotations.length) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);">No quotations found.</td></tr>`;
+      return;
+    }
+
+    quotations.forEach(q => {
+      _cache.quotations[q.id] = q;
+
+      const client = q.client || _cache.users[q.clientId] || { fullName: `User #${q.clientId || ''}`, email: "" };
+      const clientName = client.fullName || client.username || "Client";
+      const totalAmt = q.totalAmount ? Number(q.totalAmount).toFixed(2) : "0.00";
+      const depositPct = q.depositPercentage != null ? q.depositPercentage : 20;
+      const depositVal = (Number(totalAmt) * depositPct / 100).toFixed(2);
+
+      let statusBadge = `<span class="badge badge-secondary" style="padding:0.3rem 0.6rem;border-radius:6px;font-weight:600;font-size:0.75rem;background:#94a3b8;color:#fff;">${escapeHtml(q.status)}</span>`;
+      let actionBtn = "";
+
+      if (q.status === "APPROVED") {
+        statusBadge = `<span class="badge badge-success" style="padding:0.3rem 0.6rem;border-radius:6px;font-weight:600;font-size:0.75rem;background:#10b981;color:#fff;">APPROVED BY CLIENT</span>`;
+        actionBtn = `<button type="button" class="btn-add" onclick="openConvertQuoteModal(${q.id})" style="padding:0.35rem 0.75rem;font-size:0.8rem;gap:6px;border-radius:6px;cursor:pointer;background:#059669;color:#fff;font-weight:600;display:inline-flex;align-items:center;">
+            <svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><polyline points="17 11 19 13 23 9"/></svg> Convert to Project
+          </button>`;
+      } else if (q.status === "CONVERTED") {
+        statusBadge = `<span class="badge badge-purple" style="padding:0.3rem 0.6rem;border-radius:6px;font-weight:600;font-size:0.75rem;background:#8b5cf6;color:#fff;">CONVERTED</span>`;
+        actionBtn = `<span style="font-size:0.78rem;color:var(--text-muted);font-style:italic;">Project Active</span>`;
+      } else if (q.status === "PROPOSED") {
+        statusBadge = `<span class="badge badge-info" style="padding:0.3rem 0.6rem;border-radius:6px;font-weight:600;font-size:0.75rem;background:#3b82f6;color:#fff;">PROPOSED (SENT)</span>`;
+      }
+
+      const tr = document.createElement("tr");
+      tr.setAttribute("data-searchable", `${q.quoteCode} ${q.title} ${clientName} ${q.status}`);
+
+      tr.innerHTML = `
+        <td>
+          <div class="text-dark-inline" style="font-weight:600;color:var(--text-dark);">${escapeHtml(q.quoteCode || '')}</div>
+          <div style="font-size:0.82rem;color:var(--text-muted);">${escapeHtml(q.title || '')}</div>
+        </td>
+        <td>
+          <div class="text-dark-inline">${escapeHtml(clientName)}</div>
+          <div style="font-size:0.8rem;color:var(--text-muted);">${escapeHtml(client.email || '')}</div>
+        </td>
+        <td style="font-weight:600;color:#10b981;">$${totalAmt}</td>
+        <td>
+          <div style="font-weight:600;">$${depositVal}</div>
+          <div style="font-size:0.78rem;color:var(--text-muted);">${depositPct}% Deposit</div>
+        </td>
+        <td>${statusBadge}</td>
+        <td>${actionBtn}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (err) {
+    console.error("fetchAdminQuotationsTable error:", err);
+  }
+}
+
+async function openConvertQuoteModal(quoteId) {
+  let quote = _cache.quotations ? _cache.quotations[quoteId] : null;
+  if (!quote) {
+    try {
+      const res = await fetch(`/api/quotations/${quoteId}`, { headers: adminHeaders() });
+      if (res.ok) quote = await res.json();
+    } catch (e) { console.error("Error fetching quote:", e); }
+  }
+
+  if (!quote) {
+    showToast("Quote data not found", "error");
+    return;
+  }
+
+  if (Object.keys(_cache.users).length === 0) {
+    await fetchAdminUsers();
+  }
+
+  const clientId = quote.client ? quote.client.id : (quote.clientId || "");
+  const totalAmt = quote.totalAmount || 0;
+  const depPct = quote.depositPercentage != null ? quote.depositPercentage : 20;
+  const depVal = (totalAmt * depPct / 100).toFixed(2);
+  const serviceName = quote.booking && quote.booking.serviceName ? quote.booking.serviceName : "Web Development";
+
+  const prefilledItem = {
+    title: quote.title,
+    category: serviceName,
+    clientId: clientId,
+    depositAmount: depVal,
+    imageUrl: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=800&h=400",
+    description: quote.notes || ("Project converted automatically from quotation " + quote.quoteCode),
+    technologies: "Java, Spring Boot, HTML, CSS, JavaScript"
+  };
+
+  _crudState = { type: "project", item: null, convertingQuoteId: quoteId };
+
+  const overlay = document.getElementById("crud-modal-overlay");
+  const titleEl = document.getElementById("crud-modal-title");
+  const bodyEl = document.getElementById("crud-modal-body");
+  const alertEl = document.getElementById("crud-alert");
+
+  if (!overlay) return;
+  if (alertEl) { alertEl.style.display = "none"; alertEl.textContent = ""; alertEl.className = "crud-alert alert-message"; }
+
+  titleEl.textContent = `Convert Quotation (${quote.quoteCode}) to Project`;
+  bodyEl.innerHTML = buildCrudForm("project", prefilledItem);
+
+  const fileInput = document.getElementById("cf-imageFile");
+  if (fileInput) {
+    fileInput.addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const preview = document.getElementById("cf-preview");
+      const urlInput = document.getElementById("cf-imageUrl");
+      try {
+        const reader = new FileReader();
+        reader.onload = () => {
+          urlInput.value = reader.result;
+          if (preview) { preview.src = reader.result; preview.style.display = "block"; }
+        };
+        reader.readAsDataURL(file);
+      } catch (err) {}
+    });
+  }
+
+  overlay.classList.add("is-open");
+  document.body.style.overflow = "hidden";
+}
+
+window.fetchAdminQuotationsTable = fetchAdminQuotationsTable;
+window.openConvertQuoteModal = openConvertQuoteModal;
 
 // =============================================
 //  Admin - Quotation SSE Listener

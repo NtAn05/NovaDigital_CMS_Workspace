@@ -251,12 +251,14 @@ public class ResourceAllocationService {
                     staff.getFullName() + " already has an overlapping allocation for " + target + ".");
         }
 
+        // Bước kiểm tra giới hạn công việc: Gọi WorkloadCapacityCalculator để kiểm tra tổng % phân bổ
+        // trong tất cả các dự án của nhân sự đó không vượt quá 100% ở bất kỳ ngày nào
         WorkloadCapacityCalculator.findConflict(overlapping, startDate, endDate, percentage)
                 .ifPresent(conflict -> {
                     throw new IllegalArgumentException(
-                            "Workload limit exceeded: " + staff.getFullName() + " would reach "
-                                    + conflict.workloadPercentage() + "% on " + conflict.date()
-                                    + ". Maximum allowed workload is 100%.");
+                            "Vượt quá giới hạn công việc: Nhân sự " + staff.getFullName() + " sẽ chạm mốc "
+                                    + conflict.workloadPercentage() + "% vào ngày " + conflict.date()
+                                    + ". Khối lượng công việc tối đa cho phép là 100%.");
                 });
     }
 

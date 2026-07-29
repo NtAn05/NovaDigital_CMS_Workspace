@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -27,6 +28,7 @@ public class QuotationService {
     @Autowired private ConsultationAppointmentRepository appointmentRepository;
     @Autowired private UserRepository userRepository;
     @Autowired private ProjectRepository projectRepository;
+    @Autowired private ProjectClientRepository projectClientRepository;
     @Autowired private JavaMailSender mailSender;
     @Autowired private SseEmitterService sseEmitterService;
     @Autowired private NotificationRepository notificationRepository;
@@ -223,24 +225,99 @@ public class QuotationService {
 
     @Transactional
     public Project convertToProject(Long quotationId) {
+        return convertToProject(quotationId, null);
+    }
+
+    @Transactional
+    public Project convertToProject(Long quotationId, Map<String, Object> projectData) {
         Quotation quotation = quotationRepository.findById(quotationId)
                 .orElseThrow(() -> new RuntimeException("Quotation not found"));
         
-        if (!"APPROVED".equals(quotation.getStatus())) {
+        if (!"APPROVED".equals(quotation.getStatus()) && !"CONVERTED".equals(quotation.getStatus())) {
             throw new RuntimeException("Quotation must be approved to convert to project");
         }
 
-        Project project = new Project();
-        project.setTitle(quotation.getTitle());
-        project.setDescription(quotation.getNotes() != null ? quotation.getNotes() : "Project created from quotation: " + quotation.getQuoteCode());
-        project.setCategory("Converted from Quote"); // Or mapping category based on service
-        
-        Project savedProject = projectRepository.save(project);
-        
+        if (quotation.getConvertedProject() != null && projectData == null) {
+            return quotation.getConvertedProject();
+        }
+
+        String title = (projectData != null && projectData.get("title") != null && !((String)projectData.get("title")).isBlank())
+                ? ((String) projectData.get("title")).trim()
+                : quotation.getTitle();
+
+        String category = (projectData != null && projectData.get("category") != null && !((String)projectData.get("category")).isBlank())
+                ? ((String) projectData.get("category")).trim()
+                : "Converted from Quote";
+
+        String description = (projectData != null && projectData.get("description") != null && !((String)projectData.get("description")).isBlank())
+                ? ((String) projectData.get("description")).trim()
+                : (quotation.getNotes() != null && !quotation.getNotes().isBlank() ? quotation.getNotes() : "Project created from quotation: " + quotation.getQuoteCode());
+
+        String imageUrl = (projectData != null && projectData.get("imageUrl") != null) ? (String) projectData.get("imageUrl") : null;
+        String technologies = (projectData != null && projectData.get("technologies") != null) ? (String) projectData.get("technologies") : null;
+
+        Double depositAmount = 0.0;
+        if (projectData != null && projectData.get("depositAmount") != null) {
+            try {
+                depositAmount = Double.parseDouble(projectData.get("depositAmount").toString());
+            } catch (Exception ignored) {}
+        } else if (quotation.getTotalAmount() != null && quotation.getDepositPercentage() != null) {
+            depositAmount = quotation.getTotalAmount() * quotation.getDepositPercentage() / 100.0;
+        }
+
+        if (title != null && title.length() > 255) title = title.substring(0, 255);
+        if (category != null && category.length() > 100) category = category.substring(0, 100);
+
+        Project project = quotation.getConvertedProject() != null ? quotation.getConvertedProject() : new Project();
+        project.setTitle(title);
+        project.setDescription(description);
+        project.setCategory(category);
+        if (imageUrl != null && !imageUrl.isBlank()) project.setImageUrl(imageUrl);
+        if (technologies != null) project.setTechnologies(technologies);
+        project.setDepositAmount(depositAmount);
+        if (project.getDepositPaid() == null) {
+            project.setDepositPaid(false);
+        }
+
+        Project savedProject;
+        try {
+            savedProject = projectRepository.save(project);
+        } catch (Exception e) {
+            if (imageUrl != null && imageUrl.length() > 255) {
+                project.setImageUrl(imageUrl.substring(0, 255));
+                savedProject = projectRepository.save(project);
+            } else {
+                throw e;
+            }
+        }
+
+        // Link client user to project
+        Long clientId = null;
+        if (projectData != null && projectData.get("clientId") != null) {
+            try {
+                clientId = Long.parseLong(projectData.get("clientId").toString());
+            } catch (Exception ignored) {}
+        }
+        User clientUser = null;
+        if (clientId != null && clientId > 0) {
+            clientUser = userRepository.findById(clientId).orElse(null);
+        } else if (quotation.getClient() != null) {
+            clientUser = quotation.getClient();
+        }
+
+        if (clientUser != null) {
+            if (projectClientRepository.findByProjectIdAndUserId(savedProject.getId(), clientUser.getId()).isEmpty()) {
+                ProjectClient pc = new ProjectClient();
+                pc.setProject(savedProject);
+                pc.setUser(clientUser);
+                projectClientRepository.save(pc);
+            }
+        }
+
         quotation.setConvertedProject(savedProject);
         quotation.setStatus("CONVERTED");
         quotationRepository.save(quotation);
-        
+
         return savedProject;
     }
     

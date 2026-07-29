@@ -122,8 +122,8 @@ public class QuotationController {
     }
 
     @PostMapping("/{id}/convert-to-project")
-    public ResponseEntity<Project> convertToProject(@PathVariable Long id) {
-        return ResponseEntity.ok(quotationService.convertToProject(id));
+    public ResponseEntity<Project> convertToProject(@PathVariable Long id, @RequestBody(required = false) Map<String, Object> body) {
+        return ResponseEntity.ok(quotationService.convertToProject(id, body));
     }
 
     @GetMapping

@@ -9,6 +9,40 @@
   <link rel="stylesheet" href="/css/style.css">
   <style>
     /* ================================================
+       PAGINATION BUTTONS
+    ================================================ */
+    .page-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.4rem 0.75rem;
+      border: 1px solid var(--border-color, #e2e8f0);
+      background: var(--bg-card, #ffffff);
+      color: var(--text-dark, #0f172a);
+      font-weight: 600;
+      font-size: 0.8rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .page-btn:hover:not(:disabled) {
+      background: var(--primary-light, rgba(37, 99, 235, 0.1));
+      border-color: #2563eb;
+      color: #2563eb;
+    }
+    .page-btn.active {
+      background: #2563eb;
+      color: #ffffff;
+      border-color: #2563eb;
+      box-shadow: 0 4px 10px rgba(37,99,235,0.2);
+    }
+    .page-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      border-color: var(--border-color);
+    }
+
+    /* ================================================
        ADMIN LAYOUT
     ================================================ */
     body {
@@ -1625,6 +1659,38 @@
             </tbody>
           </table>
         </div>
+
+        <!-- Project Quotations Table -->
+        <div class="table-container" style="margin-top: 2rem;">
+          <div class="table-toolbar">
+            <h2>Project Quotations</h2>
+            <div class="table-search">
+              <svg viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <input type="text" placeholder="Search quotations..."
+                oninput="filterTable('quotations-table-body', this.value)">
+            </div>
+          </div>
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Quote Code / Title</th>
+                <th>Client</th>
+                <th>Total Amount</th>
+                <th>Deposit Required</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="quotations-table-body">
+              <tr>
+                <td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);">Loading quotations...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <!-- ========== MESSAGES PANEL ========== -->
@@ -1996,19 +2062,19 @@
               <input type="number" id="quoteSubtotal" step="0.01" required style="width:100%; padding: 0.65rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem;" oninput="calculateQuoteTotal()">
             </div>
             <div class="form-group" style="flex: 1;">
-              <label style="display:block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.85rem; color: var(--text-dark);">Discount ($)</label>
-              <input type="number" id="quoteDiscount" step="0.01" value="0" style="width:100%; padding: 0.65rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem;" oninput="calculateQuoteTotal()">
+              <label style="display:block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.85rem; color: var(--text-dark);">Discount (%)</label>
+              <input type="number" id="quoteDiscount" step="0.1" value="0" min="0" max="100" style="width:100%; padding: 0.65rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem;" oninput="calculateQuoteTotal()">
             </div>
           </div>
 
           <div style="display:flex; gap: 1rem; margin-bottom: 1rem;">
             <div class="form-group" style="flex: 1;">
-              <label style="display:block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.85rem; color: var(--text-dark);">Tax ($)</label>
-              <input type="number" id="quoteTax" step="0.01" value="0" style="width:100%; padding: 0.65rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem;" oninput="calculateQuoteTotal()">
+              <label style="display:block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.85rem; color: var(--text-dark);">Tax (%)</label>
+              <input type="number" id="quoteTax" value="10" readonly style="width:100%; padding: 0.65rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; background: #f8fafc; cursor: not-allowed;">
             </div>
             <div class="form-group" style="flex: 1;">
               <label style="display:block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.85rem; color: var(--text-dark);">Deposit Percentage (%) <span style="color:red">*</span></label>
-              <input type="number" id="quoteDeposit" step="0.1" value="20" required style="width:100%; padding: 0.65rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem;">
+              <input type="number" id="quoteDeposit" step="0.1" value="20" required style="width:100%; padding: 0.65rem; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem;" oninput="calculateQuoteTotal()">
             </div>
           </div>
           

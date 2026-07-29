@@ -728,7 +728,7 @@
   <script>
     const API = '';
 
-    // â”€â”€ State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── State ──────────────────────────────────────────────────────
     let pricingTable = { basePrice: 0, addons: [] }; // addons: [{id, addonName, priceModifier}]
     let selectedAddonIds = new Set();
     let chosenDate = null;
@@ -835,9 +835,10 @@
       }
     }
 
-    // Consultant field removed admin assigns consultant later
 
-    // UC-06: Dynamic Pricing Module (Service.base_price + Service_Addon) 
+    // Consultant field removed — admin assigns consultant later
+
+    // ── UC-06: Dynamic Pricing Module (Service.base_price + Service_Addon) ──
     async function loadPricingForService(serviceId) {
       const list = document.getElementById('addonList');
       const hintEl = document.getElementById('basePriceHint');
@@ -919,7 +920,7 @@
       validateForm();
     }
 
-    // â”€â”€ UC-07: Booking Calendar Controls â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── UC-07: Booking Calendar Controls ─────────────────────────────
     function bindEvents() {
       document.getElementById('serviceSelect').addEventListener('change', (e) => {
         loadPricingForService(e.target.value);
@@ -940,7 +941,7 @@
       document.getElementById('attachmentFile').addEventListener('change', onFileChange);
     }
 
-    // â”€â”€ File attachment â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── File attachment ────────────────────────────────────────────
     function onFileChange(e) {
       const file = e.target.files[0];
       const infoEl  = document.getElementById('fileInfo');
@@ -1018,7 +1019,7 @@
       validateForm();
     }
 
-    // â”€â”€ Submit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+    // ── Submit ─────────────────────────────────────────────────────
     function validateForm() {
       const ok = document.getElementById('serviceSelect').value &&
                  document.getElementById('clientIdInput').value &&

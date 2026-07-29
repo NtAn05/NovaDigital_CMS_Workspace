@@ -68,7 +68,7 @@ public class SecurityConfig {
                                 "/member-profile.html",
                                 "/resource-allocation.html", "/transaction.html", "/payment-success.html",
                                 "/payment-cancel.html",
-                                "/careers.html", "/hr-recruitment.html", "/my-bookings.html")
+                                "/careers.html", "/hr-recruitment.html", "/my-bookings.html", "/my-applications.html")
                         .permitAll()
                         .requestMatchers("/css/**", "/js/**", "/images/**", "/uploads/**", "/favicon.ico").permitAll()
 
@@ -81,6 +81,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/members", "/api/members/**").permitAll()
                         // F_38 — Vacancy APIs
                         .requestMatchers(HttpMethod.POST, "/api/vacancies/apply").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/vacancies/applications/my").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/api/vacancies/applications/my/*").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/vacancies/applications/my/*").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/vacancies/applications")
                         .hasAnyRole("ADMIN", "MEMBER", "RESOURCE")
                         .requestMatchers(HttpMethod.PATCH, "/api/vacancies/applications/*/status")
@@ -159,8 +162,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/members", "/api/members/**")
                         .hasAnyRole("ADMIN", "MEMBER")
 
-                        // Uploading files is restricted to authenticated users (so users can upload
-                        // avatars)
+                        // Uploading files is restricted to authenticated users (so users can upload avatars/CVs)
                         .requestMatchers("/api/upload", "/api/upload/**").authenticated()
 
                         // Get my contacts needs authentication

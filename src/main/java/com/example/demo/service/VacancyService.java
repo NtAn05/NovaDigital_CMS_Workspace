@@ -43,6 +43,45 @@ public class VacancyService {
         return applicationRepository.findByVacancyIdAndStatusOrderByAppliedAtDesc(vacancyId, status);
     }
 
+    /** Candidate: Get own applications */
+    public List<CandidateApplication> getApplicationsByEmail(String email) {
+        return applicationRepository.findByApplicantEmailOrderByAppliedAtDesc(email);
+    }
+
+    /** Candidate: Update their own application (only if PENDING) */
+    @Auditable(action = "UPDATE", table = "candidate_applications")
+    public CandidateApplication updateMyApplication(Long id, String email, CandidateApplication updatedData) {
+        CandidateApplication app = applicationRepository.findByIdAndApplicantEmail(id, email)
+                .orElseThrow(() -> new RuntimeException("Application not found or you don't have permission."));
+        
+        if (app.getStatus() != ApplicationStatus.PENDING) {
+            throw new RuntimeException("You can only edit applications that are currently PENDING.");
+        }
+
+        app.setApplicantName(updatedData.getApplicantName());
+        app.setApplicantPhone(updatedData.getApplicantPhone());
+        app.setCoverLetter(updatedData.getCoverLetter());
+        
+        if (updatedData.getResumeUrl() != null && !updatedData.getResumeUrl().isBlank()) {
+            app.setResumeUrl(updatedData.getResumeUrl());
+        }
+
+        return applicationRepository.save(app);
+    }
+
+    /** Candidate: Delete their own application (only if PENDING) */
+    @Auditable(action = "DELETE", table = "candidate_applications")
+    public void deleteMyApplication(Long id, String email) {
+        CandidateApplication app = applicationRepository.findByIdAndApplicantEmail(id, email)
+                .orElseThrow(() -> new RuntimeException("Application not found or you don't have permission."));
+        
+        if (app.getStatus() != ApplicationStatus.PENDING) {
+            throw new RuntimeException("You can only delete applications that are currently PENDING.");
+        }
+
+        applicationRepository.delete(app);
+    }
+
     // ── F_38: HR Status Pipeline ───────────────────────────────────────────────
 
     /**
