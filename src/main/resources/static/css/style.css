@@ -3186,30 +3186,51 @@ html.dark-theme .partners-logos svg:hover {
   color: var(--primary-light);
 }
 
-/* Inbox Styles */
+/* Inbox & Member Standalone Page Styles */
+.inbox-page-wrapper,
+.apps-page,
+.bookings-page,
+.profile-page,
+.rented-page-wrapper,
+.transaction-page-wrapper {
+  padding-top: 6.5rem !important;
+  padding-bottom: 4rem !important;
+}
+
+.inbox-main-container {
+  max-width: 1200px !important;
+  margin: 0 auto !important;
+  padding: 0 1.5rem !important;
+}
+
 .inbox-section {
-  padding: 3rem 2rem;
-  background: rgba(255, 255, 255, 0.8) !important;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--border-color) !important;
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  transition: background 0.3s ease, border-color 0.3s ease;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
 }
 
 html.dark-theme .inbox-section {
-  background: rgba(20, 26, 41, 0.65) !important;
+  background: transparent !important;
+  border: none !important;
 }
 
 .inbox-card {
-  background: var(--bg-white);
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border-color);
-  transition: var(--transition);
+  background: rgba(255, 255, 255, 0.72) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.55) !important;
+  border-radius: var(--radius-lg) !important;
+  box-shadow: 0 10px 40px rgba(37, 99, 235, 0.07), 0 2px 8px rgba(0,0,0,0.04) !important;
+  overflow: hidden;
+  padding: 2rem !important;
+  transition: background 0.3s ease, border-color 0.3s ease;
   text-align: left;
+}
+
+html.dark-theme .inbox-card {
+  background: rgba(15, 23, 42, 0.6) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 .inbox-card:hover {
@@ -5387,6 +5408,176 @@ html.dark-theme .floating-form-group select {
 .admin-main {
   margin-left: 252px !important;
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  padding-top: 1.75rem !important;
+}
+
+/* =========================================================
+   UNIFIED PAGE HEADERS (Admin & Member Dashboards) - ENHANCED
+   ========================================================= */
+.admin-main,
+.member-container,
+.dashboard-container {
+  padding-top: 1.75rem !important;
+}
+
+.panel-header,
+.admin-header,
+.member-header,
+.profile-page-header,
+.resource-panel-header,
+.apps-header,
+.bookings-header,
+.transaction-header,
+.rented-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  flex-wrap: wrap !important;
+  gap: 1.25rem !important;
+  padding: 0.65rem 0 1.5rem 0 !important;
+  margin-bottom: 2.25rem !important;
+  border-bottom: none !important;
+  position: relative !important;
+}
+
+/* Distinct Full-Width Gradient Separator Line */
+.panel-header::after,
+.admin-header::after,
+.member-header::after,
+.profile-page-header::after,
+.resource-panel-header::after,
+.apps-header::after,
+.bookings-header::after,
+.transaction-header::after,
+.rented-header::after {
+  content: '' !important;
+  position: absolute !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 2px !important;
+  background: linear-gradient(90deg, #2563eb 0%, #7c3aed 35%, #00d2ff 70%, rgba(203, 213, 225, 0.4) 100%) !important;
+  border-radius: 99px !important;
+}
+
+.panel-header h1,
+.admin-header h1,
+.member-header h1,
+.profile-page-header h1,
+.resource-panel-header h1,
+.apps-header h1,
+.bookings-header h1,
+.transaction-header h1,
+.rented-header h1 {
+  font-family: var(--font-heading) !important;
+  font-size: clamp(1.8rem, 2.7vw, 2.25rem) !important;
+  font-weight: 850 !important;
+  color: var(--text-dark, #0f172a) !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.03em !important;
+  margin: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+}
+
+/* Glowing Indicator Pill Bar */
+.panel-header h1::before,
+.admin-header h1::before,
+.member-header h1::before,
+.profile-page-header h1::before,
+.resource-panel-header h1::before,
+.apps-header h1::before,
+.bookings-header h1::before,
+.transaction-header h1::before,
+.rented-header h1::before {
+  content: '' !important;
+  display: inline-block !important;
+  width: 6px !important;
+  height: 1.85rem !important;
+  background: linear-gradient(180deg, #2563eb 0%, #7c3aed 50%, #00d2ff 100%) !important;
+  border-radius: 99px !important;
+  flex-shrink: 0 !important;
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.45) !important;
+}
+
+.panel-header .panel-subtitle,
+.admin-header p,
+.member-header p,
+.profile-page-header p,
+.resource-panel-header p,
+.apps-header p,
+.bookings-header p,
+.transaction-header p,
+.rented-header p {
+  color: var(--text-muted, #475569) !important;
+  font-size: 0.92rem !important;
+  font-weight: 500 !important;
+  margin-top: 0.4rem !important;
+  padding-left: 1.25rem !important;
+}
+
+/* Dark Theme Overrides for Unified Page Headers */
+html.dark-theme .panel-header,
+html.dark-theme .admin-header,
+html.dark-theme .member-header,
+html.dark-theme .profile-page-header,
+html.dark-theme .resource-panel-header,
+html.dark-theme .apps-header,
+html.dark-theme .bookings-header,
+html.dark-theme .transaction-header,
+html.dark-theme .rented-header {
+  border-bottom-color: rgba(255, 255, 255, 0.16) !important;
+}
+
+html.dark-theme .panel-header::after,
+html.dark-theme .admin-header::after,
+html.dark-theme .member-header::after,
+html.dark-theme .profile-page-header::after,
+html.dark-theme .resource-panel-header::after,
+html.dark-theme .apps-header::after,
+html.dark-theme .bookings-header::after,
+html.dark-theme .transaction-header::after,
+html.dark-theme .rented-header::after {
+  background: linear-gradient(90deg, #00f0ff 0%, #7c3aed 100%) !important;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.6) !important;
+}
+
+html.dark-theme .panel-header h1,
+html.dark-theme .admin-header h1,
+html.dark-theme .member-header h1,
+html.dark-theme .profile-page-header h1,
+html.dark-theme .resource-panel-header h1,
+html.dark-theme .apps-header h1,
+html.dark-theme .bookings-header h1,
+html.dark-theme .transaction-header h1,
+html.dark-theme .rented-header h1 {
+  color: #f8fafc !important;
+}
+
+html.dark-theme .panel-header h1::before,
+html.dark-theme .admin-header h1::before,
+html.dark-theme .member-header h1::before,
+html.dark-theme .profile-page-header h1::before,
+html.dark-theme .resource-panel-header h1::before,
+html.dark-theme .apps-header h1::before,
+html.dark-theme .bookings-header h1::before,
+html.dark-theme .transaction-header h1::before,
+html.dark-theme .rented-header h1::before {
+  background: linear-gradient(180deg, #00f0ff 0%, #7c3aed 100%) !important;
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.6) !important;
+}
+
+html.dark-theme .panel-header .panel-subtitle,
+html.dark-theme .admin-header p,
+html.dark-theme .member-header p,
+html.dark-theme .profile-page-header p,
+html.dark-theme .resource-panel-header p,
+html.dark-theme .apps-header p,
+html.dark-theme .bookings-header p,
+html.dark-theme .transaction-header p,
+html.dark-theme .rented-header p {
+  color: #94a3b8 !important;
 }
 
 .sidebar-toggle-btn {
