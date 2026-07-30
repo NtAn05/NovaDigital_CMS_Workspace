@@ -592,11 +592,13 @@ function initModalRegisterForm() {
           }, 1000);
           form.dataset.timerId = timerInterval;
         } else {
+          submitBtn.textContent = originalText;
           showModalAlert(data.message || "Failed to send OTP.", false, "modal-register-alert");
         }
       } catch (error) {
         console.error("Modal send OTP error:", error);
         submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
         showModalAlert("Could not connect to server. Please try again.", false, "modal-register-alert");
       }
     } else {
@@ -1261,11 +1263,13 @@ function initRegisterForm() {
           }, 1000);
           form.dataset.timerId = timerInterval;
         } else {
+          submitBtn.textContent = originalText;
           showAlert(data.message || "Failed to send OTP.", false);
         }
       } catch (error) {
         console.error("Send OTP error:", error);
         submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
         showAlert("Could not connect to server. Please try again.", false);
       }
     } else {
