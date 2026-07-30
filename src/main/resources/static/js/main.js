@@ -719,7 +719,7 @@ function checkRouteGuard() {
 function highlightActiveLink() {
   const path = window.location.pathname;
   const page = path.substring(path.lastIndexOf('/') + 1) || "index.html";
-  const navLinks = document.querySelectorAll(".nav-links a");
+  const navLinks = document.querySelectorAll(".nav-links a, .dropdown-item");
 
   navLinks.forEach(link => {
     const href = link.getAttribute("href");

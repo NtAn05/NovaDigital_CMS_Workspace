@@ -4492,12 +4492,14 @@ html.dark-theme .admin-table thead tr:hover th {
   opacity: 0;
 }
 
-.dropdown-item:hover {
+.dropdown-item:hover,
+.dropdown-item.active {
   color: var(--primary, #2563eb);
   font-weight: 600;
 }
 
-.dropdown-item:hover::after {
+.dropdown-item:hover::after,
+.dropdown-item.active::after {
   width: calc(100% - 2rem); /* Span the text roughly */
   opacity: 1;
 }
