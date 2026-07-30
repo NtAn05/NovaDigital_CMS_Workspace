@@ -49,7 +49,7 @@
           </svg>
         </div>
         <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 0.75rem;">
-          <span class="badge tech-pill" style="font-size: 0.9rem; padding: 0.45rem 1.2rem; border-radius: 50px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;">
+          <span class="badge tech-pill brand-highlight-pill" style="font-size: 0.9rem; padding: 0.45rem 1.2rem; border-radius: 50px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase;">
             NovaDigital Creative Agency
           </span>
         </div>
@@ -59,151 +59,151 @@
         </p>
       </div>
     </section>
-    <script>
-      (function() {
-        var canvas = document.getElementById('tech-canvas-bg');
-        if (!canvas) return;
-        var ctx = canvas.getContext('2d');
-        var width, height;
-        var particles = [];
-        var numParticles = 65;
-
-        function resize() {
-          width = canvas.width = canvas.parentElement.offsetWidth || window.innerWidth;
-          height = canvas.height = canvas.parentElement.offsetHeight || 400;
-        }
-        window.addEventListener('resize', resize);
-        resize();
-
-        for (var i = 0; i < numParticles; i++) {
-          particles.push({
-            x: Math.random() * width,
-            y: Math.random() * height,
-            vx: (Math.random() - 0.5) * 1.2,
-            vy: (Math.random() - 0.5) * 1.2,
-            radius: Math.random() * 2 + 1,
-            color: Math.random() > 0.5 ? '#38bdf8' : '#818cf8'
-          });
-        }
-
-        function animate() {
-          ctx.clearRect(0, 0, width, height);
-
-          ctx.strokeStyle = 'rgba(56, 189, 248, 0.05)';
-          ctx.lineWidth = 1;
-          var gridSize = 40;
-          for (var x = 0; x < width; x += gridSize) {
-            ctx.beginPath();
-            ctx.moveTo(x, 0);
-            ctx.lineTo(x, height);
-            ctx.stroke();
-          }
-          for (var y = 0; y < height; y += gridSize) {
-            ctx.beginPath();
-            ctx.moveTo(0, y);
-            ctx.lineTo(width, y);
-            ctx.stroke();
-          }
-
-          for (var i = 0; i < particles.length; i++) {
-            var p = particles[i];
-            p.x += p.vx;
-            p.y += p.vy;
-
-            if (p.x < 0 || p.x > width) p.vx *= -1;
-            if (p.y < 0 || p.y > height) p.vy *= -1;
-
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-            ctx.fillStyle = p.color;
-            ctx.fill();
-
-            for (var j = i + 1; j < particles.length; j++) {
-              var p2 = particles[j];
-              var dx = p.x - p2.x;
-              var dy = p.y - p2.y;
-              var dist = Math.sqrt(dx * dx + dy * dy);
-
-              if (dist < 120) {
-                ctx.beginPath();
-                ctx.moveTo(p.x, p.y);
-                ctx.lineTo(p2.x, p2.y);
-                ctx.strokeStyle = 'rgba(56, 189, 248, ' + (1 - dist / 120) * 0.25 + ')';
-                ctx.lineWidth = 0.8;
-                ctx.stroke();
-              }
-            }
-          }
-
-          requestAnimationFrame(animate);
-        }
-
-        animate();
-      })();
-    </script>
 
     <!-- Contact Form Section -->
-    <section class="team-section">
-      <div class="contact-container">
-        <div class="contact-info scroll-animate">
-          <h2>Contact Information</h2>
-          <p>We're here to help and answer any questions you might have. We look forward to hearing from you!</p>
-          <div class="contact-details">
-            <div class="contact-item">
-              <div class="contact-item-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                  <circle cx="12" cy="10" r="3"></circle>
-                </svg>
+    <section class="team-section" style="padding-top: 3rem; padding-bottom: 5rem;">
+      <div style="max-width: 1150px; margin: 0 auto; padding: 0 1.5rem;">
+        <div class="contact-container">
+          <!-- Left Column: Rich Contact Information Card -->
+          <div class="contact-info scroll-animate">
+            <span class="contact-badge-pill">Reach Out To Us</span>
+            <h2>Let's Talk About Your Project</h2>
+            <p class="contact-subtitle">We're here to answer your questions, explore technology solutions, and bring your business ideas to life.</p>
+            
+            <div class="contact-details">
+              <div class="contact-item">
+                <div class="contact-item-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                    <circle cx="12" cy="10" r="3"></circle>
+                  </svg>
+                </div>
+                <div class="contact-item-text">
+                  <h4>Our Headquarter</h4>
+                  <p>Fv1 Office Building, District 1, Ho Chi Minh City, Vietnam</p>
+                </div>
               </div>
-              <div class="contact-item-text">
-                <h4>Address</h4>
-                <p>Fv1 Office Building</p>
+
+              <div class="contact-item">
+                <div class="contact-item-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                    <polyline points="22,6 12,13 2,6"></polyline>
+                  </svg>
+                </div>
+                <div class="contact-item-text">
+                  <h4>Email Support</h4>
+                  <p><a href="mailto:contact@novadigital.com">contact@novadigital.com</a></p>
+                </div>
+              </div>
+
+              <div class="contact-item">
+                <div class="contact-item-icon">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.07 9.8 19.79 19.79 0 01.02 1.18 2 2 0 012 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.09 7.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z"></path>
+                  </svg>
+                </div>
+                <div class="contact-item-text">
+                  <h4>Direct Hotline</h4>
+                  <p><a href="tel:+84123456789">+84 (0) 123 456 789</a> <span class="working-hours">(Mon - Fri, 8:30 AM - 6:00 PM)</span></p>
+                </div>
               </div>
             </div>
-            <div class="contact-item">
-              <div class="contact-item-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                  <polyline points="22,6 12,13 2,6"></polyline>
+
+            <!-- Guarantee Pill -->
+            <div class="contact-guarantee-badge">
+              <div class="guarantee-pulse-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
                 </svg>
               </div>
-              <div class="contact-item-text">
-                <h4>Email Us</h4>
-                <p><a href="mailto:contact@novadigital.com" style="color: var(--text-muted); text-decoration: none;">contact@novadigital.com</a></p>
+              <div class="guarantee-text">
+                <span class="guarantee-title">Fast Response Guaranteed</span>
+                <span class="guarantee-desc">We usually reply within 2 hours during business hours</span>
               </div>
             </div>
           </div>
+          
+          <!-- Right Column: Elevated Glassmorphic Contact Form -->
+          <div class="contact-form-wrapper scroll-animate">
+            <div class="contact-form-header">
+              <h3>Send Us a Message</h3>
+              <p>Fill out the details below and our team will get back to you promptly.</p>
+            </div>
+
+            <form id="contactForm">
+              <div class="floating-form-group">
+                <input type="text" id="name" placeholder=" " required>
+                <label for="name">Your Name *</label>
+              </div>
+              <div class="floating-form-group">
+                <input type="email" id="email" placeholder=" " required>
+                <label for="email">Email Address *</label>
+              </div>
+              <div class="floating-form-group">
+                <select id="serviceSelect" required>
+                  <option value="" disabled selected hidden></option>
+                  <option value="">Loading services...</option>
+                </select>
+                <label for="serviceSelect">Service to Hire *</label>
+              </div>
+              <div class="floating-form-group">
+                <input type="text" id="title" placeholder=" " required>
+                <label for="title">Subject Title *</label>
+              </div>
+              <div class="floating-form-group">
+                <textarea id="content" rows="5" placeholder=" " required></textarea>
+                <label for="content">Detailed Message *</label>
+              </div>
+              <button type="submit" class="submit-btn">
+                <span>Send Message</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+              </button>
+              <div id="alertMessage" class="alert-message"></div>
+            </form>
+          </div>
         </div>
-        
-        <div class="contact-form-wrapper scroll-animate">
-          <form id="contactForm">
-            <div class="floating-form-group">
-              <input type="text" id="name" placeholder=" " required>
-              <label for="name">Your Name *</label>
+
+        <!-- Contact Features Highlight Grid -->
+        <div class="contact-features-grid">
+          <div class="contact-feature-card">
+            <div class="feature-icon-badge support-badge">
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
             </div>
-            <div class="floating-form-group">
-              <input type="email" id="email" placeholder=" " required>
-              <label for="email">Email Address *</label>
+            <div class="feature-card-content">
+              <h5>24/7 Dedicated Support</h5>
+              <p>Always available to assist you with technical inquiries</p>
             </div>
-            <div class="floating-form-group">
-              <select id="serviceSelect" required>
-                <option value="" disabled selected hidden></option>
-                <option value="">Loading services...</option>
-              </select>
-              <label for="serviceSelect">Service to Hire *</label>
+          </div>
+
+          <div class="contact-feature-card">
+            <div class="feature-icon-badge nda-badge">
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              </svg>
             </div>
-            <div class="floating-form-group">
-              <input type="text" id="title" placeholder=" " required>
-              <label for="title">Subject Title *</label>
+            <div class="feature-card-content">
+              <h5>100% Confidential NDA</h5>
+              <p>Your ideas and intellectual property are fully secured</p>
             </div>
-            <div class="floating-form-group">
-              <textarea id="content" rows="5" placeholder=" " required></textarea>
-              <label for="content">Detailed Message *</label>
+          </div>
+
+          <div class="contact-feature-card">
+            <div class="feature-icon-badge consult-badge">
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2v8"></path>
+                <path d="m4.93 10.93 4.24 4.24"></path>
+                <path d="M2 18h12"></path>
+                <path d="M20 18a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4z"></path>
+              </svg>
             </div>
-            <button type="submit" class="submit-btn">Send Message</button>
-            <div id="alertMessage" class="alert-message"></div>
-          </form>
+            <div class="feature-card-content">
+              <h5>Free Consultation</h5>
+              <p>Expert advice tailored to your project goals</p>
+            </div>
+          </div>
         </div>
       </div>
     </section>
