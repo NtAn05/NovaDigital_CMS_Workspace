@@ -3216,14 +3216,17 @@ async function loadNotificationList() {
       return;
     }
 
-    listEl.innerHTML = list.map(n => `
-      <a href="${escapeHtml(n.link || '#')}" class="notification-item ${n.read ? 'read' : 'unread'}" data-id="${n.id}"
-         style="display:block;padding:10px 12px;border-radius:8px;text-decoration:none;margin-bottom:4px;">
-        <div class="notif-item-title" style="font-weight:600;font-size:0.85rem;margin-bottom:2px;">${escapeHtml(n.title)}</div>
-        <div class="notif-item-msg" style="font-size:0.8rem;margin-top:2px;line-height:1.4;">${escapeHtml(n.message)}</div>
-        <div class="notif-item-time" style="font-size:0.72rem;margin-top:4px;">${formatNotificationTime(n.createdAt)}</div>
-      </a>
-    `).join("");
+    listEl.innerHTML = list.map(n => {
+      const resolvedLink = resolveNotificationLink(n);
+      return `
+        <a href="${escapeHtml(resolvedLink)}" class="notification-item ${n.read ? 'read' : 'unread'}" data-id="${n.id}"
+           style="display:block;padding:10px 12px;border-radius:8px;text-decoration:none;margin-bottom:4px;">
+          <div class="notif-item-title" style="font-weight:600;font-size:0.85rem;margin-bottom:2px;">${escapeHtml(n.title)}</div>
+          <div class="notif-item-msg" style="font-size:0.8rem;margin-top:2px;line-height:1.4;">${escapeHtml(n.message)}</div>
+          <div class="notif-item-time" style="font-size:0.72rem;margin-top:4px;">${formatNotificationTime(n.createdAt)}</div>
+        </a>
+      `;
+    }).join("");
 
     listEl.querySelectorAll(".notification-item").forEach(item => {
       item.addEventListener("click", async (e) => {
@@ -3240,6 +3243,79 @@ async function loadNotificationList() {
   } catch (e) {
     listEl.innerHTML = `<p style="text-align:center;color:#ef4444;font-size:0.85rem;padding:1.5rem 0;">Could not load notifications.</p>`;
   }
+}
+
+function resolveNotificationLink(n) {
+  if (!n) return "#";
+
+  // 1. Determine current logged-in user role
+  let role = "";
+  try {
+    const userStr = localStorage.getItem("user") || sessionStorage.getItem("user");
+    if (userStr) {
+      const u = JSON.parse(userStr);
+      role = u.role || "";
+    }
+  } catch (e) {}
+
+  const isMember = (role === "ROLE_MEMBER" || role === "Team_Member" || role === "ROLE_RESOURCE");
+  const isAdmin = (role === "ROLE_ADMIN");
+
+  const title = (n.title || "").toLowerCase();
+  const msg = (n.message || "").toLowerCase();
+  const storedLink = (n.link || "").toLowerCase().trim();
+
+  // 2. Direct routing if storedLink is a specific valid HTML page
+  if (storedLink.endsWith(".html") || storedLink.includes(".html#")) {
+    let cleanLink = n.link.startsWith("/") ? n.link.substring(1) : n.link;
+    if (cleanLink.includes("my-bookings") || cleanLink.includes("appointments")) {
+      return isMember ? "member-contact.html#my-bookings" : "my-bookings.html";
+    }
+    if (cleanLink.includes("rented-project") && isMember) {
+      return "member.html";
+    }
+    if (cleanLink.includes("member.html") && !isMember && !isAdmin) {
+      return "rented-project.html";
+    }
+    return cleanLink;
+  }
+
+  // 3. Keyword-based intelligent routing by Notification Title / Message content
+  
+  // A. Booking & Consultation Notifications
+  if (title.includes("booking") || title.includes("appointment") || title.includes("consultation") ||
+      msg.includes("booking") || msg.includes("appointment") || msg.includes("consultation")) {
+    return isMember ? "member-contact.html#my-bookings" : "my-bookings.html";
+  }
+
+  // B. Client Request & Contact Message Notifications
+  if (title.includes("client request") || title.includes("contact") || title.includes("inquiry") ||
+      msg.includes("client request") || msg.includes("contact") || msg.includes("inquiry")) {
+    return "member-contact.html";
+  }
+
+  // C. Project & Milestone Notifications
+  if (title.includes("project") || title.includes("assignment") || title.includes("milestone") ||
+      msg.includes("project") || msg.includes("assignment") || msg.includes("milestone")) {
+    if (isMember) {
+      return "member.html";
+    } else if (isAdmin) {
+      return "admin.html";
+    } else {
+      return "rented-project.html";
+    }
+  }
+
+  // D. Payment & Transaction Notifications
+  if (title.includes("payment") || title.includes("transaction") || title.includes("invoice") ||
+      msg.includes("payment") || msg.includes("transaction") || msg.includes("invoice")) {
+    return "transaction.html";
+  }
+
+  // 4. Default Role-based Fallback Routing
+  if (isAdmin) return "admin.html";
+  if (isMember) return "member.html";
+  return "rented-project.html";
 }
 
 function formatNotificationTime(iso) {
@@ -3641,10 +3717,23 @@ function formatNotificationTime(iso) {
     const service = _cache.services[b.serviceId] || { title: `Service #${b.serviceId}` };
     const expert = b.expertId ? (_cache.users[b.expertId] || { fullName: `Expert #${b.expertId}`, email: "" }) : null;
 
+    let displayMessage = b.messageContent || "";
+    let displayAttachmentUrl = b.attachmentUrl || null;
+
+    if (displayMessage) {
+      const match = displayMessage.match(/(?:\r?\n)*\s*(?:📎\s*)?Attachment:\s*(https?:\/\/[^\s]+|\/uploads\/[^\s]+)/i);
+      if (match) {
+        if (!displayAttachmentUrl) {
+          displayAttachmentUrl = match[1];
+        }
+        displayMessage = displayMessage.replace(/(?:\r?\n)*\s*(?:📎\s*)?Attachment:\s*(https?:\/\/[^\s]+|\/uploads\/[^\s]+)/i, '').trim();
+      }
+    }
+
     let attachmentHtml = "<span style='color:var(--text-muted); font-size:0.85rem;'>None</span>";
-    if (b.attachmentUrl) {
-      const fileName = b.attachmentUrl.split("/").pop();
-      attachmentHtml = `<a href="${escapeHtml(b.attachmentUrl)}" target="_blank" class="attachment-link" style="display:inline-flex;align-items:center;gap:4px;color:#2563eb;font-weight:600;font-size:0.85rem;text-decoration:none;"><svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>${escapeHtml(fileName)}</a>`;
+    if (displayAttachmentUrl) {
+      const fileName = displayAttachmentUrl.split("/").pop();
+      attachmentHtml = `<a href="${escapeHtml(displayAttachmentUrl)}" target="_blank" class="attachment-link" style="display:inline-flex;align-items:center;gap:4px;color:#2563eb;font-weight:600;font-size:0.85rem;text-decoration:none;"><svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>${escapeHtml(fileName)}</a>`;
     }
 
     container.innerHTML = `
@@ -3685,7 +3774,7 @@ function formatNotificationTime(iso) {
           <svg viewBox="0 0 24 24" style="width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           Client Request & Message
         </div>
-        <div style="font-size: 0.88rem; line-height: 1.5; color: var(--text-dark); white-space: pre-wrap; background: var(--bg-light, #f8fafc); padding: 0.8rem 1rem; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 0.75rem;">${escapeHtml(b.messageContent || "No specific request/message provided.")}</div>
+        <div style="font-size: 0.88rem; line-height: 1.5; color: var(--text-dark); white-space: pre-wrap; background: var(--bg-light, #f8fafc); padding: 0.8rem 1rem; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 0.75rem;">${escapeHtml(displayMessage || "No specific request/message provided.")}</div>
         
         <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem;">
           <span style="font-weight: 600; color: var(--text-muted);">Attachment:</span>

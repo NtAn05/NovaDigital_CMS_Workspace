@@ -316,9 +316,9 @@ public class DataSeeder implements CommandLineRunner {
         }
 
         // ── 14. Notifications & Audit Logs ──────────────────────────────────────
-        saveNotification(user1.getId(), "Project Progress Update", "Milestone 'Phase 1: High-Fidelity Figma Designs' for project Mart06 Fashion System is 100% completed.", "/projects/1", true);
-        saveNotification(user1.getId(), "Consultation Appointment Confirmation", "Your E-Commerce design consultation appointment has been confirmed for 09:00 tomorrow.", "/appointments", false);
-        saveNotification(mem1.getId(), "New Project Assignment", "You have been assigned as Project Leader for project Mart06 Fashion System.", "/matrix", false);
+        saveNotification(user1.getId(), "Project Progress Update", "Milestone 'Phase 1: High-Fidelity Figma Designs' for project Mart06 Fashion System is 100% completed.", "rented-project.html", true);
+        saveNotification(user1.getId(), "Consultation Appointment Confirmation", "Your E-Commerce design consultation appointment has been confirmed for 09:00 tomorrow.", "my-bookings.html", false);
+        saveNotification(mem1.getId(), "New Project Assignment", "You have been assigned as Project Leader for project Mart06 Fashion System.", "member.html", false);
 
         auditLogRepository.save(new AuditLog("admin", "CREATE", "projects", "Created project 'FinTech Mobile Wallet & Banking App'"));
         auditLogRepository.save(new AuditLog("admin", "CREATE", "projects", "Created project 'AI-Powered Customer Care Bot & Automation'"));

@@ -446,10 +446,6 @@ private void notifyClientBookingDeleted(User client, String serviceTitle, String
     }
 
     /**
-     * Create in-app notification for client when the admin manually reschedules
-     * their consultation date/time.
-     */
-    /**
      * In-app notification for the client immediately after they submit a booking
      * (status = PENDING) - keeps the notification bell in sync with what the customer
      * sees on the booking page, instead of waiting until admin confirms later.
@@ -470,6 +466,7 @@ private void notifyClientBookingDeleted(User client, String serviceTitle, String
                 serviceTitle, appointment.getAppointmentDate(),
                 appointment.getTimeSlot().toString().substring(0, 5)
         ));
+        noti.setLink("my-bookings.html");
         notificationRepository.save(noti);
     }
     private void notifyClientBookingRescheduled(ConsultationAppointment appointment) {
@@ -488,6 +485,7 @@ private void notifyClientBookingDeleted(User client, String serviceTitle, String
                 serviceTitle, appointment.getAppointmentDate(),
                 appointment.getTimeSlot().toString().substring(0, 5)
         ));
+        noti.setLink("my-bookings.html");
         notificationRepository.save(noti);
     }
 
@@ -501,6 +499,11 @@ private void notifyClientBookingDeleted(User client, String serviceTitle, String
     private void notifyExpertBookingConfirmed(ConsultationAppointment appointment) {
         Long expertUserId = appointment.getExpertId(); // already User.id, no need to look up via Member
         if (expertUserId == null) return;
+
+        User expertUser = userRepository.findById(expertUserId).orElse(null);
+        if (expertUser == null || "ROLE_ADMIN".equalsIgnoreCase(expertUser.getRole())) {
+            return; // Admins handle system management; do not send member-assigned booking notifications to Admin
+        }
 
         String customerName = userRepository.findById(appointment.getClientId())
                 .map(User::getFullName)
@@ -549,6 +552,7 @@ private void notifyClientBookingDeleted(User client, String serviceTitle, String
                 appointment.getTimeSlot().toString().substring(0, 5),
                 expertName != null ? " — your expert will be " + expertName : ""
         ));
+        noti.setLink("my-bookings.html");
         notificationRepository.save(noti);
     }
 

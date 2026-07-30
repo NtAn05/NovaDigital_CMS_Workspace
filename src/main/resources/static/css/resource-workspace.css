@@ -372,8 +372,9 @@ html.dark-theme body.resource-dashboard-page {
 }
 
 html.dark-theme body.hr-recruitment-page .resource-panel-header {
-  background: rgba(22, 27, 43, 0.76) !important;
-  border-color: rgba(148, 163, 184, 0.14) !important;
+  background: transparent !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: none !important;
 }
 
 html.dark-theme body.hr-recruitment-page .resource-stat-card,

@@ -179,21 +179,15 @@
     /* Panel header */
     .resource-panel-header {
       display: flex; align-items: center; justify-content: space-between; gap: 1rem;
-      margin-bottom: var(--resource-page-gap); padding: 1.05rem 1.15rem;
-      border: 1px solid rgba(148, 163, 184, 0.22); border-radius: 18px;
-      background: rgba(255, 255, 255, 0.72); box-shadow: 0 10px 30px -24px rgba(15, 23, 42, 0.35);
-      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      margin-bottom: 2rem; padding: 0.5rem 0 1.5rem 0;
+      border: none; border-bottom: 1px solid var(--border-color); border-radius: 0;
+      background: transparent; box-shadow: none;
+      backdrop-filter: none; -webkit-backdrop-filter: none;
     }
-    .resource-panel-kicker {
-      display: inline-flex; align-items: center; gap: 0.4rem; margin-bottom: 0.25rem;
-      color: #10b981; font-size: 0.67rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
-    }
-    .resource-panel-kicker::before {
-      content: ''; width: 7px; height: 7px; border-radius: 50%;
-      background: #10b981; box-shadow: 0 0 0 4px rgba(16,185,129,0.12);
-    }
-    .resource-panel-header h1 { margin: 0; color: var(--text-dark); font-family: var(--font-heading); font-size: clamp(1.48rem, 2vw, 1.72rem); font-weight: 800; }
-    .resource-panel-subtitle { max-width: 900px; margin-top: 0.24rem; color: var(--text-muted); font-size: 0.8rem; line-height: 1.5; }
+    .resource-panel-kicker { display: none; }
+    .resource-panel-header h1 { margin: 0; color: var(--text-dark); font-family: var(--font-heading); font-size: clamp(1.65rem, 2.5vw, 2.1rem); font-weight: 800; display: flex; align-items: center; gap: 0.65rem; }
+    .resource-panel-header h1::before { content: ''; display: inline-block; width: 5px; height: 1.55rem; background: linear-gradient(180deg, var(--primary) 0%, #8b5cf6 100%); border-radius: 99px; flex-shrink: 0; }
+    .resource-panel-subtitle { max-width: 900px; margin-top: 0.35rem; padding-left: 1.15rem; color: var(--text-muted); font-size: 0.9rem; font-weight: 500; line-height: 1.5; }
 
     /* Stats */
     .resource-stats-grid { display: grid; grid-template-columns: repeat(3, minmax(165px, 1fr)); gap: 0.75rem; margin-bottom: var(--resource-page-gap); }
@@ -589,11 +583,10 @@
     <!-- ══ MAIN ════════════════════════════════════════════════ -->
     <main class="resource-main">
 
-      <div class="resource-panel-header" style="flex-direction: column; align-items: flex-start; padding: 1.5rem 2rem;">
+      <div class="panel-header resource-panel-header">
         <div>
-          <div class="resource-panel-kicker">HR Workspace</div>
-          <h1 style="font-size: 1.7rem; margin-bottom: 0.3rem;">Application Management</h1>
-          <p class="resource-panel-subtitle" style="margin:0;">View and filter all candidate applications by job vacancy.</p>
+          <h1>Application Management</h1>
+          <p class="panel-subtitle resource-panel-subtitle">View and filter all candidate applications by job vacancy.</p>
         </div>
       </div>
 
