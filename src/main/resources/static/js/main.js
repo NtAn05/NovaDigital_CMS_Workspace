@@ -7253,7 +7253,6 @@ function initChatbot() {
             const card = overlay.querySelector('.ai-greeting-card');
 
             const proceedToChat = () => {
-                if (greetingTimer) { clearTimeout(greetingTimer); greetingTimer = null; }
                 overlay.classList.remove('active');
                 overlay.classList.add('leaving');
                 setTimeout(() => {
@@ -7265,7 +7264,6 @@ function initChatbot() {
 
             card.addEventListener('click', (e) => {
                 if (e.target.closest('#ai-greeting-close')) {
-                    if (greetingTimer) { clearTimeout(greetingTimer); greetingTimer = null; }
                     overlay.classList.remove('active');
                     isGreetingShowing = false;
                     return;
@@ -7279,12 +7277,6 @@ function initChatbot() {
         isGreetingShowing = true;
         overlay.classList.remove('leaving');
         overlay.classList.add('active');
-
-        greetingTimer = setTimeout(() => {
-            if (overlay.classList.contains('active')) {
-                overlay._proceedToChat();
-            }
-        }, 1800);
     }
 
     // ── Toggle open/close ──
