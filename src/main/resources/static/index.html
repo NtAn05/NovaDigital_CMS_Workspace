@@ -337,12 +337,13 @@
       transform: translateX(-50%);
       display: flex;
       gap: 0.45rem;
-      z-index: 10;
-      background: rgba(9, 17, 35, 0.5);
-      padding: 0.3rem 0.7rem;
+      z-index: 30;
+      background: rgba(9, 17, 35, 0.65);
+      padding: 0.35rem 0.75rem;
       border-radius: 99px;
-      backdrop-filter: blur(6px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
     }
 
     .slideshow-indicators .dot {
@@ -429,17 +430,16 @@
 
       <div class="hero-content" style="position: relative; z-index: 1;">
         <!-- Organization Brand Badge -->
-        <div style="display: inline-flex; align-items: center; justify-content: center; width: 60px; height: 60px; border-radius: 18px; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(16px); border: 1px solid rgba(56, 189, 248, 0.35); box-shadow: 0 0 25px rgba(56, 189, 248, 0.25); margin-bottom: 1rem;">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width: 34px; height: 34px; fill: none; stroke: #38bdf8; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;">
-            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-          </svg>
-        </div>
-        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 0.75rem;">
-          <span class="badge tech-pill" style="font-size: 0.85rem; padding: 0.4rem 1.1rem; border-radius: 50px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;">
+        <div class="hero-brand-badge-wrapper" style="display: flex; align-items: center; gap: 10px; margin-bottom: 1.25rem;">
+          <div class="hero-brand-icon" style="display: inline-flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 12px; background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%); box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35); flex-shrink: 0;">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style="width: 22px; height: 22px; fill: #ffffff;">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+            </svg>
+          </div>
+          <span class="badge tech-pill brand-highlight-pill" style="font-size: 0.85rem; padding: 0.45rem 1.25rem; border-radius: 50px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;">
             NovaDigital Creative Agency
           </span>
         </div>
-        <span class="hero-pill">Breakthrough Digital Solutions</span>
         <h1 class="stagger-words-container">
           <span class="stagger-word-wrapper"><span class="stagger-word"
               style="transition-delay: 0s;">Build</span></span>
@@ -522,7 +522,7 @@
 
           <!-- Floating UI Elements -->
           <div class="floating-badge badge-1 animate-float" style="animation-duration: 5s;">
-            <div class="badge-icon" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">
+            <div class="badge-icon support-badge">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
@@ -536,7 +536,7 @@
           </div>
 
           <div class="floating-badge badge-2 animate-float" style="animation-duration: 7s;">
-            <div class="badge-icon" style="background: rgba(37, 99, 235, 0.15); color: #2563eb;">
+            <div class="badge-icon dev-badge">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
@@ -551,7 +551,7 @@
           </div>
 
           <div class="floating-badge badge-3 animate-float" style="animation-duration: 6s;">
-            <div class="badge-icon" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">
+            <div class="badge-icon growth-badge">
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="18" y1="20" x2="18" y2="10"></line>
@@ -699,7 +699,6 @@
       </div>
 
       <div class="section-header" style="position: relative; z-index: 1;">
-        <span class="hero-pill">Testimonials</span>
         <h2>What Our Clients Say</h2>
         <p class="subtitle">Don't just take our word for it</p>
       </div>
