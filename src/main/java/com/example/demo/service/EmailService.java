@@ -65,6 +65,57 @@ public class EmailService {
         }
     }
 
+    public void sendRegistrationOtpEmail(String toEmail, String otp, int expirySeconds) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            helper.setFrom("studyhub123vn@gmail.com");
+            helper.setTo(toEmail);
+            helper.setSubject("Welcome to NovaDigital - Email Verification Code");
+
+            String htmlMsg = "<div style=\"font-family: 'Segoe UI', Helvetica, Arial, sans-serif; max-width: 600px; border: 1px solid #e2e8f0; border-radius: 16px; margin: 20px auto; background: #ffffff; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08); overflow: hidden;\">"
+                    + "  <!-- Header with Brand Logo -->"
+                    + "  <div style=\"background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 28px 30px; text-align: center; border-bottom: 3px solid #10b981;\">"
+                    + "    <div style=\"display: inline-flex; align-items: center; justify-content: center;\">"
+                    + "      <img src=\"https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=100&h=100&q=80\" alt=\"NovaDigital Logo\" style=\"width: 44px; height: 44px; border-radius: 50%; vertical-align: middle; margin-right: 12px; border: 2px solid #10b981; object-fit: cover;\">"
+                    + "      <span style=\"font-size: 24px; font-weight: 800; color: #ffffff; letter-spacing: 0.5px; vertical-align: middle;\">NOVA<span style=\"color: #38bdf8;\">DIGITAL</span></span>"
+                    + "    </div>"
+                    + "  </div>"
+                    + "  <!-- Main Body -->"
+                    + "  <div style=\"padding: 36px 32px; line-height: 1.6; color: #334155;\">"
+                    + "    <h2 style=\"color: #0f172a; font-size: 20px; font-weight: 700; margin-top: 0; margin-bottom: 12px; text-align: center;\">Verify Your Email Address</h2>"
+                    + "    <p style=\"margin-top: 0; margin-bottom: 24px; font-size: 15px; color: #475569; text-align: center;\">Thank you for joining <strong>NovaDigital</strong>! Please use the verification code below to complete your registration:</p>"
+                    + "    "
+                    + "    <!-- OTP Display Box -->"
+                    + "    <div style=\"background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border: 1px solid #a7f3d0; border-radius: 12px; padding: 20px; text-align: center; margin: 28px 0;\">"
+                    + "      <span style=\"font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #059669; display: block; margin-bottom: 8px;\">Your Security Code</span>"
+                    + "      <div style=\"font-family: 'Courier New', Consolas, monospace; font-size: 36px; font-weight: 800; letter-spacing: 10px; color: #047857;\">" + otp + "</div>"
+                    + "      <span style=\"font-size: 13px; color: #64748b; margin-top: 8px; display: block;\">⏱️ Valid for <strong>" + expirySeconds + " seconds</strong></span>"
+                    + "    </div>"
+                    + "    "
+                    + "    <!-- Warning Notice -->"
+                    + "    <div style=\"background-color: #f8fafc; border-left: 4px solid #f59e0b; padding: 14px 18px; border-radius: 4px; margin-bottom: 24px;\">"
+                    + "      <p style=\"margin: 0; font-size: 13px; color: #78350f; line-height: 1.5;\">"
+                    + "        <strong>Security Notice:</strong> If you did not sign up for an account, please ignore this email."
+                    + "      </p>"
+                    + "    </div>"
+                    + "    "
+                    + "    <p style=\"margin-top: 0; margin-bottom: 0; font-size: 14px; color: #64748b; text-align: center;\">Need help? Contact our support team at <a href=\"mailto:contact@novadigital.com\" style=\"color: #10b981; text-decoration: none; font-weight: 600;\">contact@novadigital.com</a></p>"
+                    + "  </div>"
+                    + "  <!-- Footer -->"
+                    + "  <div style=\"background-color: #f8fafc; padding: 22px 30px; border-top: 1px solid #e2e8f0; text-align: center;\">"
+                    + "    <p style=\"margin: 0; font-size: 12px; color: #94a3b8;\">This is an automated security notification. Please do not reply directly to this email.</p>"
+                    + "    <p style=\"margin: 6px 0 0 0; font-size: 12px; color: #94a3b8; font-weight: 600;\">© 2026 NovaDigital Co., Ltd. All rights reserved.</p>"
+                    + "  </div>"
+                    + "</div>";
+
+            helper.setText(htmlMsg, true);
+            mailSender.send(message);
+        } catch (Exception e) {
+            System.err.println("[EmailService] Could not send Registration OTP email: " + e.getMessage());
+        }
+    }
+
     public void sendFeedbackConfirmationEmail(String toEmail, String name, String userMessage) {
         try {
             MimeMessage message = mailSender.createMimeMessage();

@@ -263,7 +263,11 @@ function injectAuthModal() {
               <input type="password" id="modal-reg-password"
                 placeholder="Min 6 characters" required minlength="6" autocomplete="new-password">
             </div>
-            <button type="submit" class="submit-btn" style="margin-top:0.5rem;">Register</button>
+            <div class="form-group" id="modal-reg-otp-group" style="display: none;">
+              <label for="modal-reg-otp">OTP Code * <span id="modal-reg-otp-timer" style="color: #e63946; font-weight: bold; margin-left: 5px;"></span></label>
+              <input type="text" id="modal-reg-otp" placeholder="Enter 6-digit OTP sent to your email">
+            </div>
+            <button type="submit" class="submit-btn" id="modal-reg-submit-btn" style="margin-top:0.5rem;">Register</button>
             <div id="modal-register-alert" class="alert-message"></div>
           </form>
 
@@ -514,6 +518,8 @@ function initModalRegisterForm() {
   const form = document.getElementById("modal-registerForm");
   if (!form) return;
 
+  let otpSent = false;
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -528,34 +534,121 @@ function initModalRegisterForm() {
       return;
     }
 
-    try {
-      showModalAlert("Registering...", null, "modal-register-alert");
+    const otpGroup = document.getElementById("modal-reg-otp-group");
+    const otpInput = document.getElementById("modal-reg-otp");
+    const submitBtn = document.getElementById("modal-reg-submit-btn");
 
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, fullName, email, phone, password })
-      });
+    if (!otpSent) {
+      // Step 1: Send OTP
+      try {
+        submitBtn.disabled = true;
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = "Sending...";
+        showModalAlert("Sending OTP to your email...", null, "modal-register-alert");
 
-      const data = await response.json();
+        const response = await fetch("/api/auth/register-send-otp", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email })
+        });
 
-      if (response.ok && data.success) {
-        showModalAlert("Registration successful! Please log in.", true, "modal-register-alert");
-        setTimeout(() => {
-          switchAuthTab("login");
-          setTimeout(() => {
-            showModalAlert("Account created! Please log in.", true, "modal-login-alert");
-          }, 80);
-        }, 1400);
-      } else {
-        showModalAlert(
-          data.message || "Registration failed. Username or Email may already exist.",
-          false, "modal-register-alert"
-        );
+        const data = await response.json();
+        submitBtn.disabled = false;
+
+        if (response.ok && data.success) {
+          otpSent = true;
+          otpGroup.style.display = "block";
+          otpInput.required = true;
+          otpInput.value = ""; // Clear any old OTP
+          submitBtn.textContent = "Confirm OTP & Register";
+          document.getElementById("modal-email").readOnly = true;
+          showModalAlert("OTP has been sent to your email.", true, "modal-register-alert");
+
+          const timerSpan = document.getElementById("modal-reg-otp-timer");
+          let timeLeft = 60;
+          timerSpan.textContent = `(${timeLeft}s)`;
+          
+          if (form.dataset.timerId) clearInterval(form.dataset.timerId);
+          
+          const timerInterval = setInterval(() => {
+            timeLeft--;
+            if (timeLeft <= 0) {
+              clearInterval(timerInterval);
+              timerSpan.textContent = "(Expired)";
+              submitBtn.disabled = false;
+              submitBtn.textContent = "Resend OTP";
+              otpSent = false;
+              otpInput.required = false;
+              otpInput.value = "";
+              const parent = otpInput.closest(".form-group") || otpInput.parentElement;
+              if (parent) {
+                const errorSpan = parent.querySelector(".error-helper-text");
+                if (errorSpan) errorSpan.remove();
+                otpInput.classList.remove("invalid");
+              }
+            } else {
+              timerSpan.textContent = `(${timeLeft}s)`;
+            }
+          }, 1000);
+          form.dataset.timerId = timerInterval;
+        } else {
+          showModalAlert(data.message || "Failed to send OTP.", false, "modal-register-alert");
+        }
+      } catch (error) {
+        console.error("Modal send OTP error:", error);
+        submitBtn.disabled = false;
+        showModalAlert("Could not connect to server. Please try again.", false, "modal-register-alert");
       }
-    } catch (error) {
-      console.error("Modal register error:", error);
-      showModalAlert("Could not connect to server. Please try again.", false, "modal-register-alert");
+    } else {
+      // Step 2: Register with OTP
+      const otp = otpInput.value.trim();
+      if (!otp) {
+        showModalAlert("Please enter the OTP code.", false, "modal-register-alert");
+        return;
+      }
+
+      try {
+        submitBtn.disabled = true;
+        showModalAlert("Registering...", null, "modal-register-alert");
+
+        const response = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, fullName, email, phone, password, otp })
+        });
+
+        const data = await response.json();
+        submitBtn.disabled = false;
+
+        if (response.ok && data.success) {
+          if (form.dataset.timerId) clearInterval(form.dataset.timerId);
+          document.getElementById("modal-reg-otp-timer").textContent = "";
+          showModalAlert("Registration successful! Please log in.", true, "modal-register-alert");
+          // Reset form state for next time
+          otpSent = false;
+          otpGroup.style.display = "none";
+          otpInput.required = false;
+          submitBtn.textContent = "Register";
+          document.getElementById("modal-email").readOnly = false;
+          form.reset();
+
+          setTimeout(() => {
+            switchAuthTab("login");
+            setTimeout(() => {
+              showModalAlert("Account created! Please log in.", true, "modal-login-alert");
+            }, 80);
+          }, 1400);
+        } else {
+          showModalAlert(
+            data.message || "Registration failed.",
+            false, "modal-register-alert"
+          );
+        }
+      } catch (error) {
+        console.error("Modal register error:", error);
+        submitBtn.disabled = false;
+        showModalAlert("Could not connect to server. Please try again.", false, "modal-register-alert");
+      }
     }
   });
 }
@@ -1094,6 +1187,8 @@ function initRegisterForm() {
   const alertMsg = document.getElementById("alertMessage");
   if (!form || !alertMsg) return;
 
+  let otpSent = false;
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -1108,26 +1203,105 @@ function initRegisterForm() {
       return;
     }
 
-    try {
-      showAlert("Registering...", null);
+    const otpGroup = document.getElementById("reg-otp-group");
+    const otpInput = document.getElementById("reg-otp");
+    const submitBtn = document.getElementById("reg-submit-btn");
 
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, fullName, email, phone, password })
-      });
+    if (!otpSent) {
+      // Step 1: Send OTP
+      try {
+        submitBtn.disabled = true;
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = "Sending...";
+        showAlert("Sending OTP to your email...", null);
 
-      const data = await response.json();
+        const response = await fetch("/api/auth/register-send-otp", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email })
+        });
 
-      if (response.ok && data.success) {
-        showAlert("Registration successful! Redirecting to login...", true);
-        setTimeout(() => { window.location.href = "login.html?registered=true"; }, 1500);
-      } else {
-        showAlert(data.message || "Registration failed. Username or Email may already exist.", false);
+        const data = await response.json();
+        submitBtn.disabled = false;
+
+        if (response.ok && data.success) {
+          otpSent = true;
+          otpGroup.style.display = "block";
+          otpInput.required = true;
+          otpInput.value = ""; // Clear any old OTP
+          submitBtn.textContent = "Confirm OTP & Register";
+          document.getElementById("email").readOnly = true;
+          showAlert("OTP has been sent to your email.", true);
+
+          const timerSpan = document.getElementById("reg-otp-timer");
+          let timeLeft = 60;
+          timerSpan.textContent = `(${timeLeft}s)`;
+          
+          if (form.dataset.timerId) clearInterval(form.dataset.timerId);
+          
+          const timerInterval = setInterval(() => {
+            timeLeft--;
+            if (timeLeft <= 0) {
+              clearInterval(timerInterval);
+              timerSpan.textContent = "(Expired)";
+              submitBtn.disabled = false;
+              submitBtn.textContent = "Resend OTP";
+              otpSent = false;
+              otpInput.required = false;
+              otpInput.value = "";
+              const parent = otpInput.closest(".floating-form-group") || otpInput.parentElement;
+              if (parent) {
+                const errorSpan = parent.querySelector(".error-helper-text");
+                if (errorSpan) errorSpan.remove();
+                otpInput.classList.remove("invalid");
+              }
+            } else {
+              timerSpan.textContent = `(${timeLeft}s)`;
+            }
+          }, 1000);
+          form.dataset.timerId = timerInterval;
+        } else {
+          showAlert(data.message || "Failed to send OTP.", false);
+        }
+      } catch (error) {
+        console.error("Send OTP error:", error);
+        submitBtn.disabled = false;
+        showAlert("Could not connect to server. Please try again.", false);
       }
-    } catch (error) {
-      console.error("Registration error:", error);
-      showAlert("Could not connect to server. Please try again.", false);
+    } else {
+      // Step 2: Register with OTP
+      const otp = otpInput.value.trim();
+      if (!otp) {
+        showAlert("Please enter the OTP code.", false);
+        return;
+      }
+
+      try {
+        submitBtn.disabled = true;
+        showAlert("Registering...", null);
+
+        const response = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, fullName, email, phone, password, otp })
+        });
+
+        const data = await response.json();
+        submitBtn.disabled = false;
+
+        if (response.ok && data.success) {
+          if (form.dataset.timerId) clearInterval(form.dataset.timerId);
+          document.getElementById("reg-otp-timer").textContent = "";
+          showAlert("Registration successful! Redirecting to login...", true);
+          setTimeout(() => { window.location.href = "login.html?registered=true"; }, 1500);
+        } else {
+          showAlert(data.message || "Registration failed.", false);
+        }
+      } catch (error) {
+        console.error("Registration error:", error);
+        submitBtn.disabled = false;
+        showAlert("Could not connect to server. Please try again.", false);
+      }
     }
   });
 

@@ -73,10 +73,63 @@ public class AuthController {
         return ResponseEntity.ok(captchaService.generateCaptcha());
     }
 
+    @PostMapping("/register-send-otp")
+    public ResponseEntity<?> registerSendOtp(@RequestBody Map<String, String> body) {
+        String email = body.get("email");
+        if (email == null || email.isBlank()) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Email cannot be empty.");
+            return ResponseEntity.badRequest().body(response);
+        }
+        
+        java.util.Optional<User> optionalUser = userRepository.findByEmail(email.trim());
+        if (optionalUser.isPresent()) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", "Email is already registered.");
+            return ResponseEntity.badRequest().body(response);
+        }
+        
+        String otp = otpService.generateOtpCode();
+        try {
+            emailService.sendRegistrationOtpEmail(email.trim(), otp, 60);
+            otpService.saveOtp(email.trim(), otp, 60); // Start 60s expiration ONLY after email is successfully sent
+        } catch (Exception e) {
+            System.err.println("Failed to send OTP email: " + e.getMessage());
+            System.out.println("========================================");
+            System.out.println("FALLBACK REGISTER OTP FOR " + email + ": " + otp);
+            System.out.println("========================================");
+            // Fallback: save OTP anyway so they can use it from console in dev
+            otpService.saveOtp(email.trim(), otp, 60);
+        }
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "OTP code has been sent to your email.");
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest request) {
         try {
+            if (request.getOtp() == null || request.getOtp().isBlank()) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("success", false);
+                errorResponse.put("message", "OTP is required.");
+                return ResponseEntity.badRequest().body(errorResponse);
+            }
+
+            if (!otpService.verifyOtp(request.getEmail().trim(), request.getOtp().trim())) {
+                Map<String, Object> errorResponse = new HashMap<>();
+                errorResponse.put("success", false);
+                errorResponse.put("message", "OTP code is incorrect or expired.");
+                return ResponseEntity.badRequest().body(errorResponse);
+            }
+
             User registeredUser = userService.registerUser(request);
+            otpService.clearOtp(request.getEmail().trim());
+
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "User registered successfully");
@@ -280,6 +333,18 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
+    private void generateAndSendOtp(String email, String context) {
+        String otp = otpService.generateOtp(email);
+        try {
+            emailService.sendOtpEmail(email, otp);
+        } catch (Exception e) {
+            System.err.println("Failed to send OTP email: " + e.getMessage());
+            System.out.println("========================================");
+            System.out.println("FALLBACK " + context + " OTP FOR " + email + ": " + otp);
+            System.out.println("========================================");
+        }
+    }
+
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> body) {
         String email = body.get("email");
@@ -298,16 +363,7 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
         }
 
-        String otp = otpService.generateOtp(email.trim());
-
-        try {
-            emailService.sendOtpEmail(email.trim(), otp);
-        } catch (Exception e) {
-            System.err.println("Failed to send OTP email: " + e.getMessage());
-            System.out.println("========================================");
-            System.out.println("FALLBACK PASSWORD RESET OTP FOR " + email + ": " + otp);
-            System.out.println("========================================");
-        }
+        generateAndSendOtp(email.trim(), "PASSWORD RESET");
 
         response.put("success", true);
         response.put("message", "OTP code has been sent to your email.");
