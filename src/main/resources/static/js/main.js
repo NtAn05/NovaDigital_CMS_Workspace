@@ -7207,15 +7207,101 @@ function initChatbot() {
         history.forEach(m => renderBubble(m.sender, m.text));
     }
 
-    // Prefetch config so first message is instant
-    getChatbotConfig();
+    // Enhance header icon with 3D robot avatar if available
+    const headerTitle = windowEl.querySelector('.chatbot-header-title');
+    if (headerTitle && !headerTitle.querySelector('.chatbot-header-avatar')) {
+        const avatarImg = document.createElement('img');
+        avatarImg.src = '/images/ai_robot_waving.jpg';
+        avatarImg.alt = 'Nova AI';
+        avatarImg.className = 'chatbot-header-avatar';
+        avatarImg.style.cssText = 'width: 26px; height: 26px; border-radius: 50%; object-fit: cover; border: 1.5px solid rgba(255, 255, 255, 0.7); box-shadow: 0 0 8px rgba(56, 189, 248, 0.5); margin-right: 4px;';
+        headerTitle.prepend(avatarImg);
+    }
+
+    let isGreetingShowing = false;
+    let greetingTimer = null;
+
+    function openChatWindowDirectly() {
+        windowEl.classList.add('active');
+        inputEl.focus();
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    function show3DAIGreetingThenOpenChat() {
+        if (isGreetingShowing) return;
+
+        let overlay = document.getElementById('ai-greeting-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'ai-greeting-overlay';
+            overlay.className = 'ai-greeting-overlay';
+            overlay.innerHTML = `
+                <div class="ai-greeting-card" id="ai-greeting-card">
+                    <button type="button" class="ai-greeting-close" id="ai-greeting-close" title="Close">&times;</button>
+                    <div class="ai-greeting-img-wrapper">
+                        <img src="/images/ai_robot_waving.jpg" alt="Nova AI Robot Waving" class="ai-greeting-img">
+                        <div class="ai-wave-hand-badge">👋</div>
+                    </div>
+                    <div class="ai-greeting-body">
+                        <h3 class="ai-greeting-title">Xin chào! Tôi là Nova AI 👋</h3>
+                        <p class="ai-greeting-subtitle">Rất vui được gặp bạn! Đang kết nối chatbox...</p>
+                        <div class="ai-greeting-btn">
+                            <span>Bắt đầu trò chuyện</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+
+            const card = overlay.querySelector('.ai-greeting-card');
+
+            const proceedToChat = () => {
+                if (greetingTimer) { clearTimeout(greetingTimer); greetingTimer = null; }
+                overlay.classList.remove('active');
+                overlay.classList.add('leaving');
+                setTimeout(() => {
+                    overlay.classList.remove('leaving');
+                    isGreetingShowing = false;
+                    openChatWindowDirectly();
+                }, 250);
+            };
+
+            card.addEventListener('click', (e) => {
+                if (e.target.closest('#ai-greeting-close')) {
+                    if (greetingTimer) { clearTimeout(greetingTimer); greetingTimer = null; }
+                    overlay.classList.remove('active');
+                    isGreetingShowing = false;
+                    return;
+                }
+                proceedToChat();
+            });
+
+            overlay._proceedToChat = proceedToChat;
+        }
+
+        isGreetingShowing = true;
+        overlay.classList.remove('leaving');
+        overlay.classList.add('active');
+
+        greetingTimer = setTimeout(() => {
+            if (overlay.classList.contains('active')) {
+                overlay._proceedToChat();
+            }
+        }, 1800);
+    }
 
     // ── Toggle open/close ──
     fab.addEventListener('click', () => {
-        windowEl.classList.toggle('active');
         if (windowEl.classList.contains('active')) {
-            inputEl.focus();
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            windowEl.classList.remove('active');
+            if (isGreetingShowing) {
+                const overlay = document.getElementById('ai-greeting-overlay');
+                if (overlay) overlay.classList.remove('active');
+                isGreetingShowing = false;
+            }
+        } else {
+            show3DAIGreetingThenOpenChat();
         }
     });
     closeBtn.addEventListener('click', () => windowEl.classList.remove('active'));
