@@ -332,7 +332,7 @@ header.header-hidden {
   align-items: center;
 }
 
-.nav-links a {
+.nav-links > li > a {
   text-decoration: none;
   color: var(--text-muted);
   font-weight: 500;
@@ -343,19 +343,19 @@ header.header-hidden {
   display: inline-block;
 }
 
-.nav-links a:hover,
-.nav-links a.active {
+.nav-links > li > a:hover,
+.nav-links > li > a.active {
   color: var(--primary);
   font-weight: 600;
   text-shadow: 0 0 15px rgba(37, 99, 235, 0.4);
   transform: translateY(-2px);
 }
 
-.nav-links a:active {
+.nav-links > li > a:active {
   transform: scale(0.92) translateY(0);
 }
 
-.nav-links a::after {
+.nav-links > li > a::after {
   content: '';
   position: absolute;
   bottom: 0;
@@ -370,8 +370,8 @@ header.header-hidden {
   opacity: 0;
 }
 
-.nav-links a:hover::after,
-.nav-links a.active::after {
+.nav-links > li > a:hover::after,
+.nav-links > li > a.active::after {
   width: 100%;
   opacity: 1;
 }
@@ -4162,29 +4162,70 @@ html.dark-theme .admin-table thead tr:hover th {
   color: var(--text-dark, #1e293b);
   text-decoration: none;
   white-space: nowrap;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
   width: 100%;
   box-sizing: border-box;
-  border-radius: 10px;
+  border-radius: 8px; /* Slightly squarer for the line */
+  position: relative; /* For the sliding underline */
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  text-align: left;
+}
+
+.dropdown-item::after {
+  content: '';
+  position: absolute;
+  bottom: 0.2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 2.5px;
+  background-color: var(--primary, #2563eb);
+  border-radius: 4px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 0 10px rgba(37, 99, 235, 0.6);
+  opacity: 0;
 }
 
 .dropdown-item:hover {
-  background: rgba(37, 99, 235, 0.08);
-  color: #2563eb;
-  transform: translateX(4px);
+  color: var(--primary, #2563eb);
+  font-weight: 600;
+}
+
+.dropdown-item:hover::after {
+  width: calc(100% - 2rem); /* Span the text roughly */
+  opacity: 1;
+}
+
+.dropdown-item:active {
+  transform: scale(0.98);
+}
+
+.dropdown-item.text-danger {
+  color: #ef4444;
+}
+
+.dropdown-item.text-danger::after {
+  background-color: #ef4444;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
+}
+
+.dropdown-item.text-danger:hover {
+  color: #ef4444;
 }
 
 .dropdown-item svg {
   flex-shrink: 0;
   opacity: 0.85;
-  transition: transform 0.2s;
+  transition: opacity 0.2s;
   width: 16px;
   height: 16px;
 }
 
 .dropdown-item:hover svg {
-  transform: scale(1.1);
   opacity: 1;
 }
 
