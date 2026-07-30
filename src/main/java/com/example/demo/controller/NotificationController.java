@@ -13,6 +13,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.example.demo.service.SseEmitterService;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+
 /**
  * In-app notifications for current user (e.g., assigned member / confirmed booking).
  * All endpoints are scoped strictly to the currently logged-in user, preventing viewing of others' notifications.
@@ -26,6 +29,9 @@ public class NotificationController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private SseEmitterService sseEmitterService;
 
     private User resolveUser(Authentication authentication) {
         String username = authentication.getName();
@@ -71,5 +77,10 @@ public class NotificationController {
         Map<String, Object> result = new HashMap<>();
         result.put("success", true);
         return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("/stream")
+    public SseEmitter streamAdminNotifications() {
+        return sseEmitterService.createEmitter();
     }
 }

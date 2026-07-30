@@ -1207,6 +1207,110 @@ function initAdminDashboard() {
     }
   }
 
+  setupAdminSSE();
+}
+
+function setupAdminSSE() {
+  const token = getAdminToken();
+  if (!token) return;
+
+  const eventSource = new EventSource('/api/notifications/stream?token=' + encodeURIComponent(token));
+  
+  eventSource.addEventListener('new-booking', (e) => {
+    try {
+      const data = JSON.parse(e.data);
+      showAdminNotificationPopup('New Booking Received!', data.message);
+      // Auto refresh bookings if the panel is active
+      const panel = document.getElementById('panel-bookings');
+      if (panel && panel.classList.contains('active')) {
+        fetchAdminBookings();
+      }
+      
+      // Update the bell icon badge
+      if (typeof loadNotificationUnreadCount === 'function') {
+        loadNotificationUnreadCount();
+      }
+      // If the dropdown is open, refresh the list
+      const dropdown = document.getElementById('notification-dropdown');
+      if (dropdown && dropdown.style.display === 'block' && typeof loadNotificationList === 'function') {
+        loadNotificationList();
+      }
+
+    } catch (err) {
+      console.error('Error parsing SSE new-booking event:', err);
+    }
+  });
+
+  eventSource.onerror = (err) => {
+    console.warn('Admin SSE connection error, it might reconnect automatically.', err);
+  };
+}
+
+function showAdminNotificationPopup(title, message) {
+  // Create a toast notification
+  const containerId = 'admin-toast-container';
+  let container = document.getElementById(containerId);
+  if (!container) {
+    container = document.createElement('div');
+    container.id = containerId;
+    container.style.position = 'fixed';
+    container.style.top = '20px';
+    container.style.right = '20px';
+    container.style.zIndex = '9999';
+    container.style.display = 'flex';
+    container.style.flexDirection = 'column';
+    container.style.gap = '10px';
+    document.body.appendChild(container);
+  }
+
+  const toast = document.createElement('div');
+  toast.style.background = '#fff';
+  toast.style.borderLeft = '4px solid #2563eb';
+  toast.style.boxShadow = '0 10px 25px rgba(0,0,0,0.1)';
+  toast.style.borderRadius = '8px';
+  toast.style.padding = '1rem 1.25rem';
+  toast.style.minWidth = '300px';
+  toast.style.animation = 'fadeUp 0.3s ease';
+  toast.style.display = 'flex';
+  toast.style.flexDirection = 'column';
+  toast.style.cursor = 'pointer';
+
+  toast.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+      <strong style="color: #1e293b; font-size: 0.95rem;">${title}</strong>
+      <button style="background: none; border: none; cursor: pointer; color: #94a3b8; font-size: 1.1rem; line-height: 1;">&times;</button>
+    </div>
+    <div style="color: #475569; font-size: 0.85rem;">${message}</div>
+  `;
+
+  // Click to open bookings tab
+  toast.addEventListener('click', (e) => {
+    if (e.target.tagName !== 'BUTTON') {
+      const navLink = document.getElementById('nav-bookings');
+      if (navLink) switchAdminPanel('bookings', navLink);
+      toast.remove();
+    }
+  });
+
+  // Close button
+  toast.querySelector('button').addEventListener('click', (e) => {
+    e.stopPropagation();
+    toast.remove();
+  });
+
+  container.appendChild(toast);
+
+  // Auto remove after 5 seconds
+  setTimeout(() => {
+    if (document.body.contains(toast)) {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(-10px)';
+      toast.style.transition = 'all 0.3s ease';
+      setTimeout(() => {
+        if (document.body.contains(toast)) toast.remove();
+      }, 300);
+    }
+  }, 5000);
 }
   // =============================================
   //  Admin – Panel Switching
