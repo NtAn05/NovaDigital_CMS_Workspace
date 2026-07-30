@@ -592,11 +592,13 @@ function initModalRegisterForm() {
           }, 1000);
           form.dataset.timerId = timerInterval;
         } else {
+          submitBtn.textContent = originalText;
           showModalAlert(data.message || "Failed to send OTP.", false, "modal-register-alert");
         }
       } catch (error) {
         console.error("Modal send OTP error:", error);
         submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
         showModalAlert("Could not connect to server. Please try again.", false, "modal-register-alert");
       }
     } else {
@@ -855,10 +857,6 @@ function updateNavbarAuth() {
         <a href="member-profile.html" class="dropdown-item">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           Profile
-        </a>
-        <a href="my-applications.html" class="dropdown-item">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-          My Applications
         </a>
       `;
     } else {
@@ -1261,11 +1259,13 @@ function initRegisterForm() {
           }, 1000);
           form.dataset.timerId = timerInterval;
         } else {
+          submitBtn.textContent = originalText;
           showAlert(data.message || "Failed to send OTP.", false);
         }
       } catch (error) {
         console.error("Send OTP error:", error);
         submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
         showAlert("Could not connect to server. Please try again.", false);
       }
     } else {
@@ -7279,15 +7279,93 @@ function initChatbot() {
         history.forEach(m => renderBubble(m.sender, m.text));
     }
 
-    // Prefetch config so first message is instant
-    getChatbotConfig();
+    // Enhance header icon with 3D robot avatar if available
+    const headerTitle = windowEl.querySelector('.chatbot-header-title');
+    if (headerTitle && !headerTitle.querySelector('.chatbot-header-avatar')) {
+        const avatarImg = document.createElement('img');
+        avatarImg.src = '/images/ai_robot_waving.jpg';
+        avatarImg.alt = 'Nova AI';
+        avatarImg.className = 'chatbot-header-avatar';
+        avatarImg.style.cssText = 'width: 26px; height: 26px; border-radius: 50%; object-fit: cover; border: 1.5px solid rgba(255, 255, 255, 0.7); box-shadow: 0 0 8px rgba(56, 189, 248, 0.5); margin-right: 4px;';
+        headerTitle.prepend(avatarImg);
+    }
+
+    let isGreetingShowing = false;
+    let greetingTimer = null;
+
+    function openChatWindowDirectly() {
+        windowEl.classList.add('active');
+        inputEl.focus();
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    function show3DAIGreetingThenOpenChat() {
+        if (isGreetingShowing) return;
+
+        let overlay = document.getElementById('ai-greeting-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'ai-greeting-overlay';
+            overlay.className = 'ai-greeting-overlay';
+            overlay.innerHTML = `
+                <div class="ai-greeting-card" id="ai-greeting-card">
+                    <button type="button" class="ai-greeting-close" id="ai-greeting-close" title="Close">&times;</button>
+                    <div class="ai-greeting-img-wrapper">
+                        <img src="/images/ai_robot_waving.jpg" alt="Nova AI Robot Waving" class="ai-greeting-img">
+                        <div class="ai-wave-hand-badge">👋</div>
+                    </div>
+                    <div class="ai-greeting-body">
+                        <h3 class="ai-greeting-title">Hi! I'm Nova AI 👋</h3>
+                        <p class="ai-greeting-subtitle">Nice to meet you! Connecting to chatbox...</p>
+                        <div class="ai-greeting-btn">
+                            <span>Start chatting</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+
+            const card = overlay.querySelector('.ai-greeting-card');
+
+            const proceedToChat = () => {
+                overlay.classList.remove('active');
+                overlay.classList.add('leaving');
+                setTimeout(() => {
+                    overlay.classList.remove('leaving');
+                    isGreetingShowing = false;
+                    openChatWindowDirectly();
+                }, 250);
+            };
+
+            card.addEventListener('click', (e) => {
+                if (e.target.closest('#ai-greeting-close')) {
+                    overlay.classList.remove('active');
+                    isGreetingShowing = false;
+                    return;
+                }
+                proceedToChat();
+            });
+
+            overlay._proceedToChat = proceedToChat;
+        }
+
+        isGreetingShowing = true;
+        overlay.classList.remove('leaving');
+        overlay.classList.add('active');
+    }
 
     // ── Toggle open/close ──
     fab.addEventListener('click', () => {
-        windowEl.classList.toggle('active');
         if (windowEl.classList.contains('active')) {
-            inputEl.focus();
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            windowEl.classList.remove('active');
+            if (isGreetingShowing) {
+                const overlay = document.getElementById('ai-greeting-overlay');
+                if (overlay) overlay.classList.remove('active');
+                isGreetingShowing = false;
+            }
+        } else {
+            show3DAIGreetingThenOpenChat();
         }
     });
     closeBtn.addEventListener('click', () => windowEl.classList.remove('active'));

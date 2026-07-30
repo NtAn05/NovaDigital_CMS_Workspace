@@ -44,7 +44,6 @@ public class DataSeeder implements CommandLineRunner {
     @Autowired private AuthLogRepository authLogRepository;
 
     @Override
-    @Transactional
     public void run(String... args) throws Exception {
         if (projectRepository.count() >= 15) {
             System.out.println(">>> [DataSeeder] Massive sample dataset already present (15+ projects). Skipping seeding.");
@@ -259,21 +258,25 @@ public class DataSeeder implements CommandLineRunner {
 
         // ── 9. Consultation Appointments & Addons ──────────────────────────────
         if (consultationAppointmentRepository.count() < 4) {
-            ConsultationAppointment appt1 = saveAppointment(svc1.getId(), user1.getId(), mem1.getId(), LocalDate.now().plusDays(1), LocalTime.of(9, 0), AppointmentStatus.CONFIRMED, "Consultation for upgrading automated payment system for Mart06 E-Commerce platform.", 1200.0);
-            ConsultationAppointment appt2 = saveAppointment(svc2.getId(), user2.getId(), mem2.getId(), LocalDate.now().plusDays(3), LocalTime.of(14, 0), AppointmentStatus.PENDING, "Consultation for Mobile Portal UI/UX design.", 800.0);
-            ConsultationAppointment appt3 = saveAppointment(svc3.getId(), user1.getId(), mem1.getId(), LocalDate.now().minusDays(5), LocalTime.of(10, 30), AppointmentStatus.COMPLETED, "Consultation for AWS Cloud Infrastructure and Docker deployment for SaaS.", 1500.0);
-            ConsultationAppointment appt4 = saveAppointment(svc4.getId(), user2.getId(), mem5.getId(), LocalDate.now().plusDays(2), LocalTime.of(15, 30), AppointmentStatus.CONFIRMED, "Inquiry about AI Chatbot integration for customer care.", 1800.0);
-            ConsultationAppointment appt5 = saveAppointment(svc5.getId(), user3.getId(), mem9.getId(), LocalDate.now().plusDays(4), LocalTime.of(11, 0), AppointmentStatus.PENDING, "Request for vulnerability audit on banking mobile app.", 2100.0);
+            try {
+                ConsultationAppointment appt1 = saveAppointment(svc1.getId(), user1.getId(), mem1.getId(), LocalDate.now().plusDays(1), LocalTime.of(9, 0), AppointmentStatus.CONFIRMED, "Consultation for upgrading automated payment system for Mart06 E-Commerce platform.", 1200.0);
+                ConsultationAppointment appt2 = saveAppointment(svc2.getId(), user2.getId(), mem2.getId(), LocalDate.now().plusDays(3), LocalTime.of(14, 0), AppointmentStatus.PENDING, "Consultation for Mobile Portal UI/UX design.", 800.0);
+                ConsultationAppointment appt3 = saveAppointment(svc3.getId(), user1.getId(), mem1.getId(), LocalDate.now().minusDays(5), LocalTime.of(10, 30), AppointmentStatus.COMPLETED, "Consultation for AWS Cloud Infrastructure and Docker deployment for SaaS.", 1500.0);
+                ConsultationAppointment appt4 = saveAppointment(svc4.getId(), user2.getId(), mem5.getId(), LocalDate.now().plusDays(2), LocalTime.of(15, 30), AppointmentStatus.CONFIRMED, "Inquiry about AI Chatbot integration for customer care.", 1800.0);
+                ConsultationAppointment appt5 = saveAppointment(svc5.getId(), user3.getId(), mem9.getId(), LocalDate.now().plusDays(4), LocalTime.of(11, 0), AppointmentStatus.PENDING, "Request for vulnerability audit on banking mobile app.", 2100.0);
 
-            saveAppointmentAddon(appt1.getId(), 1L);
-            saveAppointmentAddon(appt1.getId(), 2L);
-            saveAppointmentAddon(appt2.getId(), 3L);
-            saveAppointmentAddon(appt4.getId(), 4L);
+                saveAppointmentAddon(appt1.getId(), 1L);
+                saveAppointmentAddon(appt1.getId(), 2L);
+                saveAppointmentAddon(appt2.getId(), 3L);
+                saveAppointmentAddon(appt4.getId(), 4L);
 
-            savePaymentTransaction(100001L, appt3.getId(), null, 1500.0, "PAID");
-            savePaymentTransaction(100002L, null, 1L, 1000.0, "PAID");
-            savePaymentTransaction(100003L, appt1.getId(), null, 1200.0, "PENDING");
-            savePaymentTransaction(100004L, appt4.getId(), null, 1800.0, "PAID");
+                savePaymentTransaction(100001L, appt3.getId(), null, 1500.0, "PAID");
+                savePaymentTransaction(100002L, null, 1L, 1000.0, "PAID");
+                savePaymentTransaction(100003L, appt1.getId(), null, 1200.0, "PENDING");
+                savePaymentTransaction(100004L, appt4.getId(), null, 1800.0, "PAID");
+            } catch (Exception e) {
+                System.err.println(">>> [DataSeeder] Non-critical error seeding appointments/transactions: " + e.getMessage());
+            }
         }
 
         // ── 11. Feedback (12 Feedbacks) ────────────────────────────────────────
@@ -468,16 +471,21 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private void savePaymentTransaction(Long orderCode, Long appointmentId, Long milestoneId, Double amount, String status) {
-        if (paymentTransactionRepository.findByOrderCode(orderCode).isPresent()) {
-            return;
+        long effectiveOrderCode = orderCode;
+        while (paymentTransactionRepository.existsByOrderCode(effectiveOrderCode) || paymentTransactionRepository.findByOrderCode(effectiveOrderCode).isPresent()) {
+            effectiveOrderCode += 1000L;
         }
-        PaymentTransaction pt = new PaymentTransaction();
-        pt.setOrderCode(orderCode);
-        pt.setAppointmentId(appointmentId);
-        pt.setMilestoneId(milestoneId);
-        pt.setAmount(amount);
-        pt.setStatus(status);
-        paymentTransactionRepository.save(pt);
+        try {
+            PaymentTransaction pt = new PaymentTransaction();
+            pt.setOrderCode(effectiveOrderCode);
+            pt.setAppointmentId(appointmentId);
+            pt.setMilestoneId(milestoneId);
+            pt.setAmount(amount);
+            pt.setStatus(status);
+            paymentTransactionRepository.save(pt);
+        } catch (Exception e) {
+            System.err.println(">>> [DataSeeder] Could not save PaymentTransaction for orderCode " + effectiveOrderCode + ": " + e.getMessage());
+        }
     }
 
     private void saveFeedback(String name, String email, String category, String message) {
