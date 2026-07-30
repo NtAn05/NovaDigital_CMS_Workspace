@@ -7239,10 +7239,10 @@ function initChatbot() {
                         <div class="ai-wave-hand-badge">👋</div>
                     </div>
                     <div class="ai-greeting-body">
-                        <h3 class="ai-greeting-title">Xin chào! Tôi là Nova AI 👋</h3>
-                        <p class="ai-greeting-subtitle">Rất vui được gặp bạn! Đang kết nối chatbox...</p>
+                        <h3 class="ai-greeting-title">Hi! I'm Nova AI 👋</h3>
+                        <p class="ai-greeting-subtitle">Nice to meet you! Connecting to chatbox...</p>
                         <div class="ai-greeting-btn">
-                            <span>Bắt đầu trò chuyện</span>
+                            <span>Start chatting</span>
                             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
                         </div>
                     </div>
