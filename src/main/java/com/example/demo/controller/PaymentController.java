@@ -134,6 +134,9 @@ public class PaymentController {
 
         // 6. Generate unique orderCode
         long orderCode = System.currentTimeMillis();
+        while (transactionRepository.existsByOrderCode(orderCode)) {
+            orderCode++;
+        }
 
         // 7. Create PaymentTransaction in DB
         PaymentTransaction transaction = new PaymentTransaction();
@@ -214,6 +217,9 @@ public class PaymentController {
 
         // 6. Generate unique orderCode
         long orderCode = System.currentTimeMillis();
+        while (transactionRepository.existsByOrderCode(orderCode)) {
+            orderCode++;
+        }
 
         // 7. Create PaymentTransaction in DB
         PaymentTransaction transaction = new PaymentTransaction();
@@ -293,6 +299,9 @@ public class PaymentController {
 
         // 6. Generate unique orderCode
         long orderCode = System.currentTimeMillis();
+        while (transactionRepository.existsByOrderCode(orderCode)) {
+            orderCode++;
+        }
 
         // 7. Create PaymentTransaction in DB
         PaymentTransaction transaction = new PaymentTransaction();

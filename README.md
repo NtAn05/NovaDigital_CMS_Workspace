@@ -51,6 +51,7 @@ sequenceDiagram
   - [7. Member & Client Portals](#7-member--client-portals)
   - [8. Real-Time Live Sync (Server-Sent Events)](#8-real-time-live-sync-server-sent-events)
   - [9. Careers & Public Portals](#9-careers--public-portals)
+- [👥 UC-14 — Staff Resource Allocation Matrix](#-uc-14--staff-resource-allocation-matrix)
 - [🛠️ Tech Stack](#️-tech-stack)
 - [🚀 Setup & Installation](#-setup--installation)
 - [📡 API Endpoints Overview](#-api-endpoints-overview)
@@ -118,6 +119,67 @@ sequenceDiagram
 
 ### 9. Careers & Public Portals
 * **Careers Page (`careers.html`)**: Public recruitment portal with job filtering, application submission modal, and full-view hero slideshow banner (`object-fit: contain`).
+
+---
+
+## 👥 UC-14 — Staff Resource Allocation Matrix
+
+### 📌 Overview & Scope
+UC-14 allows HR/Admin (`ROLE_ADMIN`) and assigned Project Managers (`ROLE_MEMBER` with PM assignment) to allocate internal staff members to a project or an individual project task/milestone based on recorded skills and workload availability.
+
+- **Entity & Persistence**: `ResourceAllocation` mapped to `resource_allocations` table.
+- **Workload Calculation**: Workload percentage is dynamically computed across all active projects for any selected date (`WorkloadCapacityCalculator`).
+- **Role Permissions**:
+  - `ROLE_ADMIN` acts as HR/Admin and may manage allocations on any project.
+  - `ROLE_MEMBER` can manage allocations only on projects where they are assigned as Project Manager (`PM`).
+  - Allocation automatically ensures the staff member has a `STAFF` project assignment without overwriting existing PM assignments.
+
+### 🛡️ Business Rules & Validation Constraints
+1. **Workload Limit (100%)**: Planned and active allocations for a staff member cannot exceed 100% capacity on any date in the allocation range.
+2. **Duplicate Overlap Prevention**: Prevents overlapping duplicate allocations for the same staff, project, and task.
+3. **Milestone Validation**: Selected task/milestone must belong to the selected project.
+4. **Member Role Required**: Only active accounts with `ROLE_MEMBER` can be allocated.
+5. **Date Check**: End date must be greater than or equal to start date (`end_date >= start_date`).
+
+### 🧪 Test & Verification Guide
+
+#### 1. HR/Admin Workflow (`admin` / `admin123`)
+1. Sign in as Admin (`admin` / `admin123`) and navigate to **Admin Panel** (`/admin.html`).
+2. Click **Resource Allocation** in the sidebar to open `resource-allocation.html`.
+3. Select a project to view staff skills, skill matching, workload percentages, and availability.
+4. Click **New Allocation** or **+ Assign** on a staff row. Select project level or milestone, percentage (1–100%), date range, status, and optional notes.
+5. Verify creation, editing, and deletion operations.
+
+#### 2. Project Manager Workflow (`mem1` / `123456`)
+1. Sign in as PM (`mem1` / `123456`) and open **PM Dashboard** (`/pm-dashboard.html`).
+2. Click **Resource Allocation**. Verify only projects where `mem1` is PM are visible.
+3. Attempting to manage allocations on unauthorized projects returns HTTP 403.
+
+#### 3. Validation Test Scenarios
+- **Over-capacity**: Adding allocations exceeding 100% total capacity returns error: `Workload limit exceeded: <staff> would reach 110% on <date>. Maximum allowed workload is 100%.`
+- **History Status**: `COMPLETED` and `CANCELLED` allocations maintain audit history but do not consume active capacity.
+- **Date Check**: Submitting end date prior to start date yields HTTP 400 validation error.
+
+### 🗄️ Database Verification Query
+Run in MySQL Workbench:
+```sql
+USE novadigitalusers;
+
+SELECT ra.id,
+       u.full_name AS staff_name,
+       p.title AS project_title,
+       pm.name AS task_name,
+       ra.allocation_percentage,
+       ra.start_date,
+       ra.end_date,
+       ra.status,
+       ra.assigned_by
+FROM resource_allocations ra
+JOIN users u ON u.id = ra.user_id
+JOIN projects p ON p.id = ra.project_id
+LEFT JOIN project_milestones pm ON pm.id = ra.milestone_id
+ORDER BY ra.id DESC;
+```
 
 ---
 
