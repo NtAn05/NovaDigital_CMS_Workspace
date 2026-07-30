@@ -110,7 +110,11 @@
           <input type="password" id="password" placeholder=" " required minlength="6">
           <label for="password">Password *</label>
         </div>
-        <button type="submit" class="submit-btn" style="margin-top: 1rem;">Register</button>
+        <div class="floating-form-group" id="reg-otp-group" style="display: none;">
+          <input type="text" id="reg-otp" placeholder=" ">
+          <label for="reg-otp">OTP Code * <span id="reg-otp-timer" style="color: #e63946; font-weight: bold; margin-left: 5px;"></span></label>
+        </div>
+        <button type="submit" id="reg-submit-btn" class="submit-btn" style="margin-top: 1rem;">Register</button>
         <div id="alertMessage" class="alert-message"></div>
       </form>
       

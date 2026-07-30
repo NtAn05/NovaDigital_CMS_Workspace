@@ -21,12 +21,24 @@ public class OtpService {
 
     private final Map<String, OtpDetails> otpCache = new ConcurrentHashMap<>();
 
-    public String generateOtp(String email) {
+    public String generateOtpCode() {
         Random random = new Random();
-        String otp = String.format("%06d", random.nextInt(1000000));
-        LocalDateTime expiryTime = LocalDateTime.now().plusMinutes(5); // OTP valid for 5 minutes
+        return String.format("%06d", random.nextInt(1000000));
+    }
+
+    public void saveOtp(String email, String otp, int expirySeconds) {
+        LocalDateTime expiryTime = LocalDateTime.now().plusSeconds(expirySeconds);
         otpCache.put(email, new OtpDetails(otp, expiryTime));
+    }
+
+    public String generateOtp(String email, int expirySeconds) {
+        String otp = generateOtpCode();
+        saveOtp(email, otp, expirySeconds);
         return otp;
+    }
+
+    public String generateOtp(String email) {
+        return generateOtp(email, 300); // Default 5 minutes
     }
 
     public boolean verifyOtp(String email, String otp) {
