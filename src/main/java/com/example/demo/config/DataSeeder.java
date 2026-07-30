@@ -45,6 +45,14 @@ public class DataSeeder implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        try {
+            seedData();
+        } catch (Exception e) {
+            System.err.println(">>> [DataSeeder] Data seeding completed with warnings (non-fatal): " + e.getMessage());
+        }
+    }
+
+    private void seedData() {
         if (projectRepository.count() >= 15) {
             System.out.println(">>> [DataSeeder] Massive sample dataset already present (15+ projects). Skipping seeding.");
             return;
@@ -331,21 +339,24 @@ public class DataSeeder implements CommandLineRunner {
     // ── Helper builders ──────────────────────────────────────────────────────
 
     private User findOrCreateUser(String username, String password, String fullName, String email, String phone, String role) {
-        return userRepository.findByUsernameOrEmail(username, email).orElseGet(() -> {
-            User u = new User();
-            u.setUsername(username);
-            u.setPassword(PasswordHasher.hash(password));
-            u.setFullName(fullName);
-            u.setEmail(email);
-            u.setPhone(phone);
-            u.setRole(role);
-            u.setEnabled(true);
-            return userRepository.save(u);
-        });
+        Optional<User> byName = userRepository.findByUsername(username);
+        if (byName.isPresent()) return byName.get();
+        Optional<User> byEmail = userRepository.findByEmail(email);
+        if (byEmail.isPresent()) return byEmail.get();
+
+        User u = new User();
+        u.setUsername(username);
+        u.setPassword(PasswordHasher.hash(password));
+        u.setFullName(fullName);
+        u.setEmail(email);
+        u.setPhone(phone);
+        u.setRole(role);
+        u.setEnabled(true);
+        return userRepository.save(u);
     }
 
     private void saveMemberIfMissing(String name, String role, Long userId, String skills, String projects) {
-        if (memberRepository.findAll().stream().noneMatch(m -> name.equalsIgnoreCase(m.getName()))) {
+        if (memberRepository.findAll().stream().noneMatch(m -> name.equalsIgnoreCase(m.getName()) || (userId != null && userId.equals(m.getUserId())))) {
             Member m = new Member();
             m.setName(name);
             m.setRole(role);
@@ -420,47 +431,61 @@ public class DataSeeder implements CommandLineRunner {
 
     private ProjectMilestone saveMilestone(Project project, String name, String description,
                                            MilestoneStatus status, int progress, LocalDate dueDate) {
-        ProjectMilestone m = new ProjectMilestone();
-        m.setProject(project);
-        m.setName(name);
-        m.setDescription(description);
-        m.setStatus(status);
-        m.setProgressPercentage(progress);
-        m.setDueDate(dueDate);
-        m.setPrice(1000.0 + (double) (Math.abs(name.hashCode()) % 5) * 500.0);
-        m.setPaid(status == MilestoneStatus.COMPLETED);
-        return projectMilestoneRepository.save(m);
+        return projectMilestoneRepository.findByProjectId(project.getId()).stream()
+                .filter(m -> name.equalsIgnoreCase(m.getName()))
+                .findFirst()
+                .orElseGet(() -> {
+                    ProjectMilestone m = new ProjectMilestone();
+                    m.setProject(project);
+                    m.setName(name);
+                    m.setDescription(description);
+                    m.setStatus(status);
+                    m.setProgressPercentage(progress);
+                    m.setDueDate(dueDate);
+                    m.setPrice(1000.0 + (double) (Math.abs(name.hashCode()) % 5) * 500.0);
+                    m.setPaid(status == MilestoneStatus.COMPLETED);
+                    return projectMilestoneRepository.save(m);
+                });
     }
 
     private void saveResourceAllocation(Project project, ProjectMilestone milestone, User user,
                                          int percentage, LocalDate startDate, LocalDate endDate,
                                          AllocationStatus status, String notes, String assignedBy) {
-        ResourceAllocation ra = new ResourceAllocation();
-        ra.setProject(project);
-        ra.setMilestone(milestone);
-        ra.setUser(user);
-        ra.setAllocationPercentage(percentage);
-        ra.setStartDate(startDate);
-        ra.setEndDate(endDate);
-        ra.setStatus(status);
-        ra.setNotes(notes);
-        ra.setAssignedBy(assignedBy);
-        resourceAllocationRepository.save(ra);
+        boolean exists = resourceAllocationRepository.findByUserId(user.getId()).stream()
+                .anyMatch(ra -> project.getId().equals(ra.getProject().getId()) && notes.equalsIgnoreCase(ra.getNotes()));
+        if (!exists) {
+            ResourceAllocation ra = new ResourceAllocation();
+            ra.setProject(project);
+            ra.setMilestone(milestone);
+            ra.setUser(user);
+            ra.setAllocationPercentage(percentage);
+            ra.setStartDate(startDate);
+            ra.setEndDate(endDate);
+            ra.setStatus(status);
+            ra.setNotes(notes);
+            ra.setAssignedBy(assignedBy);
+            resourceAllocationRepository.save(ra);
+        }
     }
 
     private ConsultationAppointment saveAppointment(Long serviceId, Long clientId, Long expertId,
                                                       LocalDate date, LocalTime time,
                                                       AppointmentStatus status, String message, Double price) {
-        ConsultationAppointment ca = new ConsultationAppointment();
-        ca.setServiceId(serviceId);
-        ca.setClientId(clientId);
-        ca.setExpertId(expertId);
-        ca.setAppointmentDate(date);
-        ca.setTimeSlot(time);
-        ca.setStatus(status);
-        ca.setMessageContent(message);
-        ca.setTotalPrice(price);
-        return consultationAppointmentRepository.save(ca);
+        return consultationAppointmentRepository.findAll().stream()
+                .filter(a -> clientId.equals(a.getClientId()) && serviceId.equals(a.getServiceId()) && date.equals(a.getAppointmentDate()))
+                .findFirst()
+                .orElseGet(() -> {
+                    ConsultationAppointment ca = new ConsultationAppointment();
+                    ca.setServiceId(serviceId);
+                    ca.setClientId(clientId);
+                    ca.setExpertId(expertId);
+                    ca.setAppointmentDate(date);
+                    ca.setTimeSlot(time);
+                    ca.setStatus(status);
+                    ca.setMessageContent(message);
+                    ca.setTotalPrice(price);
+                    return consultationAppointmentRepository.save(ca);
+                });
     }
 
     private void saveAppointmentAddon(Long appointmentId, Long addonId) {
@@ -471,20 +496,27 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private void savePaymentTransaction(Long orderCode, Long appointmentId, Long milestoneId, Double amount, String status) {
-        long effectiveOrderCode = orderCode;
-        while (paymentTransactionRepository.existsByOrderCode(effectiveOrderCode) || paymentTransactionRepository.findByOrderCode(effectiveOrderCode).isPresent()) {
-            effectiveOrderCode += 1000L;
+        if (orderCode != null) {
+            try {
+                if (paymentTransactionRepository.existsByOrderCode(orderCode) || paymentTransactionRepository.findByOrderCode(orderCode).isPresent()) {
+                    return; // Order code already exists in DB (e.g. Render production PostgreSQL), skip duplicate
+                }
+            } catch (Exception ignored) {}
         }
         try {
+            long effectiveOrderCode = (orderCode != null) ? orderCode : 100000L;
+            while (paymentTransactionRepository.existsByOrderCode(effectiveOrderCode) || paymentTransactionRepository.findByOrderCode(effectiveOrderCode).isPresent()) {
+                effectiveOrderCode += 1000L;
+            }
             PaymentTransaction pt = new PaymentTransaction();
             pt.setOrderCode(effectiveOrderCode);
             pt.setAppointmentId(appointmentId);
             pt.setMilestoneId(milestoneId);
             pt.setAmount(amount);
             pt.setStatus(status);
-            paymentTransactionRepository.save(pt);
+            paymentTransactionRepository.saveAndFlush(pt);
         } catch (Exception e) {
-            System.err.println(">>> [DataSeeder] Could not save PaymentTransaction for orderCode " + effectiveOrderCode + ": " + e.getMessage());
+            System.err.println(">>> [DataSeeder] Could not save PaymentTransaction for orderCode " + orderCode + ": " + e.getMessage());
         }
     }
 
