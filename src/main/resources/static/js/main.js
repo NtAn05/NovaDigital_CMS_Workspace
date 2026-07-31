@@ -263,7 +263,11 @@ function injectAuthModal() {
               <input type="password" id="modal-reg-password"
                 placeholder="Min 6 characters" required minlength="6" autocomplete="new-password">
             </div>
-            <button type="submit" class="submit-btn" style="margin-top:0.5rem;">Register</button>
+            <div class="form-group" id="modal-reg-otp-group" style="display: none;">
+              <label for="modal-reg-otp">OTP Code * <span id="modal-reg-otp-timer" style="color: #e63946; font-weight: bold; margin-left: 5px;"></span></label>
+              <input type="text" id="modal-reg-otp" placeholder="Enter 6-digit OTP sent to your email">
+            </div>
+            <button type="submit" class="submit-btn" id="modal-reg-submit-btn" style="margin-top:0.5rem;">Register</button>
             <div id="modal-register-alert" class="alert-message"></div>
           </form>
 
@@ -514,6 +518,8 @@ function initModalRegisterForm() {
   const form = document.getElementById("modal-registerForm");
   if (!form) return;
 
+  let otpSent = false;
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -528,34 +534,123 @@ function initModalRegisterForm() {
       return;
     }
 
-    try {
-      showModalAlert("Registering...", null, "modal-register-alert");
+    const otpGroup = document.getElementById("modal-reg-otp-group");
+    const otpInput = document.getElementById("modal-reg-otp");
+    const submitBtn = document.getElementById("modal-reg-submit-btn");
 
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, fullName, email, phone, password })
-      });
+    if (!otpSent) {
+      // Step 1: Send OTP
+      try {
+        submitBtn.disabled = true;
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = "Sending...";
+        showModalAlert("Sending OTP to your email...", null, "modal-register-alert");
 
-      const data = await response.json();
+        const response = await fetch("/api/auth/register-send-otp", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email })
+        });
 
-      if (response.ok && data.success) {
-        showModalAlert("Registration successful! Please log in.", true, "modal-register-alert");
-        setTimeout(() => {
-          switchAuthTab("login");
-          setTimeout(() => {
-            showModalAlert("Account created! Please log in.", true, "modal-login-alert");
-          }, 80);
-        }, 1400);
-      } else {
-        showModalAlert(
-          data.message || "Registration failed. Username or Email may already exist.",
-          false, "modal-register-alert"
-        );
+        const data = await response.json();
+        submitBtn.disabled = false;
+
+        if (response.ok && data.success) {
+          otpSent = true;
+          otpGroup.style.display = "block";
+          otpInput.required = true;
+          otpInput.value = ""; // Clear any old OTP
+          submitBtn.textContent = "Confirm OTP & Register";
+          document.getElementById("modal-email").readOnly = true;
+          showModalAlert("OTP has been sent to your email.", true, "modal-register-alert");
+
+          const timerSpan = document.getElementById("modal-reg-otp-timer");
+          let timeLeft = 60;
+          timerSpan.textContent = `(${timeLeft}s)`;
+          
+          if (form.dataset.timerId) clearInterval(form.dataset.timerId);
+          
+          const timerInterval = setInterval(() => {
+            timeLeft--;
+            if (timeLeft <= 0) {
+              clearInterval(timerInterval);
+              timerSpan.textContent = "(Expired)";
+              submitBtn.disabled = false;
+              submitBtn.textContent = "Resend OTP";
+              otpSent = false;
+              otpInput.required = false;
+              otpInput.value = "";
+              const parent = otpInput.closest(".form-group") || otpInput.parentElement;
+              if (parent) {
+                const errorSpan = parent.querySelector(".error-helper-text");
+                if (errorSpan) errorSpan.remove();
+                otpInput.classList.remove("invalid");
+              }
+            } else {
+              timerSpan.textContent = `(${timeLeft}s)`;
+            }
+          }, 1000);
+          form.dataset.timerId = timerInterval;
+        } else {
+          submitBtn.textContent = originalText;
+          showModalAlert(data.message || "Failed to send OTP.", false, "modal-register-alert");
+        }
+      } catch (error) {
+        console.error("Modal send OTP error:", error);
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+        showModalAlert("Could not connect to server. Please try again.", false, "modal-register-alert");
       }
-    } catch (error) {
-      console.error("Modal register error:", error);
-      showModalAlert("Could not connect to server. Please try again.", false, "modal-register-alert");
+    } else {
+      // Step 2: Register with OTP
+      const otp = otpInput.value.trim();
+      if (!otp) {
+        showModalAlert("Please enter the OTP code.", false, "modal-register-alert");
+        return;
+      }
+
+      try {
+        submitBtn.disabled = true;
+        showModalAlert("Registering...", null, "modal-register-alert");
+
+        const response = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, fullName, email, phone, password, otp })
+        });
+
+        const data = await response.json();
+        submitBtn.disabled = false;
+
+        if (response.ok && data.success) {
+          if (form.dataset.timerId) clearInterval(form.dataset.timerId);
+          document.getElementById("modal-reg-otp-timer").textContent = "";
+          showModalAlert("Registration successful! Please log in.", true, "modal-register-alert");
+          // Reset form state for next time
+          otpSent = false;
+          otpGroup.style.display = "none";
+          otpInput.required = false;
+          submitBtn.textContent = "Register";
+          document.getElementById("modal-email").readOnly = false;
+          form.reset();
+
+          setTimeout(() => {
+            switchAuthTab("login");
+            setTimeout(() => {
+              showModalAlert("Account created! Please log in.", true, "modal-login-alert");
+            }, 80);
+          }, 1400);
+        } else {
+          showModalAlert(
+            data.message || "Registration failed.",
+            false, "modal-register-alert"
+          );
+        }
+      } catch (error) {
+        console.error("Modal register error:", error);
+        submitBtn.disabled = false;
+        showModalAlert("Could not connect to server. Please try again.", false, "modal-register-alert");
+      }
     }
   });
 }
@@ -624,7 +719,7 @@ function checkRouteGuard() {
 function highlightActiveLink() {
   const path = window.location.pathname;
   const page = path.substring(path.lastIndexOf('/') + 1) || "index.html";
-  const navLinks = document.querySelectorAll(".nav-links a");
+  const navLinks = document.querySelectorAll(".nav-links a, .dropdown-item");
 
   navLinks.forEach(link => {
     const href = link.getAttribute("href");
@@ -762,10 +857,6 @@ function updateNavbarAuth() {
         <a href="member-profile.html" class="dropdown-item">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
           Profile
-        </a>
-        <a href="my-applications.html" class="dropdown-item">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-          My Applications
         </a>
       `;
     } else {
@@ -1094,6 +1185,8 @@ function initRegisterForm() {
   const alertMsg = document.getElementById("alertMessage");
   if (!form || !alertMsg) return;
 
+  let otpSent = false;
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -1108,26 +1201,107 @@ function initRegisterForm() {
       return;
     }
 
-    try {
-      showAlert("Registering...", null);
+    const otpGroup = document.getElementById("reg-otp-group");
+    const otpInput = document.getElementById("reg-otp");
+    const submitBtn = document.getElementById("reg-submit-btn");
 
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, fullName, email, phone, password })
-      });
+    if (!otpSent) {
+      // Step 1: Send OTP
+      try {
+        submitBtn.disabled = true;
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = "Sending...";
+        showAlert("Sending OTP to your email...", null);
 
-      const data = await response.json();
+        const response = await fetch("/api/auth/register-send-otp", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email })
+        });
 
-      if (response.ok && data.success) {
-        showAlert("Registration successful! Redirecting to login...", true);
-        setTimeout(() => { window.location.href = "login.html?registered=true"; }, 1500);
-      } else {
-        showAlert(data.message || "Registration failed. Username or Email may already exist.", false);
+        const data = await response.json();
+        submitBtn.disabled = false;
+
+        if (response.ok && data.success) {
+          otpSent = true;
+          otpGroup.style.display = "block";
+          otpInput.required = true;
+          otpInput.value = ""; // Clear any old OTP
+          submitBtn.textContent = "Confirm OTP & Register";
+          document.getElementById("email").readOnly = true;
+          showAlert("OTP has been sent to your email.", true);
+
+          const timerSpan = document.getElementById("reg-otp-timer");
+          let timeLeft = 60;
+          timerSpan.textContent = `(${timeLeft}s)`;
+          
+          if (form.dataset.timerId) clearInterval(form.dataset.timerId);
+          
+          const timerInterval = setInterval(() => {
+            timeLeft--;
+            if (timeLeft <= 0) {
+              clearInterval(timerInterval);
+              timerSpan.textContent = "(Expired)";
+              submitBtn.disabled = false;
+              submitBtn.textContent = "Resend OTP";
+              otpSent = false;
+              otpInput.required = false;
+              otpInput.value = "";
+              const parent = otpInput.closest(".floating-form-group") || otpInput.parentElement;
+              if (parent) {
+                const errorSpan = parent.querySelector(".error-helper-text");
+                if (errorSpan) errorSpan.remove();
+                otpInput.classList.remove("invalid");
+              }
+            } else {
+              timerSpan.textContent = `(${timeLeft}s)`;
+            }
+          }, 1000);
+          form.dataset.timerId = timerInterval;
+        } else {
+          submitBtn.textContent = originalText;
+          showAlert(data.message || "Failed to send OTP.", false);
+        }
+      } catch (error) {
+        console.error("Send OTP error:", error);
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+        showAlert("Could not connect to server. Please try again.", false);
       }
-    } catch (error) {
-      console.error("Registration error:", error);
-      showAlert("Could not connect to server. Please try again.", false);
+    } else {
+      // Step 2: Register with OTP
+      const otp = otpInput.value.trim();
+      if (!otp) {
+        showAlert("Please enter the OTP code.", false);
+        return;
+      }
+
+      try {
+        submitBtn.disabled = true;
+        showAlert("Registering...", null);
+
+        const response = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, fullName, email, phone, password, otp })
+        });
+
+        const data = await response.json();
+        submitBtn.disabled = false;
+
+        if (response.ok && data.success) {
+          if (form.dataset.timerId) clearInterval(form.dataset.timerId);
+          document.getElementById("reg-otp-timer").textContent = "";
+          showAlert("Registration successful! Redirecting to login...", true);
+          setTimeout(() => { window.location.href = "login.html?registered=true"; }, 1500);
+        } else {
+          showAlert(data.message || "Registration failed.", false);
+        }
+      } catch (error) {
+        console.error("Registration error:", error);
+        submitBtn.disabled = false;
+        showAlert("Could not connect to server. Please try again.", false);
+      }
     }
   });
 
@@ -1412,7 +1586,7 @@ function initAdminDashboard() {
     ${fld("cf-phone", "Phone Number", "tel", v.phone, 'placeholder="0123456789" pattern="[0-9]{10}"')}
     ${!item ? fld("cf-password", "Password *", "password", "", 'placeholder="Min 6 characters" required minlength="6"') : ""}
 
-    ${sel("cf-role", "Role *", [["ROLE_USER", "User"], ["ROLE_ADMIN", "Admin"], ["ROLE_MEMBER", "Team Member"]], v.role || "ROLE_USER")}
+    ${sel("cf-role", "Role *", [["ROLE_USER", "User"], ["ROLE_MEMBER", "Team Member"]], v.role || "ROLE_USER")}
 
     <div class="form-group" style="width: 100%;">
       <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; justify-content: flex-start;">
@@ -2299,14 +2473,14 @@ async function loadServiceAddonsModalList(serviceId) {
       
       if (addons.length === 0) {
         listEl.innerHTML = `
-          <div style="text-align:center;padding:2rem;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:12px;color:var(--text-muted);font-size:0.88rem;">
+          <div style="text-align:center;padding:2rem;background:var(--bg-card,#f8fafc);border:1px dashed var(--border-color,#cbd5e1);border-radius:12px;color:var(--text-muted);font-size:0.88rem;">
             No add-ons for this service yet. Add one above!
           </div>`;
         return;
       }
       
       listEl.innerHTML = addons.map(a => `
-        <div class="table-addon-row" data-addon-id="${a.id}" style="display:flex; justify-content:space-between; align-items:center; padding:0.85rem 1.25rem; background:#fff; border:1px solid #e2e8f0; border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.02); transition: all 0.2s ease;">
+        <div class="table-addon-row" data-addon-id="${a.id}" style="display:flex; justify-content:space-between; align-items:center; padding:0.85rem 1.25rem; background:var(--bg-card,#fff); border:1px solid var(--border-color,#e2e8f0); border-radius:12px; box-shadow:0 1px 3px rgba(0,0,0,0.02); transition: all 0.2s ease;">
           <div style="display:flex; flex-direction:column; gap:2px; flex:1; min-width:0; padding-right:12px;">
             <strong style="color:var(--text-dark, #0f172a); font-size:0.9rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(a.addonName)}</strong>
             <span style="color:#2563eb; font-weight:700; font-size:0.85rem;">$${Number(a.priceModifier || 0).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
@@ -2334,13 +2508,13 @@ function startEditServiceAddonModalList(serviceId, addonId) {
     
     row.innerHTML = `
       <div style="display:flex; gap:8px; width:100%; align-items:center;">
-        <input type="text" id="modal-addon-edit-name-${addonId}" value="${escapeHtml(a.addonName)}" style="flex: 1; padding: 0.5rem 0.75rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.85rem;">
+        <input type="text" id="modal-addon-edit-name-${addonId}" value="${escapeHtml(a.addonName)}" style="flex: 1; padding: 0.5rem 0.75rem; border: 1px solid var(--border-color,#cbd5e1); border-radius: 8px; font-size: 0.85rem; background:var(--bg-card,#fff); color:var(--text-dark,#0f172a);">
         <div style="position: relative; display: flex; align-items: center;">
           <span style="position: absolute; left: 8px; font-size: 0.85rem; color: var(--text-muted);">$</span>
-          <input type="number" id="modal-addon-edit-price-${addonId}" value="${a.priceModifier}" min="0" step="0.01" style="width: 80px; padding: 0.5rem 0.5rem 0.5rem 1.5rem; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.85rem; font-weight: 600;">
+          <input type="number" id="modal-addon-edit-price-${addonId}" value="${a.priceModifier}" min="0" step="0.01" style="width: 80px; padding: 0.5rem 0.5rem 0.5rem 1.5rem; border: 1px solid var(--border-color,#cbd5e1); border-radius: 8px; font-size: 0.85rem; font-weight: 600; background:var(--bg-card,#fff); color:var(--text-dark,#0f172a);">
         </div>
         <button type="button" onclick="saveServiceAddonEditModalList(${serviceId}, ${addonId})" class="btn-save" style="padding:0.5rem 0.85rem; font-size:0.78rem; font-weight:600; border-radius:6px; height:32px; border:none; background:#059669; color:#fff; cursor:pointer;">Save</button>
-        <button type="button" onclick="loadServiceAddonsModalList(${serviceId})" class="btn-cancel" style="padding:0.5rem 0.85rem; font-size:0.78rem; font-weight:600; border-radius:6px; height:32px; border:1px solid #cbd5e1; background:#fff; color:var(--text-muted); cursor:pointer;">Cancel</button>
+        <button type="button" onclick="loadServiceAddonsModalList(${serviceId})" class="btn-cancel" style="padding:0.5rem 0.85rem; font-size:0.78rem; font-weight:600; border-radius:6px; height:32px; border:1px solid var(--border-color,#cbd5e1); background:var(--bg-card,#fff); color:var(--text-muted); cursor:pointer;">Cancel</button>
       </div>
     `;
 }
@@ -3042,14 +3216,17 @@ async function loadNotificationList() {
       return;
     }
 
-    listEl.innerHTML = list.map(n => `
-      <a href="${escapeHtml(n.link || '#')}" class="notification-item ${n.read ? 'read' : 'unread'}" data-id="${n.id}"
-         style="display:block;padding:10px 12px;border-radius:8px;text-decoration:none;margin-bottom:4px;">
-        <div class="notif-item-title" style="font-weight:600;font-size:0.85rem;margin-bottom:2px;">${escapeHtml(n.title)}</div>
-        <div class="notif-item-msg" style="font-size:0.8rem;margin-top:2px;line-height:1.4;">${escapeHtml(n.message)}</div>
-        <div class="notif-item-time" style="font-size:0.72rem;margin-top:4px;">${formatNotificationTime(n.createdAt)}</div>
-      </a>
-    `).join("");
+    listEl.innerHTML = list.map(n => {
+      const resolvedLink = resolveNotificationLink(n);
+      return `
+        <a href="${escapeHtml(resolvedLink)}" class="notification-item ${n.read ? 'read' : 'unread'}" data-id="${n.id}"
+           style="display:block;padding:10px 12px;border-radius:8px;text-decoration:none;margin-bottom:4px;">
+          <div class="notif-item-title" style="font-weight:600;font-size:0.85rem;margin-bottom:2px;">${escapeHtml(n.title)}</div>
+          <div class="notif-item-msg" style="font-size:0.8rem;margin-top:2px;line-height:1.4;">${escapeHtml(n.message)}</div>
+          <div class="notif-item-time" style="font-size:0.72rem;margin-top:4px;">${formatNotificationTime(n.createdAt)}</div>
+        </a>
+      `;
+    }).join("");
 
     listEl.querySelectorAll(".notification-item").forEach(item => {
       item.addEventListener("click", async (e) => {
@@ -3066,6 +3243,79 @@ async function loadNotificationList() {
   } catch (e) {
     listEl.innerHTML = `<p style="text-align:center;color:#ef4444;font-size:0.85rem;padding:1.5rem 0;">Could not load notifications.</p>`;
   }
+}
+
+function resolveNotificationLink(n) {
+  if (!n) return "#";
+
+  // 1. Determine current logged-in user role
+  let role = "";
+  try {
+    const userStr = localStorage.getItem("user") || sessionStorage.getItem("user");
+    if (userStr) {
+      const u = JSON.parse(userStr);
+      role = u.role || "";
+    }
+  } catch (e) {}
+
+  const isMember = (role === "ROLE_MEMBER" || role === "Team_Member" || role === "ROLE_RESOURCE");
+  const isAdmin = (role === "ROLE_ADMIN");
+
+  const title = (n.title || "").toLowerCase();
+  const msg = (n.message || "").toLowerCase();
+  const storedLink = (n.link || "").toLowerCase().trim();
+
+  // 2. Direct routing if storedLink is a specific valid HTML page
+  if (storedLink.endsWith(".html") || storedLink.includes(".html#")) {
+    let cleanLink = n.link.startsWith("/") ? n.link.substring(1) : n.link;
+    if (cleanLink.includes("my-bookings") || cleanLink.includes("appointments")) {
+      return isMember ? "member-contact.html#my-bookings" : "my-bookings.html";
+    }
+    if (cleanLink.includes("rented-project") && isMember) {
+      return "member.html";
+    }
+    if (cleanLink.includes("member.html") && !isMember && !isAdmin) {
+      return "rented-project.html";
+    }
+    return cleanLink;
+  }
+
+  // 3. Keyword-based intelligent routing by Notification Title / Message content
+  
+  // A. Booking & Consultation Notifications
+  if (title.includes("booking") || title.includes("appointment") || title.includes("consultation") ||
+      msg.includes("booking") || msg.includes("appointment") || msg.includes("consultation")) {
+    return isMember ? "member-contact.html#my-bookings" : "my-bookings.html";
+  }
+
+  // B. Client Request & Contact Message Notifications
+  if (title.includes("client request") || title.includes("contact") || title.includes("inquiry") ||
+      msg.includes("client request") || msg.includes("contact") || msg.includes("inquiry")) {
+    return "member-contact.html";
+  }
+
+  // C. Project & Milestone Notifications
+  if (title.includes("project") || title.includes("assignment") || title.includes("milestone") ||
+      msg.includes("project") || msg.includes("assignment") || msg.includes("milestone")) {
+    if (isMember) {
+      return "member.html";
+    } else if (isAdmin) {
+      return "admin.html";
+    } else {
+      return "rented-project.html";
+    }
+  }
+
+  // D. Payment & Transaction Notifications
+  if (title.includes("payment") || title.includes("transaction") || title.includes("invoice") ||
+      msg.includes("payment") || msg.includes("transaction") || msg.includes("invoice")) {
+    return "transaction.html";
+  }
+
+  // 4. Default Role-based Fallback Routing
+  if (isAdmin) return "admin.html";
+  if (isMember) return "member.html";
+  return "rented-project.html";
 }
 
 function formatNotificationTime(iso) {
@@ -3467,10 +3717,23 @@ function formatNotificationTime(iso) {
     const service = _cache.services[b.serviceId] || { title: `Service #${b.serviceId}` };
     const expert = b.expertId ? (_cache.users[b.expertId] || { fullName: `Expert #${b.expertId}`, email: "" }) : null;
 
+    let displayMessage = b.messageContent || "";
+    let displayAttachmentUrl = b.attachmentUrl || null;
+
+    if (displayMessage) {
+      const match = displayMessage.match(/(?:\r?\n)*\s*(?:📎\s*)?Attachment:\s*(https?:\/\/[^\s]+|\/uploads\/[^\s]+)/i);
+      if (match) {
+        if (!displayAttachmentUrl) {
+          displayAttachmentUrl = match[1];
+        }
+        displayMessage = displayMessage.replace(/(?:\r?\n)*\s*(?:📎\s*)?Attachment:\s*(https?:\/\/[^\s]+|\/uploads\/[^\s]+)/i, '').trim();
+      }
+    }
+
     let attachmentHtml = "<span style='color:var(--text-muted); font-size:0.85rem;'>None</span>";
-    if (b.attachmentUrl) {
-      const fileName = b.attachmentUrl.split("/").pop();
-      attachmentHtml = `<a href="${escapeHtml(b.attachmentUrl)}" target="_blank" class="attachment-link" style="display:inline-flex;align-items:center;gap:4px;color:#2563eb;font-weight:600;font-size:0.85rem;text-decoration:none;"><svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>${escapeHtml(fileName)}</a>`;
+    if (displayAttachmentUrl) {
+      const fileName = displayAttachmentUrl.split("/").pop();
+      attachmentHtml = `<a href="${escapeHtml(displayAttachmentUrl)}" target="_blank" class="attachment-link" style="display:inline-flex;align-items:center;gap:4px;color:#2563eb;font-weight:600;font-size:0.85rem;text-decoration:none;"><svg viewBox="0 0 24 24" style="width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>${escapeHtml(fileName)}</a>`;
     }
 
     container.innerHTML = `
@@ -3511,7 +3774,7 @@ function formatNotificationTime(iso) {
           <svg viewBox="0 0 24 24" style="width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2;"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
           Client Request & Message
         </div>
-        <div style="font-size: 0.88rem; line-height: 1.5; color: var(--text-dark); white-space: pre-wrap; background: var(--bg-light, #f8fafc); padding: 0.8rem 1rem; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 0.75rem;">${escapeHtml(b.messageContent || "No specific request/message provided.")}</div>
+        <div style="font-size: 0.88rem; line-height: 1.5; color: var(--text-dark); white-space: pre-wrap; background: var(--bg-light, #f8fafc); padding: 0.8rem 1rem; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 0.75rem;">${escapeHtml(displayMessage || "No specific request/message provided.")}</div>
         
         <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem;">
           <span style="font-weight: 600; color: var(--text-muted);">Attachment:</span>
@@ -7029,15 +7292,93 @@ function initChatbot() {
         history.forEach(m => renderBubble(m.sender, m.text));
     }
 
-    // Prefetch config so first message is instant
-    getChatbotConfig();
+    // Enhance header icon with 3D robot avatar if available
+    const headerTitle = windowEl.querySelector('.chatbot-header-title');
+    if (headerTitle && !headerTitle.querySelector('.chatbot-header-avatar')) {
+        const avatarImg = document.createElement('img');
+        avatarImg.src = '/images/ai_robot_waving.jpg';
+        avatarImg.alt = 'Nova AI';
+        avatarImg.className = 'chatbot-header-avatar';
+        avatarImg.style.cssText = 'width: 26px; height: 26px; border-radius: 50%; object-fit: cover; border: 1.5px solid rgba(255, 255, 255, 0.7); box-shadow: 0 0 8px rgba(56, 189, 248, 0.5); margin-right: 4px;';
+        headerTitle.prepend(avatarImg);
+    }
+
+    let isGreetingShowing = false;
+    let greetingTimer = null;
+
+    function openChatWindowDirectly() {
+        windowEl.classList.add('active');
+        inputEl.focus();
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    function show3DAIGreetingThenOpenChat() {
+        if (isGreetingShowing) return;
+
+        let overlay = document.getElementById('ai-greeting-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'ai-greeting-overlay';
+            overlay.className = 'ai-greeting-overlay';
+            overlay.innerHTML = `
+                <div class="ai-greeting-card" id="ai-greeting-card">
+                    <button type="button" class="ai-greeting-close" id="ai-greeting-close" title="Close">&times;</button>
+                    <div class="ai-greeting-img-wrapper">
+                        <img src="/images/ai_robot_waving.jpg" alt="Nova AI Robot Waving" class="ai-greeting-img">
+                        <div class="ai-wave-hand-badge">👋</div>
+                    </div>
+                    <div class="ai-greeting-body">
+                        <h3 class="ai-greeting-title">Hi! I'm Nova AI 👋</h3>
+                        <p class="ai-greeting-subtitle">Nice to meet you! Connecting to chatbox...</p>
+                        <div class="ai-greeting-btn">
+                            <span>Start chatting</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+
+            const card = overlay.querySelector('.ai-greeting-card');
+
+            const proceedToChat = () => {
+                overlay.classList.remove('active');
+                overlay.classList.add('leaving');
+                setTimeout(() => {
+                    overlay.classList.remove('leaving');
+                    isGreetingShowing = false;
+                    openChatWindowDirectly();
+                }, 250);
+            };
+
+            card.addEventListener('click', (e) => {
+                if (e.target.closest('#ai-greeting-close')) {
+                    overlay.classList.remove('active');
+                    isGreetingShowing = false;
+                    return;
+                }
+                proceedToChat();
+            });
+
+            overlay._proceedToChat = proceedToChat;
+        }
+
+        isGreetingShowing = true;
+        overlay.classList.remove('leaving');
+        overlay.classList.add('active');
+    }
 
     // ── Toggle open/close ──
     fab.addEventListener('click', () => {
-        windowEl.classList.toggle('active');
         if (windowEl.classList.contains('active')) {
-            inputEl.focus();
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            windowEl.classList.remove('active');
+            if (isGreetingShowing) {
+                const overlay = document.getElementById('ai-greeting-overlay');
+                if (overlay) overlay.classList.remove('active');
+                isGreetingShowing = false;
+            }
+        } else {
+            show3DAIGreetingThenOpenChat();
         }
     });
     closeBtn.addEventListener('click', () => windowEl.classList.remove('active'));

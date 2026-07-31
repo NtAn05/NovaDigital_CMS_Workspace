@@ -18,35 +18,9 @@
       flex-direction: column;
       gap: 2rem;
     }
-    .apps-header {
-      text-align: center;
-      margin-bottom: 0.5rem;
-    }
-    .apps-header .hero-pill {
-      display: inline-block;
-      background: rgba(37, 99, 235, 0.08);
-      color: var(--primary);
-      border: 1px solid rgba(37, 99, 235, 0.18);
-      padding: 0.35rem 1.1rem;
-      border-radius: 50px;
-      font-size: 0.82rem;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      margin-bottom: 0.9rem;
-    }
-    .apps-header h1 {
-      font-family: var(--font-heading);
-      font-size: 2.6rem;
-      font-weight: 800;
-      color: var(--text-dark);
-      line-height: 1.2;
-      margin-bottom: 0.5rem;
-    }
-    .apps-header p {
-      color: var(--text-muted);
-      font-size: 1rem;
-      line-height: 1.6;
+    .apps-container {
+      max-width: 1200px;
+      margin: 0 auto;
     }
     .apps-card {
       background: rgba(255, 255, 255, 0.72);
@@ -305,10 +279,11 @@
 
   <main class="apps-page">
     <div class="apps-container">
-      <div class="apps-header">
-        <span class="hero-pill">Career Portal</span>
-        <h1>My Applications</h1>
-        <p>Review the job positions you have applied for and view your submitted resumes.</p>
+      <div class="panel-header">
+        <div>
+          <h1>My Applications</h1>
+          <p class="panel-subtitle">Review the job positions you have applied for and view your submitted resumes.</p>
+        </div>
       </div>
 
       <div class="apps-card">

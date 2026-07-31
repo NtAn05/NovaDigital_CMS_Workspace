@@ -44,8 +44,15 @@ public class DataSeeder implements CommandLineRunner {
     @Autowired private AuthLogRepository authLogRepository;
 
     @Override
-    @Transactional
     public void run(String... args) throws Exception {
+        try {
+            seedData();
+        } catch (Exception e) {
+            System.err.println(">>> [DataSeeder] Data seeding completed with warnings (non-fatal): " + e.getMessage());
+        }
+    }
+
+    private void seedData() {
         if (projectRepository.count() >= 15) {
             System.out.println(">>> [DataSeeder] Massive sample dataset already present (15+ projects). Skipping seeding.");
             return;
@@ -259,21 +266,27 @@ public class DataSeeder implements CommandLineRunner {
 
         // ── 9. Consultation Appointments & Addons ──────────────────────────────
         if (consultationAppointmentRepository.count() < 4) {
-            ConsultationAppointment appt1 = saveAppointment(svc1.getId(), user1.getId(), mem1.getId(), LocalDate.now().plusDays(1), LocalTime.of(9, 0), AppointmentStatus.CONFIRMED, "Consultation for upgrading automated payment system for Mart06 E-Commerce platform.", 1200.0);
-            ConsultationAppointment appt2 = saveAppointment(svc2.getId(), user2.getId(), mem2.getId(), LocalDate.now().plusDays(3), LocalTime.of(14, 0), AppointmentStatus.PENDING, "Consultation for Mobile Portal UI/UX design.", 800.0);
-            ConsultationAppointment appt3 = saveAppointment(svc3.getId(), user1.getId(), mem1.getId(), LocalDate.now().minusDays(5), LocalTime.of(10, 30), AppointmentStatus.COMPLETED, "Consultation for AWS Cloud Infrastructure and Docker deployment for SaaS.", 1500.0);
-            ConsultationAppointment appt4 = saveAppointment(svc4.getId(), user2.getId(), mem5.getId(), LocalDate.now().plusDays(2), LocalTime.of(15, 30), AppointmentStatus.CONFIRMED, "Inquiry about AI Chatbot integration for customer care.", 1800.0);
-            ConsultationAppointment appt5 = saveAppointment(svc5.getId(), user3.getId(), mem9.getId(), LocalDate.now().plusDays(4), LocalTime.of(11, 0), AppointmentStatus.PENDING, "Request for vulnerability audit on banking mobile app.", 2100.0);
+            try {
+                ConsultationAppointment appt1 = saveAppointment(svc1.getId(), user1.getId(), mem1.getId(), LocalDate.now().plusDays(1), LocalTime.of(9, 0), AppointmentStatus.CONFIRMED, "Consultation for upgrading automated payment system for Mart06 E-Commerce platform.", 1200.0);
+                ConsultationAppointment appt2 = saveAppointment(svc2.getId(), user2.getId(), mem2.getId(), LocalDate.now().plusDays(3), LocalTime.of(14, 0), AppointmentStatus.PENDING, "Consultation for Mobile Portal UI/UX design.", 800.0);
+                ConsultationAppointment appt3 = saveAppointment(svc3.getId(), user1.getId(), mem1.getId(), LocalDate.now().minusDays(5), LocalTime.of(10, 30), AppointmentStatus.COMPLETED, "Consultation for AWS Cloud Infrastructure and Docker deployment for SaaS.", 1500.0);
+                ConsultationAppointment appt4 = saveAppointment(svc4.getId(), user2.getId(), mem5.getId(), LocalDate.now().plusDays(2), LocalTime.of(15, 30), AppointmentStatus.CONFIRMED, "Inquiry about AI Chatbot integration for customer care.", 1800.0);
+                ConsultationAppointment appt5 = saveAppointment(svc5.getId(), user3.getId(), mem9.getId(), LocalDate.now().plusDays(4), LocalTime.of(11, 0), AppointmentStatus.PENDING, "Request for vulnerability audit on banking mobile app.", 2100.0);
 
-            saveAppointmentAddon(appt1.getId(), 1L);
-            saveAppointmentAddon(appt1.getId(), 2L);
-            saveAppointmentAddon(appt2.getId(), 3L);
-            saveAppointmentAddon(appt4.getId(), 4L);
+                saveAppointmentAddon(appt1.getId(), 1L);
+                saveAppointmentAddon(appt1.getId(), 2L);
+                saveAppointmentAddon(appt2.getId(), 3L);
+                saveAppointmentAddon(appt4.getId(), 4L);
 
-            savePaymentTransaction(100001L, appt3.getId(), null, 1500.0, "PAID");
-            savePaymentTransaction(100002L, null, 1L, 1000.0, "PAID");
-            savePaymentTransaction(100003L, appt1.getId(), null, 1200.0, "PENDING");
-            savePaymentTransaction(100004L, appt4.getId(), null, 1800.0, "PAID");
+                if (paymentTransactionRepository.count() == 0) {
+                    savePaymentTransaction(generateUniqueOrderCode(), appt3.getId(), null, 1500.0, "PAID");
+                    savePaymentTransaction(generateUniqueOrderCode(), null, 1L, 1000.0, "PAID");
+                    savePaymentTransaction(generateUniqueOrderCode(), appt1.getId(), null, 1200.0, "PENDING");
+                    savePaymentTransaction(generateUniqueOrderCode(), appt4.getId(), null, 1800.0, "PAID");
+                }
+            } catch (Exception e) {
+                System.err.println(">>> [DataSeeder] Non-critical error seeding appointments/transactions: " + e.getMessage());
+            }
         }
 
         // ── 11. Feedback (12 Feedbacks) ────────────────────────────────────────
@@ -313,9 +326,9 @@ public class DataSeeder implements CommandLineRunner {
         }
 
         // ── 14. Notifications & Audit Logs ──────────────────────────────────────
-        saveNotification(user1.getId(), "Project Progress Update", "Milestone 'Phase 1: High-Fidelity Figma Designs' for project Mart06 Fashion System is 100% completed.", "/projects/1", true);
-        saveNotification(user1.getId(), "Consultation Appointment Confirmation", "Your E-Commerce design consultation appointment has been confirmed for 09:00 tomorrow.", "/appointments", false);
-        saveNotification(mem1.getId(), "New Project Assignment", "You have been assigned as Project Leader for project Mart06 Fashion System.", "/matrix", false);
+        saveNotification(user1.getId(), "Project Progress Update", "Milestone 'Phase 1: High-Fidelity Figma Designs' for project Mart06 Fashion System is 100% completed.", "rented-project.html", true);
+        saveNotification(user1.getId(), "Consultation Appointment Confirmation", "Your E-Commerce design consultation appointment has been confirmed for 09:00 tomorrow.", "my-bookings.html", false);
+        saveNotification(mem1.getId(), "New Project Assignment", "You have been assigned as Project Leader for project Mart06 Fashion System.", "member.html", false);
 
         auditLogRepository.save(new AuditLog("admin", "CREATE", "projects", "Created project 'FinTech Mobile Wallet & Banking App'"));
         auditLogRepository.save(new AuditLog("admin", "CREATE", "projects", "Created project 'AI-Powered Customer Care Bot & Automation'"));
@@ -328,21 +341,24 @@ public class DataSeeder implements CommandLineRunner {
     // ── Helper builders ──────────────────────────────────────────────────────
 
     private User findOrCreateUser(String username, String password, String fullName, String email, String phone, String role) {
-        return userRepository.findByUsernameOrEmail(username, email).orElseGet(() -> {
-            User u = new User();
-            u.setUsername(username);
-            u.setPassword(PasswordHasher.hash(password));
-            u.setFullName(fullName);
-            u.setEmail(email);
-            u.setPhone(phone);
-            u.setRole(role);
-            u.setEnabled(true);
-            return userRepository.save(u);
-        });
+        Optional<User> byName = userRepository.findByUsername(username);
+        if (byName.isPresent()) return byName.get();
+        Optional<User> byEmail = userRepository.findByEmail(email);
+        if (byEmail.isPresent()) return byEmail.get();
+
+        User u = new User();
+        u.setUsername(username);
+        u.setPassword(PasswordHasher.hash(password));
+        u.setFullName(fullName);
+        u.setEmail(email);
+        u.setPhone(phone);
+        u.setRole(role);
+        u.setEnabled(true);
+        return userRepository.save(u);
     }
 
     private void saveMemberIfMissing(String name, String role, Long userId, String skills, String projects) {
-        if (memberRepository.findAll().stream().noneMatch(m -> name.equalsIgnoreCase(m.getName()))) {
+        if (memberRepository.findAll().stream().noneMatch(m -> name.equalsIgnoreCase(m.getName()) || (userId != null && userId.equals(m.getUserId())))) {
             Member m = new Member();
             m.setName(name);
             m.setRole(role);
@@ -417,47 +433,61 @@ public class DataSeeder implements CommandLineRunner {
 
     private ProjectMilestone saveMilestone(Project project, String name, String description,
                                            MilestoneStatus status, int progress, LocalDate dueDate) {
-        ProjectMilestone m = new ProjectMilestone();
-        m.setProject(project);
-        m.setName(name);
-        m.setDescription(description);
-        m.setStatus(status);
-        m.setProgressPercentage(progress);
-        m.setDueDate(dueDate);
-        m.setPrice(1000.0 + (double) (Math.abs(name.hashCode()) % 5) * 500.0);
-        m.setPaid(status == MilestoneStatus.COMPLETED);
-        return projectMilestoneRepository.save(m);
+        return projectMilestoneRepository.findByProjectId(project.getId()).stream()
+                .filter(m -> name.equalsIgnoreCase(m.getName()))
+                .findFirst()
+                .orElseGet(() -> {
+                    ProjectMilestone m = new ProjectMilestone();
+                    m.setProject(project);
+                    m.setName(name);
+                    m.setDescription(description);
+                    m.setStatus(status);
+                    m.setProgressPercentage(progress);
+                    m.setDueDate(dueDate);
+                    m.setPrice(1000.0 + (double) (Math.abs(name.hashCode()) % 5) * 500.0);
+                    m.setPaid(status == MilestoneStatus.COMPLETED);
+                    return projectMilestoneRepository.save(m);
+                });
     }
 
     private void saveResourceAllocation(Project project, ProjectMilestone milestone, User user,
                                          int percentage, LocalDate startDate, LocalDate endDate,
                                          AllocationStatus status, String notes, String assignedBy) {
-        ResourceAllocation ra = new ResourceAllocation();
-        ra.setProject(project);
-        ra.setMilestone(milestone);
-        ra.setUser(user);
-        ra.setAllocationPercentage(percentage);
-        ra.setStartDate(startDate);
-        ra.setEndDate(endDate);
-        ra.setStatus(status);
-        ra.setNotes(notes);
-        ra.setAssignedBy(assignedBy);
-        resourceAllocationRepository.save(ra);
+        boolean exists = resourceAllocationRepository.findByUserId(user.getId()).stream()
+                .anyMatch(ra -> project.getId().equals(ra.getProject().getId()) && notes.equalsIgnoreCase(ra.getNotes()));
+        if (!exists) {
+            ResourceAllocation ra = new ResourceAllocation();
+            ra.setProject(project);
+            ra.setMilestone(milestone);
+            ra.setUser(user);
+            ra.setAllocationPercentage(percentage);
+            ra.setStartDate(startDate);
+            ra.setEndDate(endDate);
+            ra.setStatus(status);
+            ra.setNotes(notes);
+            ra.setAssignedBy(assignedBy);
+            resourceAllocationRepository.save(ra);
+        }
     }
 
     private ConsultationAppointment saveAppointment(Long serviceId, Long clientId, Long expertId,
                                                       LocalDate date, LocalTime time,
                                                       AppointmentStatus status, String message, Double price) {
-        ConsultationAppointment ca = new ConsultationAppointment();
-        ca.setServiceId(serviceId);
-        ca.setClientId(clientId);
-        ca.setExpertId(expertId);
-        ca.setAppointmentDate(date);
-        ca.setTimeSlot(time);
-        ca.setStatus(status);
-        ca.setMessageContent(message);
-        ca.setTotalPrice(price);
-        return consultationAppointmentRepository.save(ca);
+        return consultationAppointmentRepository.findAll().stream()
+                .filter(a -> clientId.equals(a.getClientId()) && serviceId.equals(a.getServiceId()) && date.equals(a.getAppointmentDate()))
+                .findFirst()
+                .orElseGet(() -> {
+                    ConsultationAppointment ca = new ConsultationAppointment();
+                    ca.setServiceId(serviceId);
+                    ca.setClientId(clientId);
+                    ca.setExpertId(expertId);
+                    ca.setAppointmentDate(date);
+                    ca.setTimeSlot(time);
+                    ca.setStatus(status);
+                    ca.setMessageContent(message);
+                    ca.setTotalPrice(price);
+                    return consultationAppointmentRepository.save(ca);
+                });
     }
 
     private void saveAppointmentAddon(Long appointmentId, Long addonId) {
@@ -467,14 +497,32 @@ public class DataSeeder implements CommandLineRunner {
         appointmentAddonRepository.save(aa);
     }
 
+    private long generateUniqueOrderCode() {
+        long code = System.currentTimeMillis() + (long) (Math.random() * 100000);
+        try {
+            while (paymentTransactionRepository.existsByOrderCode(code) || paymentTransactionRepository.findByOrderCode(code).isPresent()) {
+                code += 1L + (long) (Math.random() * 100);
+            }
+        } catch (Exception ignored) {}
+        return code;
+    }
+
     private void savePaymentTransaction(Long orderCode, Long appointmentId, Long milestoneId, Double amount, String status) {
-        PaymentTransaction pt = new PaymentTransaction();
-        pt.setOrderCode(orderCode);
-        pt.setAppointmentId(appointmentId);
-        pt.setMilestoneId(milestoneId);
-        pt.setAmount(amount);
-        pt.setStatus(status);
-        paymentTransactionRepository.save(pt);
+        try {
+            long effectiveOrderCode = (orderCode != null && orderCode > 0) ? orderCode : generateUniqueOrderCode();
+            if (paymentTransactionRepository.existsByOrderCode(effectiveOrderCode) || paymentTransactionRepository.findByOrderCode(effectiveOrderCode).isPresent()) {
+                return; // Order code already exists in DB (e.g. Render production PostgreSQL), skip duplicate
+            }
+            PaymentTransaction pt = new PaymentTransaction();
+            pt.setOrderCode(effectiveOrderCode);
+            pt.setAppointmentId(appointmentId);
+            pt.setMilestoneId(milestoneId);
+            pt.setAmount(amount);
+            pt.setStatus(status);
+            paymentTransactionRepository.saveAndFlush(pt);
+        } catch (Exception e) {
+            System.err.println(">>> [DataSeeder] Could not save PaymentTransaction: " + e.getMessage());
+        }
     }
 
     private void saveFeedback(String name, String email, String category, String message) {
