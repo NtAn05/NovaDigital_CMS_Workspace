@@ -75,15 +75,16 @@ public class AuthController {
 
     @PostMapping("/register-send-otp")
     public ResponseEntity<?> registerSendOtp(@RequestBody Map<String, String> body) {
-        String email = body.get("email");
-        if (email == null || email.isBlank()) {
+        String rawEmail = body.get("email");
+        if (rawEmail == null || rawEmail.isBlank()) {
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
             response.put("message", "Email cannot be empty.");
             return ResponseEntity.badRequest().body(response);
         }
+        String email = rawEmail.trim().toLowerCase(java.util.Locale.ROOT);
         
-        java.util.Optional<User> optionalUser = userRepository.findByEmail(email.trim());
+        java.util.Optional<User> optionalUser = userRepository.findByEmail(email);
         if (optionalUser.isPresent()) {
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
@@ -93,15 +94,15 @@ public class AuthController {
         
         String otp = otpService.generateOtpCode();
         try {
-            emailService.sendRegistrationOtpEmail(email.trim(), otp, 60);
-            otpService.saveOtp(email.trim(), otp, 60); // Start 60s expiration ONLY after email is successfully sent
+            emailService.sendRegistrationOtpEmail(email, otp, 60);
+            otpService.saveOtp(email, otp, 60); // Start 60s expiration ONLY after email is successfully sent
         } catch (Exception e) {
             System.err.println("Failed to send OTP email: " + e.getMessage());
             System.out.println("========================================");
             System.out.println("FALLBACK REGISTER OTP FOR " + email + ": " + otp);
             System.out.println("========================================");
             // Fallback: save OTP anyway so they can use it from console in dev
-            otpService.saveOtp(email.trim(), otp, 60);
+            otpService.saveOtp(email, otp, 60);
         }
         
         Map<String, Object> response = new HashMap<>();
@@ -113,6 +114,10 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest request) {
         try {
+            if (request.getEmail() != null) {
+                request.setEmail(request.getEmail().trim().toLowerCase(java.util.Locale.ROOT));
+            }
+
             if (request.getOtp() == null || request.getOtp().isBlank()) {
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("success", false);
@@ -120,7 +125,7 @@ public class AuthController {
                 return ResponseEntity.badRequest().body(errorResponse);
             }
 
-            if (!otpService.verifyOtp(request.getEmail().trim(), request.getOtp().trim())) {
+            if (!otpService.verifyOtp(request.getEmail(), request.getOtp().trim())) {
                 Map<String, Object> errorResponse = new HashMap<>();
                 errorResponse.put("success", false);
                 errorResponse.put("message", "OTP code is incorrect or expired.");
@@ -128,7 +133,8 @@ public class AuthController {
             }
 
             User registeredUser = userService.registerUser(request);
-            otpService.clearOtp(request.getEmail().trim());
+            otpService.clearOtp(request.getEmail());
+
 
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
@@ -244,13 +250,16 @@ public class AuthController {
             // Verify Access Token
             Map<String, Object> payload = googleTokenVerifierService.verifyToken(credential);
 
-            String email = (String) payload.get("email");
+            String rawEmail = (String) payload.get("email");
+            String email = rawEmail != null ? rawEmail.trim().toLowerCase(java.util.Locale.ROOT) : null;
             String fullName = (String) payload.get("name");
             String avatarUrl = (String) payload.get("picture");
             String googleSubjectId = (String) payload.get("sub");
 
             // Find user by email (without modifying UserService)
-            java.util.Optional<User> optionalUser = userRepository.findByEmail(email);
+            java.util.Optional<User> optionalUser = (email != null && !email.isBlank())
+                    ? userRepository.findByEmail(email)
+                    : java.util.Optional.empty();
             User googleUser;
             if (optionalUser.isPresent()) {
                 googleUser = optionalUser.get();
@@ -267,7 +276,15 @@ public class AuthController {
                 
                 String prefix = safeEmail.contains("@") ? safeEmail.split("@")[0] : safeEmail;
                 String suffix = (googleSubjectId != null && googleSubjectId.length() >= 5) ? googleSubjectId.substring(0, 5) : "gg";
-                googleUser.setUsername(prefix + "_" + suffix);
+                String baseUsername = prefix.replaceAll("[^a-zA-Z0-9]", "") + "_" + suffix;
+                if (baseUsername.startsWith("_")) baseUsername = "user" + baseUsername;
+                
+                String username = baseUsername;
+                int counter = 1;
+                while (userRepository.existsByUsername(username)) {
+                    username = baseUsername + "_" + counter++;
+                }
+                googleUser.setUsername(username);
                 
                 googleUser.setFullName(fullName != null ? fullName : "Google User");
                 googleUser.setAvatarUrl(avatarUrl);
@@ -278,6 +295,7 @@ public class AuthController {
                 googleUser.setPassword(""); // Use empty string instead of null to prevent DB errors
                 googleUser = userRepository.save(googleUser);
             }
+
 
             // Generate JWT Token
             org.springframework.security.core.userdetails.UserDetails userDetails =

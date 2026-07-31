@@ -36,6 +36,22 @@ public class ProjectController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private com.example.demo.repository.ProjectMilestoneRepository milestoneRepository;
+
+    @Autowired
+    private com.example.demo.repository.ProjectAssignmentRepository assignmentRepository;
+
+    @Autowired
+    private com.example.demo.repository.ResourceAllocationRepository resourceAllocationRepository;
+
+    @Autowired
+    private com.example.demo.repository.QuotationRepository quotationRepository;
+
+    @Autowired
+    private com.example.demo.repository.PaymentTransactionRepository paymentTransactionRepository;
+
+
     // ── GET ALL ──────────────────────────────────────────
     @GetMapping
     @Transactional(readOnly = true)
@@ -241,13 +257,30 @@ public class ProjectController {
             error.put("message", "Project with id = not found " + id);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
         }
+
+        // Clean up child tables to prevent foreign key constraint violations
+        milestoneRepository.deleteAllByProjectId(id);
+        assignmentRepository.deleteByProjectId(id);
+        resourceAllocationRepository.deleteByProjectId(id);
         clientRepository.deleteByProjectId(id);
+
+        quotationRepository.findByConvertedProjectId(id).ifPresent(q -> {
+            q.setConvertedProject(null);
+            quotationRepository.save(q);
+        });
+
+        paymentTransactionRepository.findByProjectId(id).forEach(pt -> {
+            pt.setProjectId(null);
+            paymentTransactionRepository.save(pt);
+        });
+
         projectRepository.deleteById(id);
         Map<String, Object> result = new HashMap<>();
         result.put("success", true);
         result.put("message", "Project deleted successfully.");
         return ResponseEntity.ok(result);
     }
+
 
     private Long parseLong(Object val) {
         if (val == null) return null;

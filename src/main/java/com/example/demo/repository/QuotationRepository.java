@@ -10,5 +10,7 @@ import java.util.Optional;
 public interface QuotationRepository extends JpaRepository<Quotation, Long> {
     Optional<Quotation> findByApprovalToken(String approvalToken);
     Optional<Quotation> findByBookingId(Long bookingId);
+    Optional<Quotation> findByConvertedProjectId(Long convertedProjectId);
     java.util.List<Quotation> findByClientId(Long clientId);
 }
+

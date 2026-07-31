@@ -29,6 +29,10 @@ public interface ProjectAssignmentRepository extends JpaRepository<ProjectAssign
     /** Check if a user is PM on a specific project. */
     boolean existsByProjectIdAndUserIdAndProjectRole(Long projectId, Long userId, ProjectRole role);
 
+    /** Remove all assignments for a project. */
+    void deleteByProjectId(Long projectId);
+
     /** Remove a user's assignment from a project. */
     void deleteByProjectIdAndUserId(Long projectId, Long userId);
 }
+

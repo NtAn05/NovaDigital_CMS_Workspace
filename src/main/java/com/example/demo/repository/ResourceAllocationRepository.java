@@ -45,6 +45,10 @@ public interface ResourceAllocationRepository extends JpaRepository<ResourceAllo
     /** Clean up allocations when a milestone is deleted. */
     void deleteByMilestoneId(Long milestoneId);
 
+    /** Clean up allocations when a project is deleted. */
+    void deleteByProjectId(Long projectId);
+
     /** Clean up allocations when a member is removed from a project. */
     void deleteByProjectIdAndUserId(Long projectId, Long userId);
 }
+

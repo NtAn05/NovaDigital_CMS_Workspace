@@ -22,14 +22,22 @@ public final class WorkloadCapacityCalculator {
             LocalDate newEnd,
             int newPercentage) {
 
+        if (newStart == null || newEnd == null) {
+            return Optional.empty();
+        }
+
         Map<LocalDate, Integer> events = new TreeMap<>();
         addWindow(events, newStart, newEnd, newPercentage);
 
-        for (ResourceAllocation allocation : existing) {
-            addWindow(events,
-                    allocation.getStartDate(),
-                    allocation.getEndDate(),
-                    allocation.getAllocationPercentage());
+        if (existing != null) {
+            for (ResourceAllocation allocation : existing) {
+                if (allocation != null && allocation.getStartDate() != null && allocation.getEndDate() != null) {
+                    addWindow(events,
+                            allocation.getStartDate(),
+                            allocation.getEndDate(),
+                            allocation.getAllocationPercentage());
+                }
+            }
         }
 
         int running = 0;
@@ -47,7 +55,9 @@ public final class WorkloadCapacityCalculator {
                                   LocalDate start,
                                   LocalDate end,
                                   int percentage) {
+        if (events == null || start == null || end == null) return;
         events.merge(start, percentage, Integer::sum);
         events.merge(end.plusDays(1), -percentage, Integer::sum);
     }
 }
+

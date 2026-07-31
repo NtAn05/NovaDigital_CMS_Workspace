@@ -18,10 +18,11 @@ public class UserService {
 
     @Auditable(action = "CREATE", table = "users")
     public User registerUser(RegisterRequest request) {
+        String normalizedEmail = request.getEmail() != null ? request.getEmail().trim().toLowerCase(java.util.Locale.ROOT) : "";
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new RuntimeException("Username already exists");
         }
-        if (userRepository.existsByEmail(request.getEmail())) {
+        if (userRepository.existsByEmail(normalizedEmail)) {
             throw new RuntimeException("Email already exists");
         }
 
@@ -29,8 +30,9 @@ public class UserService {
         user.setUsername(request.getUsername());
         user.setPassword(PasswordHasher.hash(request.getPassword()));
         user.setFullName(request.getFullName());
-        user.setEmail(request.getEmail());
+        user.setEmail(normalizedEmail);
         user.setPhone(request.getPhone());
+
         
         // Auto-assign roles based on username prefix
         if (request.getUsername().toLowerCase().startsWith("admin")) {

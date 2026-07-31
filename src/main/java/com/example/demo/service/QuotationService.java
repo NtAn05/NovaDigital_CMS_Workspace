@@ -18,12 +18,18 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Value;
+
 import com.example.demo.annotation.Auditable;
 
 @Service
 public class QuotationService {
 
+    @Value("${app.base-url:http://localhost:8080}")
+    private String baseUrl;
+
     @Autowired private QuotationRepository quotationRepository;
+
     @Autowired private QuotationItemRepository quotationItemRepository;
     @Autowired private ConsultationAppointmentRepository appointmentRepository;
     @Autowired private UserRepository userRepository;
@@ -89,7 +95,6 @@ public class QuotationService {
         String toAddress = client.getEmail();
         String subject = "Project Quotation: " + quotation.getTitle();
         
-        String baseUrl = "http://localhost:8080"; 
         String approveUrl = baseUrl + "/api/quotations/public/approve?token=" + token;
         
         String noteSection = "";

@@ -63,6 +63,10 @@ public class BookingController {
     @Autowired
     private com.example.demo.repository.QuotationItemRepository quotationItemRepository;
 
+    @Autowired
+    private com.example.demo.repository.PaymentTransactionRepository paymentTransactionRepository;
+
+
     /**
      * API Sinh mã Captcha ngẫu nhiên chống Spam cho Form Đặt lịch tư vấn
      */
@@ -139,6 +143,16 @@ public class BookingController {
             return ResponseEntity.badRequest().body(error);
         }
         LocalTime endTime = timeSlot.plusMinutes(bookingService.getSlotDurationMinutes());
+
+        if (appointmentDate.isBefore(LocalDate.now())) {
+            error.put("message", "Appointment date cannot be in the past.");
+            return ResponseEntity.badRequest().body(error);
+        }
+
+        if (timeSlot.isBefore(LocalTime.of(9, 0)) || timeSlot.isAfter(LocalTime.of(17, 0))) {
+            error.put("message", "Consultation time slot must be between 09:00 and 17:00.");
+            return ResponseEntity.badRequest().body(error);
+        }
 
         // UC-07: prevent overlap - server-side recheck
         try {
@@ -349,6 +363,12 @@ public ResponseEntity<?> deleteBooking(@PathVariable Long id) {
 
                 List<AppointmentAddon> addons = appointmentAddonRepository.findByAppointmentId(id);
                 appointmentAddonRepository.deleteAll(addons);
+
+                // Unlink payment transactions for this booking to prevent FK errors or orphaned references
+                paymentTransactionRepository.findByAppointmentId(id).forEach(pt -> {
+                    pt.setAppointmentId(null);
+                    paymentTransactionRepository.save(pt);
+                });
 
                 // Snapshot what we need for the notification before the row is gone.
                 User client = userRepository.findById(a.getClientId()).orElse(null);

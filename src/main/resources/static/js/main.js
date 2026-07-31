@@ -7188,13 +7188,15 @@ function initFooterMove() {
 const CHATBOT_HISTORY_KEY = 'nova_chatbot_history';
 
 const CHATBOT_SYSTEM_PROMPT =
-    "You are Nova AI, a support assistant for NovaDigital Agency's website ONLY. " +
-    "Your knowledge is strictly limited to: NovaDigital's services "+
-    "STRICT RULE: If a question is not about NovaDigital or this website — including general knowledge, coding help, " +
-    "other companies, personal advice, math, current events, or any topic outside the list above — you MUST NOT answer it. " +
-    "Instead, reply briefly that you can only help with questions about NovaDigital's services and this website, " +
-    "and ask if they'd like help with one of those instead. Do not attempt to be helpful on off-topic requests, " +
-    "even if you know the answer. Be warm, professional, and concise.";
+    "You are Nova AI, the official intelligent assistant for NovaDigital Agency. " +
+    "NovaDigital is a premier software development & digital agency specializing in Web Applications, Mobile Apps, UI/UX Design, Cloud DevOps, AI & Machine Learning Solutions, and IT Consultation. " +
+    "You assist visitors with: " +
+    "1. Services & Pricing: Web App Development (from $1,500), Mobile App Development (from $2,000), UI/UX Design (from $800), AI & Machine Learning Integration (from $2,500), Cloud DevOps Infrastructure (from $1,200). " +
+    "2. Booking Consultation: Visitors can schedule a 1-on-1 consultation appointment with an expert on our Booking page (/booking.html). " +
+    "3. Careers & Open Vacancies: NovaDigital is actively hiring Full-Stack Engineers (Spring Boot & React/Vue), Senior UI/UX Designers, AI Engineers, and Project Managers. Interested candidates can explore openings on our Careers page. " +
+    "4. Custom Project Proposals: Clients can request a custom quotation by filling out our Booking form or Contact form. " +
+    "Rule: Always be warm, professional, informative, and concise. Answer in the exact language used by the visitor (English or Vietnamese).";
+
 
 // Cached config from backend
 let _chatbotConfig = null;
@@ -7292,16 +7294,67 @@ function initChatbot() {
         history.forEach(m => renderBubble(m.sender, m.text));
     }
 
-    // Enhance header icon with 3D robot avatar if available
+    // Enhance header icon with 3D robot avatar
     const headerTitle = windowEl.querySelector('.chatbot-header-title');
-    if (headerTitle && !headerTitle.querySelector('.chatbot-header-avatar')) {
-        const avatarImg = document.createElement('img');
-        avatarImg.src = '/images/ai_robot_waving.jpg';
-        avatarImg.alt = 'Nova AI';
-        avatarImg.className = 'chatbot-header-avatar';
-        avatarImg.style.cssText = 'width: 26px; height: 26px; border-radius: 50%; object-fit: cover; border: 1.5px solid rgba(255, 255, 255, 0.7); box-shadow: 0 0 8px rgba(56, 189, 248, 0.5); margin-right: 4px;';
-        headerTitle.prepend(avatarImg);
+    if (headerTitle) {
+        const defaultSvg = headerTitle.querySelector('svg');
+        if (defaultSvg) defaultSvg.remove(); // Remove duplicate default icon
+
+        if (!headerTitle.querySelector('.chatbot-header-avatar')) {
+            const avatarImg = document.createElement('img');
+            avatarImg.src = '/images/ai_robot_waving.jpg';
+            avatarImg.alt = 'Nova AI';
+            avatarImg.className = 'chatbot-header-avatar';
+            avatarImg.style.cssText = 'width: 26px; height: 26px; border-radius: 50%; object-fit: cover; border: 1.5px solid rgba(255, 255, 255, 0.8); box-shadow: 0 0 8px rgba(56, 189, 248, 0.5); margin-right: 6px; vertical-align: middle;';
+            headerTitle.prepend(avatarImg);
+        }
     }
+
+    // ── Render Quick Action Suggestion Chips (English) ──
+    let quickActionsContainer = windowEl.querySelector('.chatbot-quick-actions');
+    if (!quickActionsContainer) {
+        quickActionsContainer = document.createElement('div');
+        quickActionsContainer.className = 'chatbot-quick-actions';
+
+        const quickPrompts = [
+            {
+                label: 'Services & Pricing',
+                text: 'What digital services and pricing plans does NovaDigital offer?'
+            },
+            {
+                label: 'Book Consultation',
+                text: 'How can I schedule a consultation appointment with an expert?'
+            },
+            {
+                label: 'Open Vacancies',
+                text: 'What career opportunities and job openings are currently available?'
+            },
+            {
+                label: 'Start a Project',
+                text: 'I want to start a custom digital project. How can I contact your team?'
+            }
+        ];
+
+        quickPrompts.forEach(p => {
+            const chip = document.createElement('button');
+            chip.type = 'button';
+            chip.className = 'chatbot-chip';
+            chip.textContent = p.label;
+            chip.addEventListener('click', () => {
+                inputEl.value = p.text;
+                sendMessage();
+            });
+            quickActionsContainer.appendChild(chip);
+        });
+
+
+        const inputRow = windowEl.querySelector('.chatbot-input-row');
+        if (inputRow) {
+            windowEl.insertBefore(quickActionsContainer, inputRow);
+        }
+    }
+
+
 
     let isGreetingShowing = false;
     let greetingTimer = null;

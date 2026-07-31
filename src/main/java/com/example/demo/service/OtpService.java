@@ -26,9 +26,13 @@ public class OtpService {
         return String.format("%06d", random.nextInt(1000000));
     }
 
+    private String normalizeEmail(String email) {
+        return email != null ? email.trim().toLowerCase(java.util.Locale.ROOT) : "";
+    }
+
     public void saveOtp(String email, String otp, int expirySeconds) {
         LocalDateTime expiryTime = LocalDateTime.now().plusSeconds(expirySeconds);
-        otpCache.put(email, new OtpDetails(otp, expiryTime));
+        otpCache.put(normalizeEmail(email), new OtpDetails(otp, expiryTime));
     }
 
     public String generateOtp(String email, int expirySeconds) {
@@ -42,18 +46,20 @@ public class OtpService {
     }
 
     public boolean verifyOtp(String email, String otp) {
-        OtpDetails details = otpCache.get(email);
+        String key = normalizeEmail(email);
+        OtpDetails details = otpCache.get(key);
         if (details == null) {
             return false;
         }
         if (details.expiryTime.isBefore(LocalDateTime.now())) {
-            otpCache.remove(email);
+            otpCache.remove(key);
             return false;
         }
         return details.otp.equals(otp);
     }
 
     public void clearOtp(String email) {
-        otpCache.remove(email);
+        otpCache.remove(normalizeEmail(email));
     }
 }
+
