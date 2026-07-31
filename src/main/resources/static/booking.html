@@ -1050,6 +1050,7 @@
       submitBtn.textContent = 'Booking...';
 
       let finalMessage = document.getElementById('messageContent').value.trim();
+      let attachmentUrl = null;
 
       try {
         // 1. If there's an attached file, upload it first to /api/upload
@@ -1069,8 +1070,7 @@
 
           const uploadResult = await uploadRes.json();
           if (uploadResult.url) {
-            const fileLink = window.location.origin + uploadResult.url;
-            finalMessage += (finalMessage ? '\n\n' : '') + `\uD83D\uDCCE Attachment: ${fileLink}`;
+            attachmentUrl = window.location.origin + uploadResult.url;
           }
         }
 
@@ -1083,6 +1083,7 @@
           appointmentDate: chosenDate,
           timeSlot: confirmedStart,
           messageContent: finalMessage,
+          attachmentUrl: attachmentUrl,
           captchaToken: captchaToken,
           captchaAnswer: document.getElementById('captchaAnswerInput').value.trim()
         };

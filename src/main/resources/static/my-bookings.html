@@ -17,36 +17,9 @@
       display: flex;
       flex-direction: column;
       gap: 2rem;
-    }
-    .bookings-header {
-      text-align: center;
-      margin-bottom: 0.5rem;
-    }
-    .bookings-header .hero-pill {
-      display: inline-block;
-      background: rgba(37, 99, 235, 0.08);
-      color: var(--primary);
-      border: 1px solid rgba(37, 99, 235, 0.18);
-      padding: 0.35rem 1.1rem;
-      border-radius: 50px;
-      font-size: 0.82rem;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      margin-bottom: 0.9rem;
-    }
-    .bookings-header h1 {
-      font-family: var(--font-heading);
-      font-size: 2.6rem;
-      font-weight: 800;
-      color: var(--text-dark);
-      line-height: 1.2;
-      margin-bottom: 0.5rem;
-    }
-    .bookings-header p {
-      color: var(--text-muted);
-      font-size: 1rem;
-      line-height: 1.6;
+    .bookings-container {
+      max-width: 1200px;
+      margin: 0 auto;
     }
     .bookings-card {
       background: rgba(255, 255, 255, 0.72);
@@ -192,10 +165,11 @@
   <!-- Main Content -->
   <main class="bookings-page">
     <div class="bookings-container">
-      <div class="bookings-header">
-        <span class="hero-pill">Consultations</span>
-        <h1>My Bookings</h1>
-        <p>Manage, track status, and view details of your scheduled consultation appointments.</p>
+      <div class="panel-header">
+        <div>
+          <h1>My Bookings</h1>
+          <p class="panel-subtitle">Manage, track status, and view details of your scheduled consultation appointments.</p>
+        </div>
       </div>
 
       <div class="bookings-card">
@@ -347,9 +321,15 @@
               </div>
             ` : `<span style="color: var(--text-muted); font-style: italic;">Pending Assignment</span>`;
 
+            let displayAttachmentUrl = b.attachmentUrl || null;
+            if (!displayAttachmentUrl && b.messageContent) {
+              const match = b.messageContent.match(/(?:📎\s*)?Attachment:\s*(https?:\/\/[^\s]+|\/uploads\/[^\s]+)/i);
+              if (match) displayAttachmentUrl = match[1];
+            }
+
             // Format attachment
-            const attachmentHtml = b.attachmentUrl ? `
-              <a href="${escapeHtml(b.attachmentUrl)}" target="_blank" style="color: var(--primary); font-weight: 600; text-decoration: underline; display: flex; align-items: center; gap: 4px;">
+            const attachmentHtml = displayAttachmentUrl ? `
+              <a href="${escapeHtml(displayAttachmentUrl)}" target="_blank" style="color: var(--primary); font-weight: 600; text-decoration: underline; display: flex; align-items: center; gap: 4px;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
                 View File
               </a>
