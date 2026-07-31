@@ -3458,10 +3458,25 @@ html.dark-theme .auth-modal span,
 html.dark-theme .auth-modal .auth-modal-divider,
 html.dark-theme .crud-modal label,
 html.dark-theme .crud-modal p,
-html.dark-theme .crud-modal span,
+html.dark-theme .crud-modal span {
+  color: var(--text-dark) !important;
+}
+
+html.dark-theme .original-message {
+  background: var(--bg-light, #0f172a) !important;
+  border-color: var(--border-color, #334155) !important;
+}
+
 html.dark-theme .original-message h4,
 html.dark-theme .original-message p {
-  color: var(--text-dark) !important;
+  color: var(--text-dark, #f1f5f9) !important;
+}
+
+html.dark-theme .crud-modal textarea,
+html.dark-theme .crud-modal input {
+  background: var(--bg-card, #0f172a) !important;
+  color: var(--text-dark, #f1f5f9) !important;
+  border-color: var(--border-color, #334155) !important;
 }
 
 html.dark-theme .auth-modal .auth-modal-divider a {
