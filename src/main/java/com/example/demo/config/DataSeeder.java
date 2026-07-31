@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Optional;
 
 /**
  * DataSeeder: Automatically seeds the database with massive, rich sample data across all system modules on startup.
@@ -433,9 +434,7 @@ public class DataSeeder implements CommandLineRunner {
 
     private ProjectMilestone saveMilestone(Project project, String name, String description,
                                            MilestoneStatus status, int progress, LocalDate dueDate) {
-        return projectMilestoneRepository.findByProjectId(project.getId()).stream()
-                .filter(m -> name.equalsIgnoreCase(m.getName()))
-                .findFirst()
+        return projectMilestoneRepository.findByProjectIdAndName(project.getId(), name)
                 .orElseGet(() -> {
                     ProjectMilestone m = new ProjectMilestone();
                     m.setProject(project);
@@ -453,8 +452,8 @@ public class DataSeeder implements CommandLineRunner {
     private void saveResourceAllocation(Project project, ProjectMilestone milestone, User user,
                                          int percentage, LocalDate startDate, LocalDate endDate,
                                          AllocationStatus status, String notes, String assignedBy) {
-        boolean exists = resourceAllocationRepository.findByUserId(user.getId()).stream()
-                .anyMatch(ra -> project.getId().equals(ra.getProject().getId()) && notes.equalsIgnoreCase(ra.getNotes()));
+        boolean exists = resourceAllocationRepository.findAll().stream()
+                .anyMatch(ra -> ra.getUser() != null && user.getId().equals(ra.getUser().getId()) && ra.getProject() != null && project.getId().equals(ra.getProject().getId()) && notes.equalsIgnoreCase(ra.getNotes()));
         if (!exists) {
             ResourceAllocation ra = new ResourceAllocation();
             ra.setProject(project);
