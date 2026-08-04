@@ -359,12 +359,21 @@
       display: flex;
       align-items: center;
       gap: 1rem;
-      margin-bottom: 1.25rem;
-      padding: 1rem 1.5rem;
+      margin-bottom: 1rem;
+      padding: 1.1rem 1.5rem;
       background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
       border-radius: 14px;
       position: relative;
       overflow: hidden;
+      cursor: pointer;
+      user-select: none;
+      transition: all 0.22s ease;
+      box-shadow: 0 4px 14px rgba(15,23,42,0.15);
+    }
+    .cr-ws-heading:hover {
+      background: linear-gradient(135deg, #1e293b 0%, #2e1065 100%);
+      box-shadow: 0 8px 24px rgba(15,23,42,0.3);
+      transform: translateY(-2px);
     }
 
     .cr-ws-heading::before {
@@ -560,9 +569,67 @@
       flex-shrink: 0;
     }
 
+    /* Action buttons in job card */
+    .cr-job-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+
+
+    .btn-expand-job {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.45rem 0.8rem;
+      border-radius: 8px;
+      border: 1px solid #e2e8f0;
+      background: #eff6ff;
+      color: #2563eb;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-expand-job:hover {
+      background: #2563eb;
+      color: #ffffff;
+      border-color: #2563eb;
+    }
+
+    /* Collapsible Job Details */
+    .cr-job-item-wrapper {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      overflow: hidden;
+      transition: border-color 0.22s, box-shadow 0.22s;
+    }
+    .cr-job-item-wrapper:hover {
+      border-color: rgba(124, 58, 237, 0.35);
+      box-shadow: 0 6px 28px rgba(124, 58, 237, 0.1);
+    }
+    .cr-job-item-wrapper .cr-job-row {
+      border: none;
+      border-radius: 0;
+    }
+    .cr-job-expanded-panel {
+      padding: 1.25rem 1.5rem 1.5rem;
+      background: #f8fafc;
+      border-top: 1px solid #e2e8f0;
+      display: none;
+      animation: fadeIn 0.25s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     @media (max-width: 900px) {
       .cr-job-row {
-        grid-template-columns: 170px 1fr auto;
+        grid-template-columns: 1fr;
+        gap: 0.8rem;
       }
     }
 
@@ -2207,24 +2274,64 @@
       CONTRACT: { cls: 'jt-contract', label: 'Contract' }
     };
 
+    /* ─── WORKSTREAM ACCORDION & INLINE EXPAND LOGIC ──────────── */
+    var expandedJobIds = new Set();
+    var expandedWorkstreams = new Set(['Engineering']); // Engineering expanded initially
+
+
+
+    function toggleWorkstreamGroup(wsName) {
+      if (expandedWorkstreams.has(wsName)) {
+        expandedWorkstreams.delete(wsName);
+      } else {
+        expandedWorkstreams.add(wsName);
+      }
+      var wsKey = wsName.replace(/[^a-zA-Z0-9]/g, '-');
+      var list = document.getElementById('ws-list-' + wsKey);
+      var chevron = document.getElementById('ws-chevron-' + wsKey);
+      var isExp = expandedWorkstreams.has(wsName);
+      if (list) {
+        list.style.display = isExp ? 'flex' : 'none';
+      }
+      if (chevron) {
+        chevron.style.transform = isExp ? 'rotate(180deg)' : 'rotate(0deg)';
+      }
+    }
+
     /* ─── RENDER BOARD ───────────────────────────────────────── */
     function renderBoard() {
+      var root = document.getElementById('board-root');
+      var totalCountEl = document.getElementById('total-count');
+      if (totalCountEl) totalCountEl.textContent = VACANCY_DATA.length + ' positions';
+
+      if (VACANCY_DATA.length === 0) {
+        root.innerHTML = '<div style="text-align:center; padding: 3rem; color: #64748b;">No open positions found.</div>';
+        return;
+      }
+
       var grouped = {};
       VACANCY_DATA.forEach(function (v) { if (!grouped[v.ws]) grouped[v.ws] = []; grouped[v.ws].push(v); });
-      var root = document.getElementById('board-root'), html = '';
+      var html = '';
       Object.keys(grouped).forEach(function (ws) {
         var items = grouped[ws], m = WS_META[ws] || { icon: '💼', desc: '' };
+        var wsKey = ws.replace(/[^a-zA-Z0-9]/g, '-');
+        var isExp = expandedWorkstreams.has(ws);
+
         html += '<div class="cr-ws-group">' +
-          '<div class="cr-ws-heading">' +
+          '<div class="cr-ws-heading" onclick="toggleWorkstreamGroup(\'' + ws + '\')" title="Bấm để đóng/mở danh sách vị trí ' + ws + '">' +
           '<div class="cr-ws-icon">' + m.icon + '</div>' +
           '<div><h3 class="cr-ws-title">' + ws + '</h3><p class="cr-ws-desc">' + (m.desc || '') + '</p></div>' +
+          '<div style="margin-left: auto; display: flex; align-items: center; gap: 0.75rem;">' +
           '<span class="cr-ws-badge">' + items.length + ' open</span>' +
+          '<svg id="ws-chevron-' + wsKey + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px; color: #a78bfa; transition: transform 0.25s ease; transform: ' + (isExp ? 'rotate(180deg)' : 'rotate(0deg)') + ';">' +
+          '<polyline points="6 9 12 15 18 9"/>' +
+          '</svg>' +
           '</div>' +
-          '<div class="cr-job-list">' + items.map(buildCard).join('') + '</div>' +
+          '</div>' +
+          '<div class="cr-job-list" id="ws-list-' + wsKey + '" style="display: ' + (isExp ? 'flex' : 'none') + ';">' + items.map(buildCard).join('') + '</div>' +
           '</div>';
       });
       root.innerHTML = html;
-      document.getElementById('total-count').textContent = VACANCY_DATA.length + ' positions';
     }
 
     function buildCard(v) {

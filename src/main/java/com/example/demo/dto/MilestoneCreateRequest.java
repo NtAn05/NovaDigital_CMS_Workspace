@@ -30,4 +30,7 @@ public class MilestoneCreateRequest {
 
     /** Optional deadline for this milestone phase */
     private LocalDate dueDate;
+
+    @Min(value = 0, message = "Milestone price cannot be negative.")
+    private Double price;
 }

@@ -542,7 +542,11 @@
                 </div>
               </div>
               <div class="form-field">
-                <label>Initial Progress (0 – 100%)</label>
+                <label for="pm-m-price">Phase Price ($USD) *</label>
+                <input type="number" id="pm-m-price" min="0" step="50" value="1500" placeholder="1500" required>
+              </div>
+              <div class="form-field">
+                <label for="pm-m-progress">Initial Progress (0 – 100%)</label>
                 <input type="number" id="pm-m-progress" min="0" max="100" value="0">
               </div>
               <button type="submit" class="btn-sync" style="width:100%;margin-top:4px;">Create Milestone</button>
@@ -696,6 +700,7 @@
     // ─────────────────────────────────────────────────────────────────────────
     let currentProjectId = null;
     let currentProjectIsPm = false;
+    let currentProjectTitle = '';
     let sseSource = null;
 
     function initSSE() {
@@ -981,6 +986,7 @@
     async function openPanel(projectId, isPm, title) {
       currentProjectId    = projectId;
       currentProjectIsPm  = isPm;
+      currentProjectTitle = title;
       document.getElementById('panelTitle').textContent = `${title} — Milestones`;
 
       const bodyEl = document.getElementById('panelBody');
@@ -1015,24 +1021,62 @@
       const res = await fetch(`/api/projects/${projectId}/milestones`);
       const milestones = await res.json();
       const listEl = document.getElementById('panelMilestonesList');
+
+      const totalBudget = milestones.reduce((sum, m) => sum + (m.price || 0), 0);
+      const paidBudget = milestones.filter(m => m.paid).reduce((sum, m) => sum + (m.price || 0), 0);
+
+      const budgetBadge = `<div style="margin-top:6px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:12px;font-weight:700;">
+        <span style="background:rgba(37,99,235,0.08);color:#1d4ed8;padding:4px 12px;border-radius:14px;border:1px solid rgba(37,99,235,0.25);">Total Budget: $${totalBudget.toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
+        <span style="background:rgba(16,185,129,0.08);color:#047857;padding:4px 12px;border-radius:14px;border:1px solid rgba(16,185,129,0.25);">Paid: $${paidBudget.toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
+      </div>`;
+
+      const titleEl = document.getElementById('panelTitle');
+      if (titleEl) {
+        titleEl.innerHTML = `${escHtml(currentProjectTitle || 'Project')} — Milestones ${budgetBadge}`;
+      }
+
       if (!milestones.length) {
-        listEl.innerHTML = `<div class="empty-state"><span class="emoji">🏁</span>No milestones yet for this project.</div>`;
+        listEl.innerHTML = `<div class="empty-state">No milestones yet for this project.</div>`;
         return;
       }
       listEl.innerHTML = milestones.map(m => buildMilestoneItem(m, isPm)).join('');
     }
 
+    function handleMilestoneStatusChange(milestoneId) {
+      const statusSelect = document.getElementById(`sel-${milestoneId}`);
+      const slider = document.getElementById(`slider-${milestoneId}`);
+      if (statusSelect) {
+        statusSelect.className = `status-select sel-${statusSelect.value}`;
+        if (slider) {
+          slider.disabled = (statusSelect.value === 'DELAYED');
+        }
+      }
+    }
+    window.handleMilestoneStatusChange = handleMilestoneStatusChange;
+
     function buildMilestoneItem(m, isPm) {
       const statusOpts = ['PENDING','IN_PROGRESS','COMPLETED','DELAYED'].map(s =>
         `<option value="${s}" ${m.status === s ? 'selected' : ''}>${s}</option>`
       ).join('');
+      const isDelayed = m.status === 'DELAYED';
+      const mPrice = m.price != null ? m.price : 1500;
+      const priceText = `$${mPrice.toLocaleString('en-US', {minimumFractionDigits: 2})}`;
+
+      const priceBadgeStyle = m.paid
+        ? 'background:rgba(16,185,129,0.1);color:#047857;border:1px solid rgba(16,185,129,0.25);'
+        : 'background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;';
+      const paidTag = m.paid ? ' • Paid' : '';
+      const priceBadge = `<span style="margin-left:8px;font-size:11px;font-weight:700;padding:3px 10px;border-radius:14px;letter-spacing:0.02em;display:inline-block;${priceBadgeStyle}">${priceText}${paidTag}</span>`;
 
       return `
         <div class="milestone-item" id="ms-${m.id}">
           <div class="milestone-item-head">
-            <span class="milestone-name">${escHtml(m.name)}</span>
+            <div>
+              <span class="milestone-name">${escHtml(m.name)}</span>
+              ${priceBadge}
+            </div>
             ${isPm
-              ? `<select class="status-select" id="sel-${m.id}">${statusOpts}</select>`
+              ? `<select class="status-select sel-${m.status || 'PENDING'}" id="sel-${m.id}" onchange="handleMilestoneStatusChange(${m.id})">${statusOpts}</select>`
               : `<span class="status-badge status-${(m.status||'').toLowerCase()}">${m.status}</span>`
             }
           </div>
@@ -1043,16 +1087,25 @@
             <span class="progress-label" id="lbl-${m.id}">${m.progressPercentage}%</span>
           </div>
           ${isPm ? `
-            <input type="range" class="slider" min="0" max="100" value="${m.progressPercentage}" id="slider-${m.id}"
+            <input type="range" class="slider" min="0" max="100" value="${m.progressPercentage}" id="slider-${m.id}" ${isDelayed ? 'disabled' : ''}
               oninput="document.getElementById('bar-${m.id}').style.width=this.value+'%';document.getElementById('lbl-${m.id}').textContent=this.value+'%'">
             <div class="milestone-actions">
-              <button class="btn-sync" onclick="syncMilestone(${currentProjectId}, ${m.id})">⚡ Sync Progress</button>
-              <button class="btn-log" onclick="toggleLog(${m.id})">📋 Logs</button>
+              <button class="btn-sync" onclick="syncMilestone(${currentProjectId}, ${m.id})">
+                <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;display:inline-block;vertical-align:-2px;margin-right:5px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                Sync Progress
+              </button>
+              <button class="btn-log" onclick="toggleLog(${m.id})">
+                <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:inline-block;vertical-align:-2px;margin-right:5px;"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
+                Logs
+              </button>
             </div>
             <div class="log-drawer" id="log-${m.id}"></div>
           ` : `
             <div style="margin-top:4px;">
-              <button class="btn-log" onclick="toggleLog(${m.id})">📋 View Audit Logs</button>
+              <button class="btn-log" onclick="toggleLog(${m.id})">
+                <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:inline-block;vertical-align:-2px;margin-right:5px;"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg>
+                View Audit Logs
+              </button>
               <div class="log-drawer" id="log-${m.id}"></div>
             </div>
           `}
@@ -1067,6 +1120,7 @@
         description: document.getElementById('pm-m-desc').value.trim(),
         status: document.getElementById('pm-m-status').value,
         dueDate: document.getElementById('pm-m-dueDate').value || null,
+        price: parseFloat(document.getElementById('pm-m-price').value) || 1500,
         progressPercentage: parseInt(document.getElementById('pm-m-progress').value) || 0
       };
       try {

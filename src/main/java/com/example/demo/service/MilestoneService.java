@@ -10,6 +10,7 @@ import com.example.demo.entity.ProjectAssignment;
 import com.example.demo.entity.ProjectAssignment.ProjectRole;
 import com.example.demo.entity.ProjectMilestone;
 import com.example.demo.entity.User;
+import com.example.demo.entity.enums.MilestoneStatus;
 import com.example.demo.entity.enums.MutationActionType;
 import com.example.demo.repository.MilestoneMutationLogRepository;
 import com.example.demo.repository.ProjectAssignmentRepository;
@@ -135,6 +136,7 @@ public class MilestoneService {
         milestone.setStatus(request.getStatus());
         milestone.setProgressPercentage(request.getProgressPercentage());
         milestone.setDueDate(request.getDueDate());
+        milestone.setPrice(request.getPrice() != null ? request.getPrice() : 1500.0);
 
         ProjectMilestone saved = milestoneRepository.save(milestone);
 
@@ -211,6 +213,13 @@ public class MilestoneService {
         }
 
         List<MilestoneMutationLog> logs = new ArrayList<>();
+
+        // Business Rule: If milestone is DELAYED or being changed to DELAYED, progress percentage cannot be modified.
+        boolean isCurrentlyDelayed = milestone.getStatus() == MilestoneStatus.DELAYED;
+        boolean isNewStatusDelayed = request.getStatus() == MilestoneStatus.DELAYED;
+        if ((isCurrentlyDelayed || isNewStatusDelayed) && !request.getProgressPercentage().equals(milestone.getProgressPercentage())) {
+            throw new IllegalArgumentException("Không thể chỉnh sửa tiến độ (%) khi milestone ở trạng thái DELAYED.");
+        }
 
         // ── Field-level change detection ─────────────────────────────────────
         // Only log and update fields that have actually changed in value.
