@@ -2846,7 +2846,14 @@ async function saveServiceAddonEdit(serviceId, addonId) {
         throw new Error("Failed to fetch messages");
       }
       allMessages = await response.json();
-      allMessages.sort((a, b) => b.id - a.id);
+      allMessages.sort((a, b) => {
+        const isRepliedA = (a.replied || a.status === 'DONE' || Boolean(a.reply)) ? 1 : 0;
+        const isRepliedB = (b.replied || b.status === 'DONE' || Boolean(b.reply)) ? 1 : 0;
+        if (isRepliedA !== isRepliedB) return isRepliedB - isRepliedA;
+        const timeA = new Date(a.repliedAt || a.createdAt || 0).getTime() || (a.id || 0);
+        const timeB = new Date(b.repliedAt || b.createdAt || 0).getTime() || (b.id || 0);
+        return timeB - timeA;
+      });
       
       // Update Overview stats count dynamically if the element is present
       const statsCount = document.getElementById("stat-messages-count");
