@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Optional;
 
 /**
  * DataSeeder: Automatically seeds the database with massive, rich sample data across all system modules on startup.
@@ -278,10 +279,12 @@ public class DataSeeder implements CommandLineRunner {
                 saveAppointmentAddon(appt2.getId(), 3L);
                 saveAppointmentAddon(appt4.getId(), 4L);
 
-                savePaymentTransaction(100001L, appt3.getId(), null, 1500.0, "PAID");
-                savePaymentTransaction(100002L, null, 1L, 1000.0, "PAID");
-                savePaymentTransaction(100003L, appt1.getId(), null, 1200.0, "PENDING");
-                savePaymentTransaction(100004L, appt4.getId(), null, 1800.0, "PAID");
+                if (paymentTransactionRepository.count() == 0) {
+                    savePaymentTransaction(generateUniqueOrderCode(), appt3.getId(), null, 1500.0, "PAID");
+                    savePaymentTransaction(generateUniqueOrderCode(), null, 1L, 1000.0, "PAID");
+                    savePaymentTransaction(generateUniqueOrderCode(), appt1.getId(), null, 1200.0, "PENDING");
+                    savePaymentTransaction(generateUniqueOrderCode(), appt4.getId(), null, 1800.0, "PAID");
+                }
             } catch (Exception e) {
                 System.err.println(">>> [DataSeeder] Non-critical error seeding appointments/transactions: " + e.getMessage());
             }
@@ -431,9 +434,7 @@ public class DataSeeder implements CommandLineRunner {
 
     private ProjectMilestone saveMilestone(Project project, String name, String description,
                                            MilestoneStatus status, int progress, LocalDate dueDate) {
-        return projectMilestoneRepository.findByProjectId(project.getId()).stream()
-                .filter(m -> name.equalsIgnoreCase(m.getName()))
-                .findFirst()
+        return projectMilestoneRepository.findByProjectIdAndName(project.getId(), name)
                 .orElseGet(() -> {
                     ProjectMilestone m = new ProjectMilestone();
                     m.setProject(project);
@@ -451,8 +452,8 @@ public class DataSeeder implements CommandLineRunner {
     private void saveResourceAllocation(Project project, ProjectMilestone milestone, User user,
                                          int percentage, LocalDate startDate, LocalDate endDate,
                                          AllocationStatus status, String notes, String assignedBy) {
-        boolean exists = resourceAllocationRepository.findByUserId(user.getId()).stream()
-                .anyMatch(ra -> project.getId().equals(ra.getProject().getId()) && notes.equalsIgnoreCase(ra.getNotes()));
+        boolean exists = resourceAllocationRepository.findAll().stream()
+                .anyMatch(ra -> ra.getUser() != null && user.getId().equals(ra.getUser().getId()) && ra.getProject() != null && project.getId().equals(ra.getProject().getId()) && notes.equalsIgnoreCase(ra.getNotes()));
         if (!exists) {
             ResourceAllocation ra = new ResourceAllocation();
             ra.setProject(project);
@@ -495,18 +496,21 @@ public class DataSeeder implements CommandLineRunner {
         appointmentAddonRepository.save(aa);
     }
 
-    private void savePaymentTransaction(Long orderCode, Long appointmentId, Long milestoneId, Double amount, String status) {
-        if (orderCode != null) {
-            try {
-                if (paymentTransactionRepository.existsByOrderCode(orderCode) || paymentTransactionRepository.findByOrderCode(orderCode).isPresent()) {
-                    return; // Order code already exists in DB (e.g. Render production PostgreSQL), skip duplicate
-                }
-            } catch (Exception ignored) {}
-        }
+    private long generateUniqueOrderCode() {
+        long code = System.currentTimeMillis() + (long) (Math.random() * 100000);
         try {
-            long effectiveOrderCode = (orderCode != null) ? orderCode : 100000L;
-            while (paymentTransactionRepository.existsByOrderCode(effectiveOrderCode) || paymentTransactionRepository.findByOrderCode(effectiveOrderCode).isPresent()) {
-                effectiveOrderCode += 1000L;
+            while (paymentTransactionRepository.existsByOrderCode(code) || paymentTransactionRepository.findByOrderCode(code).isPresent()) {
+                code += 1L + (long) (Math.random() * 100);
+            }
+        } catch (Exception ignored) {}
+        return code;
+    }
+
+    private void savePaymentTransaction(Long orderCode, Long appointmentId, Long milestoneId, Double amount, String status) {
+        try {
+            long effectiveOrderCode = (orderCode != null && orderCode > 0) ? orderCode : generateUniqueOrderCode();
+            if (paymentTransactionRepository.existsByOrderCode(effectiveOrderCode) || paymentTransactionRepository.findByOrderCode(effectiveOrderCode).isPresent()) {
+                return; // Order code already exists in DB (e.g. Render production PostgreSQL), skip duplicate
             }
             PaymentTransaction pt = new PaymentTransaction();
             pt.setOrderCode(effectiveOrderCode);
@@ -516,7 +520,7 @@ public class DataSeeder implements CommandLineRunner {
             pt.setStatus(status);
             paymentTransactionRepository.saveAndFlush(pt);
         } catch (Exception e) {
-            System.err.println(">>> [DataSeeder] Could not save PaymentTransaction for orderCode " + orderCode + ": " + e.getMessage());
+            System.err.println(">>> [DataSeeder] Could not save PaymentTransaction: " + e.getMessage());
         }
     }
 
