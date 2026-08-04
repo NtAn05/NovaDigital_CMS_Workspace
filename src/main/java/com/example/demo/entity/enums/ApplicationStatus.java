@@ -14,6 +14,9 @@ public enum ApplicationStatus {
     /** Newly submitted – awaiting HR review (default). */
     PENDING,
 
+    /** HR has viewed the candidate application / CV. */
+    VIEWED,
+
     /** HR has scheduled / is planning an interview with this candidate. */
     INTERVIEW,
 
