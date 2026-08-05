@@ -105,7 +105,7 @@
     .sidebar-nav {
       list-style: none;
       padding: 0 0.75rem;
-      flex: 1;
+      flex: none;
     }
 
     .sidebar-nav li {
@@ -1189,6 +1189,14 @@
         <span class="brand-label">Admin Control Panel</span>
       </div>
 
+      <div class="sidebar-user-card">
+        <div class="sidebar-avatar" id="sidebarAvatar">AD</div>
+        <div>
+          <div class="sidebar-user-name" id="sidebarName">Administrator</div>
+          <div class="sidebar-user-role">System Admin</div>
+        </div>
+      </div>
+
       <p class="sidebar-section-title">Overview</p>
       <ul class="sidebar-nav">
         <li>
@@ -2263,6 +2271,48 @@
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="/js/main.js"></script>
+  <script>
+    // ── Sidebar avatar sync ───────────────────────────────
+    (function syncAdminSidebarAvatar() {
+      const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken') || localStorage.getItem('token') || sessionStorage.getItem('token');
+
+      function renderAdminSidebarAvatar(url, name) {
+        const sbName = document.getElementById('sidebarName');
+        if (sbName && name) sbName.textContent = name;
+        const av = document.getElementById('sidebarAvatar');
+        if (!av) return;
+        if (url) {
+          av.innerHTML = `<img src="${url}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+        } else {
+          const nameStr = (name || 'Administrator');
+          av.textContent = nameStr.split(' ').slice(-2).map(w => w[0]).join('').toUpperCase() || 'AD';
+        }
+      }
+
+      // Render immediately from localStorage
+      const cachedUrl = localStorage.getItem('avatarUrl') || sessionStorage.getItem('avatarUrl');
+      const cachedName = localStorage.getItem('fullName') || sessionStorage.getItem('fullName');
+      renderAdminSidebarAvatar(cachedUrl, cachedName);
+
+      // Then sync from API
+      if (token) {
+        fetch('/api/profile', { headers: { 'Authorization': 'Bearer ' + token } })
+          .then(res => res.ok ? res.json() : null)
+          .then(data => {
+            if (!data) return;
+            if (data.avatarUrl) {
+              localStorage.setItem('avatarUrl', data.avatarUrl);
+              sessionStorage.setItem('avatarUrl', data.avatarUrl);
+            }
+            if (data.fullName) {
+              localStorage.setItem('fullName', data.fullName);
+              sessionStorage.setItem('fullName', data.fullName);
+            }
+            renderAdminSidebarAvatar(data.avatarUrl, data.fullName || data.username);
+          }).catch(() => {});
+      }
+    })();
+  </script>
 </body>
 
 </html>

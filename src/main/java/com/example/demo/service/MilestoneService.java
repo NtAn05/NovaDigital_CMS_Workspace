@@ -129,6 +129,13 @@ public class MilestoneService {
                             "A milestone named '" + request.getName() + "' already exists in this project.");
                 });
 
+        if (request.getDueDate() == null) {
+            throw new IllegalArgumentException("Due date is required.");
+        }
+        if (request.getDueDate().isBefore(java.time.LocalDate.now())) {
+            throw new IllegalArgumentException("Due date cannot be in the past.");
+        }
+
         ProjectMilestone milestone = new ProjectMilestone();
         milestone.setProject(project);
         milestone.setName(request.getName().trim());

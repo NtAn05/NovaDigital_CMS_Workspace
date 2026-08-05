@@ -896,6 +896,9 @@
 
           // Avatar
           renderAvatar(data.avatarUrl, data.fullName || data.username);
+          if (data.avatarUrl && typeof window.updateNavbarAvatarImage === 'function') {
+            window.updateNavbarAvatarImage(data.avatarUrl);
+          }
 
           // Role
           renderRoleBadge(data.role || sessionStorage.getItem("role") || "ROLE_USER");

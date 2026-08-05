@@ -28,7 +28,9 @@ public class MilestoneCreateRequest {
     @Max(value = 100, message = "Progress percentage cannot exceed 100%.")
     private Integer progressPercentage = 0;
 
-    /** Optional deadline for this milestone phase */
+    /** Mandatory deadline for this milestone phase */
+    @NotNull(message = "Due date is required.")
+    @FutureOrPresent(message = "Due date cannot be in the past.")
     private LocalDate dueDate;
 
     @Min(value = 0, message = "Milestone price cannot be negative.")

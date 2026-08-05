@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-US">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -42,7 +42,7 @@
     .sidebar-user-role { font-size: 0.68rem; font-weight: 700; color: #22d3a5; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
 
     .sidebar-section-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.14em; color: #ffffff !important; font-weight: 800; opacity: 1; text-shadow: 0 1px 2px rgba(0,0,0,0.4); padding: 0 1.5rem; margin: 1.25rem 0 0.5rem; }
-    .sidebar-nav { list-style: none; padding: 0 0.75rem; flex: 1; }
+    .sidebar-nav { list-style: none; padding: 0 0.75rem; flex: none; }
     .sidebar-nav li { margin-bottom: 2px; }
     .sidebar-nav a {
       display: flex; align-items: center; gap: 0.7rem; padding: 0.7rem 0.85rem;
@@ -556,8 +556,9 @@
                   </select>
                 </div>
                 <div class="form-field">
-                  <label>Due Date</label>
-                  <input type="date" id="pm-m-dueDate">
+                  <label>Due Date *</label>
+                  <input type="date" id="pm-m-dueDate" lang="en-US" required>
+                  <span id="pm-m-dueDate-err" style="color:#ef4444; font-size:0.75rem; display:none; margin-top:2px;">Due date is required.</span>
                 </div>
               </div>
               <div class="form-field">
@@ -672,7 +673,6 @@
       try {
         currentUser = JSON.parse(savedUser);
         displayName = currentUser.fullName || currentUser.username || displayName;
-        avatarUrl = currentUser.avatarUrl;
         avatarChar = displayName[0].toUpperCase();
       } catch(e) {}
     } else {
@@ -681,12 +681,42 @@
       avatarChar = displayName[0].toUpperCase();
     }
 
-    document.getElementById('sidebarName').textContent = displayName;
-    const av = document.getElementById('sidebarAvatar');
-    if (avatarUrl) {
-      av.innerHTML = `<img src="${avatarUrl}" alt="avatar">`;
-    } else {
-      av.textContent = avatarChar;
+    // Always prefer localStorage avatarUrl over user object (may be stale)
+    avatarUrl = localStorage.getItem('avatarUrl') || sessionStorage.getItem('avatarUrl') || (currentUser && currentUser.avatarUrl) || null;
+
+    function renderSidebarAvatar(url, name) {
+      document.getElementById('sidebarName').textContent = name || displayName;
+      const av = document.getElementById('sidebarAvatar');
+      if (url) {
+        av.innerHTML = `<img src="${url}" alt="avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+      } else {
+        av.textContent = (name || displayName)[0].toUpperCase();
+      }
+    }
+
+    renderSidebarAvatar(avatarUrl, displayName);
+
+    // Sync from API to get the latest avatar
+    if (pmToken) {
+      fetch('/api/profile', { headers: { 'Authorization': 'Bearer ' + pmToken } })
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data) {
+            if (data.avatarUrl) {
+              avatarUrl = data.avatarUrl;
+              localStorage.setItem('avatarUrl', data.avatarUrl);
+              sessionStorage.setItem('avatarUrl', data.avatarUrl);
+            }
+            if (data.fullName) {
+              displayName = data.fullName;
+              localStorage.setItem('fullName', data.fullName);
+            }
+            renderSidebarAvatar(avatarUrl, displayName);
+            if (typeof window.updateNavbarAvatarImage === 'function') {
+              window.updateNavbarAvatarImage(avatarUrl);
+            }
+          }
+        }).catch(() => {});
     }
 
     document.getElementById('member-logout-btn').addEventListener('click', e => {
@@ -1013,6 +1043,18 @@
       const form   = document.getElementById('pm-milestone-form');
       if (form) form.reset();
 
+      const dueDateInput = document.getElementById('pm-m-dueDate');
+      const dueDateErr   = document.getElementById('pm-m-dueDate-err');
+      if (dueDateInput) {
+        dueDateInput.style.borderColor = '';
+        dueDateInput.setAttribute('min', new Date().toISOString().split('T')[0]);
+        dueDateInput.oninput = () => {
+          dueDateInput.style.borderColor = '';
+          if (dueDateErr) dueDateErr.style.display = 'none';
+        };
+      }
+      if (dueDateErr) dueDateErr.style.display = 'none';
+
       if (isPm) {
         bodyEl.style.gridTemplateColumns = '1.3fr 1fr';
         formEl.style.display = 'block';
@@ -1134,11 +1176,47 @@
     async function submitCreateMilestone(event) {
       event.preventDefault();
       if (!currentProjectId) return;
+
+      const dueDateInput = document.getElementById('pm-m-dueDate');
+      const dueDateErr   = document.getElementById('pm-m-dueDate-err');
+      const dueDateVal   = dueDateInput ? dueDateInput.value : '';
+
+      if (!dueDateVal) {
+        if (dueDateErr) {
+          dueDateErr.textContent = 'Due date is required.';
+          dueDateErr.style.display = 'block';
+        }
+        if (dueDateInput) {
+          dueDateInput.style.borderColor = '#ef4444';
+          dueDateInput.focus();
+        }
+        showPmToast('Required Field', 'Please select a due date for the milestone.', 'error');
+        return;
+      }
+
+      const selectedDate = new Date(dueDateVal + 'T00:00:00');
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (selectedDate < today) {
+        if (dueDateErr) {
+          dueDateErr.textContent = 'Due date cannot be in the past.';
+          dueDateErr.style.display = 'block';
+        }
+        if (dueDateInput) {
+          dueDateInput.style.borderColor = '#ef4444';
+          dueDateInput.focus();
+        }
+        showPmToast('Invalid Date', 'Due date cannot be in the past.', 'error');
+        return;
+      }
+      if (dueDateErr) dueDateErr.style.display = 'none';
+      if (dueDateInput) dueDateInput.style.borderColor = '';
+
       const payload = {
         name: document.getElementById('pm-m-name').value.trim(),
         description: document.getElementById('pm-m-desc').value.trim(),
         status: document.getElementById('pm-m-status').value,
-        dueDate: document.getElementById('pm-m-dueDate').value || null,
+        dueDate: dueDateVal || null,
         price: parseFloat(document.getElementById('pm-m-price').value) || 1500,
         progressPercentage: parseInt(document.getElementById('pm-m-progress').value) || 0
       };

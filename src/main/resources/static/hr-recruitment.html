@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en-US">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -158,7 +158,7 @@
     .resource-sidebar-brand { padding: 0 1.5rem 1.5rem; margin-bottom: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.07); }
     .resource-sidebar-brand span, .resource-sidebar-title { color: #ffffff !important; font-size: 0.75rem !important; font-weight: 800 !important; letter-spacing: 0.14em !important; text-transform: uppercase !important; opacity: 1 !important; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important; }
     .resource-sidebar-title { padding: 0 1.5rem; margin: 1.25rem 0 0.5rem; }
-    .resource-sidebar-nav { flex: 1; list-style: none; padding: 0 0.75rem; }
+    .resource-sidebar-nav { flex: none; list-style: none; padding: 0 0.75rem; }
     .resource-sidebar-nav li { margin-bottom: 2px; }
     .resource-sidebar-nav a {
       display: flex; align-items: center; gap: 0.7rem; padding: 0.7rem 0.85rem;
@@ -757,12 +757,56 @@
       window.location.href = 'index.html?error=unauthorized#login';
     }
 
-    // Hiển thị tên người dùng
-    const nameEl = document.getElementById('actorName');
-    nameEl.textContent = userData.fullName || userData.username || 'Resource Manager';
-    const initials = document.getElementById('accountInitials');
-    const name = nameEl.textContent;
-    initials.textContent = name.split(' ').slice(-2).map(w => w[0]).join('').toUpperCase();
+    function updateHrAvatar(url, nameStr) {
+      if (url) avatarUrl = url;
+      const targetUrl = url || avatarUrl || localStorage.getItem('avatarUrl') || sessionStorage.getItem('avatarUrl');
+      const name = nameStr || userData.fullName || userData.username || 'Resource Manager';
+      const nameEl = document.getElementById('actorName');
+      if (nameEl) nameEl.textContent = name;
+      const sbName = document.getElementById('sidebarName');
+      if (sbName) sbName.textContent = name;
+
+      const initialsTxt = name.split(' ').slice(-2).map(w => w[0]).join('').toUpperCase();
+
+      const initials = document.getElementById('accountInitials');
+      if (initials) {
+        if (targetUrl) {
+          initials.innerHTML = `<img src="${targetUrl}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+        } else {
+          initials.textContent = initialsTxt;
+        }
+      }
+
+      const sbAvatar = document.getElementById('sidebarAvatar');
+      if (sbAvatar) {
+        if (targetUrl) {
+          sbAvatar.innerHTML = `<img src="${targetUrl}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+        } else {
+          sbAvatar.textContent = initialsTxt;
+        }
+      }
+    }
+
+    let avatarUrl = localStorage.getItem('avatarUrl') || sessionStorage.getItem('avatarUrl');
+    updateHrAvatar(avatarUrl, userData.fullName || userData.username);
+
+    if (token) {
+      fetch('/api/profile', { headers: { 'Authorization': 'Bearer ' + token } })
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data) {
+            if (data.avatarUrl) {
+              localStorage.setItem('avatarUrl', data.avatarUrl);
+              sessionStorage.setItem('avatarUrl', data.avatarUrl);
+            }
+            if (data.fullName) {
+              localStorage.setItem('fullName', data.fullName);
+              sessionStorage.setItem('fullName', data.fullName);
+            }
+            updateHrAvatar(data.avatarUrl, data.fullName || data.username);
+          }
+        }).catch(() => {});
+    }
 
     // ── Logout ────────────────────────────────────────────────
     document.getElementById('logoutBtn').addEventListener('click', () => {

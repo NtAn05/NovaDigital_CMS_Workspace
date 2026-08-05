@@ -84,16 +84,37 @@ public class DataSeeder implements CommandLineRunner {
         User user4 = findOrCreateUser("client4",  "123456",   "Tran Thi Bich",     "bichtt@client.com",         "0999999994", "ROLE_USER");
 
         // ── 2. Members (10 Public Team Page & Matrix) ──────────────────────────
-        saveMemberIfMissing("An Nguyen3", "PROJECT LEADER", mem1.getId(), "Spring Boot, Java, AWS, Microservices", "Mart06 Fashion System, Enterprise ERP Portal");
-        saveMemberIfMissing("Ho Huy A", "UI/UX DESIGN LEAD", mem2.getId(), "React, CSS3, Figma, Design System, UI/UX", "NovaDigital Mobile Portal, CloudPay Analytics Dashboard");
-        saveMemberIfMissing("Tran Duc Minh", "DEVOPS ARCHITECT", mem3.getId(), "Docker, Kubernetes, AWS, Terraform, CI/CD", "Smart Freight Tracking System, CloudPay Dashboard");
-        saveMemberIfMissing("Pham Thi Thanh", "MOBILE LEAD", mem4.getId(), "Flutter, React Native, iOS, Android, Dart", "FinTech Mobile Wallet & Banking App");
-        saveMemberIfMissing("Le Hoang Nam", "FULLSTACK & AI ENGINEER", mem5.getId(), "Python, FastAPI, React, Node.js, OpenAI", "AI-Powered Customer Care Bot & Automation");
-        saveMemberIfMissing("Vu Hoang Anh", "FRONTEND SPECIALIST", mem6.getId(), "Vue.js, React, Next.js, TailwindCSS, TypeScript", "EduHub Online Learning & Exam Platform");
-        saveMemberIfMissing("Dang Quoc Bao", "BACKEND ENGINEER", mem7.getId(), "Golang, Spring Boot, PostgreSQL, Redis, gRPC", "SmartCity IoT Environmental Monitoring System");
-        saveMemberIfMissing("Nguyen Thu Ha", "QA & AUTOMATION LEAD", mem8.getId(), "Selenium, Cypress, JUnit, Postman, JMeter", "MedCare Telehealth & Online Booking Platform");
-        saveMemberIfMissing("Bui Van Dung", "CYBERSECURITY SPECIALIST", mem9.getId(), "Ethical Hacking, OWASP, Penetration Testing, Linux", "CryptoPay Web3 Decentralized Exchange");
-        saveMemberIfMissing("Do Phuong Thao", "DATA SCIENTIST & ML ENGINEER", mem10.getId(), "Python, PyTorch, TensorFlow, Pandas, Scikit-learn", "BigData Predictive Sales Forecasting Engine");
+        // name, role, userId, skills, projects, avatarUrl, facebookUrl, githubUrl, linkedinUrl
+        saveMemberIfMissing("An Nguyen3", "PROJECT LEADER", mem1.getId(), "Spring Boot, Java, AWS, Microservices", "Mart06 Fashion System, Enterprise ERP Portal",
+                "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face",
+                "https://facebook.com/annguyen.dev", "https://github.com/annguyen-dev", "https://linkedin.com/in/annguyen-dev");
+        saveMemberIfMissing("Ho Huy A", "UI/UX DESIGN LEAD", mem2.getId(), "React, CSS3, Figma, Design System, UI/UX", "NovaDigital Mobile Portal, CloudPay Analytics Dashboard",
+                "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=face",
+                "https://facebook.com/hohuya.design", "https://github.com/hohuya-ui", "https://linkedin.com/in/hohuya-design");
+        saveMemberIfMissing("Tran Duc Minh", "DEVOPS ARCHITECT", mem3.getId(), "Docker, Kubernetes, AWS, Terraform, CI/CD", "Smart Freight Tracking System, CloudPay Dashboard",
+                "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&h=200&fit=crop&crop=face",
+                "https://facebook.com/tranducminh.devops", "https://github.com/tducminh-ops", "https://linkedin.com/in/tranducminh-devops");
+        saveMemberIfMissing("Pham Thi Thanh", "MOBILE LEAD", mem4.getId(), "Flutter, React Native, iOS, Android, Dart", "FinTech Mobile Wallet & Banking App",
+                "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=200&h=200&fit=crop&crop=face",
+                "https://facebook.com/phamtithanh.mobile", "https://github.com/ptthanh-mobile", "https://linkedin.com/in/phamtithanh-mobile");
+        saveMemberIfMissing("Le Hoang Nam", "FULLSTACK & AI ENGINEER", mem5.getId(), "Python, FastAPI, React, Node.js, OpenAI", "AI-Powered Customer Care Bot & Automation",
+                "https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?w=200&h=200&fit=crop&crop=face",
+                "https://facebook.com/lehoangnam.ai", "https://github.com/lhnam-fullstack", "https://linkedin.com/in/lehoangnam-ai");
+        saveMemberIfMissing("Vu Hoang Anh", "FRONTEND SPECIALIST", mem6.getId(), "Vue.js, React, Next.js, TailwindCSS, TypeScript", "EduHub Online Learning & Exam Platform",
+                "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop&crop=face",
+                "https://facebook.com/vuhoganh.fe", "https://github.com/vhanhanh-frontend", "https://linkedin.com/in/vuhoganhanh-fe");
+        saveMemberIfMissing("Dang Quoc Bao", "BACKEND ENGINEER", mem7.getId(), "Golang, Spring Boot, PostgreSQL, Redis, gRPC", "SmartCity IoT Environmental Monitoring System",
+                "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&h=200&fit=crop&crop=face",
+                "https://facebook.com/dangquocbao.be", "https://github.com/dqbao-backend", "https://linkedin.com/in/dangquocbao-go");
+        saveMemberIfMissing("Nguyen Thu Ha", "QA & AUTOMATION LEAD", mem8.getId(), "Selenium, Cypress, JUnit, Postman, JMeter", "MedCare Telehealth & Online Booking Platform",
+                "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=200&h=200&fit=crop&crop=face",
+                "https://facebook.com/nguyenthuha.qa", "https://github.com/ntha-automation", "https://linkedin.com/in/nguyenthuha-qa");
+        saveMemberIfMissing("Bui Van Dung", "CYBERSECURITY SPECIALIST", mem9.getId(), "Ethical Hacking, OWASP, Penetration Testing, Linux", "CryptoPay Web3 Decentralized Exchange",
+                "https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=200&h=200&fit=crop&crop=face",
+                "https://facebook.com/buivandung.sec", "https://github.com/bvdung-security", "https://linkedin.com/in/buivandung-cyber");
+        saveMemberIfMissing("Do Phuong Thao", "DATA SCIENTIST & ML ENGINEER", mem10.getId(), "Python, PyTorch, TensorFlow, Pandas, Scikit-learn", "BigData Predictive Sales Forecasting Engine",
+                "https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=200&h=200&fit=crop&crop=face",
+                "https://facebook.com/dophuongthao.ds", "https://github.com/dpthao-ml", "https://linkedin.com/in/dophuongthao-datascience");
 
         // ── 3. Services (8 Services & 24 Addons) ──────────────────────────────
         Service svc1 = saveServiceIfMissing("E-Commerce Website Development", "Build high-performance online stores with automated payment, order tracking, and clean admin controls tailored to your brand.", "web");
@@ -139,21 +160,37 @@ public class DataSeeder implements CommandLineRunner {
         saveServiceAddon(svc8.getId(), "Predictive Analytics Machine Learning Model", 700.0);
 
         // ── 4. Projects (15 Diverse Projects) ───────────────────────────────
-        Project proj1  = saveProjectIfMissing("Mart06 Fashion System", "High-performance online shopping platform with seamless automated payment integration and full inventory management.", "Website E-Commerce", "Java, Spring Boot, MySQL, Thymeleaf, CSS3");
-        Project proj2  = saveProjectIfMissing("NovaDigital Mobile Portal", "Premium mobile application for project coordination, client messaging, and real-time SSE milestone progress alerts.", "Mobile Application", "React Native, Node.js, SSE, MySQL");
-        Project proj3  = saveProjectIfMissing("CloudPay Analytics Dashboard", "SaaS analytics dashboard with real-time financial reporting, role-based access control, and Stripe billing integration.", "Cloud SaaS", "Vue.js, Spring Boot, PostgreSQL, Docker");
-        Project proj4  = saveProjectIfMissing("FinTech Mobile Wallet & Banking App", "Mobile e-wallet application with biometric login, QR payment, and PayOS gateway integration.", "Mobile Application", "Flutter, Kotlin, Spring Boot, PostgreSQL");
-        Project proj5  = saveProjectIfMissing("AI-Powered Customer Care Bot & Automation", "Smart AI customer support agent handling automated inquiries and tickets across web and social channels.", "AI & Automation", "Python, FastAPI, React, OpenAI, Redis");
-        Project proj6  = saveProjectIfMissing("Smart Logistical Freight Tracking System", "Real-time fleet tracking, route optimization, and driver management dashboard for nationwide logistics.", "Cloud SaaS", "Angular, Spring Boot, Docker, Kubernetes, AWS");
-        Project proj7  = saveProjectIfMissing("Enterprise ERP & HR Management Portal", "Comprehensive HR management system with attendance tracking, payroll, performance evaluation, and shift scheduling.", "Enterprise Portal", "Java, Spring Boot, Vue.js, MySQL");
-        Project proj8  = saveProjectIfMissing("CryptoPay Web3 Decentralized Exchange", "Decentralized crypto trading platform with automated market maker (AMM) and non-custodial wallet integration.", "Blockchain Web3", "Solidity, React, Ethers.js, Node.js");
-        Project proj9  = saveProjectIfMissing("MedCare Telehealth & Online Booking Platform", "Telemedicine platform connecting patients with doctors for online video consultations and electronic prescription management.", "Healthcare Tech", "React Native, Spring Boot, WebRTC, MySQL");
-        Project proj10 = saveProjectIfMissing("EduHub Online Learning & Exam Management", "Interactive e-learning portal with video streaming, automated quizzes, and student progress analytics.", "EdTech", "Next.js, Node.js, PostgreSQL, AWS S3");
-        Project proj11 = saveProjectIfMissing("SmartCity IoT Environmental Monitoring System", "IoT sensor data aggregation network monitoring air quality, water levels, and weather stations in real-time.", "IoT & Cloud", "Golang, MQTT, TimescaleDB, Grafana");
-        Project proj12 = saveProjectIfMissing("AutoFleet Vehicle Leasing & Maintenance System", "Automotive fleet management software tracking vehicle maintenance schedules, fuel consumption, and lease agreements.", "Automotive SaaS", "Vue.js, Java, Spring Boot, MySQL");
-        Project proj13 = saveProjectIfMissing("RealEstate 3D Virtual Tour & CRM", "PropTech web application offering 3D virtual home tours and real estate agent lead management CRM.", "PropTech", "React, Three.js, Node.js, MongoDB");
-        Project proj14 = saveProjectIfMissing("OmniChannel Retail Point-of-Sale (POS)", "Cloud-synced desktop and tablet POS software for multi-branch retail stores with offline barcode scanning.", "Retail Tech", "Electron, Spring Boot, SQLite, WebSockets");
-        Project proj15 = saveProjectIfMissing("BigData Predictive Sales Forecasting Engine", "AI machine learning engine forecasting product demand, seasonal sales trends, and automated stock reordering.", "Data Science", "Python, PyTorch, Airflow, Snowflake, FastAPI");
+        // title, description, category, technologies, imageUrl
+        Project proj1  = saveProjectIfMissing("Mart06 Fashion System", "High-performance online shopping platform with seamless automated payment integration and full inventory management.", "Website E-Commerce", "Java, Spring Boot, MySQL, Thymeleaf, CSS3",
+                "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=800&h=400");
+        Project proj2  = saveProjectIfMissing("NovaDigital Mobile Portal", "Premium mobile application for project coordination, client messaging, and real-time SSE milestone progress alerts.", "Mobile Application", "React Native, Node.js, SSE, MySQL",
+                "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&w=800&h=400");
+        Project proj3  = saveProjectIfMissing("CloudPay Analytics Dashboard", "SaaS analytics dashboard with real-time financial reporting, role-based access control, and Stripe billing integration.", "Cloud SaaS", "Vue.js, Spring Boot, PostgreSQL, Docker",
+                "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&h=400");
+        Project proj4  = saveProjectIfMissing("FinTech Mobile Wallet & Banking App", "Mobile e-wallet application with biometric login, QR payment, and PayOS gateway integration.", "Mobile Application", "Flutter, Kotlin, Spring Boot, PostgreSQL",
+                "https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&w=800&h=400");
+        Project proj5  = saveProjectIfMissing("AI-Powered Customer Care Bot & Automation", "Smart AI customer support agent handling automated inquiries and tickets across web and social channels.", "AI & Automation", "Python, FastAPI, React, OpenAI, Redis",
+                "https://images.unsplash.com/photo-1677442135703-1787eea5ce01?auto=format&fit=crop&w=800&h=400");
+        Project proj6  = saveProjectIfMissing("Smart Logistical Freight Tracking System", "Real-time fleet tracking, route optimization, and driver management dashboard for nationwide logistics.", "Cloud SaaS", "Angular, Spring Boot, Docker, Kubernetes, AWS",
+                "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=800&h=400");
+        Project proj7  = saveProjectIfMissing("Enterprise ERP & HR Management Portal", "Comprehensive HR management system with attendance tracking, payroll, performance evaluation, and shift scheduling.", "Enterprise Portal", "Java, Spring Boot, Vue.js, MySQL",
+                "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=800&h=400");
+        Project proj8  = saveProjectIfMissing("CryptoPay Web3 Decentralized Exchange", "Decentralized crypto trading platform with automated market maker (AMM) and non-custodial wallet integration.", "Blockchain Web3", "Solidity, React, Ethers.js, Node.js",
+                "https://images.unsplash.com/photo-1621761191319-c6fb62004040?auto=format&fit=crop&w=800&h=400");
+        Project proj9  = saveProjectIfMissing("MedCare Telehealth & Online Booking Platform", "Telemedicine platform connecting patients with doctors for online video consultations and electronic prescription management.", "Healthcare Tech", "React Native, Spring Boot, WebRTC, MySQL",
+                "https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=800&h=400");
+        Project proj10 = saveProjectIfMissing("EduHub Online Learning & Exam Management", "Interactive e-learning portal with video streaming, automated quizzes, and student progress analytics.", "EdTech", "Next.js, Node.js, PostgreSQL, AWS S3",
+                "https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=800&h=400");
+        Project proj11 = saveProjectIfMissing("SmartCity IoT Environmental Monitoring System", "IoT sensor data aggregation network monitoring air quality, water levels, and weather stations in real-time.", "IoT & Cloud", "Golang, MQTT, TimescaleDB, Grafana",
+                "https://images.unsplash.com/photo-1573804633927-bfcbcd909acd?auto=format&fit=crop&w=800&h=400");
+        Project proj12 = saveProjectIfMissing("AutoFleet Vehicle Leasing & Maintenance System", "Automotive fleet management software tracking vehicle maintenance schedules, fuel consumption, and lease agreements.", "Automotive SaaS", "Vue.js, Java, Spring Boot, MySQL",
+                "https://images.unsplash.com/photo-1449965408869-eaa3f722e40d?auto=format&fit=crop&w=800&h=400");
+        Project proj13 = saveProjectIfMissing("RealEstate 3D Virtual Tour & CRM", "PropTech web application offering 3D virtual home tours and real estate agent lead management CRM.", "PropTech", "React, Three.js, Node.js, MongoDB",
+                "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800&h=400");
+        Project proj14 = saveProjectIfMissing("OmniChannel Retail Point-of-Sale (POS)", "Cloud-synced desktop and tablet POS software for multi-branch retail stores with offline barcode scanning.", "Retail Tech", "Electron, Spring Boot, SQLite, WebSockets",
+                "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=800&h=400");
+        Project proj15 = saveProjectIfMissing("BigData Predictive Sales Forecasting Engine", "AI machine learning engine forecasting product demand, seasonal sales trends, and automated stock reordering.", "Data Science", "Python, PyTorch, Airflow, Snowflake, FastAPI",
+                "https://images.unsplash.com/photo-1504868584819-f8e8b4b6d7e3?auto=format&fit=crop&w=800&h=400");
 
         // ── 5. Project Assignments (Exactly 1 PM per project + Staff) ──────────
         saveAssignmentIfMissing(proj1,  mem1,  ProjectAssignment.ProjectRole.PM);
@@ -325,7 +362,7 @@ public class DataSeeder implements CommandLineRunner {
             JobVacancy job3 = saveJobVacancy("DevOps & Cloud Engineer (AWS/GCP)", "Configure CI/CD pipelines, Kubernetes, Terraform, and optimize cloud infrastructure costs.", "Engineering", "Remote", "CONTRACT", JobVacancy.VacancyStatus.ACTIVE);
             JobVacancy job4 = saveJobVacancy("AI / ML Research Scientist", "Develop LLM RAG pipelines, fine-tune open-source AI models, and optimize Vector DB queries.", "AI Research", "Hanoi / Hybrid", "FULL_TIME", JobVacancy.VacancyStatus.ACTIVE);
 
-            saveCandidateApplication(job1.getId(), job1.getTitle(), "Long Do", "hoanglong.dev@gmail.com", "0912345678", "/uploads/resumes/hoanglong_cv.pdf", "I have 5 years of experience working with Java Spring Boot and MySQL.", com.example.demo.entity.enums.ApplicationStatus.VIEWED);
+            saveCandidateApplication(job1.getId(), job1.getTitle(), "Long Do", "hoanglong.dev@gmail.com", "0912345678", "/uploads/resumes/hoanglong_cv.pdf", "I have 5 years of experience working with Java Spring Boot and MySQL.", com.example.demo.entity.enums.ApplicationStatus.PENDING);
             saveCandidateApplication(job2.getId(), job2.getTitle(), "Mai Vu", "maivu.design@gmail.com", "0987654321", "/uploads/resumes/thanhmai_portfolio.pdf", "Eager to contribute to NovaDigital design products.", com.example.demo.entity.enums.ApplicationStatus.PENDING);
             saveCandidateApplication(job4.getId(), job4.getTitle(), "Trinh Duc Thang", "thangtd.ai@gmail.com", "0933445566", "/uploads/resumes/ducthang_ai_cv.pdf", "AI researcher with 2 published papers on NLP and LLM RAG retrieval.", com.example.demo.entity.enums.ApplicationStatus.INTERVIEW);
         }
@@ -362,16 +399,35 @@ public class DataSeeder implements CommandLineRunner {
         return userRepository.save(u);
     }
 
-    private void saveMemberIfMissing(String name, String role, Long userId, String skills, String projects) {
-        if (memberRepository.findAll().stream().noneMatch(m -> name.equalsIgnoreCase(m.getName()) || (userId != null && userId.equals(m.getUserId())))) {
-            Member m = new Member();
-            m.setName(name);
-            m.setRole(role);
-            m.setUserId(userId);
-            m.setSkills(skills);
-            m.setProjects(projects);
-            memberRepository.save(m);
-        }
+    private void saveMemberIfMissing(String name, String role, Long userId, String skills, String projects,
+                                      String avatarUrl, String facebookUrl, String githubUrl, String linkedinUrl) {
+        memberRepository.findAll().stream()
+                .filter(m -> name.equalsIgnoreCase(m.getName()) || (userId != null && userId.equals(m.getUserId())))
+                .findFirst()
+                .ifPresentOrElse(
+                    m -> {
+                        // Update social links & avatar if missing
+                        boolean changed = false;
+                        if (m.getAvatarUrl() == null || m.getAvatarUrl().isBlank()) { m.setAvatarUrl(avatarUrl); changed = true; }
+                        if (m.getFacebookUrl() == null || m.getFacebookUrl().isBlank()) { m.setFacebookUrl(facebookUrl); changed = true; }
+                        if (m.getGithubUrl() == null || m.getGithubUrl().isBlank()) { m.setGithubUrl(githubUrl); changed = true; }
+                        if (m.getLinkedinUrl() == null || m.getLinkedinUrl().isBlank()) { m.setLinkedinUrl(linkedinUrl); changed = true; }
+                        if (changed) memberRepository.save(m);
+                    },
+                    () -> {
+                        Member m = new Member();
+                        m.setName(name);
+                        m.setRole(role);
+                        m.setUserId(userId);
+                        m.setSkills(skills);
+                        m.setProjects(projects);
+                        m.setAvatarUrl(avatarUrl);
+                        m.setFacebookUrl(facebookUrl);
+                        m.setGithubUrl(githubUrl);
+                        m.setLinkedinUrl(linkedinUrl);
+                        memberRepository.save(m);
+                    }
+                );
     }
 
     private Service saveServiceIfMissing(String title, String description, String iconUrl) {
@@ -400,7 +456,7 @@ public class DataSeeder implements CommandLineRunner {
                 });
     }
 
-    private Project saveProjectIfMissing(String title, String description, String category, String technologies) {
+    private Project saveProjectIfMissing(String title, String description, String category, String technologies, String imageUrl) {
         return projectRepository.findAll().stream()
                 .filter(p -> title.equalsIgnoreCase(p.getTitle()))
                 .findFirst()
@@ -410,6 +466,7 @@ public class DataSeeder implements CommandLineRunner {
                     p.setDescription(description);
                     p.setCategory(category);
                     p.setTechnologies(technologies);
+                    p.setImageUrl(imageUrl);
                     return projectRepository.save(p);
                 });
     }

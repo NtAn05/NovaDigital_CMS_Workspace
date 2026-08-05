@@ -4277,15 +4277,30 @@ html.dark-theme body.dashboard-page::after {
 
 .admin-sidebar .sidebar-brand,
 .resource-sidebar .resource-sidebar-brand {
-  padding: 0 1.5rem 1.5rem !important;
+  padding: 0 1.5rem 1rem !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.07) !important;
-  margin-bottom: 1.25rem !important;
+  margin-bottom: 1rem !important;
 }
 
 .admin-sidebar .sidebar-brand .brand-label,
 .admin-sidebar .sidebar-brand span,
+.resource-sidebar .resource-sidebar-brand span {
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  font-size: 0.75rem !important;
+  letter-spacing: 0.14em !important;
+  text-transform: uppercase !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
+  display: block !important;
+}
+
 .admin-sidebar .sidebar-section-title,
-.resource-sidebar .resource-sidebar-brand span,
 .resource-sidebar .resource-sidebar-title {
   color: #ffffff !important;
   font-weight: 800 !important;
@@ -4361,7 +4376,7 @@ html.dark-theme body.dashboard-page::after {
 .resource-sidebar .resource-sidebar-nav {
   list-style: none !important;
   padding: 0 0.75rem !important;
-  flex: 1 !important;
+  flex: none !important;
   margin: 0 !important;
 }
 
@@ -4669,7 +4684,7 @@ html.dark-theme .admin-table thead tr:hover th {
   border-radius: 16px;
   box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.12), 0 0 0 1px rgba(0, 0, 0, 0.02);
   padding: 0.4rem;
-  z-index: 9999;
+  z-index: 100000 !important;
   flex-direction: column;
   animation: dropdownSlideIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
@@ -6976,7 +6991,7 @@ html.dark-theme .replied-box {
 
 .demo-slider-modal-content {
   background: var(--bg-white);
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--border-color, #e2e8f0);
   border-radius: var(--radius-lg);
   width: 90%;
   max-width: 800px;
@@ -7054,7 +7069,7 @@ html.dark-theme .demo-slider-modal-content {
 
 .demo-slider-arrow {
   background: var(--bg-white);
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--border-color, #e2e8f0);
   color: var(--text-dark);
   width: 44px;
   height: 44px;
@@ -7100,7 +7115,7 @@ html.dark-theme .demo-slider-arrow {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: var(--border-light);
+  background: #cbd5e1;
   cursor: pointer;
   transition: all 0.3s ease;
 }
@@ -7117,9 +7132,13 @@ html.dark-theme .demo-slider-dot {
 
 /* ===== Notification Dropdown Component (Light & Dark Mode) ===== */
 #notification-dropdown {
+  position: fixed !important;
+  z-index: 99999 !important;
+  width: 330px !important;
+  max-width: calc(100vw - 24px) !important;
   background: var(--bg-card, #ffffff) !important;
   border: 1px solid var(--border-color, #e2e8f0) !important;
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.15) !important;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.2) !important;
   color: var(--text-dark, #1e293b) !important;
 }
 

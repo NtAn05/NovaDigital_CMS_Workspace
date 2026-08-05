@@ -1222,6 +1222,9 @@
           avatarHidden.value = data.avatarUrl || "";
           if (data.avatarUrl) {
             avatarUrlInput.value = data.avatarUrl;
+            if (typeof window.updateNavbarAvatarImage === 'function') {
+              window.updateNavbarAvatarImage(data.avatarUrl);
+            }
           }
 
           // Skills CSV

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-US">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -160,7 +160,7 @@
     .resource-sidebar-brand { padding: 0 1.5rem 1.5rem; margin-bottom: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.07); }
     .resource-sidebar-brand span, .resource-sidebar-title { color: #ffffff !important; font-size: 0.75rem !important; font-weight: 800 !important; letter-spacing: 0.14em !important; text-transform: uppercase !important; opacity: 1 !important; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important; }
     .resource-sidebar-title { padding: 0 1.5rem; margin: 1.25rem 0 0.5rem; }
-    .resource-sidebar-nav { flex: 1; list-style: none; padding: 0 0.75rem; }
+    .resource-sidebar-nav { flex: none; list-style: none; padding: 0 0.75rem; }
     .resource-sidebar-nav li { margin-bottom: 2px; }
     .resource-sidebar-nav a {
       display: flex; align-items: center; gap: 0.7rem; padding: 0.7rem 0.85rem;
@@ -1605,7 +1605,7 @@
             </div>
             <div class="field">
               <label for="focusDate">Workload date</label>
-              <input type="date" id="focusDate" />
+              <input type="date" id="focusDate" lang="en-US" />
             </div>
             <div class="field">
               <label for="searchInput">Search staff</label>
@@ -1712,8 +1712,8 @@
             <div class="field full"><label for="formTask">Task / milestone</label><select id="formTask"><option value="">Project-level allocation</option></select></div>
             <div class="field"><label for="formPercentage">Allocation percentage *</label><input id="formPercentage" type="number" min="1" max="100" value="25" required /></div>
             <div class="field"><label for="formStatus">Status *</label><select id="formStatus" required><option value="PLANNED">PLANNED</option><option value="ACTIVE">ACTIVE</option><option value="COMPLETED">COMPLETED</option><option value="CANCELLED">CANCELLED</option></select></div>
-            <div class="field"><label for="formStart">Start date *</label><input id="formStart" type="date" required /></div>
-            <div class="field"><label for="formEnd">End date *</label><input id="formEnd" type="date" required /></div>
+            <div class="field"><label for="formStart">Start date *</label><input id="formStart" type="date" lang="en-US" required /></div>
+            <div class="field"><label for="formEnd">End date *</label><input id="formEnd" type="date" lang="en-US" required /></div>
             <div class="field full"><label for="formNotes">Notes</label><textarea id="formNotes" maxlength="2000" placeholder="Responsibilities, expected output, or allocation reason..."></textarea></div>
           </div>
           <div class="form-error" id="formError"></div>
@@ -1858,8 +1858,58 @@
   };
 
   els.focusDate.value = todayString();
-  document.getElementById('actorName').textContent = storedUser?.fullName || storedUser?.username || 'Resource Allocation Manager';
-  document.getElementById('accountInitials').textContent = getInitials(storedUser?.fullName || storedUser?.username || 'Resource Allocation Manager');
+  function updateResourceWorkspaceAvatar(url, nameStr) {
+    if (url) resAvatarUrl = url;
+    const targetUrl = url || resAvatarUrl || localStorage.getItem('avatarUrl') || sessionStorage.getItem('avatarUrl');
+    const name = nameStr || storedUser?.fullName || storedUser?.username || 'Resource Manager';
+    const nameEl = document.getElementById('actorName');
+    if (nameEl) nameEl.textContent = name;
+    const sbName = document.getElementById('sidebarName');
+    if (sbName) sbName.textContent = name;
+
+    const initialsTxt = getInitials(name);
+
+    const initials = document.getElementById('accountInitials');
+    if (initials) {
+      if (targetUrl) {
+        initials.innerHTML = `<img src="${targetUrl}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+      } else {
+        initials.textContent = initialsTxt;
+      }
+    }
+
+    const sbAvatar = document.getElementById('sidebarAvatar');
+    if (sbAvatar) {
+      if (targetUrl) {
+        sbAvatar.innerHTML = `<img src="${targetUrl}" alt="Avatar" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+      } else {
+        sbAvatar.textContent = initialsTxt;
+      }
+    }
+  }
+
+  let resAvatarUrl = localStorage.getItem('avatarUrl') || sessionStorage.getItem('avatarUrl');
+  updateResourceWorkspaceAvatar(resAvatarUrl, storedUser?.fullName || storedUser?.username);
+
+  const resToken = localStorage.getItem('authToken') || sessionStorage.getItem('authToken') || localStorage.getItem('token') || sessionStorage.getItem('token');
+  if (resToken) {
+    fetch('/api/profile', { headers: { 'Authorization': 'Bearer ' + resToken } })
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data) {
+          if (data.avatarUrl) {
+            localStorage.setItem('avatarUrl', data.avatarUrl);
+            sessionStorage.setItem('avatarUrl', data.avatarUrl);
+          }
+          if (data.fullName) {
+            localStorage.setItem('fullName', data.fullName);
+            sessionStorage.setItem('fullName', data.fullName);
+          }
+          updateResourceWorkspaceAvatar(data.avatarUrl, data.fullName || data.username);
+        }
+      }).catch(() => {});
+  }
+
   const actorModeEl = document.getElementById('actorMode');
   if (actorModeEl) actorModeEl.textContent = 'HR MANAGER';
 
@@ -1958,8 +2008,8 @@
 
   function renderContext() {
     const m = state.matrix;
-    document.getElementById('actorName').textContent = m.actorName || storedUser?.fullName || 'Resource manager';
-    document.getElementById('accountInitials').textContent = getInitials(m.actorName || storedUser?.fullName || storedUser?.username || 'Resource Manager');
+    const currentName = m.actorName || storedUser?.fullName || storedUser?.username || 'Resource Manager';
+    updateResourceWorkspaceAvatar(resAvatarUrl, currentName);
     document.getElementById('actorMode').textContent = 'RESOURCE MANAGER';
 
     const previousProject = String(m.selectedProjectId || '');

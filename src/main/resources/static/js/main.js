@@ -305,6 +305,7 @@ function openAuthModal(tab = "login") {
   const overlay = document.getElementById("auth-modal-overlay");
   if (!overlay) return;
 
+
   const mForm = document.getElementById("modal-loginForm");
   if (mForm) mForm.reset();
   const muInput = document.getElementById("modal-usernameOrEmail");
@@ -1389,7 +1390,7 @@ function setupAdminSSE() {
   if (!token) return;
 
   const eventSource = new EventSource('/api/notifications/stream?token=' + encodeURIComponent(token));
-  
+
   eventSource.addEventListener('new-booking', (e) => {
     try {
       const data = JSON.parse(e.data);
@@ -1399,7 +1400,7 @@ function setupAdminSSE() {
       if (panel && panel.classList.contains('active')) {
         fetchAdminBookings();
       }
-      
+
       // Update the bell icon badge
       if (typeof loadNotificationUnreadCount === 'function') {
         loadNotificationUnreadCount();
@@ -3738,9 +3739,9 @@ function renderBookingTablePage() {
       extraActions += `<button type="button" class="btn-add" onclick="openQuoteModal(${b.id})" style="padding:0.35rem 0.6rem;font-size:0.8rem;gap:4px;border-radius:6px;cursor:pointer;">
             <svg viewBox="0 0 24 24" style="width:12px;height:12px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> 
           </button>`;
-      }
-      if (b.status === "CONFIRMED") {
-        extraActions += `<button type="button" class="btn-add" onclick="openBookingEmailModal(${b.id})" style="padding:0.35rem 0.6rem;font-size:0.8rem;gap:4px;border-radius:6px;cursor:pointer;background-color:#4f46e5;">
+    }
+    if (b.status === "CONFIRMED") {
+      extraActions += `<button type="button" class="btn-add" onclick="openBookingEmailModal(${b.id})" style="padding:0.35rem 0.6rem;font-size:0.8rem;gap:4px;border-radius:6px;cursor:pointer;background-color:#4f46e5;">
             <svg viewBox="0 0 24 24" style="width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg>
           </button>`;
     }
@@ -3767,7 +3768,7 @@ function renderBookingTablePage() {
       <td>
         <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
           <button type="button" class="btn-detail" onclick="openBookingDetailModal(${b.id})" style="padding:0.35rem 0.65rem;font-size:0.8rem;gap:4px;border-radius:6px;background:rgba(37,99,235,0.1);color:#2563eb;border:1px solid rgba(37,99,235,0.22);cursor:pointer;font-weight:600;display:inline-flex;align-items:center;transition:all 0.2s ease;">
-            <svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              <svg viewBox="0 0 24 24" style="width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
           </button>
           ${extraActions}
           ${!isLocked ? `<button type="button" class="btn-delete" onclick="deleteBooking(${b.id})" style="padding:0.35rem 0.6rem;font-size:0.8rem;gap:4px;border-radius:6px;background-color:#ef4444;color:#fff;border:none;cursor:pointer;">
@@ -7291,15 +7292,14 @@ if (document.readyState === "loading") {
 const CHATBOT_HISTORY_KEY = 'nova_chatbot_history';
 
 const CHATBOT_SYSTEM_PROMPT =
-    "You are Nova AI, the official intelligent assistant for NovaDigital Agency. " +
-    "NovaDigital is a premier software development & digital agency specializing in Web Applications, Mobile Apps, UI/UX Design, Cloud DevOps, AI & Machine Learning Solutions, and IT Consultation. " +
-    "You assist visitors with: " +
-    "1. Services & Pricing: Web App Development (from $1,500), Mobile App Development (from $2,000), UI/UX Design (from $800), AI & Machine Learning Integration (from $2,500), Cloud DevOps Infrastructure (from $1,200). " +
-    "2. Booking Consultation: Visitors can schedule a 1-on-1 consultation appointment with an expert on our Booking page (/booking.html). " +
-    "3. Careers & Open Vacancies: NovaDigital is actively hiring Full-Stack Engineers (Spring Boot & React/Vue), Senior UI/UX Designers, AI Engineers, and Project Managers. Interested candidates can explore openings on our Careers page. " +
-    "4. Custom Project Proposals: Clients can request a custom quotation by filling out our Booking form or Contact form. " +
-    "Rule: Always be warm, professional, informative, and concise. Answer in the exact language used by the visitor (English or Vietnamese).";
-
+  "You are Nova AI, the official intelligent assistant for NovaDigital Agency. " +
+  "NovaDigital is a premier software development & digital agency specializing in Web Applications, Mobile Apps, UI/UX Design, Cloud DevOps, AI & Machine Learning Solutions, and IT Consultation. " +
+  "You assist visitors with: " +
+  "1. Services & Pricing: Web App Development (from $1,500), Mobile App Development (from $2,000), UI/UX Design (from $800), AI & Machine Learning Integration (from $2,500), Cloud DevOps Infrastructure (from $1,200). " +
+  "2. Booking Consultation: Visitors can schedule a 1-on-1 consultation appointment with an expert on our Booking page (/booking.html). " +
+  "3. Careers & Open Vacancies: NovaDigital is actively hiring Full-Stack Engineers (Spring Boot & React/Vue), Senior UI/UX Designers, AI Engineers, and Project Managers. Interested candidates can explore openings on our Careers page. " +
+  "4. Custom Project Proposals: Clients can request a custom quotation by filling out our Booking form or Contact form. " +
+  "Rule: Always be warm, professional, informative, and concise. Answer in the exact language used by the visitor (English or Vietnamese).";
 
 // Cached config from backend
 let _chatbotConfig = null;
@@ -7397,67 +7397,65 @@ function initChatbot() {
     history.forEach(m => renderBubble(m.sender, m.text));
   }
 
-    // Enhance header icon with 3D robot avatar
-    const headerTitle = windowEl.querySelector('.chatbot-header-title');
-    if (headerTitle) {
-        const defaultSvg = headerTitle.querySelector('svg');
-        if (defaultSvg) defaultSvg.remove(); // Remove duplicate default icon
+  // Enhance header icon with 3D robot avatar
+  const headerTitle = windowEl.querySelector('.chatbot-header-title');
+  if (headerTitle) {
+    const defaultSvg = headerTitle.querySelector('svg');
+    if (defaultSvg) defaultSvg.remove(); // Remove duplicate default icon
 
-        if (!headerTitle.querySelector('.chatbot-header-avatar')) {
-            const avatarImg = document.createElement('img');
-            avatarImg.src = '/images/ai_robot_waving.jpg';
-            avatarImg.alt = 'Nova AI';
-            avatarImg.className = 'chatbot-header-avatar';
-            avatarImg.style.cssText = 'width: 26px; height: 26px; border-radius: 50%; object-fit: cover; border: 1.5px solid rgba(255, 255, 255, 0.8); box-shadow: 0 0 8px rgba(56, 189, 248, 0.5); margin-right: 6px; vertical-align: middle;';
-            headerTitle.prepend(avatarImg);
-        }
+    if (!headerTitle.querySelector('.chatbot-header-avatar')) {
+      const avatarImg = document.createElement('img');
+      avatarImg.src = '/images/ai_robot_waving.jpg';
+      avatarImg.alt = 'Nova AI';
+      avatarImg.className = 'chatbot-header-avatar';
+      avatarImg.style.cssText = 'width: 26px; height: 26px; border-radius: 50%; object-fit: cover; border: 1.5px solid rgba(255, 255, 255, 0.8); box-shadow: 0 0 8px rgba(56, 189, 248, 0.5); margin-right: 6px; vertical-align: middle;';
+      headerTitle.prepend(avatarImg);
     }
+  }
 
-    // ── Render Quick Action Suggestion Chips (English) ──
-    let quickActionsContainer = windowEl.querySelector('.chatbot-quick-actions');
-    if (!quickActionsContainer) {
-        quickActionsContainer = document.createElement('div');
-        quickActionsContainer.className = 'chatbot-quick-actions';
+  // ── Render Quick Action Suggestion Chips (English) ──
+  let quickActionsContainer = windowEl.querySelector('.chatbot-quick-actions');
+  if (!quickActionsContainer) {
+    quickActionsContainer = document.createElement('div');
+    quickActionsContainer.className = 'chatbot-quick-actions';
 
-        const quickPrompts = [
-            {
-                label: 'Services & Pricing',
-                text: 'What digital services and pricing plans does NovaDigital offer?'
-            },
-            {
-                label: 'Book Consultation',
-                text: 'How can I schedule a consultation appointment with an expert?'
-            },
-            {
-                label: 'Open Vacancies',
-                text: 'What career opportunities and job openings are currently available?'
-            },
-            {
-                label: 'Start a Project',
-                text: 'I want to start a custom digital project. How can I contact your team?'
-            }
-        ];
+    const quickPrompts = [
+      {
+        label: 'Services & Pricing',
+        text: 'What digital services and pricing plans does NovaDigital offer?'
+      },
+      {
+        label: 'Book Consultation',
+        text: 'How can I schedule a consultation appointment with an expert?'
+      },
+      {
+        label: 'Open Vacancies',
+        text: 'What career opportunities and job openings are currently available?'
+      },
+      {
+        label: 'Start a Project',
+        text: 'I want to start a custom digital project. How can I contact your team?'
+      }
+    ];
 
-        quickPrompts.forEach(p => {
-            const chip = document.createElement('button');
-            chip.type = 'button';
-            chip.className = 'chatbot-chip';
-            chip.textContent = p.label;
-            chip.addEventListener('click', () => {
-                inputEl.value = p.text;
-                sendMessage();
-            });
-            quickActionsContainer.appendChild(chip);
-        });
+    quickPrompts.forEach(p => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'chatbot-chip';
+      chip.textContent = p.label;
+      chip.addEventListener('click', () => {
+        inputEl.value = p.text;
+        sendMessage();
+      });
+      quickActionsContainer.appendChild(chip);
+    });
 
 
-        const inputRow = windowEl.querySelector('.chatbot-input-row');
-        if (inputRow) {
-            windowEl.insertBefore(quickActionsContainer, inputRow);
-        }
+    const inputRow = windowEl.querySelector('.chatbot-input-row');
+    if (inputRow) {
+      windowEl.insertBefore(quickActionsContainer, inputRow);
     }
-
-
+  }
 
   let isGreetingShowing = false;
   let greetingTimer = null;
