@@ -2390,7 +2390,6 @@ function renderServiceTablePage() {
     <td>
   <span style="font-weight:700;color:var(--text-dark);font-size:0.9rem;">$${Number(s.basePrice || 0).toFixed(2)}</span>
     </td>
-    </td>
     <td>
       <button type="button" onclick="openAddonModal(${s.id}, '${escapeHtml(s.title).replace(/'/g, "\\'")}')" id="addon-toggle-btn-${s.id}"
         style="background:#eff6ff;border:1px solid #bfdbfe;color:#2563eb;border-radius:6px;padding:0.3rem 0.6rem;font-size:0.78rem;font-weight:600;cursor:pointer;white-space:nowrap;">
@@ -2929,32 +2928,33 @@ async function loadUserMessages() {
         window.location.href = "login.html";
         return;
       }
-      allMessages = await response.json();
-      allMessages.sort((a, b) => {
-        const isRepliedA = (a.replied || a.status === 'DONE' || Boolean(a.reply)) ? 1 : 0;
-        const isRepliedB = (b.replied || b.status === 'DONE' || Boolean(b.reply)) ? 1 : 0;
-        if (isRepliedA !== isRepliedB) return isRepliedB - isRepliedA;
-        const timeA = new Date(a.repliedAt || a.createdAt || 0).getTime() || (a.id || 0);
-        const timeB = new Date(b.repliedAt || b.createdAt || 0).getTime() || (b.id || 0);
-        return timeB - timeA;
-      });
-      
-      // Update Overview stats count dynamically if the element is present
-      const statsCount = document.getElementById("stat-messages-count");
-      if (statsCount) statsCount.textContent = allMessages.length;
-      
-      applyFilters();
-    } catch (err) {
-      console.error(err);
-      const tbody = document.getElementById("messages-table-body");
-      if (tbody) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="6" style="text-align: center; padding: 2rem; color: #ef4444; font-weight: 600;">
-              Error loading messages: ${err.message}
-            </td>
-          </tr>
-        `;
+      throw new Error("Failed to fetch messages");
+    }
+    allMessages = await response.json();
+    allMessages.sort((a, b) => {
+      const isRepliedA = (a.replied || a.status === 'DONE' || Boolean(a.reply)) ? 1 : 0;
+      const isRepliedB = (b.replied || b.status === 'DONE' || Boolean(b.reply)) ? 1 : 0;
+      if (isRepliedA !== isRepliedB) return isRepliedB - isRepliedA;
+      const timeA = new Date(a.repliedAt || a.createdAt || 0).getTime() || (a.id || 0);
+      const timeB = new Date(b.repliedAt || b.createdAt || 0).getTime() || (b.id || 0);
+      return timeB - timeA;
+    });
+
+    const statsCount = document.getElementById("stat-messages-count");
+    if (statsCount) statsCount.textContent = allMessages.length;
+
+    applyFilters();
+  } catch (err) {
+    console.error(err);
+    const tbody = document.getElementById("messages-table-body");
+    if (tbody) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" style="text-align: center; padding: 2rem; color: #ef4444; font-weight: 600;">
+            Error loading messages: ${err.message}
+          </td>
+        </tr>
+      `;
     }
   }
 }
