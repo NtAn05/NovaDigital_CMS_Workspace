@@ -6146,14 +6146,17 @@ function openDetailModal(logJsonString) {
   }
 
   // Footer
-  document.getElementById('detail-source-ip').innerText = log.ipAddress || 'Unknown';
-  // Simple hashCode to generate consistent mock session
-  let hash = 0;
-  const uaStr = log.userAgent || '';
-  for (let i = 0; i < uaStr.length; i++) {
-    hash = uaStr.charCodeAt(i) + ((hash << 5) - hash);
+  const ipElem = document.getElementById('detail-source-ip');
+  if (ipElem) ipElem.innerText = log.ipAddress || 'Unknown';
+  const sessElem = document.getElementById('detail-session-id');
+  if (sessElem) {
+    let hash = 0;
+    const uaStr = log.userAgent || '';
+    for (let i = 0; i < uaStr.length; i++) {
+      hash = uaStr.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    sessElem.innerText = log.userAgent ? ('SESS-' + Math.abs(hash).toString(16).toUpperCase().substring(0, 8)) : 'N/A';
   }
-  document.getElementById('detail-session-id').innerText = log.userAgent ? ('SESS-' + Math.abs(hash).toString(16).toUpperCase().substring(0, 8)) : 'N/A';
 
   // Render table
   renderComparisonTable();
