@@ -156,21 +156,21 @@
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .resource-sidebar-brand { padding: 0 1.5rem 1.5rem; margin-bottom: 1.25rem; border-bottom: 1px solid rgba(255,255,255,0.07); }
-    .resource-sidebar-brand span, .resource-sidebar-title { color: rgba(255,255,255,0.34); font-size: 0.67rem; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; }
+    .resource-sidebar-brand span, .resource-sidebar-title { color: #ffffff !important; font-size: 0.75rem !important; font-weight: 800 !important; letter-spacing: 0.14em !important; text-transform: uppercase !important; opacity: 1 !important; text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important; }
     .resource-sidebar-title { padding: 0 1.5rem; margin: 1.25rem 0 0.5rem; }
     .resource-sidebar-nav { flex: 1; list-style: none; padding: 0 0.75rem; }
     .resource-sidebar-nav li { margin-bottom: 2px; }
     .resource-sidebar-nav a {
       display: flex; align-items: center; gap: 0.7rem; padding: 0.7rem 0.85rem;
-      border-radius: 10px; color: rgba(255,255,255,0.55); font-size: 0.88rem; font-weight: 500; text-decoration: none;
+      border-radius: 10px; color: #f1f5f9 !important; font-size: 0.88rem; font-weight: 600; text-decoration: none; opacity: 0.92;
     }
-    .resource-sidebar-nav a:hover { color: #fff; background: rgba(255,255,255,0.06); }
-    .resource-sidebar-nav a.active { color: #fff; background: linear-gradient(135deg, rgba(37,99,235,0.96), rgba(79,70,229,0.96)); box-shadow: 0 4px 14px rgba(37,99,235,0.35); }
+    .resource-sidebar-nav a:hover { color: #ffffff !important; background: rgba(255,255,255,0.12) !important; opacity: 1; }
+    .resource-sidebar-nav a.active { color: #ffffff !important; background: linear-gradient(135deg, rgba(37,99,235,0.96), rgba(79,70,229,0.96)) !important; box-shadow: 0 4px 14px rgba(37,99,235,0.35) !important; opacity: 1; }
     .resource-sidebar-nav svg { width: 17px; height: 17px; flex-shrink: 0; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
     .resource-sidebar-footer { padding: 1.25rem 1.5rem 0; margin-top: auto; border-top: 1px solid rgba(255,255,255,0.07); }
     .resource-logout {
       width: 100%; display: flex; align-items: center; gap: 0.7rem; padding: 0.65rem 0.85rem;
-      border: none; border-radius: 10px; color: rgba(239,68,68,0.78); background: transparent;
+      border: none; border-radius: 10px; color: #ef4444; background: transparent;
       font-size: 0.88rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;
     }
     .resource-logout:hover { color: #ef4444; background: rgba(239,68,68,0.1); }
@@ -554,13 +554,22 @@
     </svg>
   </button>
 
-  <div class="resource-layout">
+  <div class="admin-layout resource-layout">
+    <aside class="admin-sidebar">
+      <div class="sidebar-brand">
+        <span class="brand-label">HR Management</span>
+      </div>
 
-    <!-- ══ SIDEBAR ════════════════════════════════════════════ -->
-    <aside class="resource-sidebar">
-      <div class="resource-sidebar-brand"><span>HR Control Panel</span></div>
-      <p class="resource-sidebar-title">Workspace</p>
-      <ul class="resource-sidebar-nav">
+      <div class="sidebar-user-card">
+        <div class="sidebar-avatar" id="sidebarAvatar">RM</div>
+        <div>
+          <div class="sidebar-user-name" id="sidebarName">Resource Manager</div>
+          <div class="sidebar-user-role">HR / PM</div>
+        </div>
+      </div>
+
+      <p class="sidebar-section-title">Workspace</p>
+      <ul class="sidebar-nav">
         <li>
           <a href="resource-allocation.html">
             <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
@@ -574,11 +583,12 @@
           </a>
         </li>
       </ul>
-      <div class="resource-sidebar-footer">
-        <button class="resource-logout" id="logoutBtn" type="button">
-          <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+
+      <div class="sidebar-footer">
+        <a href="#" id="logoutBtn" style="display:flex;align-items:center;gap:0.7rem;color:#ef4444;font-weight:600;text-decoration:none;padding:0.65rem 0.85rem;border-radius:10px;">
+          <svg viewBox="0 0 24 24" style="width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           Logout
-        </button>
+        </a>
       </div>
     </aside>
 

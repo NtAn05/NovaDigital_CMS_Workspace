@@ -4256,12 +4256,212 @@ html.dark-theme body.dashboard-page::after {
   opacity: 0.16;
 }
 
-/* Glassmorphism Sidebar (Dark/Indigo mesh in both light and dark themes) */
-.admin-sidebar {
-  background: linear-gradient(175deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 27, 75, 0.85) 55%, rgba(15, 23, 42, 0.8) 100%) !important;
+/* Glassmorphism Sidebar - Dark Navy Slate with ultra-sharp high contrast text across both themes */
+.admin-sidebar, .resource-sidebar {
+  width: 252px !important;
+  min-height: calc(100vh - 72px) !important;
+  background: linear-gradient(175deg, #0f172a 0%, #1e1b4b 55%, #0f172a 100%) !important;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+  position: fixed !important;
+  top: 72px !important;
+  left: 0 !important;
+  padding: 1.75rem 0 2rem !important;
+  overflow-y: auto !important;
+  z-index: 100 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.admin-sidebar .sidebar-brand,
+.resource-sidebar .resource-sidebar-brand {
+  padding: 0 1.5rem 1.5rem !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07) !important;
+  margin-bottom: 1.25rem !important;
+}
+
+.admin-sidebar .sidebar-brand .brand-label,
+.admin-sidebar .sidebar-brand span,
+.admin-sidebar .sidebar-section-title,
+.resource-sidebar .resource-sidebar-brand span,
+.resource-sidebar .resource-sidebar-title {
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  font-size: 0.75rem !important;
+  letter-spacing: 0.14em !important;
+  text-transform: uppercase !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+  margin: 1.25rem 0 0.5rem !important;
+  padding: 0 1.5rem !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important;
+  display: block !important;
+}
+
+/* User Info Card */
+.admin-sidebar .sidebar-user-card,
+.resource-sidebar .sidebar-user-card {
+  margin: 0 0.75rem 1.25rem !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 12px !important;
+  padding: 0.9rem 1rem !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.75rem !important;
+}
+
+.admin-sidebar .sidebar-avatar,
+.resource-sidebar .sidebar-avatar {
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 50% !important;
+  flex-shrink: 0 !important;
+  overflow: hidden !important;
+  background: linear-gradient(135deg, #6c63ff, #22d3a5) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-weight: 700 !important;
+  font-size: 16px !important;
+  color: #ffffff !important;
+}
+
+.admin-sidebar .sidebar-avatar img,
+.resource-sidebar .sidebar-avatar img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+
+.admin-sidebar .sidebar-user-name,
+.resource-sidebar .sidebar-user-name {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  font-size: 0.85rem !important;
+  line-height: 1.2 !important;
+}
+
+.admin-sidebar .sidebar-user-role,
+.resource-sidebar .sidebar-user-role {
+  font-size: 0.68rem !important;
+  font-weight: 700 !important;
+  color: #22d3a5 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  margin-top: 2px !important;
+}
+
+/* Sidebar Navigation Items */
+.admin-sidebar .sidebar-nav,
+.resource-sidebar .resource-sidebar-nav {
+  list-style: none !important;
+  padding: 0 0.75rem !important;
+  flex: 1 !important;
+  margin: 0 !important;
+}
+
+.admin-sidebar .sidebar-nav li,
+.resource-sidebar .resource-sidebar-nav li {
+  margin-bottom: 2px !important;
+}
+
+.admin-sidebar .sidebar-nav a,
+.resource-sidebar .resource-sidebar-nav a {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.7rem !important;
+  padding: 0.7rem 0.85rem !important;
+  border-radius: 10px !important;
+  text-decoration: none !important;
+  color: #f1f5f9 !important;
+  font-size: 0.88rem !important;
+  font-weight: 600 !important;
+  transition: all 0.2s ease !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  opacity: 0.92 !important;
+}
+
+.admin-sidebar .sidebar-nav a svg,
+.resource-sidebar .resource-sidebar-nav a svg {
+  width: 17px !important;
+  height: 17px !important;
+  max-width: 17px !important;
+  max-height: 17px !important;
+  flex-shrink: 0 !important;
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 2 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+  display: inline-block !important;
+}
+
+.admin-sidebar .sidebar-nav a:hover,
+.resource-sidebar .resource-sidebar-nav a:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+.admin-sidebar .sidebar-nav a.active,
+.resource-sidebar .resource-sidebar-nav a.active {
+  background: linear-gradient(135deg, #2563eb, #4f46e5) !important;
+  color: #ffffff !important;
+  opacity: 1 !important;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.45) !important;
+}
+
+/* Sidebar Footer & Logout */
+.admin-sidebar .sidebar-footer,
+.resource-sidebar .resource-sidebar-footer {
+  padding: 1.25rem 1.5rem 0 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.07) !important;
+  margin-top: auto !important;
+}
+
+.admin-sidebar .sidebar-footer a,
+.resource-sidebar .resource-sidebar-footer a,
+.resource-sidebar .resource-logout {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.7rem !important;
+  color: #ef4444 !important;
+  font-size: 0.88rem !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+  padding: 0.65rem 0.85rem !important;
+  border-radius: 10px !important;
+  transition: all 0.2s !important;
+  cursor: pointer !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+.admin-sidebar .sidebar-footer a:hover,
+.resource-sidebar .resource-sidebar-footer a:hover,
+.resource-sidebar .resource-logout:hover {
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: #ef4444 !important;
+}
+
+.admin-sidebar .sidebar-footer a svg,
+.resource-sidebar .resource-sidebar-footer a svg,
+.resource-sidebar .resource-logout svg {
+  width: 17px !important;
+  height: 17px !important;
+  max-width: 17px !important;
+  max-height: 17px !important;
+  flex-shrink: 0 !important;
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 2 !important;
+  stroke-linecap: round !important;
 }
 
 /* Glassmorphic Stat Cards */
@@ -5610,7 +5810,7 @@ body.dashboard-page:has(.admin-sidebar) header {
   transition: var(--header-transition) !important;
 }
 
-/* Scrolled / Detached Header Styles in Admin Dashboard - Contracts onto Left Sidebar */
+/* Scrolled / Detached Header Styles in Admin Dashboard - Contracts onto Left Sidebar Top */
 body.dashboard-page:has(.admin-sidebar) header.header-detached {
   top: 0 !important;
   left: 0 !important;
@@ -5640,13 +5840,18 @@ body.dashboard-page:has(.admin-sidebar) header.header-detached .navbar {
   align-items: center !important;
 }
 
-/* Contrasting logo on dark background */
+/* Contrasting white logo on dark sidebar header */
 body.dashboard-page:has(.admin-sidebar) header.header-detached .logo {
   color: #ffffff !important;
 }
 
 body.dashboard-page:has(.admin-sidebar) header.header-detached .logo svg {
   fill: #ffffff !important;
+}
+
+/* Hide logo text inside contracted header */
+body.dashboard-page:has(.admin-sidebar) header.header-detached .logo span {
+  display: none !important;
 }
 
 /* Hide logo text inside contracted header */
