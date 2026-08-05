@@ -292,6 +292,37 @@
     .toast-body { opacity: .8; font-size: 12px; }
     @keyframes slideIn { from{transform:translateX(50px);opacity:0} to{transform:translateX(0);opacity:1} }
 
+    /* ── Pagination Buttons ── */
+    .page-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.4rem 0.75rem;
+      border: 1px solid var(--border-color, #e2e8f0);
+      background: var(--bg-card, #ffffff);
+      color: var(--text-dark, #0f172a);
+      font-weight: 600;
+      font-size: 0.8rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .page-btn:hover:not(:disabled) {
+      background: rgba(37, 99, 235, 0.1);
+      border-color: #2563eb;
+      color: #2563eb;
+    }
+    .page-btn.active {
+      background: #2563eb;
+      color: #ffffff;
+      border-color: #2563eb;
+      box-shadow: 0 4px 10px rgba(37,99,235,0.2);
+    }
+    .page-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
     /* ── Misc ── */
     .empty-state { text-align: center; padding: 40px; color: #64748b; }
     .empty-state .emoji { font-size: 42px; display: block; margin-bottom: 10px; }
@@ -447,6 +478,7 @@
               <tr><td colspan="6" style="text-align:center;padding:2rem;color:#64748b;">Loading...</td></tr>
             </tbody>
           </table>
+          <div id="member-contacts-pagination"></div>
         </div>
       </div>
 
@@ -465,6 +497,7 @@
         <div class="project-grid" id="myBookingsGrid">
           <div class="spinner"></div>
         </div>
+        <div id="my-bookings-pagination" style="margin-top: 1.25rem;"></div>
       </div>
 
     </main>
@@ -726,15 +759,33 @@
     }
 
     let _cacheMemberBookings = [];
+    let _memberBookingPage = 1;
+    const BOOKING_PAGE_SIZE = 8;
 
     function renderMyBookings(bookings) {
       _cacheMemberBookings = bookings || [];
+      _memberBookingPage = 1;
+      renderMemberBookingsPage();
+    }
+
+    function renderMemberBookingsPage() {
       const container = document.getElementById('myBookingsGrid');
-      if (!bookings.length) {
+      if (!container) return;
+
+      if (!_cacheMemberBookings.length) {
         container.innerHTML = `<div class="empty-state"><span class="emoji">📅</span>No consultation bookings assigned to you yet.</div>`;
+        renderPaginationBar('my-bookings-pagination', 0, 1, BOOKING_PAGE_SIZE, changeMemberBookingPage);
         return;
       }
-      container.innerHTML = bookings.map(b => `
+
+      const totalItems = _cacheMemberBookings.length;
+      const totalPages = Math.ceil(totalItems / BOOKING_PAGE_SIZE);
+      if (_memberBookingPage > totalPages) _memberBookingPage = Math.max(1, totalPages);
+
+      const startIndex = (_memberBookingPage - 1) * BOOKING_PAGE_SIZE;
+      const pageBookings = _cacheMemberBookings.slice(startIndex, startIndex + BOOKING_PAGE_SIZE);
+
+      container.innerHTML = pageBookings.map(b => `
         <div class="project-card">
           <div class="project-card-header">
             <span class="booking-status-badge status-${b.status.toLowerCase()}">${b.status}</span>
@@ -752,6 +803,15 @@
           </div>
         </div>
       `).join('');
+
+      renderPaginationBar('my-bookings-pagination', totalItems, _memberBookingPage, BOOKING_PAGE_SIZE, changeMemberBookingPage);
+    }
+
+    function changeMemberBookingPage(page) {
+      const totalPages = Math.ceil(_cacheMemberBookings.length / BOOKING_PAGE_SIZE);
+      if (page < 1 || page > totalPages) return;
+      _memberBookingPage = page;
+      renderMemberBookingsPage();
     }
 
     async function openMemberBookingDetailModal(bookingId) {
@@ -1060,14 +1120,25 @@
     // ─────────────────────────────────────────────────────────────────────────
     let currentContactId = null;
     let _memberContactsCache = {};
+    let _allMemberContacts = [];
+    let _filteredMemberContacts = [];
+    let _memberContactPage = 1;
+    const CONTACT_PAGE_SIZE = 8;
 
     function filterMemberTable(query) {
-      const tbody = document.getElementById('member-contacts-table-body');
-      if (!tbody) return;
-      const q = query.toLowerCase();
-      tbody.querySelectorAll('tr[data-searchable]').forEach(row => {
-        row.style.display = (row.getAttribute('data-searchable') || '').toLowerCase().includes(q) ? '' : 'none';
-      });
+      const q = (query || '').toLowerCase().trim();
+      if (!q) {
+        _filteredMemberContacts = [..._allMemberContacts];
+      } else {
+        _filteredMemberContacts = _allMemberContacts.filter(c => 
+          (c.name || '').toLowerCase().includes(q) ||
+          (c.email || '').toLowerCase().includes(q) ||
+          (c.title || '').toLowerCase().includes(q) ||
+          (c.content || '').toLowerCase().includes(q)
+        );
+      }
+      _memberContactPage = 1;
+      renderMemberContactsPage();
     }
 
     async function fetchMemberContacts() {
@@ -1078,37 +1149,120 @@
         const response = await fetch('/api/contacts', { headers: { 'Authorization': 'Bearer ' + token } });
         if (!response.ok) throw new Error('Failed to fetch');
         const contacts = await response.json();
-        tableBody.innerHTML = '';
+        _allMemberContacts = contacts || [];
+        _allMemberContacts.sort((a, b) => {
+          const isRepliedA = (a.status === 'DONE' || Boolean(a.reply) || Boolean(a.repliedAt)) ? 1 : 0;
+          const isRepliedB = (b.status === 'DONE' || Boolean(b.reply) || Boolean(b.repliedAt)) ? 1 : 0;
+          if (isRepliedA !== isRepliedB) return isRepliedB - isRepliedA;
+          const timeA = new Date(a.repliedAt || a.createdAt || 0).getTime() || (a.id || 0);
+          const timeB = new Date(b.repliedAt || b.createdAt || 0).getTime() || (b.id || 0);
+          return timeB - timeA;
+        });
+        _filteredMemberContacts = [..._allMemberContacts];
+        _memberContactPage = 1;
         _memberContactsCache = {};
 
-        if (!contacts.length) {
-          tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;">No requests yet.</td></tr>`;
-          return;
-        }
-        contacts.forEach(contact => {
-          _memberContactsCache[contact.id] = contact;
-          const row = document.createElement('tr');
-          const date = new Date(contact.createdAt).toLocaleDateString('en-US', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric' });
-          row.setAttribute('data-searchable', `${contact.name} ${contact.email} ${contact.title} ${contact.content}`);
-          row.innerHTML = `
-            <td><div class="text-dark-inline">${escHtml(contact.name)}</div><div style="font-size:.85rem;color:#64748b;">${escHtml(contact.email)}</div></td>
-            <td class="text-dark-inline">${escHtml(contact.title)}</td>
-            <td>
-              <button type="button" onclick="openViewContactMessageModal(${contact.id})" style="padding:0.4rem 0.8rem; font-size:0.8rem; font-weight:600; border-radius:6px; background:rgba(37,99,235,0.08); color:#2563eb; border:1px solid rgba(37,99,235,0.2); cursor:pointer; display:inline-flex; align-items:center; gap:5px; transition:all 0.2s ease;">
-                <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                View Message
-              </button>
-            </td>
-            <td>${date}</td>
-            <td><span class="status-badge ${contact.status === 'DONE' ? 'status-done' : 'status-pending'}">${escHtml(contact.status)}</span></td>
-            <td><button class="btn-reply" onclick="openReplyModal(${contact.id})">Reply</button></td>
-          `;
-          tableBody.appendChild(row);
-        });
+        renderMemberContactsPage();
       } catch (err) {
         console.error(err);
         tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;color:#ef4444;">Failed to load requests.</td></tr>`;
       }
+    }
+
+    function renderMemberContactsPage() {
+      const tableBody = document.getElementById('member-contacts-table-body');
+      if (!tableBody) return;
+
+      tableBody.innerHTML = '';
+      if (!_filteredMemberContacts.length) {
+        tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:2rem;">No requests found.</td></tr>`;
+        renderPaginationBar('member-contacts-pagination', 0, 1, CONTACT_PAGE_SIZE, changeMemberContactPage);
+        return;
+      }
+
+      const totalItems = _filteredMemberContacts.length;
+      const totalPages = Math.ceil(totalItems / CONTACT_PAGE_SIZE);
+      if (_memberContactPage > totalPages) _memberContactPage = Math.max(1, totalPages);
+
+      const startIndex = (_memberContactPage - 1) * CONTACT_PAGE_SIZE;
+      const pageItems = _filteredMemberContacts.slice(startIndex, startIndex + CONTACT_PAGE_SIZE);
+
+      pageItems.forEach(contact => {
+        _memberContactsCache[contact.id] = contact;
+        const row = document.createElement('tr');
+        const date = new Date(contact.createdAt).toLocaleDateString('en-US', { hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit', year:'numeric' });
+        row.innerHTML = `
+          <td><div class="text-dark-inline">${escHtml(contact.name)}</div><div style="font-size:.85rem;color:#64748b;">${escHtml(contact.email)}</div></td>
+          <td class="text-dark-inline">${escHtml(contact.title)}</td>
+          <td>
+            <button type="button" onclick="openViewContactMessageModal(${contact.id})" style="padding:0.4rem 0.8rem; font-size:0.8rem; font-weight:600; border-radius:6px; background:rgba(37,99,235,0.08); color:#2563eb; border:1px solid rgba(37,99,235,0.2); cursor:pointer; display:inline-flex; align-items:center; gap:5px; transition:all 0.2s ease;">
+              <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              View Message
+            </button>
+          </td>
+          <td>${date}</td>
+          <td><span class="status-badge ${contact.status === 'DONE' ? 'status-done' : 'status-pending'}">${escHtml(contact.status)}</span></td>
+          <td><button class="btn-reply" onclick="openReplyModal(${contact.id})">Reply</button></td>
+        `;
+        tableBody.appendChild(row);
+      });
+
+      renderPaginationBar('member-contacts-pagination', totalItems, _memberContactPage, CONTACT_PAGE_SIZE, changeMemberContactPage);
+    }
+
+    function changeMemberContactPage(page) {
+      const totalPages = Math.ceil(_filteredMemberContacts.length / CONTACT_PAGE_SIZE);
+      if (page < 1 || page > totalPages) return;
+      _memberContactPage = page;
+      renderMemberContactsPage();
+    }
+
+    function renderPaginationBar(containerId, totalItems, currentPage, pageSize, callbackFn) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+
+      const totalPages = Math.ceil(totalItems / pageSize);
+      if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+      }
+
+      const startEntry = (currentPage - 1) * pageSize + 1;
+      const endEntry = Math.min(currentPage * pageSize, totalItems);
+
+      let buttonsHtml = '';
+      const fnName = callbackFn.name;
+
+      buttonsHtml += `
+        <button type="button" class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="${fnName}(${currentPage - 1})">
+          &laquo; Prev
+        </button>
+      `;
+
+      for (let i = 1; i <= totalPages; i++) {
+        buttonsHtml += `
+          <button type="button" class="page-btn ${currentPage === i ? 'active' : ''}" onclick="${fnName}(${i})">
+            ${i}
+          </button>
+        `;
+      }
+
+      buttonsHtml += `
+        <button type="button" class="page-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="${fnName}(${currentPage + 1})">
+          Next &raquo;
+        </button>
+      `;
+
+      container.innerHTML = `
+        <div class="pagination-wrapper" style="display:flex; justify-content:space-between; align-items:center; padding:1rem; border-top:1px solid var(--border-color, #e2e8f0); font-size:0.85rem; color:var(--text-muted, #64748b);">
+          <div>
+            Showing <strong>${startEntry}</strong> to <strong>${endEntry}</strong> of <strong>${totalItems}</strong> entries
+          </div>
+          <div style="display:flex; gap:5px;">
+            ${buttonsHtml}
+          </div>
+        </div>
+      `;
     }
 
     function openViewContactMessageModal(contactId) {

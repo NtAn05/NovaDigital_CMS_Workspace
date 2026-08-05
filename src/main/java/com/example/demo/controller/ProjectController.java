@@ -86,7 +86,7 @@ public class ProjectController {
         String description = (String) body.get("description");
         String imageUrl = (String) body.get("imageUrl");
         String technologies = (String) body.get("technologies");
-
+ 
         if (title == null || title.isBlank()) {
             error.put("message", "Project's name cannot empty");
             return ResponseEntity.badRequest().body(error);

@@ -691,6 +691,14 @@
           throw new Error("Failed to fetch messages");
         }
         allMessages = await response.json();
+        allMessages.sort((a, b) => {
+          const isRepliedA = (a.replied || a.status === 'DONE' || Boolean(a.reply)) ? 1 : 0;
+          const isRepliedB = (b.replied || b.status === 'DONE' || Boolean(b.reply)) ? 1 : 0;
+          if (isRepliedA !== isRepliedB) return isRepliedB - isRepliedA;
+          const timeA = new Date(a.repliedAt || a.createdAt || 0).getTime() || (a.id || 0);
+          const timeB = new Date(b.repliedAt || b.createdAt || 0).getTime() || (b.id || 0);
+          return timeB - timeA;
+        });
         applyFilters();
       } catch (err) {
         console.error(err);
