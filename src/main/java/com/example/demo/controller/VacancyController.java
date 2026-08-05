@@ -163,7 +163,7 @@ public class VacancyController {
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             response.put("success", false);
-            response.put("message", "Invalid status value. Allowed: PENDING, VIEWED, INTERVIEW, APPROVED, REJECTED");
+            response.put("message", "Invalid status value. Allowed: PENDING, INTERVIEW, APPROVED, REJECTED");
             return ResponseEntity.badRequest().body(response);
         } catch (RuntimeException e) {
             response.put("success", false);

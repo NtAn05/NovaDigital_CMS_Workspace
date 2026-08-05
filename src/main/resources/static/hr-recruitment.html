@@ -636,7 +636,6 @@
             <select id="status-filter" class="status-filter-select">
               <option value="all">— All Statuses —</option>
               <option value="PENDING">Pending</option>
-              <option value="VIEWED">Viewed</option>
               <option value="INTERVIEW">Interview</option>
               <option value="APPROVED">Approved</option>
               <option value="REJECTED">Rejected</option>
@@ -762,7 +761,6 @@
     // ── Status config (insertion order = PENDING → INTERVIEW → APPROVED → REJECTED)
     const STATUS_META = {
       PENDING:   { label: 'Pending',   dot: 'dot-PENDING' },
-      VIEWED:    { label: 'Viewed',    dot: 'dot-VIEWED' },
       INTERVIEW: { label: 'Interview', dot: 'dot-INTERVIEW' },
       APPROVED:  { label: 'Approved',  dot: 'dot-APPROVED' },
       REJECTED:  { label: 'Rejected',  dot: 'dot-REJECTED' }
@@ -902,7 +900,11 @@
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.status === 403) throw new Error('Access denied: insufficient permissions');
-        allApplications = await res.json();
+        const data = await res.json();
+        if (!res.ok || !Array.isArray(data)) {
+          throw new Error(data.message || data.error || 'Failed to load applications');
+        }
+        allApplications = data;
         filteredApplications = [...allApplications];
         renderTable();
         buildStats(allApplications);
@@ -1081,11 +1083,6 @@
       document.getElementById('cl-modal-title').textContent = 'Cover Letter: ' + (app.applicantName || 'Candidate');
       document.getElementById('cl-modal-content').textContent = app.coverLetter || '';
       document.getElementById('cover-letter-modal').classList.add('active');
-      
-      // Auto-trigger status to VIEWED if currently PENDING
-      if (app && app.id && app.status === 'PENDING') {
-        updateApplicationStatus(app.id, 'VIEWED', { stopPropagation: () => {} });
-      }
     }
     function closeCoverLetterModal() {
       document.getElementById('cover-letter-modal').classList.remove('active');
@@ -1100,14 +1097,6 @@
       if (blankState) blankState.style.display = 'none';
 
       document.getElementById('cv-modal').classList.add('active');
-
-      // Auto-trigger status to VIEWED if currently PENDING
-      if (appId) {
-        const app = allApplications.find(a => a.id === appId);
-        if (app && app.status === 'PENDING') {
-          updateApplicationStatus(appId, 'VIEWED', { stopPropagation: () => {} });
-        }
-      }
 
       if (!url || !url.trim() || url === '#') {
         if (blankState) blankState.style.display = 'flex';
@@ -1147,7 +1136,7 @@
       const todayCount = data.filter(a => a.appliedAt && new Date(a.appliedAt).toDateString() === today).length;
       document.getElementById('stat-today').textContent = todayCount;
       const statViewed = document.getElementById('stat-viewed');
-      if (statViewed) statViewed.textContent = data.filter(a => a.status === 'VIEWED').length;
+      if (statViewed) statViewed.textContent = data.filter(a => a.status !== 'PENDING').length;
       document.getElementById('stat-approved').textContent =
         data.filter(a => a.status === 'APPROVED').length;
       document.getElementById('stat-rejected').textContent =
