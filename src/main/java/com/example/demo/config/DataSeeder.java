@@ -43,9 +43,13 @@ public class DataSeeder implements CommandLineRunner {
     @Autowired private NotificationRepository notificationRepository;
     @Autowired private AuditLogRepository auditLogRepository;
     @Autowired private AuthLogRepository authLogRepository;
+    @Autowired private org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
     @Override
     public void run(String... args) throws Exception {
+        try {
+            jdbcTemplate.execute("UPDATE candidate_applications SET status = 'PENDING' WHERE status = 'VIEWED'");
+        } catch (Exception ignored) {}
         try {
             seedData();
         } catch (Exception e) {
@@ -558,6 +562,8 @@ public class DataSeeder implements CommandLineRunner {
     private void saveCandidateApplication(Long vacancyId, String vacancyTitle, String name,
                                            String email, String phone, String resumeUrl, String coverLetter,
                                            com.example.demo.entity.enums.ApplicationStatus status) {
+                                           String email, String phone, String resumeUrl, String coverLetter,
+                                           com.example.demo.entity.enums.ApplicationStatus status) {
         CandidateApplication ca = new CandidateApplication();
         ca.setVacancyId(vacancyId);
         ca.setVacancyTitle(vacancyTitle);
@@ -566,6 +572,9 @@ public class DataSeeder implements CommandLineRunner {
         ca.setApplicantPhone(phone);
         ca.setResumeUrl(resumeUrl);
         ca.setCoverLetter(coverLetter);
+        if (status != null) {
+            ca.setStatus(status);
+        }
         if (status != null) {
             ca.setStatus(status);
         }

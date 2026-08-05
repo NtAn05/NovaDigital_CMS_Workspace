@@ -912,7 +912,11 @@
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.status === 403) throw new Error('Access denied: insufficient permissions');
-        allApplications = await res.json();
+        const data = await res.json();
+        if (!res.ok || !Array.isArray(data)) {
+          throw new Error(data.message || data.error || 'Failed to load applications');
+        }
+        allApplications = data;
         filteredApplications = [...allApplications];
         renderTable();
         buildStats(allApplications);
@@ -1157,7 +1161,7 @@
       const todayCount = data.filter(a => a.appliedAt && new Date(a.appliedAt).toDateString() === today).length;
       document.getElementById('stat-today').textContent = todayCount;
       const statViewed = document.getElementById('stat-viewed');
-      if (statViewed) statViewed.textContent = data.filter(a => a.status === 'VIEWED').length;
+      if (statViewed) statViewed.textContent = data.filter(a => a.status !== 'PENDING').length;
       document.getElementById('stat-approved').textContent =
         data.filter(a => a.status === 'APPROVED').length;
       document.getElementById('stat-rejected').textContent =
