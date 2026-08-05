@@ -43,9 +43,13 @@ public class DataSeeder implements CommandLineRunner {
     @Autowired private NotificationRepository notificationRepository;
     @Autowired private AuditLogRepository auditLogRepository;
     @Autowired private AuthLogRepository authLogRepository;
+    @Autowired private org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
 
     @Override
     public void run(String... args) throws Exception {
+        try {
+            jdbcTemplate.execute("UPDATE candidate_applications SET status = 'PENDING' WHERE status = 'VIEWED'");
+        } catch (Exception ignored) {}
         try {
             seedData();
         } catch (Exception e) {
@@ -321,9 +325,9 @@ public class DataSeeder implements CommandLineRunner {
             JobVacancy job3 = saveJobVacancy("DevOps & Cloud Engineer (AWS/GCP)", "Configure CI/CD pipelines, Kubernetes, Terraform, and optimize cloud infrastructure costs.", "Engineering", "Remote", "CONTRACT", JobVacancy.VacancyStatus.ACTIVE);
             JobVacancy job4 = saveJobVacancy("AI / ML Research Scientist", "Develop LLM RAG pipelines, fine-tune open-source AI models, and optimize Vector DB queries.", "AI Research", "Hanoi / Hybrid", "FULL_TIME", JobVacancy.VacancyStatus.ACTIVE);
 
-            saveCandidateApplication(job1.getId(), job1.getTitle(), "Long Do", "hoanglong.dev@gmail.com", "0912345678", "/uploads/resumes/hoanglong_cv.pdf", "I have 5 years of experience working with Java Spring Boot and MySQL.");
-            saveCandidateApplication(job2.getId(), job2.getTitle(), "Mai Vu", "maivu.design@gmail.com", "0987654321", "/uploads/resumes/thanhmai_portfolio.pdf", "Eager to contribute to NovaDigital design products.");
-            saveCandidateApplication(job4.getId(), job4.getTitle(), "Trinh Duc Thang", "thangtd.ai@gmail.com", "0933445566", "/uploads/resumes/ducthang_ai_cv.pdf", "AI researcher with 2 published papers on NLP and LLM RAG retrieval.");
+            saveCandidateApplication(job1.getId(), job1.getTitle(), "Long Do", "hoanglong.dev@gmail.com", "0912345678", "/uploads/resumes/hoanglong_cv.pdf", "I have 5 years of experience working with Java Spring Boot and MySQL.", com.example.demo.entity.enums.ApplicationStatus.PENDING);
+            saveCandidateApplication(job2.getId(), job2.getTitle(), "Mai Vu", "maivu.design@gmail.com", "0987654321", "/uploads/resumes/thanhmai_portfolio.pdf", "Eager to contribute to NovaDigital design products.", com.example.demo.entity.enums.ApplicationStatus.PENDING);
+            saveCandidateApplication(job4.getId(), job4.getTitle(), "Trinh Duc Thang", "thangtd.ai@gmail.com", "0933445566", "/uploads/resumes/ducthang_ai_cv.pdf", "AI researcher with 2 published papers on NLP and LLM RAG retrieval.", com.example.demo.entity.enums.ApplicationStatus.INTERVIEW);
         }
 
         // ── 14. Notifications & Audit Logs ──────────────────────────────────────
@@ -556,7 +560,8 @@ public class DataSeeder implements CommandLineRunner {
     }
 
     private void saveCandidateApplication(Long vacancyId, String vacancyTitle, String name,
-                                           String email, String phone, String resumeUrl, String coverLetter) {
+                                           String email, String phone, String resumeUrl, String coverLetter,
+                                           com.example.demo.entity.enums.ApplicationStatus status) {
         CandidateApplication ca = new CandidateApplication();
         ca.setVacancyId(vacancyId);
         ca.setVacancyTitle(vacancyTitle);
@@ -565,6 +570,9 @@ public class DataSeeder implements CommandLineRunner {
         ca.setApplicantPhone(phone);
         ca.setResumeUrl(resumeUrl);
         ca.setCoverLetter(coverLetter);
+        if (status != null) {
+            ca.setStatus(status);
+        }
         candidateApplicationRepository.save(ca);
     }
 

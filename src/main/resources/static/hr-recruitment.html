@@ -279,6 +279,7 @@
     }
     .status-badge:hover { filter: brightness(0.92); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
     .status-badge.status-PENDING   { color: #92400e; background: #fef3c7; border-color: #fcd34d; }
+    .status-badge.status-VIEWED    { color: #0369a1; background: #e0f2fe; border-color: #7dd3fc; }
     .status-badge.status-INTERVIEW { color: #1e40af; background: #dbeafe; border-color: #93c5fd; }
     .status-badge.status-APPROVED  { color: #14532d; background: #dcfce7; border-color: #86efac; }
     .status-badge.status-REJECTED  { color: #7f1d1d; background: #fee2e2; border-color: #fca5a5; }
@@ -311,6 +312,7 @@
     .status-dropdown-item:hover { background: #f1f5f9; }
     .status-dropdown-item .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
     .dot-PENDING   { background: #f59e0b; }
+    .dot-VIEWED    { background: #0284c7; }
     .dot-INTERVIEW { background: #3b82f6; }
     .dot-APPROVED  { background: #22c55e; }
     .dot-REJECTED  { background: #ef4444; }
@@ -605,6 +607,10 @@
           <div class="resource-stat-data"><h3 id="stat-today">—</h3><p>Today's Applications</p><small>New profiles received today</small></div>
         </article>
         <article class="resource-stat-card">
+          <div class="resource-stat-icon" style="background: rgba(14,165,233,0.12); color: #0284c7;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div>
+          <div class="resource-stat-data"><h3 id="stat-viewed">—</h3><p>Viewed</p><small>Profiles opened by HR</small></div>
+        </article>
+        <article class="resource-stat-card">
           <div class="resource-stat-icon" style="background: rgba(34,197,94,0.12); color: #15803d;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
           <div class="resource-stat-data"><h3 id="stat-approved">—</h3><p>Approved</p><small>Candidates passed evaluation</small></div>
         </article>
@@ -613,8 +619,6 @@
           <div class="resource-stat-data"><h3 id="stat-rejected">—</h3><p>Rejected</p><small>Applications closed</small></div>
         </article>
       </section>
-
-
 
       <!-- Table -->
       <section class="resource-table-card">
@@ -690,13 +694,22 @@
 
   <!-- CV Preview Modal -->
   <div id="cv-modal" class="modal-overlay">
-    <div class="modal-content">
+    <div class="modal-content" style="max-width: 850px; width: 92%; height: 85vh; display: flex; flex-direction: column;">
       <div class="modal-header">
         <h2 id="cv-modal-title">Resume Preview</h2>
         <button class="modal-close" onclick="closeCvModal()">×</button>
       </div>
-      <div class="modal-body">
-        <iframe id="cv-iframe" src="" frameborder="0" width="100%" height="100%"></iframe>
+      <div class="modal-body" style="flex: 1; position: relative; overflow: hidden; background: var(--bg-light, #f8fafc); display: flex; align-items: center; justify-content: center; padding: 0;">
+        <iframe id="cv-iframe" src="" frameborder="0" width="100%" height="100%" style="display: none; width: 100%; height: 100%; border: none;"></iframe>
+        <div id="cv-blank-state" style="display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 3rem 1.5rem; gap: 1rem;">
+          <div style="width: 80px; height: 80px; border-radius: 22px; background: rgba(239, 68, 68, 0.08); color: #ef4444; display: grid; place-items: center; box-shadow: 0 4px 12px rgba(239,68,68,0.12);">
+            <svg viewBox="0 0 24 24" style="width: 40px; height: 40px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+          </div>
+          <div>
+            <h3 style="margin: 0 0 0.4rem 0; font-size: 1.4rem; font-weight: 700;" class="text-dark-inline">CV is blank!</h3>
+            <p style="margin: 0; font-size: 0.92rem; color: var(--text-muted, #64748b); max-width: 380px; line-height: 1.55;">No resume document attached or the uploaded file is not available on the server.</p>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -887,7 +900,11 @@
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.status === 403) throw new Error('Access denied: insufficient permissions');
-        allApplications = await res.json();
+        const data = await res.json();
+        if (!res.ok || !Array.isArray(data)) {
+          throw new Error(data.message || data.error || 'Failed to load applications');
+        }
+        allApplications = data;
         filteredApplications = [...allApplications];
         renderTable();
         buildStats(allApplications);
@@ -995,7 +1012,7 @@
         const date    = app.appliedAt ? new Date(app.appliedAt).toLocaleDateString('en-US') : '—';
         const time    = app.appliedAt ? new Date(app.appliedAt).toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit'}) : '';
         const preview = app.coverLetter
-          ? `<button onclick="openCoverLetterModal(${globalIndex})" class="btn-cv" style="cursor:pointer">📖 Read</button>`
+          ? `<button onclick="openCoverLetterModal(${globalIndex})" class="btn-cv" style="cursor:pointer; display:inline-flex; align-items:center; gap:0.35rem;"><svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>Read</button>`
           : '<span style="color:#94a3b8">None</span>';
         const status  = app.status || 'PENDING';
         return `
@@ -1010,7 +1027,7 @@
             <td>
               ${app.resumeUrl
                 ? `<div style="display:flex;gap:5px;">
-                     <button onclick="openCvModal('${app.resumeUrl}', '${escHtml(app.applicantName || 'Candidate').replace(/'/g, "\\'")}')" class="btn-cv" style="cursor:pointer">👁 Preview</button>
+                     <button onclick="openCvModal('${app.resumeUrl}', '${escHtml(app.applicantName || 'Candidate').replace(/'/g, "\\'")}', ${app.id})" class="btn-cv" style="cursor:pointer; display:inline-flex; align-items:center; gap:0.35rem;"><svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Preview</button>
                    </div>`
                 : '<span style="color:#94a3b8">—</span>'}
             </td>
@@ -1071,14 +1088,43 @@
       document.getElementById('cover-letter-modal').classList.remove('active');
     }
 
-    function openCvModal(url, name) {
-      document.getElementById('cv-modal-title').textContent = 'Resume: ' + name;
-      document.getElementById('cv-iframe').src = url;
+    async function openCvModal(url, name, appId) {
+      document.getElementById('cv-modal-title').textContent = 'Resume: ' + (name || 'Applicant');
+      const iframe = document.getElementById('cv-iframe');
+      const blankState = document.getElementById('cv-blank-state');
+      
+      if (iframe) { iframe.style.display = 'none'; iframe.src = ''; }
+      if (blankState) blankState.style.display = 'none';
+
       document.getElementById('cv-modal').classList.add('active');
+
+      if (!url || !url.trim() || url === '#') {
+        if (blankState) blankState.style.display = 'flex';
+        return;
+      }
+
+      try {
+        const res = await fetch(url, { method: 'HEAD' });
+        const contentType = res.headers.get('content-type') || '';
+        if (res.ok && !contentType.includes('text/html')) {
+          if (iframe) {
+            iframe.src = url;
+            iframe.style.display = 'block';
+          }
+        } else {
+          if (blankState) blankState.style.display = 'flex';
+        }
+      } catch (err) {
+        if (blankState) blankState.style.display = 'flex';
+      }
     }
+
     function closeCvModal() {
       document.getElementById('cv-modal').classList.remove('active');
-      setTimeout(() => document.getElementById('cv-iframe').src = '', 300);
+      const iframe = document.getElementById('cv-iframe');
+      const blankState = document.getElementById('cv-blank-state');
+      if (iframe) { iframe.src = ''; iframe.style.display = 'none'; }
+      if (blankState) blankState.style.display = 'none';
     }
 
     // ── Tính stats ─────────────────────────────────────────────
@@ -1089,6 +1135,8 @@
       const today = new Date().toDateString();
       const todayCount = data.filter(a => a.appliedAt && new Date(a.appliedAt).toDateString() === today).length;
       document.getElementById('stat-today').textContent = todayCount;
+      const statViewed = document.getElementById('stat-viewed');
+      if (statViewed) statViewed.textContent = data.filter(a => a.status !== 'PENDING').length;
       document.getElementById('stat-approved').textContent =
         data.filter(a => a.status === 'APPROVED').length;
       document.getElementById('stat-rejected').textContent =

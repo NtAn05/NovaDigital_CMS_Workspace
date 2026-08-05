@@ -5,22 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="NovaDigital - View and manage your job applications.">
   <title>My Applications | NovaDigital</title>
-  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/style.css?v=resource-integrated-v9">
   <style>
     .apps-page {
       min-height: 100vh;
       padding: 7rem 1.5rem 5rem;
     }
     .apps-container {
-      max-width: 980px;
+      max-width: 1200px;
       margin: 0 auto;
       display: flex;
       flex-direction: column;
       gap: 2rem;
-    }
-    .apps-container {
-      max-width: 1200px;
-      margin: 0 auto;
     }
     .apps-card {
       background: rgba(255, 255, 255, 0.72);
@@ -74,31 +70,65 @@
     .status-badge {
       display: inline-flex;
       align-items: center;
-      gap: 0.4rem;
-      padding: 0.3rem 0.8rem;
+      padding: 0.25rem 0.75rem;
       border-radius: 50px;
-      font-size: 0.75rem;
+      font-size: 0.78rem;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      background: rgba(0,0,0,0.04);
+    }
+    .status-PENDING {
+      background: #fef3c7;
+      color: #d97706;
+      border: 1px solid #fde68a;
+    }
+    .status-VIEWED {
+      background: #e0f2fe;
+      color: #0284c7;
+      border: 1px solid #bae6fd;
+    }
+    .status-INTERVIEW {
+      background: #dbeafe;
+      color: #2563eb;
+      border: 1px solid #bfdbfe;
+    }
+    .status-APPROVED {
+      background: #d1fae5;
+      color: #059669;
+      border: 1px solid #a7f3d0;
+    }
+    .status-REJECTED {
+      background: #fee2e2;
+      color: #dc2626;
+      border: 1px solid #fca5a5;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 4rem 2rem;
       color: var(--text-muted);
     }
-    .status-badge .dot {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: currentColor;
+    .empty-state svg {
+      width: 64px;
+      height: 64px;
+      stroke: var(--text-muted);
+      opacity: 0.5;
+      margin-bottom: 1.5rem;
     }
-    .status-PENDING { background: rgba(245,158,11,0.1); color: #d97706; }
-    .status-INTERVIEW { background: rgba(59,130,246,0.1); color: #2563eb; }
-    .status-APPROVED { background: rgba(16,185,129,0.1); color: #059669; }
-    .status-REJECTED { background: rgba(239,68,68,0.1); color: #dc2626; }
-    
-    html.dark-theme .status-PENDING { color: #fbbf24; }
-    html.dark-theme .status-INTERVIEW { color: #60a5fa; }
-    html.dark-theme .status-APPROVED { color: #34d399; }
-    html.dark-theme .status-REJECTED { color: #f87171; }
+    .btn-book {
+      display: inline-block;
+      margin-top: 1rem;
+      padding: 0.75rem 1.5rem;
+      background: var(--primary);
+      color: white;
+      text-decoration: none;
+      font-weight: 700;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+    }
+    .btn-book:hover {
+      transform: translateY(-1.5px);
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
 
     .btn-view-cv {
       display: inline-flex;
@@ -127,12 +157,11 @@
       border-color: rgba(255, 255, 255, 0.4);
     }
 
-    #loading-state, #empty-state {
+    #loading-state {
       text-align: center;
       padding: 3rem 1rem;
       color: var(--text-muted);
     }
-    #empty-state { display: none; }
 
     /* Action Buttons */
     .action-group {
@@ -253,7 +282,7 @@
     #cv-frame { width: 100%; flex: 1; border: none; border-radius: 8px; background: #e5e7eb; }
   </style>
 </head>
-<body>
+<body class="dashboard-page">
   <!-- Header -->
   <header>
     <nav class="navbar">
@@ -289,13 +318,16 @@
       <div class="apps-card">
         <div id="loading-state">Loading your applications...</div>
         
-        <div id="empty-state">
-          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24" style="margin: 0 auto 1rem; opacity:0.5;">
-            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
-            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
-          </svg>
-          <p>You haven't applied for any jobs yet.</p>
-          <a href="careers.html" class="btn btn-primary" style="margin-top: 1rem; display:inline-block; text-decoration:none;">Browse Jobs</a>
+        <div id="empty-state" style="display:none;">
+          <div class="empty-state">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+              <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+            </svg>
+            <p style="margin: 0; font-size: 1.1rem; font-weight:600; color: var(--text-dark);">No applications found</p>
+            <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem; color: var(--text-muted);">You haven't applied for any job positions yet.</p>
+            <a href="careers.html" class="btn-book">Browse Open Positions Now</a>
+          </div>
         </div>
 
         <div class="table-responsive" id="table-container" style="display:none;">
@@ -319,12 +351,23 @@
 
   <!-- CV Viewer Modal -->
   <div class="modal-overlay" id="cv-modal">
-    <div class="modal-box large">
-      <div class="modal-header">
-        <h2 id="cv-modal-title">View CV</h2>
+    <div class="modal-box large" style="max-width: 850px; width: 92%; height: 85vh; display: flex; flex-direction: column; padding: 0; overflow: hidden; border-radius: 16px;">
+      <div class="modal-header" style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-color, #e2e8f0);">
+        <h2 id="cv-modal-title" style="margin:0; font-size:1.25rem;">View CV</h2>
         <button class="close-modal" id="close-cv-modal">&times;</button>
       </div>
-      <iframe id="cv-frame" src="" title="CV Viewer"></iframe>
+      <div style="flex: 1; position: relative; overflow: hidden; background: var(--bg-light, #f8fafc); display: flex; align-items: center; justify-content: center;">
+        <iframe id="cv-frame" src="" title="CV Viewer" style="display: none; width: 100%; height: 100%; border: none;"></iframe>
+        <div id="cv-blank-state-user" style="display: none; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 3rem 1.5rem; gap: 1rem;">
+          <div style="width: 80px; height: 80px; border-radius: 22px; background: rgba(239, 68, 68, 0.08); color: #ef4444; display: grid; place-items: center; box-shadow: 0 4px 12px rgba(239,68,68,0.12);">
+            <svg viewBox="0 0 24 24" style="width: 40px; height: 40px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+          </div>
+          <div>
+            <h3 style="margin: 0 0 0.4rem 0; font-size: 1.4rem; font-weight: 700;" class="text-dark-inline">CV is blank!</h3>
+            <p style="margin: 0; font-size: 0.92rem; color: var(--text-muted, #64748b); max-width: 380px; line-height: 1.55;">No resume document attached or the uploaded file is not available on the server.</p>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -442,7 +485,7 @@
     </div>
   </footer>
 
-  <script src="/js/main.js"></script>
+  <script src="/js/main.js?v=resource-integrated-v9"></script>
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       const token = localStorage.getItem('token') || sessionStorage.getItem('token');
@@ -554,10 +597,36 @@
     // CV Modal
     const cvModal = document.getElementById('cv-modal');
     const cvFrame = document.getElementById('cv-frame');
-    document.getElementById('close-cv-modal').onclick = () => { cvModal.classList.remove('active'); cvFrame.src = ""; };
-    window.openCvModal = function(url) {
-      cvFrame.src = url;
+    const cvBlankStateUser = document.getElementById('cv-blank-state-user');
+
+    document.getElementById('close-cv-modal').onclick = () => { 
+      cvModal.classList.remove('active'); 
+      if (cvFrame) { cvFrame.src = ""; cvFrame.style.display = "none"; }
+      if (cvBlankStateUser) { cvBlankStateUser.style.display = "none"; }
+    };
+
+    window.openCvModal = async function(url) {
+      if (cvFrame) { cvFrame.src = ""; cvFrame.style.display = "none"; }
+      if (cvBlankStateUser) cvBlankStateUser.style.display = "none";
       cvModal.classList.add('active');
+
+      if (!url || !url.trim() || url === '#') {
+        if (cvBlankStateUser) cvBlankStateUser.style.display = "flex";
+        return;
+      }
+
+      try {
+        const res = await fetch(url, { method: 'HEAD' });
+        const contentType = res.headers.get('content-type') || '';
+        if (res.ok && !contentType.includes('text/html')) {
+          cvFrame.src = url;
+          cvFrame.style.display = "block";
+        } else {
+          if (cvBlankStateUser) cvBlankStateUser.style.display = "flex";
+        }
+      } catch (err) {
+        if (cvBlankStateUser) cvBlankStateUser.style.display = "flex";
+      }
     };
 
     // Edit Modal

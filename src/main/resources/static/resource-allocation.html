@@ -663,6 +663,37 @@
     .loading, .empty-state { padding: 3.4rem 1.4rem; text-align: center; color: var(--text-muted); font-size: 0.85rem; }
     .empty-state strong { display: block; margin-bottom: 0.35rem; color: var(--text-dark); }
 
+    /* ── Pagination Buttons ── */
+    .page-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.4rem 0.75rem;
+      border: 1px solid var(--border-color, #e2e8f0);
+      background: var(--bg-card, #ffffff);
+      color: var(--text-dark, #0f172a);
+      font-weight: 600;
+      font-size: 0.8rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .page-btn:hover:not(:disabled) {
+      background: rgba(37, 99, 235, 0.1);
+      border-color: #2563eb;
+      color: #2563eb;
+    }
+    .page-btn.active {
+      background: #2563eb;
+      color: #ffffff;
+      border-color: #2563eb;
+      box-shadow: 0 4px 10px rgba(37,99,235,0.2);
+    }
+    .page-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
     /* ===== Modal ===== */
     .modal-backdrop {
       position: fixed;
@@ -1588,6 +1619,7 @@
               <thead><tr><th>Staff member</th><th>Skills</th><th>Total workload</th><th>Availability</th><th>Project &amp; task allocations</th><th>Action</th></tr></thead>
               <tbody id="matrixBody"></tbody>
             </table>
+            <div id="matrixPagination"></div>
             <div class="empty-state" id="emptyState" hidden><strong>No matching staff found</strong>Change the filters or add internal team members first.</div>
           </div>
         </div>
@@ -1643,6 +1675,7 @@
               </thead>
               <tbody id="rolesTableBody"><tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:1.5rem;">Loading...</td></tr></tbody>
             </table>
+            <div id="rolesPagination"></div>
           </div>
         </div>
       </section>
@@ -1822,10 +1855,72 @@
   document.getElementById('modalClose').addEventListener('click', closeModal);
   document.getElementById('modalCancel').addEventListener('click', closeModal);
   els.modal.addEventListener('click', e => { if (e.target === els.modal) closeModal(); });
+  let _matrixCurrentPage = 1;
+  const MATRIX_PAGE_SIZE = 8;
+  let _rolesCurrentPage = 1;
+  const ROLES_PAGE_SIZE = 8;
+
+  function renderPaginationBar(containerId, totalItems, currentPage, pageSize, callbackFnName) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    const totalPages = Math.ceil(totalItems / pageSize);
+    if (totalPages <= 1) {
+      container.innerHTML = '';
+      return;
+    }
+
+    const startEntry = (currentPage - 1) * pageSize + 1;
+    const endEntry = Math.min(currentPage * pageSize, totalItems);
+
+    let buttonsHtml = `
+      <button type="button" class="page-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="${callbackFnName}(${currentPage - 1})">
+        &laquo; Prev
+      </button>
+    `;
+
+    for (let i = 1; i <= totalPages; i++) {
+      buttonsHtml += `
+        <button type="button" class="page-btn ${currentPage === i ? 'active' : ''}" onclick="${callbackFnName}(${i})">
+          ${i}
+        </button>
+      `;
+    }
+
+    buttonsHtml += `
+      <button type="button" class="page-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="${callbackFnName}(${currentPage + 1})">
+        Next &raquo;
+      </button>
+    `;
+
+    container.innerHTML = `
+      <div class="pagination-wrapper" style="display:flex; justify-content:space-between; align-items:center; padding:1rem; border-top:1px solid var(--border-color, #e2e8f0); font-size:0.85rem; color:var(--text-muted, #64748b);">
+        <div>
+          Showing <strong>${startEntry}</strong> to <strong>${endEntry}</strong> of <strong>${totalItems}</strong> entries
+        </div>
+        <div style="display:flex; gap:5px;">
+          ${buttonsHtml}
+        </div>
+      </div>
+    `;
+  }
+
+  function changeMatrixPage(page) {
+    _matrixCurrentPage = page;
+    renderMatrix(false);
+  }
+  window.changeMatrixPage = changeMatrixPage;
+
+  function changeRolesPage(page) {
+    _rolesCurrentPage = page;
+    renderRolesTable(false);
+  }
+  window.changeRolesPage = changeRolesPage;
+
   els.form.addEventListener('submit', saveAllocation);
   els.project.addEventListener('change', () => loadMatrix());
   els.focusDate.addEventListener('change', () => loadMatrix());
-  [els.search, els.skill, els.availability].forEach(el => el.addEventListener('input', renderMatrix));
+  [els.search, els.skill, els.availability].forEach(el => el.addEventListener('input', () => renderMatrix(true)));
 
   loadMatrix();
 
@@ -1838,7 +1933,7 @@
       const data = await api(`/api/resource-allocations/matrix?${params.toString()}`);
       state.matrix = data;
       renderContext();
-      renderMatrix();
+      renderMatrix(true);
     } catch (error) {
       state.matrix = null;
       els.loading.innerHTML = `<strong style="display:block;color:#b91c1c;margin-bottom:7px;">Unable to load resource matrix</strong>${escapeHtml(error.message)}`;
@@ -1883,9 +1978,11 @@
     document.getElementById('kpiAllocations').textContent = m.allocations.length;
   }
 
-  function renderMatrix() {
+  function renderMatrix(resetPage = false) {
     const m = state.matrix;
     if (!m) return;
+    if (resetPage) _matrixCurrentPage = 1;
+
     const query = els.search.value.trim().toLowerCase();
     const skill = els.skill.value.toLowerCase();
     const availability = els.availability.value;
@@ -1928,9 +2025,18 @@
       return (a.fullName || a.username || '').localeCompare(b.fullName || b.username || '');
     });
 
-    els.body.innerHTML = sorted.map(s => staffRowHtml(s, allocationsByUser[s.userId] || [])).join('');
+    const totalItems = sorted.length;
+    const totalPages = Math.ceil(totalItems / MATRIX_PAGE_SIZE);
+    if (_matrixCurrentPage > totalPages) _matrixCurrentPage = Math.max(1, totalPages);
+
+    const startIndex = (_matrixCurrentPage - 1) * MATRIX_PAGE_SIZE;
+    const pageItems = sorted.slice(startIndex, startIndex + MATRIX_PAGE_SIZE);
+
+    els.body.innerHTML = pageItems.map(s => staffRowHtml(s, allocationsByUser[s.userId] || [])).join('');
     els.table.hidden = sorted.length === 0;
     els.empty.hidden = sorted.length !== 0;
+
+    renderPaginationBar('matrixPagination', totalItems, _matrixCurrentPage, MATRIX_PAGE_SIZE, 'changeMatrixPage');
   }
 
   function staffRowHtml(s, allocations) {
@@ -2294,10 +2400,11 @@
     }
   }
 
-  function renderRolesTable() {
+  function renderRolesTable(resetPage = false) {
     const tbody = document.getElementById('rolesTableBody');
     const roleFilter = document.getElementById('rolesRoleFilter').value;
     const projFilter = document.getElementById('rolesProjectFilter').value;
+    if (resetPage) _rolesCurrentPage = 1;
 
     const filtered = _rolesData.filter(a => {
       if (roleFilter && a.projectRole !== roleFilter) return false;
@@ -2307,10 +2414,18 @@
 
     if (!filtered.length) {
       tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:1.5rem;">No assignments found. Use "Assign Role" to add members.</td></tr>';
+      renderPaginationBar('rolesPagination', 0, 1, ROLES_PAGE_SIZE, 'changeRolesPage');
       return;
     }
 
-    tbody.innerHTML = filtered.map(a => {
+    const totalItems = filtered.length;
+    const totalPages = Math.ceil(totalItems / ROLES_PAGE_SIZE);
+    if (_rolesCurrentPage > totalPages) _rolesCurrentPage = Math.max(1, totalPages);
+
+    const startIndex = (_rolesCurrentPage - 1) * ROLES_PAGE_SIZE;
+    const pageItems = filtered.slice(startIndex, startIndex + ROLES_PAGE_SIZE);
+
+    tbody.innerHTML = pageItems.map(a => {
       const roleBadge = a.projectRole === 'PM'
         ? `<span style="padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;background:rgba(37,99,235,0.1);color:#2563eb;">★ PM</span>`
         : `<span style="padding:3px 10px;border-radius:20px;font-size:0.72rem;font-weight:700;background:rgba(245,158,11,0.12);color:#d97706;">⚙ Staff</span>`;
@@ -2349,6 +2464,8 @@
         </td>
       </tr>`;
     }).join('');
+
+    renderPaginationBar('rolesPagination', totalItems, _rolesCurrentPage, ROLES_PAGE_SIZE, 'changeRolesPage');
   }
 
   // Switch role in-place (toggle PM ↔ STAFF)
