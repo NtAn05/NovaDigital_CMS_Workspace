@@ -474,7 +474,7 @@ public class PaymentController {
 
     private void confirmPaymentInDb(PaymentTransaction transaction) {
         System.out.println(">>> [PaymentController] confirmPaymentInDb called for transaction orderCode: " + transaction.getOrderCode());
-        System.out.println(">>> [PaymentController] appointmentId: " + transaction.getAppointmentId() + ", milestoneId: " + transaction.getMilestoneId());
+        System.out.println(">>> [PaymentController] appointmentId: " + transaction.getAppointmentId() + ", milestoneId: " + transaction.getMilestoneId() + ", projectId: " + transaction.getProjectId());
 
         transaction.setStatus("PAID");
         transactionRepository.save(transaction);
@@ -492,7 +492,13 @@ public class PaymentController {
 
                 // Send receipt email to client
                 User client = userRepository.findById(appointment.getClientId()).orElse(null);
-                if (client != null && client.getEmail() != null) {
+                if (client == null) {
+                    try {
+                        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+                        client = userRepository.findByUsername(username).orElse(null);
+                    } catch (Exception ignored) {}
+                }
+                if (client != null && client.getEmail() != null && !client.getEmail().isBlank()) {
                     long amountVnd = transaction.getAmount() != null ? transaction.getAmount().longValue() : 0L;
                     emailService.sendPaymentReceiptEmail(
                             client.getEmail(),
@@ -522,18 +528,36 @@ public class PaymentController {
                     // Send receipt email to each project client
                     List<com.example.demo.entity.ProjectClient> pClients =
                             projectClientRepository.findByProjectId(milestone.getProject().getId());
-                    for (com.example.demo.entity.ProjectClient pc : pClients) {
-                        User u = pc.getUser();
-                        if (u != null && u.getEmail() != null) {
-                            long amountVnd = transaction.getAmount() != null ? transaction.getAmount().longValue() : 0L;
-                            emailService.sendPaymentReceiptEmail(
-                                    u.getEmail(),
-                                    u.getFullName(),
-                                    "Project Phase — " + milestone.getName(),
-                                    "Milestone #" + milestone.getId(),
-                                    amountVnd,
-                                    transaction.getOrderCode()
-                            );
+                    if (pClients.isEmpty()) {
+                        try {
+                            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+                            User u = userRepository.findByUsername(username).orElse(null);
+                            if (u != null && u.getEmail() != null && !u.getEmail().isBlank()) {
+                                long amountVnd = transaction.getAmount() != null ? transaction.getAmount().longValue() : 0L;
+                                emailService.sendPaymentReceiptEmail(
+                                        u.getEmail(),
+                                        u.getFullName(),
+                                        "Project Phase — " + milestone.getName(),
+                                        "Milestone #" + milestone.getId(),
+                                        amountVnd,
+                                        transaction.getOrderCode()
+                                );
+                            }
+                        } catch (Exception ignored) {}
+                    } else {
+                        for (com.example.demo.entity.ProjectClient pc : pClients) {
+                            User u = pc.getUser();
+                            if (u != null && u.getEmail() != null && !u.getEmail().isBlank()) {
+                                long amountVnd = transaction.getAmount() != null ? transaction.getAmount().longValue() : 0L;
+                                emailService.sendPaymentReceiptEmail(
+                                        u.getEmail(),
+                                        u.getFullName(),
+                                        "Project Phase — " + milestone.getName(),
+                                        "Milestone #" + milestone.getId(),
+                                        amountVnd,
+                                        transaction.getOrderCode()
+                                );
+                            }
                         }
                     }
                 }
@@ -556,18 +580,36 @@ public class PaymentController {
                 // Send receipt email to each project client
                 List<com.example.demo.entity.ProjectClient> pClients =
                         projectClientRepository.findByProjectId(project.getId());
-                for (com.example.demo.entity.ProjectClient pc : pClients) {
-                    User u = pc.getUser();
-                    if (u != null && u.getEmail() != null) {
-                        long amountVnd = transaction.getAmount() != null ? transaction.getAmount().longValue() : 0L;
-                        emailService.sendPaymentReceiptEmail(
-                                u.getEmail(),
-                                u.getFullName(),
-                                "Project Deposit — " + project.getTitle(),
-                                "Project #" + project.getId(),
-                                amountVnd,
-                                transaction.getOrderCode()
-                        );
+                if (pClients.isEmpty()) {
+                    try {
+                        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+                        User u = userRepository.findByUsername(username).orElse(null);
+                        if (u != null && u.getEmail() != null && !u.getEmail().isBlank()) {
+                            long amountVnd = transaction.getAmount() != null ? transaction.getAmount().longValue() : 0L;
+                            emailService.sendPaymentReceiptEmail(
+                                    u.getEmail(),
+                                    u.getFullName(),
+                                    "Project Deposit — " + project.getTitle(),
+                                    "Project #" + project.getId(),
+                                    amountVnd,
+                                    transaction.getOrderCode()
+                            );
+                        }
+                    } catch (Exception ignored) {}
+                } else {
+                    for (com.example.demo.entity.ProjectClient pc : pClients) {
+                        User u = pc.getUser();
+                        if (u != null && u.getEmail() != null && !u.getEmail().isBlank()) {
+                            long amountVnd = transaction.getAmount() != null ? transaction.getAmount().longValue() : 0L;
+                            emailService.sendPaymentReceiptEmail(
+                                    u.getEmail(),
+                                    u.getFullName(),
+                                    "Project Deposit — " + project.getTitle(),
+                                    "Project #" + project.getId(),
+                                    amountVnd,
+                                    transaction.getOrderCode()
+                            );
+                        }
                     }
                 }
             }
