@@ -206,20 +206,12 @@ public class BookingController {
         notifyClientBookingReceived(saved);
         notifyAdminsBookingReceived(saved);
 
-        // SSE Push for Admin
-        Map<String, Object> eventData = new HashMap<>();
-        eventData.put("bookingId", saved.getId());
-        eventData.put("message", "Có lịch hẹn mới (#" + saved.getId() + ") cần xác nhận.");
-        eventData.put("time", LocalTime.now().toString());
-        sseEmitterService.sendEventToAll("new-booking", eventData);
-        notifyAdminsBookingReceived(saved);
-
-        // SSE Push for Admin
-        Map<String, Object> eventData = new HashMap<>();
-        eventData.put("bookingId", saved.getId());
-        eventData.put("message", "Có lịch hẹn mới (#" + saved.getId() + ") cần xác nhận.");
-        eventData.put("time", LocalTime.now().toString());
-        sseEmitterService.sendEventToAll("new-booking", eventData);
+        // // SSE Push for Admin
+        // Map<String, Object> eventData = new HashMap<>();
+        // eventData.put("bookingId", saved.getId());
+        // eventData.put("message", "Có lịch hẹn mới (#" + saved.getId() + ") cần xác nhận.");
+        // eventData.put("time", LocalTime.now().toString());
+        // sseEmitterService.sendEventToAll("new-booking", eventData);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponse(saved, basePrice, addonsPrice, request.getAddonIds()));
     }
@@ -509,27 +501,6 @@ private void notifyClientBookingDeleted(User client, String serviceTitle, String
         noti.setLink("my-bookings.html");
         notificationRepository.save(noti);
     }
-
-    private void notifyAdminsBookingReceived(ConsultationAppointment appointment) {
-        String serviceTitle = serviceRepository.findById(appointment.getServiceId())
-                .map(Service::getTitle)
-                .orElse("service #" + appointment.getServiceId());
-
-        List<User> admins = userRepository.findByRole("ROLE_ADMIN");
-        for (User admin : admins) {
-            Notification noti = new Notification();
-            noti.setUserId(admin.getId());
-            noti.setTitle("New Booking Request");
-            noti.setMessage(String.format(
-                    "New consultation request for \"%s\" on %s at %s.",
-                    serviceTitle, appointment.getAppointmentDate(),
-                    appointment.getTimeSlot().toString().substring(0, 5)
-            ));
-            noti.setLink("/admin.html?panel=bookings");
-            notificationRepository.save(noti);
-        }
-    }
-
 
     private void notifyAdminsBookingReceived(ConsultationAppointment appointment) {
         String serviceTitle = serviceRepository.findById(appointment.getServiceId())

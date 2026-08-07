@@ -105,11 +105,18 @@ document.addEventListener("DOMContentLoaded", () => {
   const urlParams = new URLSearchParams(window.location.search);
 
   if (hash === "#login") {
-    openAuthModal("login");
-    if (urlParams.get("error") === "unauthorized") {
-      setTimeout(() => {
-        showModalAlert("You need to log in to access this feature.", false, "modal-login-alert");
-      }, 180);
+    // Do not open modal if user is already authenticated
+    const alreadyLoggedIn = localStorage.getItem("token") || sessionStorage.getItem("token");
+    if (!alreadyLoggedIn) {
+      openAuthModal("login");
+      if (urlParams.get("error") === "unauthorized") {
+        setTimeout(() => {
+          showModalAlert("You need to log in to access this feature.", false, "modal-login-alert");
+        }, 180);
+      }
+    } else {
+      // Clean up the URL so the error params don't linger
+      history.replaceState(null, "", window.location.pathname);
     }
   } else if (hash === "#register") {
     openAuthModal("register");
@@ -495,7 +502,9 @@ function initModalLoginForm() {
               sessionStorage.removeItem("redirectAttempt");
               window.location.href = redirectAttempt;
             } else {
-              window.location.reload();
+              // Replace the URL to remove ?error=unauthorized#login before reloading
+              // to prevent the hash from re-opening the login modal
+              window.location.replace(window.location.pathname);
             }
           }
         }, 1000);

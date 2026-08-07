@@ -619,8 +619,6 @@ public class DataSeeder implements CommandLineRunner {
     private void saveCandidateApplication(Long vacancyId, String vacancyTitle, String name,
                                            String email, String phone, String resumeUrl, String coverLetter,
                                            com.example.demo.entity.enums.ApplicationStatus status) {
-                                           String email, String phone, String resumeUrl, String coverLetter,
-                                           com.example.demo.entity.enums.ApplicationStatus status) {
         CandidateApplication ca = new CandidateApplication();
         ca.setVacancyId(vacancyId);
         ca.setVacancyTitle(vacancyTitle);
